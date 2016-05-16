@@ -18,6 +18,7 @@ if __name__ == "__main__":
     port = port[0] if port and port[0] else PORT
 
     http_server = tornado.httpserver.HTTPServer(urls, xheaders=True)
-    http_server.listen(int(port))
+    http_server.bind(int(port))
+    http_server.start(0)
     tornado.ioloop.IOLoop.current().start()
 
