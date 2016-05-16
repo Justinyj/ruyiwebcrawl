@@ -14,6 +14,7 @@ from datetime import datetime
 import base64
 import hashlib
 import json
+import logging
 import os
 
 from settings import FSCACHEDIR
