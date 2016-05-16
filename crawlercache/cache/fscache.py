@@ -78,7 +78,7 @@ def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
             'date': str(now), 
             'batch_id': batch_id,
             'groups': groups,
-            'url': base64.urlsafe_decode(b64url),
+            'url': base64.urlsafe_b64decode(b64url),
         })
         get_logger( now.strftime('%Y%m%d') ).info(log_line)
     except Exception as e:
