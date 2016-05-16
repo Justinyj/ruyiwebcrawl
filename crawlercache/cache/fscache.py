@@ -60,10 +60,12 @@ def makedir(absdir):
 def fs_get_cache(b64url, batch_id):
     try:
         assert batch_id != ''
+        sha256 = hashlib.sha256(b64url).hexdigest()
         level1 = hashlib.sha1(b64url).hexdigest()[-1:]
-        level2 = hashlib.md5(b64url).hexdigest()[-2:]
+        level2 = sha256[-2:]
+
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
-        cache_file = os.path.join(absdir, b64url)
+        cache_file = os.path.join(absdir, sha256)
         if os.path.isfile(cache_file):
             with open(cache_file) as fd:
                 html = fd.read()
@@ -75,10 +77,12 @@ def fs_get_cache(b64url, batch_id):
 def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
     try:
         assert batch_id != ''
+        sha256 = hashlib.sha256(b64url).hexdigest()
         level1 = hashlib.sha1(b64url).hexdigest()[-1:]
-        level2 = hashlib.md5(b64url).hexdigest()[-2:]
+        level2 = sha256[-2:]
+
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
-        cache_file = os.path.join(absdir, b64url)
+        cache_file = os.path.join(absdir, sha256)
 
         makedir(absdir)
         if refresh or not os.path.isfile(cache_file):
