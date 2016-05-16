@@ -24,13 +24,13 @@ class CacheHandler(tornado.web.RequestHandler):
         # x_real_ip = self.request.headers.get("X-Real-IP")
         # remote_ip = x_real_ip or self.request.remote_ip
 
-        workgroup = self.get_body_argument(u'workgroup', u'')
+        groups = self.get_body_argument(u'groups', u'')
         content = self.get_body_argument(u'content', u'')
         refresh = self.get_body_argument(u'refresh', False)
 
         response = BaseCache.set_cache(b64url.encode('utf-8'),
                                        batch_id.encode('utf-8'),
-                                       workgroup.encode('utf-8'),
+                                       groups.encode('utf-8'),
                                        content.encode('utf-8'),
                                        refresh)
         self.write(response)

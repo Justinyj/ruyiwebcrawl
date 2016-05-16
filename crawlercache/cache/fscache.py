@@ -59,7 +59,7 @@ def fs_get_cache(b64url, batch_id):
     return {'success': True, 'content': html}
 
 
-def fs_set_cache(b64url, batch_id, workgroup, content, refresh=False):
+def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
     try:
         assert batch_id != ''
         level1 = hashlib.sha1(b64url).hexdigest()[-1:]
@@ -76,7 +76,7 @@ def fs_set_cache(b64url, batch_id, workgroup, content, refresh=False):
         log_line = json.dumps({
             'date': str(now), 
             'batch_id': batch_id,
-            'workgroup': workgroup,
+            'groups': groups,
             'url': base64.urlsafe_decode(b64url),
         })
         get_logger( now.strftime('%Y%m%d') ).info(log_line)

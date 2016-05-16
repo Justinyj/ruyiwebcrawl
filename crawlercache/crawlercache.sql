@@ -4,7 +4,7 @@ create database crawlercache;
 create table accessed (
   id bigserial primary key,
   batch_id varchar(64),
-  workgroup varchar(64),
+  groups varchar(64)[],
   status smallint, -- 0 begin, 1 downloaded
   url varchar(2048),
   url_hash varchar(128),

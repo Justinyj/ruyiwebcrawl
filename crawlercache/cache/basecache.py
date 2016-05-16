@@ -31,7 +31,7 @@ class BaseCache(object):
 
 
     @staticmethod
-    def set_cache(self, b64url, batch_id, workgroup, content, refresh):
+    def set_cache(self, b64url, batch_id, groups, content, refresh):
         url = base64.urlsafe_b64decode(b64url)
         hashkey = hashlib.sha1(url).hexdigest()
 
@@ -40,7 +40,7 @@ class BaseCache(object):
         elif CACHEPAGE == 'qiniu':
             pass
         elif CACHEPAGE == 'fs':
-            return fs_set_cache(b64url, batch_id, workgroup, content, refresh)
+            return fs_set_cache(b64url, batch_id, groups, content, refresh)
 
 
     @staticmethod
