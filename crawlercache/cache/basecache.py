@@ -18,7 +18,7 @@ class BaseCache(object):
         pass
 
     @staticmethod
-    def get_cache(self, b64url, batch_id):
+    def get_cache(b64url, batch_id):
         url = base64.urlsafe_b64decode(b64url)
         hashkey = hashlib.sha1(url).hexdigest()
 
@@ -31,7 +31,7 @@ class BaseCache(object):
 
 
     @staticmethod
-    def set_cache(self, b64url, batch_id, groups, content, refresh):
+    def set_cache(b64url, batch_id, groups, content, refresh):
         url = base64.urlsafe_b64decode(b64url)
         hashkey = hashlib.sha1(url).hexdigest()
 
@@ -44,7 +44,7 @@ class BaseCache(object):
 
 
     @staticmethod
-    def get_all_cache(self, batch_id):
+    def get_all_cache(batch_id):
         if CACHEPAGE == 'pg':
             return db_get_all_cache(batch_id)
 
