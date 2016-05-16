@@ -17,7 +17,7 @@ envs = {
         'DBPORT': 5432,
 
         'CACHEPAGE': 'fs', # fs, pg, qiniu
-        'FSCACHEDIR': '/tmp/',
+        'FSCACHEDIR': '/data/crawler_file_cache/',
     },
 }
 

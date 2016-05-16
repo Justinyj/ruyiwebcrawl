@@ -8,7 +8,6 @@ import tornado.web
 from handler import *
 
 settings = {
-    "xsrf_cookies": True,
     "autoreload": True,
 }
 
