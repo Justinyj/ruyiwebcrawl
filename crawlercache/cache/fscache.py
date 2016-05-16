@@ -21,13 +21,13 @@ from settings import FSCACHEDIR
 from tools import log, ip
 
 
-def get_logger(today_str):
+def get_logger(batch_id, today_str):
     """
         today_str: datetime.now().strftime('%Y%m%d')
     """
 
     def filename_in_logger_out():
-        absdir = os.path.join(FSCACHEDIR, 'meta')
+        absdir = os.path.join(FSCACHEDIR, batch_id, 'meta')
         makedir(absdir)
         absfname = os.path.join(absdir, 
                                 '{}_{}.log'.format(
@@ -37,7 +37,7 @@ def get_logger(today_str):
         if not os.path.isfile(absfname):
             with open(absfname, 'a'):
                 pass
-        return log.init('logname', absfname, level=logging.INFO, size=100*1024*1024)
+        return log.init(batch_id, absfname, level=logging.INFO, size=100*1024*1024)
 
     if not hasattr(get_logger, '_ipaddr'):
         setattr(get_logger, '_ipaddr', ip.get_ip_address())
@@ -92,7 +92,7 @@ def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
             'groups': groups,
             'url': base64.urlsafe_b64decode(b64url),
         })
-        get_logger( now.strftime('%Y%m%d') ).info(log_line)
+        get_logger(batch_id, now.strftime('%Y%m%d')).info(log_line)
     except Exception as e:
         return {'success': False, 'error': e}
     return {'success': True}

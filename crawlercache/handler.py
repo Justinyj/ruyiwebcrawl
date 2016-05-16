@@ -19,7 +19,6 @@ class CacheHandler(tornado.web.RequestHandler):
         self.write(response)
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
 
-    @exception.exception
     def post(self, b64url, batch_id):
         # x_real_ip = self.request.headers.get("X-Real-IP")
         # remote_ip = x_real_ip or self.request.remote_ip
