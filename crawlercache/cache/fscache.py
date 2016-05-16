@@ -27,8 +27,9 @@ def get_logger(today_str):
     """
 
     def filename_in_logger_out():
-        absfname = os.path.join(FSCACHEDIR,
-                                'meta',
+        absdir = os.path.join(FSCACHEDIR, 'meta')
+        makedir(absdir)
+        absfname = os.path.join(absdir, 
                                 '{}_{}.log'.format(
                                     get_logger._ipaddr,
                                     get_logger._today_str)
