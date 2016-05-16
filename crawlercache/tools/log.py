@@ -13,7 +13,7 @@ def init(log_name, log_file, level=logging.DEBUG, size=1024*1024, count=10):
     logger = logging.getLogger(log_name)
     logger.setLevel(level)
 
-    formatter = logging.Formatter("%(asctime)s")
+    formatter = logging.Formatter("")
 
     handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=size, backupCount=count)
     handler.setFormatter(formatter)

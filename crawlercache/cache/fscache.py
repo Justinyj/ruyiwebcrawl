@@ -25,21 +25,31 @@ def get_logger(today_str):
     """
         today_str: datetime.now().strftime('%Y%m%d')
     """
+
+    def filename_in_logger_out():
+        absfname = os.path.join(FSCACHEDIR,
+                                'meta',
+                                '{}_{}.log'.format(
+                                    get_logger._ipaddr,
+                                    get_logger._today_str)
+                               )
+        if not os.path.isfile(absfname):
+            with open(absfname, 'a'):
+                pass
+        return log.init('logname', absfname, level=logging.INFO, size=100*1024*1024)
+
     if not hasattr(get_logger, '_ipaddr'):
         setattr(get_logger, '_ipaddr', ip.get_ip_address())
+
     if not hasattr(get_logger, '_today_str'):
         setattr(get_logger, '_today_str', today_str)
+        setattr(get_logger, '_logger', filename_in_logger_out())
 
     if get_logger._today_str != today_str:
         setattr(get_logger, '_today_str', today_str)
+        setattr(get_logger, '_logger', filename_in_logger_out())
 
-    log_file = os.path.join(FSCACHEDIR,
-                            'meta',
-                            '{}_{}.log'.format(
-                                get_logger._ipaddr,
-                                get_logger._today_str)
-                           )
-    return log.init('logname', log_file, level=logging.INFO, size=100*1024*1024)
+    return get_logger._logger
 
 def makedir(absdir):
     if not os.path.exists(absdir):
