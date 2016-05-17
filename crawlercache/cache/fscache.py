@@ -69,6 +69,8 @@ def fs_get_cache(b64url, batch_id):
         if os.path.isfile(cache_file):
             with open(cache_file) as fd:
                 html = fd.read()
+        else:
+            return {'success': False}
     except Exception as e:
         return {'success': False, 'error': e}
     return {'success': True, 'content': html}

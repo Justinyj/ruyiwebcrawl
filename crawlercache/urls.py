@@ -8,7 +8,8 @@ import tornado.web
 from handler import *
 
 settings = {
-    "autoreload": True,
+# autoreload is incompatible with multi-process mode. When autoreload is enabled you must run only one process.
+#    "autoreload": True,
 }
 
 urls = tornado.web.Application([

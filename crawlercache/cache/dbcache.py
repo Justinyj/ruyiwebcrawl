@@ -22,7 +22,7 @@ def db_get_cache(hashkey):
         # RowResult(columns=['content'], results=[('WkhWdFpTNWpiMjA9',)])
         ret = dbwrapper.execute(sql1, result=True)
         if ret.results == []:
-            return {'success': True, 'content': None}
+            return {'success': False}
 
         html = base64.standard_b64decode(ret.results[0][0])
     except Exception as e:
@@ -64,7 +64,7 @@ def db_get_all_cache(batch_id):
     try:
         ret = dbwrapper.execute(sql).results
         if ret == []:
-            return {'success': True, 'hash_content_pair': None}
+            return {'success': False}
     except Exception as e:
         return {'success': False, 'error': e}
 
