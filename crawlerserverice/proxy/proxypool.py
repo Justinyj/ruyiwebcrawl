@@ -10,7 +10,6 @@ from Queue import heapq
 import urlparse
 import time
 
-
 class ProxyPool(object):
     """
         We assume proxy provider server a lot of freshed proxy all the time.
@@ -24,10 +23,10 @@ class ProxyPool(object):
 
     def __init__(self):
         """ self._table = {
-                Domain: {
-                    Proxy1: (last_time, count),
-                    Proxy2: (last_time, count),
-                    priority: PriorityQueue()
+                'Domain': {
+                    'Proxy1': (last_time, count),
+                    'Proxy2': (last_time, count),
+                    'priority': PriorityQueue()
                 }, ...
             }
             priority: (last_time, count, proxy)
@@ -38,6 +37,14 @@ class ProxyPool(object):
         self.FAIL_THRESHOLD = 5 # times
         self.FAILED = 'fail'
         self.SUCCESS = 'success'
+
+
+    @classmethod
+    def instance(cls):
+        if not hasattr(cls, '_instance'):
+            if not hasattr(cls, '_instance'):
+                cls._instance = cls()
+        return cls._instance
 
 
     def set_host_interval(self, host, interval):
@@ -118,7 +125,7 @@ class ProxyPool(object):
 #        return (proxy, to_sleep)
 
 
-    def set_proxy_state(self, url, proxy, state):
+    def set_proxy_status(self, url, proxy, status):
         """.. :py:method::
             Now, crawler only set status after proxy failed.
             remove this proxy from self._pool, self._table[domain],
@@ -126,13 +133,13 @@ class ProxyPool(object):
 
         :param url: get the domain
         :param proxy:
-        :param state: fail or success
+        :param status: fail or success
         """
         domain = urlparse.urlparse(url).netloc
         proxies_table = self._table[domain]
         now = time.time()
 
-        if state == self.FAILED:
+        if status == self.FAILED:
             if proxy in proxies_table:
                 last_time, count = proxy_table[proxy]
                 _count = self._count_rule('set', count)
@@ -146,7 +153,10 @@ class ProxyPool(object):
 
             else: # not execute here now
                 proxy_table[proxy] = (now, 1)
-        elif state == self.SUCCESS:
+        elif status == self.SUCCESS:
             pass
 
+
+    def get_data_structure(self):
+        return self._table
 

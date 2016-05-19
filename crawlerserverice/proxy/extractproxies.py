@@ -20,10 +20,12 @@ class ExtractProxies(object):
         num = 1
         api = 'http://proxy.mimvp.com/api/fetch.php?orderid=1915654268662414&num={}&country_group=1&http_type=1&anonymous=5&result_fields=1,2&result_format=json'.format(num)
         for i in range(5):
-            response = requests.get(api)
-            if response.status_code == 200:
-                break
-            time.sleep(5)
+            try:
+                response = requests.get(api)
+                if response.status_code == 200:
+                    break
+            except Exception as e:
+                time.sleep(4)
         return response.json()[u'result']
 
 
