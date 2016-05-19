@@ -14,7 +14,7 @@ class ExtractProxies(object):
         self.SUCCESS_RATIO = 0.5
 
         self.limit = 200000
-        self.every_time_num = 1
+        self.every_time_num = 1 # 2000 max
         self.times_count = 0
 
 
@@ -43,7 +43,8 @@ class ExtractProxies(object):
                 if response.status_code == 200:
                     break
             except Exception as e:
-                time.sleep(4)
+                pass
+            time.sleep(5)
         return response.json()[u'result']
 
 
