@@ -13,12 +13,30 @@ class ExtractProxies(object):
         self.TIMEOUT = 20
         self.SUCCESS_RATIO = 0.5
 
+        self.limit = 200000
+        self.every_time_num = 1
+        self.times_count = 0
+
+
+    @classmethod
+    def instance(cls):
+        if not hasattr(cls, '_instance'):
+            if not hasattr(cls, '_instance'):
+                cls._instance = cls()
+        return cls._instance
+
 
     def get_proxies(self):
         """ get proxies to pool
         """
-        num = 1
-        api = 'http://proxy.mimvp.com/api/fetch.php?orderid=1915654268662414&num={}&country_group=1&http_type=1&anonymous=5&result_fields=1,2&result_format=json'.format(num)
+        self.times_count += 1
+        if self.times_count > self.limit / self.every_time_num:
+            return
+
+        api = ("http://proxy.mimvp.com/api/fetch.php?orderid=1915654268662414&"
+               "num={}&country_group=1&http_type=1&anonymous=5&result_fields="
+               "1,2&result_format=json".format(self.every_time_num))
+
         for i in range(5):
             try:
                 response = requests.get(api)
@@ -63,8 +81,14 @@ class ExtractProxies(object):
 
 
     def run(self):
+        """
+        :rtype: [{'http': 'http://123.169.238.33:8888'}, ...]
+        """
         requests_proxies = []
         raw_proxies = self.get_proxies()
+        if raw_proxies is None:
+            return []
+
         for item in raw_proxies:
             proxies = self.parse_proxies(item)
             ret = self.check_proxies_connectivity(proxies)
@@ -72,4 +96,3 @@ class ExtractProxies(object):
                 requests_proxies.append(proxies)
         return requests_proxies
 
-print( ExtractProxies().run() )

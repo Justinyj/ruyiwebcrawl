@@ -15,6 +15,7 @@ class ProxyPool(object):
         We assume proxy provider server a lot of freshed proxy all the time.
         1. We don't need to add a blacklist of ip:port to avoid freshed proxy unusable,
         2. We also don't need to recover blacklist ip:port back when pool becomes shallow.
+        3. We don't need to dump the data structure every 5 minutes, so we can recover from crash.
 
         Calculate something in distributed crawlers to reduce burden of proxy server
             a. count max_last_time in crawlers
@@ -38,6 +39,12 @@ class ProxyPool(object):
         self.FAILED = 'fail'
         self.SUCCESS = 'success'
 
+        self.dump_file = 'datastructure.dump'
+        if os.path.isfile(self.dump_file):
+            with open(self.dump_file) as fd:
+                self._table = json.load(fd)
+
+        ExtractProxies().run()
 
     @classmethod
     def instance(cls):
@@ -158,5 +165,7 @@ class ProxyPool(object):
 
 
     def get_data_structure(self):
+        with open(self.dump_file, 'w') as fd:
+            json.dump(fd, self._table)
         return self._table
 
