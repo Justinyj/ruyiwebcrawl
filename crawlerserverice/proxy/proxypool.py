@@ -6,7 +6,7 @@
 from __future__ import print_function, division
 
 from collections import defaultdict
-from Queue import PriorityQueue, Empty, Full
+from Queue import heapq
 import urlparse
 import time
 
@@ -21,14 +21,23 @@ class ProxyPool(object):
             a. count max_last_time in crawlers
             b. count domain in crawlers (need this to fullfill the service)
     """
+
     def __init__(self):
+        """ self._table = {
+                Domain: {
+                    Proxy1: (last_time, count),
+                    Proxy2: (last_time, count),
+                    priority: PriorityQueue()
+                }, ...
+            }
+            priority: (last_time, count, proxy)
+        """
         self._pool = set() # (url1, url2, ...)
         self._table = defaultdict(dict)
 
         self.FAIL_THRESHOLD = 5 # times
-        self.FAILED = 0
-        self.SUCCESS = 1
-
+        self.FAILED = 'fail'
+        self.SUCCESS = 'success'
 
 
     def set_host_interval(self, host, interval):
@@ -42,30 +51,32 @@ class ProxyPool(object):
         self._specific_interval[host] = interval
 
 
-    def get_proxies(self):
-        """ get proxies to pool
-        """
-        import requests
-        api = 'http://proxy.mimvp.com/api/fetch.php?orderid=q_0_0_p@yahoo.com&num=20&result_fields=1,2&result_format=json'
-        response = requests.get(api)
+    def _count_rule(method, count):
+        """ get count negative, set count positive, count begin with 0.
 
-
-    def check_proxies(self):
-        """ if proxy work, add to pool
+            Now, crawler only set status after proxy failed,
+            so every get, assume proxy works, count -= 1,
+            every set, means proxy don't work, count += 2,
+            Failer after many success, reset count = 0
         """
-        pass
-
-    def data_struct(self):
-        """ {Domain: {Proxy1: (last_time, failed_count),
-                      Proxy2: (last_time, failed_count),
-                      priority: PriorityQueue()
-                     }, ...
-            }
-        """
-        pass
+        if method == 'get':
+            count -= 1
+        elif method == 'set':
+            count = count + 2 if count >= 0 else 0
+        return count
 
 
     def get(self, url, max_last_time):
+        """ proxy is the form http://8.8.8.8:8000
+
+            if self._pool not all in self._table[domain]:
+                add one of the difference to self._table[domain]
+            else:
+                pop item with lowest last_time from priority queue,
+                compare last proxied time,
+                if no proxy available, put item back, return None.
+                else, put item back with now time, update self._table[domain][proxy], return proxy
+        """
         domain = urlparse.urlparse(url).netloc
         proxies_table = self._table[domain]
         now = time.time()
@@ -73,24 +84,25 @@ class ProxyPool(object):
         rest_proxies = self._pool.difference( set(proxies_table.keys()) )
         if len(rest_proxies) == 0:
             try:
-                item = proxies_table['priority'].get_nowait()
-                last_time, failed_count, proxy = item
+                item = heapq.heappop(proxies_table['priority'])
+                last_time, count, proxy = item
                 if max_last_time < last_time:
-                    proxies_table['priority'].put_nowait(item)
+                    heapq.heappush(proxies_table['priority'], item)
                     return
-                proxies_table['priority'].put_nowait( (now, failed_count, proxy) )
+
+                _count = self._count_rule('get', count)
+                proxies_table[proxy] = (now, _count)
+                heapq.heappush(proxies_table['priority'], (now, _count, proxy))
                 return proxy
-            except Empty:
-                print('queue is empty.')
-            except Full:
-                print('queue is full.')
+            except IndexError:
+                print('priority queue is empty.')
         else:
             proxy = rest_proxies.pop()
             proxies_table[proxy] = (now, 0)
 
             if 'priority' not in proxies_table:
-                proxies_table['priority'] = PriorityQueue()
-            proxies_table['priority'].put_nowait( (now, 0, proxy) )
+                proxies_table['priority'] = []
+            heapq.heappush(proxies_table['priority'], (now, 0, proxy))
             return proxy
 
 
@@ -108,19 +120,31 @@ class ProxyPool(object):
 
     def set_proxy_state(self, url, proxy, state):
         """.. :py:method::
-            check whether proxy is available, and set
+            Now, crawler only set status after proxy failed.
+            remove this proxy from self._pool, self._table[domain],
+            and priority queue.
+
+        :param url: get the domain
+        :param proxy:
+        :param state: fail or success
         """
         domain = urlparse.urlparse(url).netloc
         proxies_table = self._table[domain]
+        now = time.time()
 
         if state == self.FAILED:
             if proxy in proxies_table:
-                last_time, failed_count = proxy_table[proxy]
-                failed_count += 1
-                if failed_count >= self.FAIL_THRESHOLD:
+                last_time, count = proxy_table[proxy]
+                _count = self._count_rule('set', count)
+                if _count >= self.FAIL_THRESHOLD:
                     proxies_table.pop(proxy)
                     self._pool.remove(proxy)
-            else:
+
+                    if 'priority' in proxies_table:
+                        proxies_table['priority'].remove((last_time, count, proxy))
+                        heapq.heapify( proxies_table['priority'] )
+
+            else: # not execute here now
                 proxy_table[proxy] = (now, 1)
         elif state == self.SUCCESS:
             pass

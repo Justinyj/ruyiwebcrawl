@@ -6,8 +6,6 @@ from __future__ import print_function, division
 
 
 MIMVIP_PROXIES = [
-  {u'http_type': u'Socks5', u'ip:port': u'71.11.217.77:47146'},
-  {u'http_type': u'HTTP', u'ip:port': u'115.228.44.59:8080'},
   {u'http_type': u'HTTP', u'ip:port': u'223.27.194.166:8080'},
   {u'http_type': u'HTTP', u'ip:port': u'182.72.113.114:3128'},
   {u'http_type': u'HTTPS', u'ip:port': u'202.173.214.15:8080'},
@@ -21,7 +19,6 @@ MIMVIP_PROXIES = [
   {u'http_type': u'HTTP', u'ip:port': u'177.65.219.168:8080'},
   {u'http_type': u'HTTPS', u'ip:port': u'181.55.151.34:8080'},
   {u'http_type': u'HTTP/HTTPS', u'ip:port': u'190.82.94.13:80'},
-  {u'http_type': u'Socks4/Socks5', u'ip:port': u'24.192.91.95:10200'},
   {u'http_type': u'HTTP', u'ip:port': u'218.3.230.2:3128'},
   {u'http_type': u'HTTP/HTTPS', u'ip:port': u'179.185.4.116:8080'},
   {u'http_type': u'HTTP', u'ip:port': u'101.96.11.30:8090'},
@@ -40,20 +37,5 @@ FREE_PROXIES = [
     {"ip_port": "183.111.169.205:3128"},
 ]
 
-def parse_proxies():
-    if not hasattr(parse_proxies, '_PROXIES'):
-        PROXIES = []
-        for item in MIMVIP_PROXIES:
-            proxies = {}
-            for protocol in item[u'http_type'].split(u'/'):
-                if u'HTTP' == protocol:
-                    proxies['http'] = 'http://' + item[u'ip:por']
-                elif u'HTTPS' == protocol:
-                    proxies['https'] = 'https://' + item[u'ip:port']
-                elif u'Socks5' == protocol:
-                    proxies['http'] = 'socks5://' + item[u'ip:port']
-            PROXIES.append(proxies)
-        setattr(parse_proxies, '_PROXIES', PROXIES)
-    return parse_proxies._PROXIES
 
 PROXIES = parse_proxies()
