@@ -19,7 +19,7 @@ class ExtractProxies(object):
     def __init__(self):
         self.TESTURL = 'http://www.baidu.com'
         self.CONNECTIVITY_TEST = 3 # times
-        self.TIMEOUT = 20
+        self.TIMEOUT = 10
         self.SUCCESS_RATIO = 0.5
 
         self.limit = 200000

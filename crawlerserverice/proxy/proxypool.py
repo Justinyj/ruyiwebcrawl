@@ -41,14 +41,15 @@ class ProxyPool(object):
         self._table = defaultdict(dict)
 
         self.FAIL_THRESHOLD = 5 # times
-        self.FAILED = 'fail'
-        self.SUCCESS = 'success'
+        self.FAILED = u'fail'
+        self.SUCCESS = u'success'
 
 
         self.dump_file = 'datastructure.dump'
         if os.path.isfile(self.dump_file):
             with open(self.dump_file) as fd:
-                self._table = json.load(fd)
+                self._pool, self._table = json.load(fd)
+            self._pool = set(self._pool)
 
         self.extract_proxies_task()
 
@@ -60,8 +61,6 @@ class ProxyPool(object):
             for proxy in requests_proxies:
                 for protocol, address in proxy.items():
                     self._pool.add(address)
-            print('re', requests_proxies)
-            print('pool', self._pool)
 
             yield tornado.gen.sleep(2)
 
@@ -85,7 +84,7 @@ class ProxyPool(object):
         self._specific_interval[host] = interval
 
 
-    def _count_rule(method, count):
+    def _count_rule(self, method, count):
         """ get count negative, set count positive, count begin with 0.
 
             Now, crawler only set status after proxy failed,
@@ -134,12 +133,14 @@ class ProxyPool(object):
             except IndexError:
                 print('priority queue is empty.')
         else:
+            count = 0
+            _count = self._count_rule('get', count)
             proxy = rest_proxies.pop()
-            proxies_table[proxy] = (now, 0)
+            proxies_table[proxy] = (now, _count)
 
             if 'priority' not in proxies_table:
                 proxies_table['priority'] = []
-            heapq.heappush(proxies_table['priority'], (now, 0, proxy))
+            heapq.heappush(proxies_table['priority'], (now, _count, proxy))
             return proxy
 
 
@@ -171,25 +172,31 @@ class ProxyPool(object):
 
         if status == self.FAILED:
             if proxy in proxies_table:
-                last_time, count = proxy_table[proxy]
+                last_time, count = proxies_table[proxy]
                 _count = self._count_rule('set', count)
                 if _count >= self.FAIL_THRESHOLD:
                     proxies_table.pop(proxy)
+                    # 1. this proxy not available, remove from pool
+                    # 2. this proxy avaiable for other sites, not remove
                     self._pool.remove(proxy)
 
                     if 'priority' in proxies_table:
-                        proxies_table['priority'].remove((last_time, count, proxy))
+                        proxies_table['priority'].remove([last_time, count, proxy])
                         heapq.heapify( proxies_table['priority'] )
+                else:
+                    proxies_table[proxy][1] = _count
+                    idx = proxies_table['priority'].index([last_time, count, proxy])
+                    proxies_table['priority'][idx][1] = _count
 
             else: # not execute here now
-                proxy_table[proxy] = (now, 1)
+                proxies_table[proxy] = (now, 1)
         elif status == self.SUCCESS:
             pass
 
 
     def get_data_structure(self):
-        if self._table:
+        if self._pool and self._table:
             with open(self.dump_file, 'w') as fd:
-                json.dump(self._table, fd)
-        return self._table
+                json.dump((list(self._pool), self._table), fd)
+        return (list(self._pool), self._table)
 

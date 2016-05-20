@@ -65,7 +65,7 @@ class ProxyHandler(tornado.web.RequestHandler):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
 
 
-    def post(self, b64url):
+    def post(self, b64url, useless):
         """
         :param proxy: e.g. 'http://8.8.8.8:8000'
         :param status: 'success' or 'fail'
@@ -91,8 +91,8 @@ class ProxyHandler(tornado.web.RequestHandler):
 class ProxyDataStructureHandler(tornado.web.RequestHandler):
     def get(self):
         try:
-            ds = ProxyPool.instance().get_data_structure()
-            response = {'success': True, 'datastructure': ds}
+            _pool, ds = ProxyPool.instance().get_data_structure()
+            response = {'success': True, 'pool': _pool, 'datastructure': ds}
         except Exception as e:
             response = {'success': False, 'error': e}
 
