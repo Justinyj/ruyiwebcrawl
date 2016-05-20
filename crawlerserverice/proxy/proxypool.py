@@ -128,8 +128,8 @@ class ProxyPool(object):
                     return
 
                 _count = self._count_rule('get', count)
-                proxies_table[proxy] = (now, _count)
-                heapq.heappush(proxies_table['priority'], (now, _count, proxy))
+                proxies_table[proxy] = [now, _count]
+                heapq.heappush(proxies_table['priority'], [now, _count, proxy])
                 return proxy
             except IndexError:
                 print('priority queue is empty.')
@@ -137,11 +137,11 @@ class ProxyPool(object):
             count = 0
             _count = self._count_rule('get', count)
             proxy = rest_proxies.pop()
-            proxies_table[proxy] = (now, _count)
+            proxies_table[proxy] = [now, _count]
 
             if 'priority' not in proxies_table:
                 proxies_table['priority'] = []
-            heapq.heappush(proxies_table['priority'], (now, _count, proxy))
+            heapq.heappush(proxies_table['priority'], [now, _count, proxy])
             return proxy
 
 
