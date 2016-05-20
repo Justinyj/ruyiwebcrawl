@@ -162,7 +162,8 @@ class Qichacha(object):
 
         if subcompany is True:
             invest_info_dict = self.crawl_company_investment(name, key_num)
-            name_info_dict[name]['invests'] = invest_info_dict[name].values()
+            if invest_info_dict is not None:
+                name_info_dict[name]['invests'] = invest_info_dict[name].values()
         return name_info_dict
 
 
