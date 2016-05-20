@@ -50,9 +50,12 @@ class ProxyHandler(tornado.web.RequestHandler):
             if max_last_time is None:
                 raise MissingParameter('missing parameter max_last_time')
 
-            url = base64.urlsafe_decode(b64url.encode('utf-8'))
+            url = base64.urlsafe_b64decode(b64url.encode('utf-8'))
             proxy = ProxyPool.instance().get(url, float(max_last_time))
-            response = {'success': True, 'proxy': proxy}
+            if proxy is None:
+                response = {'success': False, 'error': 'no proxy avaiable'}
+            else:
+                response = {'success': True, 'proxy': proxy}
         except MissingParameter as e:
             response = {'success': False, 'error': e}
         except Exception as e:
@@ -73,7 +76,7 @@ class ProxyHandler(tornado.web.RequestHandler):
             if not proxy or not status:
                 raise MissingParameter('missing parameter proxy or status')
 
-            url = base64.urlsafe_decode(b64url.encode('utf-8'))
+            url = base64.urlsafe_b64decode(b64url.encode('utf-8'))
             ProxyPool.instance().set_proxy_status(url, proxy, status)
             response = {'success': True}
         except MissingParameter as e:

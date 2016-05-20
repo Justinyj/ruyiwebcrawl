@@ -5,6 +5,7 @@
 from __future__ import print_function, division
 
 import requests
+import time
 
 class ExtractProxies(object):
     def __init__(self):
@@ -81,19 +82,18 @@ class ExtractProxies(object):
         return False
 
 
-    def run(self):
-        """
-        :rtype: [{'http': 'http://123.169.238.33:8888'}, ...]
-        """
-        requests_proxies = []
-        raw_proxies = self.get_proxies()
-        if raw_proxies is None:
-            return []
-
+def extract_proxies():
+    """
+    :rtype: [{'http': 'http://123.169.238.33:8888'}, ...]
+    """
+    instance = ExtractProxies.instance()
+    requests_proxies = []
+    raw_proxies = instance.get_proxies()
+    if raw_proxies is not None:
         for item in raw_proxies:
-            proxies = self.parse_proxies(item)
-            ret = self.check_proxies_connectivity(proxies)
+            proxies = instance.parse_proxies(item)
+            ret = instance.check_proxies_connectivity(proxies)
             if ret is True:
                 requests_proxies.append(proxies)
-        return requests_proxies
+    return requests_proxies
 

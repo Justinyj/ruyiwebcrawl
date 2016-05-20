@@ -19,6 +19,6 @@ if __name__ == "__main__":
 
     http_server = tornado.httpserver.HTTPServer(urls, xheaders=True)
     http_server.bind(int(port))
-    http_server.start(3)
+    http_server.start(1)
     tornado.ioloop.IOLoop.current().start()
 

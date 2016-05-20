@@ -7,8 +7,13 @@ from __future__ import print_function, division
 
 from collections import defaultdict
 from Queue import heapq
-import urlparse
+import json
+import os
 import time
+import urlparse
+import tornado.gen
+
+from extractproxies import extract_proxies
 
 class ProxyPool(object):
     """
@@ -39,12 +44,27 @@ class ProxyPool(object):
         self.FAILED = 'fail'
         self.SUCCESS = 'success'
 
+
         self.dump_file = 'datastructure.dump'
         if os.path.isfile(self.dump_file):
             with open(self.dump_file) as fd:
                 self._table = json.load(fd)
 
-        ExtractProxies().run()
+        self.extract_proxies_task()
+
+
+    @tornado.gen.coroutine
+    def extract_proxies_task(self):
+        while True:
+            requests_proxies = extract_proxies()
+            for proxy in requests_proxies:
+                for protocol, address in proxy.items():
+                    self._pool.add(address)
+            print('re', requests_proxies)
+            print('pool', self._pool)
+
+            yield tornado.gen.sleep(2)
+
 
     @classmethod
     def instance(cls):
@@ -95,7 +115,10 @@ class ProxyPool(object):
         proxies_table = self._table[domain]
         now = time.time()
 
+        if not self._pool:
+            return
         rest_proxies = self._pool.difference( set(proxies_table.keys()) )
+
         if len(rest_proxies) == 0:
             try:
                 item = heapq.heappop(proxies_table['priority'])
@@ -165,7 +188,8 @@ class ProxyPool(object):
 
 
     def get_data_structure(self):
-        with open(self.dump_file, 'w') as fd:
-            json.dump(fd, self._table)
+        if self._table:
+            with open(self.dump_file, 'w') as fd:
+                json.dump(self._table, fd)
         return self._table
 
