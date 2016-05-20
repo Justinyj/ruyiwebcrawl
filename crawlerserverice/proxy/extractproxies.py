@@ -10,6 +10,10 @@ import time
 import tornado.httpclient
 import tornado.gen
 import pycurl
+try:
+    from tornado.curl_httpclient import CurlAsyncHTTPClient as AsyncHTTPClient
+except ImportError:
+    from tornado.simple_httpclient import SimpleAsyncHTTPClient as AsyncHTTPClient
 
 class ExtractProxies(object):
     def __init__(self):
@@ -130,15 +134,17 @@ class ExtractProxies(object):
                 self.fail_count -= 1
 
 
-        tornado.httpclient.AsyncHTTPClient.configure(
+        AsyncHTTPClient.configure(
                 'tornado.curl_httpclient.CurlAsyncHTTPClient')
-        http_client = tornado.httpclient.AsyncHTTPClient()
+        http_client = AsyncHTTPClient()
         http_request = tornado.httpclient.HTTPRequest(
                 url=self.TESTURL,
+                method='GET',
                 proxy_host=host,
                 proxy_port=int(port),
                 prepare_curl_callback=prepare_curl_type,
-                )
+                follow_redirects=False,
+        )
 
         for i in range(self.CONNECTIVITY_TEST):
             http_client.fetch(http_request, self.handle_request)
