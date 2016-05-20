@@ -43,7 +43,7 @@ class ExtractProxies(object):
             return
 
         api = ("http://proxy.mimvp.com/api/fetch.php?orderid=1915654268662414&"
-               "num={}&country_group=1&http_type=1&anonymous=5&result_fields="
+               "num={}&country_group=1&http_type=1&anonymous=5&ping_time=0.3&transfer_time=1&result_fields="
                "1,2&result_format=json".format(self.every_time_num))
 
         for i in range(5):
@@ -168,9 +168,10 @@ def extract_proxies():
     if raw_proxies is not None:
         for item in raw_proxies:
             proxies = instance.parse_proxies(item)
-            ret = instance.check_proxies_connectivity(proxies)
-            if ret is True:
-                requests_proxies.append(proxies)
+            requests_proxies.append(proxies)
+#            ret = instance.check_proxies_connectivity(proxies)
+#            if ret is True:
+#                requests_proxies.append(proxies)
     return requests_proxies
 
 
