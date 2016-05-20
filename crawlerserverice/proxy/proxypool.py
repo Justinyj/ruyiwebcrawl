@@ -50,6 +50,7 @@ class ProxyPool(object):
             with open(self.dump_file) as fd:
                 self._pool, self._table = json.load(fd)
             self._pool = set(self._pool)
+            self._table = defaultdict(dict, self._table)
 
         self.extract_proxies_task()
 
