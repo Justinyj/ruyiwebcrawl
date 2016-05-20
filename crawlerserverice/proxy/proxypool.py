@@ -62,7 +62,7 @@ class ProxyPool(object):
                 for protocol, address in proxy.items():
                     self._pool.add(address)
 
-            yield tornado.gen.sleep(2)
+            yield tornado.gen.sleep(1800)
 
 
     @classmethod

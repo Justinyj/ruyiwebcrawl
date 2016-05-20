@@ -23,7 +23,7 @@ class ExtractProxies(object):
         self.SUCCESS_RATIO = 0.5
 
         self.limit = 200000
-        self.every_time_num = 1 # 2000 max
+        self.every_time_num = 1000 # 2000 max
         self.times_count = 0
 
 
