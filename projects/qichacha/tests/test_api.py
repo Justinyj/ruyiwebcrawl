@@ -25,3 +25,10 @@ def test_search_corporate():
 def test_detail():
     name = '天津仁正企业管理有限公司'
     ret = qichacha.crawl_company_detail(name, subcompany=True)
+    assert type(ret) == dict
+
+def test_descendant():
+    name = '天津仁正企业管理有限公司'
+    ret = qichacha.crawl_descendant_company(name)
+    import pdb; pdb.set_trace()
+    print( json.dumps(ret, ensure_ascii=False, indent=4) )

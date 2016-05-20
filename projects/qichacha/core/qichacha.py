@@ -170,8 +170,8 @@ class Qichacha(object):
         """.. :py:method::
             if parameter page is 1, parameter max_page_num must be []
         """
-        if not hasattr(self._crawl_company_investment_single_page, '_re_page_num'):
-            setattr(self._crawl_company_investment_single_page,
+        if not hasattr(self, '_re_page_num'):
+            setattr(self,
                     '_re_page_num',
                     re.compile('javascript:touzilist\((\d+)\)'))
 
@@ -187,9 +187,12 @@ class Qichacha(object):
             return
 
         if page == 1 and max_page_num == []:
-            page_num = [ int( self._crawl_company_investment_single_page._re_page_num.match( i.get('href') ).group(1) ) \
-                for i in tree.cssselect('.pagination #ajaxpage') ].append(1)
-            max_page_num.append(max(page_num))
+            if tree.cssselect('.pagination #ajaxpage') == []:
+                max_page_num.append(1)
+            else:
+                page_num = [ int( self._re_page_num.match( i.get('href') ).group(1) ) \
+                    for i in tree.cssselect('.pagination #ajaxpage') ].append(1)
+                max_page_num.append(max(page_num))
 
         return self.parser.parse_company_investment(tree)
 
