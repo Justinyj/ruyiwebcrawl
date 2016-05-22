@@ -66,9 +66,9 @@ class Downloader(object):
         self.driver.cookies.update(dict(i.split('=', 1) \
                 for i in choice_cookie().split('; ')))
         self.driver.headers['User-Agent'] = choice_agent()
-        proxies = choice_proxy(url)
-        self.driver.proxies.update(proxies)
-        return proxies
+#        proxies = choice_proxy(url)
+#        self.driver.proxies.update(proxies)
+#        return proxies
 
 
     def request_download(self, url):
@@ -80,8 +80,9 @@ class Downloader(object):
                 if response.status_code == 200:
                     return response.text #unicode
             except:
-                proxy = proxies.items()[0][1]
-                Proxy.instance().post(url, proxy)
+#                proxy = proxies.items()[0][1]
+#                Proxy.instance().post(url, proxy)
+                pass
             finally:
                 time.sleep(get_sleep_period()) # sleep of cookie
         else:
