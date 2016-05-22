@@ -50,13 +50,13 @@ def crawl_search(batch):
 
 
 def crawl_search_file(batch, filename):
-    filename_metadata = getLocalFile('crawl_search.{}.json.txt'.format(batch))
+    filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
     LIMIT = 100
 
     #load prev state
     searched = set()
-    if os.path.exists(filename_metadata):
-        for line in file2set(filename_metadata):
+    if os.path.exists(filename_metadata_search):
+        for line in file2set(filename_metadata_search):
             item = json.loads(line)
             searched.update(item["data"].keys())
 
@@ -64,7 +64,7 @@ def crawl_search_file(batch, filename):
     #return
 
     #add new
-    with codecs.open(filename_metadata,'a') as flog:
+    with codecs.open(filename_metadata_search,'a') as flog:
         #crawl_search_pass( FILENAME_CRAWL_SEED_KEYWORDS, searched, flog, crawler.list_corporate_search, LIMIT, False )
         crawl_search_pass( filename, searched, flog, LIMIT, False )
 
@@ -76,6 +76,7 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
     counter = collections.Counter()
     counter['total'] = len(seeds)
     counter['searched'] = len(seeds.intersection(searched))
+    company_set = set()
 
     print len(seeds),list(seeds)[0:3]
 
@@ -105,6 +106,7 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
                     "data": data,
                     "ts": datetime.datetime.now().isoformat()
                 }
+
                 flog.write(json.dumps(item, ensure_ascii=False))
                 flog.write("\n")
             else:
@@ -114,23 +116,62 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
             counter['failed'] +=1
             pass
 
+    counter['company'] = len(company_set)
 
     print "final", os.path.basename(filename), counter
 
+def stat(batch):
+    all_company = {}
+    filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
+    if os.path.exists(filename_metadata_search):
 
-def crawl_company(filename_company):
-    #load prev state
-    filename_metadata = getLocalFile('loal/crawl_search.json.txt')
-    crawl_search_result = set()
-    if os.path.exists(filename_metadata):
-        for line in file2set(filename_metadata):
+        for line in file2set(filename_metadata_search):
+            gcounter["line"] +=1
             item = json.loads(line)
-            crawl_search_result.update(item["data"])
+            gcounter["all_company_dup"] += len(item["data"].values())
+            for entry in item["data"].values():
+                all_company.update(entry)
+
+    gcounter["all_company"] = len(all_company)
+
+
+def fetch_detail(batch):
+
+    #load search history
+    all_company = {}
+    filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
+    if os.path.exists(filename_metadata_search):
+
+        for line in file2set(filename_metadata_search):
+            gcounter["line"] +=1
+            item = json.loads(line)
+            for entry in item["data"].values():
+                all_company.update(entry)
 
     #load names
-    seed_company = file2set(filename_company)
+    print json.dumps(all_company.values()[0], ensure_ascii=False)
 
     #map names to id
+    crawler = Qichacha()
+    counter = collections.Counter()
+    counter['total'] = len(all_company)
+    for company in all_company.values():
+        name = company['name']
+        key_num = company.get('key_num')
+
+        if counter['visited'] % 10 ==0:
+            print batch, datetime.datetime.now().isoformat(), counter
+        counter['visited']+=1
+
+        try:
+            crawler.crawl_company_detail(name, key_num)
+            counter['ok'] +=1
+        except:
+            print "fail", name
+            counter['fail'] +=1
+            pass
+
+
 
 def test():
     seed = "上海华衡投资"
@@ -150,6 +191,10 @@ def main():
     #filename = sys.argv[3]
     if "search" == option:
         crawl_search(batch)
+        stat(batch)
+
+    elif "fetch" == option:
+        fetch_detail(batch)
 
     elif "test" == option:
         test()
