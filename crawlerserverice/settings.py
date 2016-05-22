@@ -18,6 +18,7 @@ envs = {
 
         'CACHEPAGE': 'fs', # fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
+        'FSCACHEDIR': '/tmp',
     },
 }
 
