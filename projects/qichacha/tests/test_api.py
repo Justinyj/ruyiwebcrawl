@@ -14,12 +14,12 @@ qichacha = Qichacha(batch_id='qichacha', groups='哈药')
 
 def test_search_person():
     person = '吴志军'
-    ret = qichacha.list_person_search(person, limit=4)
+    ret = qichacha.list_person_search(person, limit=10)
     assert type(ret) == dict
 
 def test_search_corporate():
     corporate_list = ['哈药', '哈尔滨']
-    ret = qichacha.list_corporate_search(corporate_list, limit=11)
+    ret = qichacha.list_corporate_search(corporate_list, limit=10)
     assert type(ret) == dict
 
 def test_detail():
@@ -28,7 +28,12 @@ def test_detail():
     assert type(ret) == dict
 
 def test_descendant():
-    name = '天津仁正企业管理有限公司'
+    name = '上海新微科技发展有限公司'
     ret = qichacha.crawl_descendant_company(name)
-    import pdb; pdb.set_trace()
-    print( json.dumps(ret, ensure_ascii=False, indent=4) )
+    assert type(ret) == dict
+
+def test_ansator():
+    name = '上海菊园物联网科技服务有限公司'
+    ret = qichacha.crawl_ancestors_company(name)
+    assert type(ret) == dict
+

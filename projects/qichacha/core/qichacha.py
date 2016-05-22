@@ -200,7 +200,8 @@ class Qichacha(object):
                 max_page_num.append(1)
             else:
                 page_num = [ int( self._re_page_num.match( i.get('href') ).group(1) ) \
-                    for i in tree.cssselect('.pagination #ajaxpage') ].append(1)
+                    for i in tree.cssselect('.pagination #ajaxpage') ]
+                page_num.append(1)
                 max_page_num.append(max(page_num))
 
         return self.parser.parse_company_investment(tree)
@@ -240,10 +241,11 @@ class Qichacha(object):
 
         name_info_dict = self.crawl_company_detail(name, key_num, subcompany=True)
         already_crawled_names.add(name)
-        next_layer_name_id_set.update(
-            [(i['name'], i['key_num']) for i in name_info_dict[name]['invests']\
-                if i['name'] not in already_crawled_names]
-        )
+        if 'invests' in name_info_dict[name]:
+            next_layer_name_id_set.update(
+                [(i['name'], i['key_num']) for i in name_info_dict[name]['invests']\
+                    if i['name'] not in already_crawled_names]
+            )
         all_name_info_dict.update(name_info_dict)
 
 
@@ -267,7 +269,7 @@ class Qichacha(object):
         all_name_info_dict = {}
         next_layer_name_id_set = set([(name, key_num)])
 
-        while limit > 0:
+        while limit > 0 and next_layer_name_id_set:
             this_layer_name_id_set = next_layer_name_id_set
             next_layer_name_id_set = set()
 
@@ -299,7 +301,7 @@ class Qichacha(object):
         name_info_dict = self.crawl_company_detail(name, key_num, subcompany=True)
         already_crawled_names.add(name)
 
-        for shareholder in name_info_dict['shareholders']:
+        for shareholder in name_info_dict[name]['shareholders']:
             if shareholder['link'] is not None:
                 if shareholder['name'] not in already_crawled_names:
                     key_num = shareholder['link'].rstrip('.shtml').rsplit('_')[-1]
@@ -327,7 +329,7 @@ class Qichacha(object):
         all_name_info_dict = {}
         next_layer_name_id_set = set([(name, key_num)])
 
-        while limit > 0:
+        while limit > 0 and next_layer_name_id_set:
             this_layer_name_id_set = next_layer_name_id_set
             next_layer_name_id_set = set()
 
@@ -345,3 +347,4 @@ class Qichacha(object):
                 except KeyError:
                     break
             limit -= 1
+        return all_name_info_dict
