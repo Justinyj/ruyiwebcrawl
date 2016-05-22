@@ -38,6 +38,7 @@ def choice_proxy(url):
         proxies = Proxy.instance().get(url, max_last_time)
         if proxies is False:
             time.sleep(CRAWL_GAP)
+            print('lack of proxies, sleep') # TODO check
         else:
             protocol = proxies.split(':', 1)[0]
             return {protocol: proxies}

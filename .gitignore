@@ -5,6 +5,7 @@ __pycache__/
 
 # Data
 local/
+*.dump
 
 # C extensions
 *.so
@@ -65,5 +66,6 @@ target/
 .ipynb_checkpoints
 
 
-#data
-*.dump
+# Secret
+secret.*
+

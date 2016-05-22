@@ -34,6 +34,7 @@ class Qichacha(object):
 
     def list_person_search(self, person_list, limit=None):
         """.. :py:method::
+            need to catch exception of download error
 
         :param person_list: str or list type, search keyword
         :param limit: result number of every search keyword
@@ -54,8 +55,11 @@ class Qichacha(object):
 
                     url = self.list_url.format(key=person, index=index, page=page)
 
-                    source = self.downloader.access_page_with_cache(url)
-                    tree = lxml.html.fromstring(source)
+                    try:
+                        source = self.downloader.access_page_with_cache(url)
+                        tree = lxml.html.fromstring(source)
+                    except lxml.etree.XMLSyntaxError:
+                        raise Exception('error: download source empty, need redownload')
 
                     if tree.cssselect('div.noresult .noface'):
                         break
@@ -66,6 +70,7 @@ class Qichacha(object):
 
     def list_corporate_search(self, corporate_list, limit=None):
         """.. :py:method::
+            need to catch exception of download error
 
         :param corporate_list: str or list type, search keyword
         :param limit: result number of every search keyword
@@ -86,8 +91,11 @@ class Qichacha(object):
 
                     url = self.list_url.format(key=corporate, index=index, page=page)
 
-                    source = self.downloader.access_page_with_cache(url)
-                    tree = lxml.html.fromstring(source)
+                    try:
+                        source = self.downloader.access_page_with_cache(url)
+                        tree = lxml.html.fromstring(source)
+                    except lxml.etree.XMLSyntaxError:
+                        raise Exception('error: download source empty, need redownload')
 
                     if tree.cssselect('div.noresult .noface'):
                         break
@@ -162,7 +170,8 @@ class Qichacha(object):
 
         if subcompany is True:
             invest_info_dict = self.crawl_company_investment(name, key_num)
-            name_info_dict[name]['invests'] = invest_info_dict[name].values()
+            if invest_info_dict is not None:
+                name_info_dict[name]['invests'] = invest_info_dict[name].values()
         return name_info_dict
 
 

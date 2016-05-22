@@ -24,7 +24,7 @@ class Downloader(object):
 
     def __init__(self, request=False, batch_id='', groups=None, refresh=False):
         self.request = request
-        self.TIMEOUT = 30
+        self.TIMEOUT = 10
         self.RETRY = 3
 
         if batch_id == '':
@@ -77,14 +77,14 @@ class Downloader(object):
 
             try:
                 response = self.driver.get(url, timeout=self.TIMEOUT)
-                time.sleep(get_sleep_period())
                 if response.status_code == 200:
                     return response.text #unicode
             except:
                 proxy = proxies.items()[0][1]
                 Proxy.instance().post(url, proxy)
+            finally:
+                time.sleep(get_sleep_period()) # sleep of cookie
         else:
-            time.sleep(self.TIMEOUT)
             return u''
 
     def selenium_download(self, url):
@@ -92,13 +92,12 @@ class Downloader(object):
             try:
                 self.driver.get(url)
                 source = self.driver.page_source # unicode
-                time.sleep(get_sleep_period())
                 return source
             except:
-                time.sleep(get_sleep_period())
                 continue
+            finally:
+                time.sleep(get_sleep_period())
         else:
-            time.sleep(self.TIMEOUT)
             return u''
 
     def access_page_with_cache(self, url, groups=None, refresh=None):
