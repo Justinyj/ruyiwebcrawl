@@ -18,6 +18,7 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)) )
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
+import libnlp
 
 ###################
 # global config and functions
@@ -39,7 +40,11 @@ def file2set(filename):
                 ret.add(line)
     return ret
 
-
+def lines2file(lines, filename):
+    with codecs.open(filename, "w", encoding="utf-8") as f:
+        for line in lines:
+            f.write(line)
+            f.write("\n")
 
 def crawl_search(batch):
     dir_name = getTheFile( batch+"/*")
@@ -51,7 +56,7 @@ def crawl_search(batch):
 
 def crawl_search_file(batch, filename):
     filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
-    LIMIT = 100
+    LIMIT = None
 
     #load prev state
     searched = set()
@@ -120,33 +125,90 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
 
     print "final", os.path.basename(filename), counter
 
+    '''
+    {
+"data": {
+    "不孕不育医院": {
+        "data": {
+            "成都送子鸟不孕不育医院有限公司": {
+                "status": "存续",
+                "href": "/firm_SC_7b4e0c669165cd33ff04fe8d5af6884d.shtml",
+                "name": "成都送子鸟不孕不育医院有限公司",
+                "key_num": "7b4e0c669165cd33ff04fe8d5af6884d"
+            },
+            "洛阳不孕不育症医院（特殊普通合伙企业）": {
+                "status": "存续",
+                "href": "/firm_HEN_e07d78673eaf2acfa9279adacb0c660e.shtml",
+                "name": "洛阳不孕不育症医院（特殊普通合伙企业）",
+                "key_num": "e07d78673eaf2acfa9279adacb0c660e"
+            }
+        },
+        "metadata": {
+            "total": 58,
+            "total_[不孕不育医院][index:2][省:]": 58
+        }
+    }
+},
+"ts": "2016-05-22T17:33:47.248311"
+}
+    '''
 def stat(batch):
     all_company = {}
+    all_keywords = {}
     filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
     if os.path.exists(filename_metadata_search):
 
         for line in file2set(filename_metadata_search):
             gcounter["line"] +=1
             item = json.loads(line)
-            gcounter["all_company_dup"] += len(item["data"].values())
-            for entry in item["data"].values():
-                all_company.update(entry)
+            for keyword, keyword_entry in item["data"].items():
+                #print type(keyword_entry)
+                all_company.update(keyword_entry["data"])
+                gcounter["all_company_dup"] += len(keyword_entry["data"])
+                all_keywords[keyword] = keyword_entry["metadata"]["total"]
 
+    print json.dumps(all_keywords,ensure_ascii=False)
     gcounter["all_company"] = len(all_company)
+    gcounter["all_keywords"] = len(all_keywords)
+    all_hospital = [x for x in all_company.keys() if libnlp.classify_company_name(x) in [u'医院投资',u'医院管理']]
+    gcounter["all_hospital"] = len(all_hospital)
 
+    filename = getLocalFile('company_from_search.{}.txt'.format(batch))
+    lines2file(sorted(list(all_hospital)), filename)
+
+    all_hospital_sentence = set()
+    filename = getLocalFile('text_corpus.{}.txt'.format(batch))
+    all_sentences =  [ line for line in file2set(filename) if u'医院' in line]
+
+    map_name_freq = libnlp.get_keywords(all_sentences, None,  ur"医院$", 300)
+
+    new_keywords = set()
+    new_keywords.update(all_keywords)
+    new_keywords.update(map_name_freq.keys())
+    gcounter["new_keywords"] = len(new_keywords)
+    filename = getLocalFile('keywords_new.{}.txt'.format(batch))
+    lines2file(sorted(list(new_keywords)), filename)
+
+
+
+#################
 
 def fetch_detail(batch):
 
     #load search history
     all_company = {}
+    all_keywords = {}
     filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
     if os.path.exists(filename_metadata_search):
 
         for line in file2set(filename_metadata_search):
             gcounter["line"] +=1
             item = json.loads(line)
-            for entry in item["data"].values():
-                all_company.update(entry)
+            for keyword, keyword_entry in item["data"].items():
+                #print type(keyword_entry)
+                all_company.update(keyword_entry["data"])
+                gcounter["all_company_dup"] += len(keyword_entry["data"])
+                all_keywords[keyword] = keyword_entry["metadata"]["total"]
 
     #load names
     print json.dumps(all_company.values()[0], ensure_ascii=False)
@@ -154,9 +216,10 @@ def fetch_detail(batch):
     #map names to id
     crawler = Qichacha()
     counter = collections.Counter()
-    counter['total'] = len(all_company)
-    for company in all_company.values():
-        name = company['name']
+    all_hospital = [x for x in all_company.keys() if libnlp.classify_company_name(x) in [u'医院投资',u'医院管理']]
+    counter['total'] = len(all_hospital)
+    for name in all_hospital:
+        company = all_company[name]
         key_num = company.get('key_num')
 
         if counter['visited'] % 10 ==0:
@@ -165,6 +228,8 @@ def fetch_detail(batch):
 
         try:
             crawler.crawl_company_detail(name, key_num)
+            crawler.crawl_descendant_company(name, key_num)
+            #crawler.crawl_ancestors_company(name, key_num)
             counter['ok'] +=1
         except:
             print "fail", name
@@ -174,6 +239,12 @@ def fetch_detail(batch):
 
 
 def test():
+    seed = "博爱医院"
+    crawler = Qichacha()
+    ret = crawler.list_corporate_search(seed, None)
+    print json.dumps(ret, ensure_ascii=False,encoding='utf-8')
+
+def test2():
     seed = "上海华衡投资"
     crawler = Qichacha()
     ret = crawler.list_corporate_search(seed, 1)
@@ -192,6 +263,11 @@ def main():
     if "search" == option:
         crawl_search(batch)
         stat(batch)
+
+
+    elif "stat" == option:
+        stat(batch)
+
 
     elif "fetch" == option:
         fetch_detail(batch)
