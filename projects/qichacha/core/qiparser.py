@@ -42,7 +42,7 @@ class QiParser(object):
                 if not info['registration_id']:
                     info['registration_id'] = text
             elif label == u'组织机构代码：':
-               info['organization_code'] = text 
+               info['organization_code'] = text
             elif label == u'经营状态：':
                 info['status'] = text
             elif label == u'公司类型：':
@@ -187,7 +187,14 @@ class QiParser(object):
             }
         return summary_dict
 
-
+    def parse_search_result_count(self, tree):
+        ret = tree.cssselect('.container .panel-default .pull-right span.text-danger')
+        #print (ret,ret[0].text_content().strip())
+        if ret:
+            return int(ret[0].text_content().strip().replace("+",""))
+        else:
+            return 0
+            
     def parse_company_investment(self, tree):
         invest_dict = {}
         for sub_company in tree.cssselect('.list-group a.list-group-item'):
@@ -200,4 +207,3 @@ class QiParser(object):
                 'href': href,
             }
         return invest_dict
-

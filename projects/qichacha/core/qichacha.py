@@ -127,12 +127,8 @@ class Qichacha(object):
                     source = self.downloader.access_page_with_cache(url)
                     tree = lxml.html.fromstring(source)
 
-                    ret = tree.cssselect('.container .panel-default .pull-right span.text-danger')
-                    #print (ret,ret[0].text_content().strip())
-                    if ret:
-                        result[corporate] = int(ret[0].text_content().strip().replace("+",""))
-                    else:
-                        result[corporate] =0
+                    result[corporate] = self.parser.parse_search_result_count(tree)
+
         print (json.dumps(result, ensure_ascii=False))
         return result
 
