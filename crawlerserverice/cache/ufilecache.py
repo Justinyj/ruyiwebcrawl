@@ -28,6 +28,7 @@ def ufile_get_cache(b64url):
         resp = requests.get(url)
         if resp.status_code != 200:
             raise Exception('download ufile error: {}'.format(b64url))
+
     except Exception as e:
         return {'success': False, 'error': e}
     return {'success': True, 'content': resp.content}
@@ -45,6 +46,13 @@ def ufile_set_cache(b64url, batch_id, groups, content, refresh=False):
         if resp.status_code != 200:
             raise Exception('{} upload ufile error: {}'.format(batch_id, b64url))
 
+        sql1 = ("insert into accessed (batch_id, status, b64url, url_hash) "
+                "values ('{}', '{}', '{}', '{}');".format(batch_id, 0, b64url, url_hash))
+        sql2 = ("insert into cached (b64url, url_hash) values ('{}', '{}')"
+                ";".format(b64url, url_hash))
+        dbwrapper.execute(sql1)
+        dbwrapper.execute(sql2)
+
         now = datetime.now()
         log_line = json.dumps({
             'date': str(now),
@@ -58,4 +66,4 @@ def ufile_set_cache(b64url, batch_id, groups, content, refresh=False):
     return {'success': True}
 
 #ufile_set_cache('rewre', 'qichacha', 'test', u'abcd3e')
-ufile_get_cache('rewre')
+#ufile_get_cache('rewre')

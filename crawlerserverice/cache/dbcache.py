@@ -10,17 +10,17 @@ import hashlib
 import base64
 
 
-def db_get_cache(hashkey):
+def db_get_cache(url_hash):
     sql1 = ("select content from contents where cached_id = "
             "(select id from cached where url_hash='{}' "
-            "order by created_time desc limit 1);".format(hashkey))
+            "order by created_time desc limit 1);".format(url_hash))
     sql2 = ("select content from contents as a "
             "inner join cached as b on a.cached_id=b.id "
-            "where b.url_hash='{}';".format(hashkey))
+            "where b.url_hash='{}';".format(url_hash))
 
     try:
         # RowResult(columns=['content'], results=[('WkhWdFpTNWpiMjA9',)])
-        ret = dbwrapper.execute(sql1, result=True)
+        ret = dbwrapper.execute(sql2, result=True)
         if ret.results == []:
             return {'success': False}
 
@@ -30,18 +30,20 @@ def db_get_cache(hashkey):
     return {'success': True, 'content': html}
 
 
-def db_set_cache(hashkey, url, batch_id, content):
-    sql1 = ("insert into accessed (batch_id, status, url, url_hash) "
-            "values ('{}', '{}', '{}', '{}');".format(batch_id, 0, url, hashkey))
-
-    sql2 = ("with inserted as ("
-                "insert into cached (url, url_hash, content_hash) values ('{}', '{}', '{}')"
-                " RETURNING id )"
-            "insert into contents (cached_id, content) values ((select id from inserted), '{}');"
-            "".format(url, hashkey, content_hash, base64.standard_b64encode(content)))
-
+def db_set_cache(b64url, url_hash, batch_id, groups, content, refresh):
+    """ compare content_hash, if new content_hash is the 404 or 502 or webpage
+    """
     try:
         content_hash = hashlib.sha1(content).hexdigest()
+        sql1 = ("insert into accessed (batch_id, status, b64url, url_hash) "
+            "values ('{}', '{}', '{}', '{}');".format(batch_id, 0, b64url, url_hash))
+
+        sql2 = ("with inserted as ("
+                "insert into cached (b64url, url_hash, content_hash) values ('{}', '{}', '{}')"
+                " RETURNING id )"
+            "insert into contents (cached_id, content) values ((select id from inserted), '{}');"
+            "".format(b64url, url_hash, content_hash, base64.standard_b64encode(content)))
+
         dbwrapper.execute(sql1)
         dbwrapper.execute(sql2)
     except Exception as e:
