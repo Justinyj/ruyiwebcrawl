@@ -10,6 +10,7 @@ import hashlib
 from settings import CACHEPAGE
 from .fscache import fs_get_cache, fs_set_cache
 from .dbcache import db_get_cache, db_set_cache, db_get_all_cache
+from .ufilecache import ufile_get_cache, ufile_set_cache
 #from .qiniucache import *
 
 
@@ -28,6 +29,8 @@ class BaseCache(object):
             pass
         elif CACHEPAGE == 'fs':
             return fs_get_cache(b64url, batch_id)
+        elif CACHEPAGE == 'ufile':
+            return ufile_get_cache(b64url)
 
 
     @staticmethod
@@ -41,6 +44,8 @@ class BaseCache(object):
             pass
         elif CACHEPAGE == 'fs':
             return fs_set_cache(b64url, batch_id, groups, content, refresh)
+        elif CACHEPAGE == 'ufile':
+            return ufile_set_cache(b64url, batch_id, groups, content, refresh)
 
 
     @staticmethod
