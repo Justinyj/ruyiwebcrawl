@@ -23,9 +23,10 @@ def test_search_corporate():
     assert type(ret) == dict
 
 def test_search_corporate_count():
-    corporate_list = ['哈尔滨','哈尔滨红肠很好吃']
-    ret = qichacha.list_corporate_search_count(corporate_list)
-    assert type(ret) == dict
+    keyword_list = ['哈尔滨','哈尔滨红肠很好吃']
+    for keyword in keyword_list:
+        ret = qichacha.get_keyword_search_count(keyword, 2)
+        assert type(ret) == int
 
 def test_detail():
     name = '天津仁正企业管理有限公司'

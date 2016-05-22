@@ -16,13 +16,16 @@ class Qichacha(object):
     def __init__(self, batch_id=None, groups=None, refresh=False, request=True):
         if batch_id is None:
             batch_id = 'qichacha'
-        self.list_url = 'http://qichacha.com/search?key={key}&index={index}&p={page}'
+        self.list_url = 'http://qichacha.com/search?key={key}&index={index}&p={page}&province={province}'
         self.base_url = 'http://qichacha.com/company_base?unique={key_num}&companyname={name}'
         self.invest_url = 'http://qichacha.com/company_touzi?unique={key_num}&companyname={name}&p={page}'
 
         self.VIP_MAX_PAGE_NUM = 500
         self.MAX_PAGE_NUM = 10
         self.NUM_PER_PAGE = 10
+        self.PROVINCE_LIST = [
+        "AH", "BJ", "CQ", "FJ", "GD", "GS", "GX", "GZ", "HAIN", "HB", "HEN", "HLJ", "HUB", "HUN", "JL",
+        "JS", "JX", "LN", "NMG", "NX", "QH", "SAX", "SC", "SD", "SH", "SX", "TJ", "XJ", "XZ", "YN", "ZJ"]
 
         self.downloader = Downloader(request=request,
                                      batch_id=batch_id,
@@ -39,35 +42,10 @@ class Qichacha(object):
 
         :param person_list: str or list type, search keyword
         :param limit: result number of every search keyword
-        :rtype: {keyword1: {name1: {}, name2: {}, ...},
+        :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
                   keyword2: {}, ...}
         """
-        if not isinstance(person_list, list):
-            person_list = [person_list]
-        max_page = self.MAX_PAGE_NUM if limit is None else \
-                   (limit - 1) // self.NUM_PER_PAGE + 1
-        max_page = (max_page > self.MAX_PAGE_NUM and [self.MAX_PAGE_NUM] or [max_page])[0]
-
-        result = {}
-        for idx, person in enumerate(person_list):
-            summary_dict = {}
-            for index in (4, 6):
-                for page in range(1, max_page + 1):
-
-                    url = self.list_url.format(key=person, index=index, page=page)
-
-                    try:
-                        source = self.downloader.access_page_with_cache(url)
-                        tree = lxml.html.fromstring(source)
-                    except lxml.etree.XMLSyntaxError:
-                        raise Exception('error: download source empty, need redownload')
-
-                    if tree.cssselect('div.noresult .noface'):
-                        break
-                    summary_dict.update( self.parser.parse_search_result(tree) )
-            result[person] = summary_dict
-        return result
-
+        return self._list_keyword_search(person_list, [4,6], limit )
 
     def list_corporate_search(self, corporate_list, limit=None):
         """.. :py:method::
@@ -75,62 +53,75 @@ class Qichacha(object):
 
         :param corporate_list: str or list type, search keyword
         :param limit: result number of every search keyword
-        :rtype: {keyword1: {name1: {}, name2: {}, ...},
+        :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
                   keyword2: {}, ...}
         """
-        if not isinstance(corporate_list, list):
-            corporate_list = [corporate_list]
+        return self._list_keyword_search(corporate_list, [2], limit )
+
+    def _list_keyword_search(self, keyword_list, index_list, limit=None):
+        if not isinstance(keyword_list, list):
+            keyword_list = [keyword_list]
         max_page = self.MAX_PAGE_NUM if limit is None else \
                    (limit - 1) // self.NUM_PER_PAGE + 1
         max_page = (max_page > self.MAX_PAGE_NUM and [self.MAX_PAGE_NUM] or [max_page])[0]
 
         result = {}
-        for idx, corporate in enumerate(corporate_list):
+        for idx, keyword in enumerate(keyword_list):
             summary_dict = {}
-            for index in (0, ):
-                for page in range(1, max_page + 1):
+            metadata_dict = {'total':0}
+            for index in index_list:
 
-                    url = self.list_url.format(key=corporate, index=index, page=page)
+                cnt = self.get_keyword_search_count(keyword, index)
 
-                    try:
-                        source = self.downloader.access_page_with_cache(url)
-                        tree = lxml.html.fromstring(source)
-                    except lxml.etree.XMLSyntaxError:
-                        raise Exception('error: download source empty, need redownload')
-
-                    if tree.cssselect('div.noresult .noface'):
-                        break
-                    summary_dict.update( self.parser.parse_search_result(tree) )
-            result[corporate] = summary_dict
+                province_list = []
+                if limit is None and cnt> self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
+                    for province in self.PROVINCE_LIST:
+                        self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict)
+                else:
+                    self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict)
+            result[keyword] = {
+                "data":summary_dict,
+                "metadata":metadata_dict
+            }
+        print(json.dumps(result, ensure_ascii=False))
         return result
 
+    def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict):
+        for page in range(1, max_page + 1):
 
-    def list_corporate_search_count(self, corporate_list):
+            url = self.list_url.format(key=keyword, index=index, page=page, province=province)
+
+            try:
+                source = self.downloader.access_page_with_cache(url)
+                tree = lxml.html.fromstring(source)
+            except lxml.etree.XMLSyntaxError:
+                raise Exception('error: download source empty, need redownload')
+
+            if page ==1:
+                cnt = self.parser.parse_search_result_count(tree)
+                metadata_dict['total']+=cnt
+                key ='total_{}_{}_{}'.format(keyword,index, province)
+                metadata_dict['total_{}_{}_{}'.format(keyword,index, province)]=cnt
+                if cnt > self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
+                    print ("TODO expand {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
+
+            if tree.cssselect('div.noresult .noface'):
+                break
+
+            summary_dict.update( self.parser.parse_search_result(tree) )
+
+    def get_keyword_search_count(self, keyword, index):
         """.. :py:method::
 
-        :param corporate_list: str or list type, search keyword
-        :rtype: {keyword1: count,
-                  keyword2: count, ...}
+        :param keyword: search keyword
+        :rtype: count
         """
-        if not isinstance(corporate_list, list):
-            corporate_list = [corporate_list]
-        max_page = 1
+        url = self.list_url.format(key=keyword, index=index, page=1, province='')
 
-        result = {}
-        for idx, corporate in enumerate(corporate_list):
-            summary_dict = {}
-            for index in (0, ):
-                for page in range(1, max_page + 1):
+        source = self.downloader.access_page_with_cache(url)
+        tree = lxml.html.fromstring(source)
 
-                    url = self.list_url.format(key=corporate, index=index, page=page)
-
-                    source = self.downloader.access_page_with_cache(url)
-                    tree = lxml.html.fromstring(source)
-
-                    result[corporate] = self.parser.parse_search_result_count(tree)
-
-        print (json.dumps(result, ensure_ascii=False))
-        return result
+        return  self.parser.parse_search_result_count(tree)
 
 
     def input_name_output_id(self, name):
@@ -139,7 +130,7 @@ class Qichacha(object):
         :param name: standard company name
         :rtype: qichacha id or None
         """
-        url = self.list_url.format(key=name, index=0, page=1)
+        url = self.list_url.format(key=name, index=0, page=1,province='')
         try:
             source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
