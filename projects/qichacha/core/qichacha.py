@@ -9,6 +9,7 @@ from qiparser import QiParser
 
 import lxml.html
 import re
+import json
 
 class Qichacha(object):
 
@@ -41,7 +42,7 @@ class Qichacha(object):
         :rtype: {keyword1: {name1: {}, name2: {}, ...},
                   keyword2: {}, ...}
         """
-        if isinstance(person_list, str):
+        if not isinstance(person_list, list):
             person_list = [person_list]
         max_page = self.MAX_PAGE_NUM if limit is None else \
                    (limit - 1) // self.NUM_PER_PAGE + 1
@@ -77,7 +78,7 @@ class Qichacha(object):
         :rtype: {keyword1: {name1: {}, name2: {}, ...},
                   keyword2: {}, ...}
         """
-        if isinstance(corporate_list, str):
+        if not isinstance(corporate_list, list):
             corporate_list = [corporate_list]
         max_page = self.MAX_PAGE_NUM if limit is None else \
                    (limit - 1) // self.NUM_PER_PAGE + 1
@@ -101,6 +102,38 @@ class Qichacha(object):
                         break
                     summary_dict.update( self.parser.parse_search_result(tree) )
             result[corporate] = summary_dict
+        return result
+
+
+    def list_corporate_search_count(self, corporate_list):
+        """.. :py:method::
+
+        :param corporate_list: str or list type, search keyword
+        :rtype: {keyword1: count,
+                  keyword2: count, ...}
+        """
+        if not isinstance(corporate_list, list):
+            corporate_list = [corporate_list]
+        max_page = 1
+
+        result = {}
+        for idx, corporate in enumerate(corporate_list):
+            summary_dict = {}
+            for index in (0, ):
+                for page in range(1, max_page + 1):
+
+                    url = self.list_url.format(key=corporate, index=index, page=page)
+
+                    source = self.downloader.access_page_with_cache(url)
+                    tree = lxml.html.fromstring(source)
+
+                    ret = tree.cssselect('.container .panel-default .pull-right span.text-danger')
+                    #print (ret,ret[0].text_content().strip())
+                    if ret:
+                        result[corporate] = int(ret[0].text_content().strip().replace("+",""))
+                    else:
+                        result[corporate] =0
+        print (json.dumps(result, ensure_ascii=False))
         return result
 
 
