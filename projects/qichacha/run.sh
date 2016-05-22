@@ -12,3 +12,8 @@ if [ "$1" = "init" ]; then
   echo "source env.sh"
   echo "pip install -r requirments.txt"
 fi
+
+if [ "$1" = "search" ]; then
+  source env.sh
+  python business/crawljob.py search medical
+fi

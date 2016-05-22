@@ -24,7 +24,10 @@ sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(
 gcounter = collections.Counter()
 
 def getLocalFile(filename):
-    return os.path.abspath(os.path.dirname(__file__)).replace("/python/","/local/") +"/"+filename
+    return os.path.abspath(os.path.dirname(__file__)).replace("/qichacha/","/qichacha/local/") +"/"+filename
+
+def getTheFile(filename):
+    return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
 def file2set(filename):
     ret = set()
@@ -39,7 +42,7 @@ def file2set(filename):
 
 
 def crawl_search(batch):
-    dir_name = os.path.abspath(os.path.join(os.path.dirname(__file__), batch+"/*"))
+    dir_name = getTheFile( batch+"/*")
     filenames = glob.glob(dir_name)
     for filename in filenames:
         print filename
@@ -55,43 +58,58 @@ def crawl_search_file(batch, filename):
     if os.path.exists(filename_metadata):
         for line in file2set(filename_metadata):
             item = json.loads(line)
-            searched.update(item.keys())
+            searched.update(item["data"].keys())
 
+    #print len(searched),list(searched)[0:3]
+    #return
 
     #add new
-    crawler = Qichacha()
     with codecs.open(filename_metadata,'a') as flog:
         #crawl_search_pass( FILENAME_CRAWL_SEED_KEYWORDS, searched, flog, crawler.list_corporate_search, LIMIT, False )
-        if "seed_org" in filename:
-            crawl_search_pass( filename, searched, flog, crawler.list_corporate_search, LIMIT, False )
-        elif "seed_person" in filename:
-            crawl_search_pass( filename, searched, flog, crawler.list_person_search, LIMIT, False )
-        else:
-            print "unsupported filename"
+        crawl_search_pass( filename, searched, flog, LIMIT, False )
 
-def crawl_search_pass( filename, searched, flog, fn, limit, refresh):
+def crawl_search_pass( filename, searched, flog, limit, refresh):
+
+    crawler = Qichacha()
 
     seeds = file2set(filename)
     counter = collections.Counter()
     counter['total'] = len(seeds)
     counter['searched'] = len(seeds.intersection(searched))
 
+    print len(seeds),list(seeds)[0:3]
+
     for seed in sorted(list(seeds)):
         if counter['visited'] % 10 ==0:
-            print os.path.basename(filename), counter
+            print os.path.basename(filename), datetime.datetime.now().isoformat(), counter
 
         counter['visited']+=1
         if not refresh and seed in searched:
             continue
         searched.add(seed)
 
+        print seed, limit
         try:
-            item = {
-                "data":fn(seed, limit),
-                "ts": datetime.datetime.now().isoformat()
-            }
-            flog.write(json.dumps(item, ensure_ascii=False))
-            flog.write("\n")
+
+
+            if "seed_org" in filename:
+                data = crawler.list_corporate_search( [seed], limit)
+            elif "seed_person" in filename:
+                data = crawler.list_person_search( [seed], limit)
+            else:
+                print "skip unsupported filename ", fileanme
+                continue
+
+            if data:
+                item = {
+                    "data": data,
+                    "ts": datetime.datetime.now().isoformat()
+                }
+                flog.write(json.dumps(item, ensure_ascii=False))
+                flog.write("\n")
+            else:
+                counter['empty'] +=1
+
         except:
             counter['failed'] +=1
             pass
