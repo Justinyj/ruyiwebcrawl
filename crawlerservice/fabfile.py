@@ -5,6 +5,7 @@
 from __future__ import print_function, division
 
 from fabric.api import *
+from settings import DBPASS
 
 env.hosts = ['106.75.6.152']
 env.user = 'ubuntu'
@@ -20,6 +21,7 @@ def _build_pg():
     sudo("""sed -i "s/'\/var\/lib\/postgresql\/9.5\/main'/'\/data\/pg\/main'/" /etc/postgresql/9.5/main/postgresql.conf""")
     sudo('mv /var/lib/postgresql/9.5/main /data/pg/')
     sudo('service postgresql restart')
+    sudo("""sudo -u postgres psql -c "ALTER USER postgres PASSWORD '{}';" """.format(DBPASS))
 
 
 def build_env():
@@ -28,7 +30,7 @@ def build_env():
     sudo('sudo pip install virtualenvwrapper')
 
 
-def deploy():
+def upload():
     archive = 'crawlerservice.tar.bz2'
     with lcd('..'):
         local('tar jcf {} --exclude *.pyc crawlerservice'.format(archive))
@@ -43,7 +45,12 @@ def deploy():
         run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
 
+
+def deploy():
+    upload()
+
     with cd('/opt/service/crawlerservice'):
+#        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
         with prefix('source env.sh {}'.format('PRODUCTION')):
             run('pip install -r requirements.txt')

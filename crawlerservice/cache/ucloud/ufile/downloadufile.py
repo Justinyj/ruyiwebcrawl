@@ -65,7 +65,7 @@ class DownloadUFile(BaseUFile):
         if response.status_code in [200, 206]:
             return response.content, ResponseInfo(response, None, content_consumed)
         else:
-            return __return_wraper(response)
+            return None, ResponseInfo(response)
 
 
     def download_file(self, bucket, key, localfile, isprivate=True, expires=config.get_default('expires'), content_range=None, header=None):
