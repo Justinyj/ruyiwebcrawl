@@ -19,6 +19,16 @@ envs = {
         'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
     },
+    'PRODUCTION': {
+        'DBNAME': 'crawlercache',
+        'DBUSER': 'postgres',
+        'DBPASS': '1qaz2wsx',
+        'DBHOST': '127.0.0.1',
+        'DBPORT': 5432,
+
+        'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
+        'FSCACHEDIR': '/data/crawler_file_cache/',
+    }
 }
 
 for key, value in envs.get(ENV, envs['DEV']).items():

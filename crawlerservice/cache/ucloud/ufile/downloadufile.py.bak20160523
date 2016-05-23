@@ -27,47 +27,6 @@ class DownloadUFile(BaseUFile):
         super(DownloadUFile, self).__init__(public_key, private_key)
 
 
-    def download_stream(self, bucket, key, isprivate=True, expires=config.get_default('expires'), content_range=None, header=None):
-        """
-        下载UFile文件并且按string 返回
-
-        @param bucket: string类型, UFile空间名称
-        @param key: string类型， 下载文件在空间中的名称
-        @param isprivate: boolean类型，如果为私有空间则为True
-        @param expires: integer类型，私有文件链接有效时间
-        @param content_range: tuple类型，元素为两个整型
-        @param header: dict类型，http 请求header，键值对类型分别为string，比如{'User-Agent': 'Google Chrome'}
-        @return ret: 如果http状态码为[200, 204, 206]之一则返回string，否则如果服务器返回json信息则返回dict类型，键值对类型分别为string, unicode string类型，否则返回空的dict
-        @return  ResponseInfo: 响应的具体信息，UCloud UFile 服务器返回信息或者网络链接异常
-        """
-        if header is None:
-            header = dict()
-        else:
-            _check_dict(header)
-        if 'User-Agent' not in header:
-            header['User-Agent'] = config.get_default('user_agent')
-
-        if isinstance(content_range, tuple) and len(content_range) == 2:
-            header['Range'] = 'bytes=' + '-'.join(map(lambda x: str(x), content_range))
-
-        if not isprivate:
-            url = self.public_download_url(bucket, key)
-        else:
-            url = self.private_download_url(bucket, key, expires, header, True)
-
-        logger.info('get ufile url:{0}'.format(url))
-
-        import requests
-        try:
-            response = requests.get(url, headers=header)
-        except requests.RequestException as e:
-            return None, ResponseInfo(None, e)
-        if response.status_code in [200, 206]:
-            return response.content, ResponseInfo(response, None, content_consumed)
-        else:
-            return __return_wraper(response)
-
-
     def download_file(self, bucket, key, localfile, isprivate=True, expires=config.get_default('expires'), content_range=None, header=None):
         """
         下载UFile文件并且保存为本地文件

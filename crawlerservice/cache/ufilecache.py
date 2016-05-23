@@ -24,14 +24,12 @@ def ufile_get_cache(b64url):
 
     try:
         hashkey = hashlib.sha256(b64url).hexdigest()
-        url = ufile_get_cache._auth.private_download_url(private_bucket, hashkey, internal=True)
-        resp = requests.get(url)
+        ret, resp = ufile_get_cache._auth.download_stream(private_bucket, hashkey)
         if resp.status_code != 200:
             raise Exception('download ufile error: {}'.format(b64url))
-
     except Exception as e:
         return {'success': False, 'error': e}
-    return {'success': True, 'content': resp.content}
+    return {'success': True, 'content': ret}
 
 
 def ufile_set_cache(b64url, batch_id, groups, content, refresh=False):
