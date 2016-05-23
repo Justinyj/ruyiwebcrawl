@@ -49,15 +49,14 @@ def lines2file(lines, filename):
             f.write(line)
             f.write("\n")
 
-def crawl_search(batch):
-    dir_name = getTheFile( batch+"/*")
+def crawl_search(batch, dir_name, refresh=False):
     filenames = glob.glob(dir_name)
     for filename in filenames:
         print filename
-        crawl_search_file(batch, filename)
+        crawl_search_file(batch, filename, refresh)
 
 
-def crawl_search_file(batch, filename):
+def crawl_search_file(batch, filename, refresh):
     filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
     LIMIT = None
 
@@ -74,11 +73,14 @@ def crawl_search_file(batch, filename):
     #add new
     with codecs.open(filename_metadata_search,'a') as flog:
         #crawl_search_pass( FILENAME_CRAWL_SEED_KEYWORDS, searched, flog, crawler.list_corporate_search, LIMIT, False )
-        crawl_search_pass( filename, searched, flog, LIMIT, False )
+        crawl_search_pass( filename, searched, flog, LIMIT, refresh )
 
 def crawl_search_pass( filename, searched, flog, limit, refresh):
 
-    crawler = Qichacha()
+    if '_vip' in filename:
+        crawler = get_crawler('vip')
+    else:
+        crawler = get_crawler('regular')
 
     seeds = file2set(filename)
     counter = collections.Counter()
@@ -261,7 +263,7 @@ def fetch_detail(batch):
     print json.dumps(all_company.values()[0], ensure_ascii=False)
 
     #map names to id
-    crawler = Qichacha()
+    crawler = get_crawler('regular')
     counter = collections.Counter()
     all_medical = [x for x in all_company.keys() if libnlp.classify_company_name(x) in [u'医院投资',u'医院公司']]
     counter['total'] = len(all_medical)
@@ -284,10 +286,15 @@ def fetch_detail(batch):
             pass
 
 
+def get_crawler(option):
+    filename = getTheFile("../config/conf.179.json")
+    with open(filename) as f:
+        config = json.load(f)[option]
+    return Qichacha(config)
 
 def test():
     seed = "博爱医院"
-    crawler = Qichacha()
+    crawler = get_crawler('test')
     ret = crawler.list_corporate_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding='utf-8')
 
@@ -308,7 +315,8 @@ def main():
     batch = sys.argv[2]
     #filename = sys.argv[3]
     if "search" == option:
-        crawl_search(batch)
+        #crawl_search(batch, getTheFile( batch+"/*"), False)
+        crawl_search(batch, getTheFile( batch+"/*_vip*"), True)
         #stat(batch)
         #fetch_detail(batch)
 

@@ -4,14 +4,13 @@
 
 from __future__ import print_function, division
 
-from settings import CACHESERVER
 import base64
 import urlparse
 import requests
 
 class Cache(object):
-    def __init__(self, batch_id, server=None):
-        self.SERVER = server if server else CACHESERVER
+    def __init__(self, config, batch_id, server=None):
+        self.SERVER = server if server else config['CACHE_SERVER']
         self.batch_id = batch_id
 
     def get(self, url):
@@ -44,4 +43,3 @@ class Cache(object):
         if u'error' in js:
             return js[u'error']
         return False
-
