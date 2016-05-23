@@ -45,7 +45,7 @@ class BaseCache(object):
         elif CACHEPAGE == 'fs':
             return fs_set_cache(b64url, batch_id, groups, content, refresh)
         elif CACHEPAGE == 'ufile':
-            return ufile_set_cache(b64url, batch_id, groups, content, refresh)
+            return ufile_set_cache(b64url, url_hash, batch_id, groups, content, refresh)
 
 
     @staticmethod

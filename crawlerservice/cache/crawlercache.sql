@@ -12,7 +12,7 @@ create table accessed (
   updated_time timestamp
 );
 create index accessed_url_idx on accessed (b64url);
-create unique index accessed_batchid_urlhash_idx on accessed (batch_id, url_hash);
+create index accessed_batchid_urlhash_idx on accessed (batch_id, url_hash); -- can be unique
 
 
 create table cached (
