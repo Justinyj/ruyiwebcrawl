@@ -10,6 +10,7 @@ from qiparser import QiParser
 import lxml.html
 import re
 import json
+import collections
 
 class Qichacha(object):
 
@@ -23,9 +24,40 @@ class Qichacha(object):
         self.VIP_MAX_PAGE_NUM = 500
         self.MAX_PAGE_NUM = 10
         self.NUM_PER_PAGE = 10
-        self.PROVINCE_LIST = [
-        "AH", "BJ", "CQ", "FJ", "GD", "GS", "GX", "GZ", "HAIN", "HB", "HEN", "HLJ", "HUB", "HUN", "JL",
-        "JS", "JX", "LN", "NMG", "NX", "QH", "SAX", "SC", "SD", "SH", "SX", "TJ", "XJ", "XZ", "YN", "ZJ"]
+        self.INDEX_LIST_PERSON = [4,6]
+        self.INDEX_LIST_ORG = [2]
+        self.PROVINCE_LIST = {
+        "AH":[1,2,3,4,5,6,7,8,10,11,12,13,15,16,17,18,24,25,26,29],
+        "BJ":[],
+        "CQ":[],
+        "FJ":[1,2,3,4,5,6,7,8,9,22],
+        "GD":[1,2,3,4,5,6,7,8,9,12,13,14,15,16,17,18,19,20,51,52,53],
+        "GS":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,21,22,23,24,26,27],
+        "GX":[],
+        "GZ":[],
+        "HAIN":[],
+        "HB":[],
+        "HEN":[],
+        "HLJ":[],
+        "HUB":[],
+        "HUN":[],
+        "JL":[],
+        "JS":[],
+        "JX":[],
+        "LN":[],
+        "NMG":[],
+        "NX":[],
+        "QH":[],
+        "SAX":[],
+        "SC":[],
+        "SD":[],
+        "SH":[],
+        "SX":[],
+        "TJ":[],
+        "XJ":[],
+        "XZ":[],
+        "YN":[],
+        "ZJ":[]}
 
         self.downloader = Downloader(request=request,
                                      batch_id=batch_id,
@@ -45,7 +77,7 @@ class Qichacha(object):
         :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
                   keyword2: {}, ...}
         """
-        return self._list_keyword_search(person_list, [4,6], limit )
+        return self._list_keyword_search(person_list, self.INDEX_LIST_PERSON, limit )
 
     def list_corporate_search(self, corporate_list, limit=None):
         """.. :py:method::
@@ -56,7 +88,7 @@ class Qichacha(object):
         :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
                   keyword2: {}, ...}
         """
-        return self._list_keyword_search(corporate_list, [2], limit )
+        return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit )
 
     def _list_keyword_search(self, keyword_list, index_list, limit=None):
         if not isinstance(keyword_list, list):
@@ -68,13 +100,16 @@ class Qichacha(object):
         result = {}
         for idx, keyword in enumerate(keyword_list):
             summary_dict = {}
-            metadata_dict = {'total':0}
+            metadata_dict = collections.Counter()
             for index in index_list:
 
                 cnt = self.get_keyword_search_count(keyword, index)
+                metadata_dict['total_expect']+=cnt
+                #metadata_dict['total_[index:{}]_expect'.format(index)]=cnt
 
                 province_list = []
                 if limit is None and cnt> self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
+                    print ('auto expand {} results of [{}] with province filter '.format(cnt, keyword) )
                     for province in self.PROVINCE_LIST:
                         self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict)
                 else:
@@ -83,7 +118,10 @@ class Qichacha(object):
                 "data":summary_dict,
                 "metadata":metadata_dict
             }
-        print(json.dumps(result, ensure_ascii=False))
+            metadata_dict['total_actual'] = len(summary_dict)
+            if metadata_dict['total_expect2'] -  metadata_dict['total_actual']>2:
+                print ('[{}] expect {}, expect2 {}, actual {} '.format( keyword, metadata_dict['total_expect'], metadata_dict['total_expect2'], metadata_dict['total_actual']) )
+        #print(json.dumps(result, ensure_ascii=False))
         return result
 
     def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict):
@@ -99,9 +137,9 @@ class Qichacha(object):
 
             if page ==1:
                 cnt = self.parser.parse_search_result_count(tree)
-                metadata_dict['total']+=cnt
-                key ='total_{}_{}_{}'.format(keyword,index, province)
-                metadata_dict['total_{}_{}_{}'.format(keyword,index, province)]=cnt
+                metadata_dict['total_expect2']+=cnt
+                #metadata_dict['total_[index:{}]_expect2'.format(index)]+=cnt
+                #metadata_dict['total_[index:{}][省:{}]_expect2'.format(index, province)]=cnt
                 if cnt > self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
                     print ("TODO expand {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
 
@@ -130,7 +168,7 @@ class Qichacha(object):
         :param name: standard company name
         :rtype: qichacha id or None
         """
-        url = self.list_url.format(key=name, index=0, page=1,province='')
+        url = self.list_url.format(key=name, index=0, page=1, province='')
         try:
             source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
