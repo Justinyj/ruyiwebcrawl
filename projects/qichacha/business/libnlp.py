@@ -112,48 +112,29 @@ def classify_company_name(name):
 
 
 
-def get_keywords(sentences, regex_skip_word, regex_use_word, limit=100 ):
+def get_keywords(sentences, regex_skip_word,  limit=100 ):
     import jieba
-
-    #char
-    sentences_stream = [
-            [char.strip() for char in sentence]
-            for sentence in sentences
-    ]
-
-    tf_char = collections.Counter()
-    tf_char_bigram = collections.Counter()
-    for sentence in sentences_stream:
-        if not sentence:
-            continue
-
-        for w in sentence:
-            if w:
-                tf_char[w+u"医院"]+=1
-
-        for bigram in [u"".join(sentence[i:i+2]).strip() for i in range(len(sentence)-1) ]:
-            tf_char_bigram[bigram+u"医院"]+=1
 
     sentence_stream = [
         [word.strip() for word in jieba.cut(sentence) if not regex_skip_word or not re.search(regex_skip_word,word)]
         for sentence in sentences
     ]
 
-    #word
     tf_word = collections.Counter()
     tf_word_bigram = collections.Counter()
-    for sentence in sentences:
+    for sentence in sentence_stream:
         for w in sentence:
             if w:
-                tf_word[w+u"医院"]+=1
+                tf_word[w]+=1
 
         for bigram in [u"".join(sentence[i:i+2]).strip() for i in range(len(sentence)-1) ]:
-            if re.search(regex_use_word,bigram):
-                tf_word_bigram[bigram]+=1
+            #if re.search(regex_use_word,bigram):
+            tf_word_bigram[bigram]+=1
 
     map_name_tf = {}
-    for tf in [tf_char, tf_char_bigram, tf_word, tf_word_bigram]:
-        print json.dumps(tf.most_common(limit),  ensure_ascii=False)
+#    for tf in [tf_char, tf_char_bigram, tf_word, tf_word_bigram]:
+    for tf in [tf_word, tf_word_bigram]:
+        #print json.dumps(tf.most_common(limit),  ensure_ascii=False)
         for (name, freq) in tf.most_common(limit):
             map_name_tf[name] = freq + map_name_tf.get(name,0)
 

@@ -35,6 +35,9 @@ def file2set(filename):
     with codecs.open(filename,  encoding="utf-8") as f:
         for line in f.readlines():
             line = line.strip()
+            #skip comment line
+            if line.startswith('#'):
+                continue
 
             if line:
                 ret.add(line)
@@ -165,30 +168,74 @@ def stat(batch):
                 #print type(keyword_entry)
                 all_company.update(keyword_entry["data"])
                 gcounter["all_company_dup"] += len(keyword_entry["data"])
-                all_keywords[keyword] = keyword_entry["metadata"]["total"]
+                all_keywords[keyword] = keyword_entry["metadata"]["total_expect2"]
+                if keyword_entry["metadata"]["total_expect2"] - keyword_entry["metadata"]["total_actual"]>2:
+                    print keyword, json.dumps(keyword_entry["metadata"],ensure_ascii=False)
+                else:
+                    gcounter["all_keywords_complete"] += 1
+                all_keywords[keyword] = keyword_entry["metadata"]["total_expect2"]
 
-    print json.dumps(all_keywords,ensure_ascii=False)
+
+    #print json.dumps(all_keywords,ensure_ascii=False)
     gcounter["all_company"] = len(all_company)
     gcounter["all_keywords"] = len(all_keywords)
-    all_hospital = [x for x in all_company.keys() if libnlp.classify_company_name(x) in [u'医院投资',u'医院管理']]
-    gcounter["all_hospital"] = len(all_hospital)
+    all_medical = [x for x in all_company.keys() if libnlp.classify_company_name(x) in [u'医院投资',u'医院公司']]
+    gcounter["all_medical"] = len(all_medical)
 
-    filename = getLocalFile('company_from_search.{}.txt'.format(batch))
-    lines2file(sorted(list(all_hospital)), filename)
 
-    all_hospital_sentence = set()
-    filename = getLocalFile('text_corpus.{}.txt'.format(batch))
-    all_sentences =  [ line for line in file2set(filename) if u'医院' in line]
 
-    map_name_freq = libnlp.get_keywords(all_sentences, None,  ur"医院$", 300)
+def merge_company(batch):
+    company_name_all = set()
+    all_keywords = {}
+    #load prev result
+    for filename_metadata_search in glob.glob(getLocalFile('company_name*.txt')):
+        names = file2set(filename_metadata_search)
+        gcounter['company_name_dup1'] += len(names)
+        company_name_all.update(names)
+
+    #load from search metadata
+    filename_metadata_search = getLocalFile('crawl_search.{}.json.txt'.format(batch))
+    for filename in glob.glob(getLocalFile('crawl_search*.json.txt')):
+        for line in file2set(filename):
+            gcounter["line"] +=1
+            item = json.loads(line)
+            for keyword, keyword_entry in item["data"].items():
+                if 'data' in keyword_entry:
+                    names = keyword_entry["data"].keys()
+                else:
+                    names = keyword_entry.keys()
+                gcounter['company_name_dup2'] += len(names)
+                company_name_all.update(names)
+
+                if filename == filename_metadata_search:
+                    all_keywords[keyword] = keyword_entry["metadata"]["total_expect2"]
+
+    gcounter['company_name_all']=len(company_name_all)
+    filename = getLocalFile('company_name.all.txt')
+    lines2file(sorted(list(company_name_all)), filename)
+
+    #medical company
+    all_medical = [x for x in company_name_all if libnlp.classify_company_name(x) in [u'医院投资',u'医院公司']]
+    gcounter["all_medical"] = len(all_medical)
+    filename = getLocalFile('company_name.{}.txt'.format(batch))
+    lines2file(sorted(list(all_medical)), filename)
+
+    #medical new keywords
+    map_name_freq = libnlp.get_keywords(all_medical, None,  100)
 
     new_keywords = set()
-    new_keywords.update(all_keywords)
-    new_keywords.update(map_name_freq.keys())
+    for name in map_name_freq:
+        if not re.match(ur"(医院|公司)$", name):
+            name += u"医院"
+        new_keywords.update(map_name_freq.keys())
+
+    gcounter["new_keywords_1"] = len(new_keywords)
+    new_keywords.difference_update(all_keywords.keys())
     gcounter["new_keywords"] = len(new_keywords)
     filename = getLocalFile('keywords_new.{}.txt'.format(batch))
     lines2file(sorted(list(new_keywords)), filename)
 
+    #medical company
 
 
 #################
@@ -208,7 +255,7 @@ def fetch_detail(batch):
                 #print type(keyword_entry)
                 all_company.update(keyword_entry["data"])
                 gcounter["all_company_dup"] += len(keyword_entry["data"])
-                all_keywords[keyword] = keyword_entry["metadata"]["total"]
+                all_keywords[keyword] = keyword_entry["metadata"]["total_expect2"]
 
     #load names
     print json.dumps(all_company.values()[0], ensure_ascii=False)
@@ -216,9 +263,9 @@ def fetch_detail(batch):
     #map names to id
     crawler = Qichacha()
     counter = collections.Counter()
-    all_hospital = [x for x in all_company.keys() if libnlp.classify_company_name(x) in [u'医院投资',u'医院管理']]
-    counter['total'] = len(all_hospital)
-    for name in all_hospital:
+    all_medical = [x for x in all_company.keys() if libnlp.classify_company_name(x) in [u'医院投资',u'医院公司']]
+    counter['total'] = len(all_medical)
+    for name in all_medical:
         company = all_company[name]
         key_num = company.get('key_num')
 
@@ -229,7 +276,7 @@ def fetch_detail(batch):
         try:
             crawler.crawl_company_detail(name, key_num)
             crawler.crawl_descendant_company(name, key_num)
-            #crawler.crawl_ancestors_company(name, key_num)
+            crawler.crawl_ancestors_company(name, key_num)
             counter['ok'] +=1
         except:
             print "fail", name
@@ -262,12 +309,15 @@ def main():
     #filename = sys.argv[3]
     if "search" == option:
         crawl_search(batch)
-        stat(batch)
+        #stat(batch)
+        #fetch_detail(batch)
 
 
     elif "stat" == option:
         stat(batch)
 
+    elif "merge" == option:
+        merge_company(batch)
 
     elif "fetch" == option:
         fetch_detail(batch)

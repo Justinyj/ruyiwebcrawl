@@ -10,6 +10,7 @@ from qiparser import QiParser
 import lxml.html
 import re
 import json
+import collections
 
 class Qichacha(object):
 
@@ -25,9 +26,38 @@ class Qichacha(object):
         self.NUM_PER_PAGE = 10
         self.INDEX_LIST_PERSON = [4,6]
         self.INDEX_LIST_ORG = [2]
-        self.PROVINCE_LIST = [
-        "AH", "BJ", "CQ", "FJ", "GD", "GS", "GX", "GZ", "HAIN", "HB", "HEN", "HLJ", "HUB", "HUN", "JL",
-        "JS", "JX", "LN", "NMG", "NX", "QH", "SAX", "SC", "SD", "SH", "SX", "TJ", "XJ", "XZ", "YN", "ZJ"]
+        self.PROVINCE_LIST = {
+        "AH":[1,2,3,4,5,6,7,8,10,11,12,13,15,16,17,18,24,25,26,29],
+        "BJ":[],
+        "CQ":[],
+        "FJ":[1,2,3,4,5,6,7,8,9,22],
+        "GD":[1,2,3,4,5,6,7,8,9,12,13,14,15,16,17,18,19,20,51,52,53],
+        "GS":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,21,22,23,24,26,27],
+        "GX":[],
+        "GZ":[],
+        "HAIN":[],
+        "HB":[],
+        "HEN":[],
+        "HLJ":[],
+        "HUB":[],
+        "HUN":[],
+        "JL":[],
+        "JS":[],
+        "JX":[],
+        "LN":[],
+        "NMG":[],
+        "NX":[],
+        "QH":[],
+        "SAX":[],
+        "SC":[],
+        "SD":[],
+        "SH":[],
+        "SX":[],
+        "TJ":[],
+        "XJ":[],
+        "XZ":[],
+        "YN":[],
+        "ZJ":[]}
 
         self.downloader = Downloader(request=request,
                                      batch_id=batch_id,
@@ -70,10 +100,12 @@ class Qichacha(object):
         result = {}
         for idx, keyword in enumerate(keyword_list):
             summary_dict = {}
-            metadata_dict = {'total':0}
+            metadata_dict = collections.Counter()
             for index in index_list:
 
                 cnt = self.get_keyword_search_count(keyword, index)
+                metadata_dict['total_expect']+=cnt
+                #metadata_dict['total_[index:{}]_expect'.format(index)]=cnt
 
                 province_list = []
                 if limit is None and cnt> self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
@@ -86,6 +118,9 @@ class Qichacha(object):
                 "data":summary_dict,
                 "metadata":metadata_dict
             }
+            metadata_dict['total_actual'] = len(summary_dict)
+            if metadata_dict['total_expect2'] -  metadata_dict['total_actual']>2:
+                print ('[{}] expect {}, expect2 {}, actual {} '.format( keyword, metadata_dict['total_expect'], metadata_dict['total_expect2'], metadata_dict['total_actual']) )
         #print(json.dumps(result, ensure_ascii=False))
         return result
 
@@ -102,9 +137,9 @@ class Qichacha(object):
 
             if page ==1:
                 cnt = self.parser.parse_search_result_count(tree)
-                metadata_dict['total']+=cnt
-                key ='total_[{}][index:{}][省:{}]'.format(keyword,index, province)
-                metadata_dict[key]=cnt
+                metadata_dict['total_expect2']+=cnt
+                #metadata_dict['total_[index:{}]_expect2'.format(index)]+=cnt
+                #metadata_dict['total_[index:{}][省:{}]_expect2'.format(index, province)]=cnt
                 if cnt > self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
                     print ("TODO expand {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
 
