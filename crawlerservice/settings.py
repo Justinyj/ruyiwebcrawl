@@ -16,9 +16,8 @@ envs = {
         'DBHOST': '127.0.0.1',
         'DBPORT': 5432,
 
-        'CACHEPAGE': 'fs', # fs, pg, qiniu
+        'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
-        'FSCACHEDIR': '/tmp',
     },
 }
 
