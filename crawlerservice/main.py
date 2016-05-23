@@ -15,7 +15,7 @@ define('process', default=1, type=int, help='process number')
 
 
 if __name__ == "__main__":
-    # python main.py -port=8000 -process=8
+    # python main.py -port=8000 -process=4
     tornado.options.parse_command_line()
 
     http_server = tornado.httpserver.HTTPServer(urls, xheaders=True)
