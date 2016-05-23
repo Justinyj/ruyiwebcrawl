@@ -40,12 +40,13 @@ def deploy():
         run('mv /tmp/crawlerservice /opt/service/raw/crawlerservice`date +%Y%m%d%H%M%S`')
 
     with cd('/opt/service/'):
-        run('[ -f crawlerservice ] && unlink crawlerservice || echo ""')
+        run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
-        with cd('crawlerservice'):
-            run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
-            with prefix('source env.sh'):
-                run('pip install -r requirements.txt')
-                run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py'))
-                run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4'))
+
+    with cd('/opt/service/crawlerservice'):
+        run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
+        with prefix('source env.sh'):
+            run('pip install -r requirements.txt')
+            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py'))
+            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4'))
 
