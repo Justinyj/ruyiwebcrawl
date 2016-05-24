@@ -13,7 +13,7 @@ import time
 import urlparse
 import tornado.gen
 
-from extractproxies import extract_proxies
+from extractproxies import extract_proxies, extract_proxies_async
 
 class ProxyPool(object):
     """
@@ -57,13 +57,15 @@ class ProxyPool(object):
 
     @tornado.gen.coroutine
     def extract_proxies_task(self):
+        requests_proxies = []
         while True:
-            requests_proxies = extract_proxies()
+            # TODO yield fetch_duration next line
+            extract_proxies_async(requests_proxies)
             for proxy in requests_proxies:
                 for protocol, address in proxy.items():
                     self._pool.add(address)
 
-            yield tornado.gen.sleep(1800)
+            yield tornado.gen.sleep(432)
 
 
     @classmethod

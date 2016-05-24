@@ -5,7 +5,7 @@
 from __future__ import print_function, division
 
 from tornado.options import define, options
-import tornado.ioloop
+from tornado.ioloop import IOLoop
 import tornado.httpserver
 
 from urls import urls
@@ -21,5 +21,5 @@ if __name__ == "__main__":
     http_server = tornado.httpserver.HTTPServer(urls, xheaders=True)
     http_server.bind(options.port)
     http_server.start(options.process)
-    tornado.ioloop.IOLoop.current().start()
+    IOLoop.current().start()
 
