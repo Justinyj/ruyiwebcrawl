@@ -2,6 +2,8 @@
 
 ### 1.web crawler cache
 
+    I would like to asynchronous cache service with every single process.
+
 ### 2.centralized web proxy pool
 
     Because proxy pool data structure saved in memory, so can not run this service in multiprocess mode.
