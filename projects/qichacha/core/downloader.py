@@ -9,7 +9,6 @@ import requests
 import time
 import os
 
-from cookies import get_sleep_period
 from headers import choice_cookie, choice_agent, choice_proxy
 from cache import Cache
 from proxy import Proxy
@@ -22,15 +21,16 @@ class Downloader(object):
 
     """
 
-    def __init__(self, request=False, batch_id='', groups=None, refresh=False):
+    def __init__(self, config, request=False, batch_id='', groups=None, refresh=False):
         self.request = request
         self.TIMEOUT = 10
         self.RETRY = 3
 
         if batch_id == '':
             batch_id = os.path.dirname(__file__)
-        self.cache = Cache(batch_id=batch_id)
+        self.cache = Cache(config, batch_id=batch_id)
         self.groups = groups
+        self.config = config
         self.refresh = refresh
 
 
@@ -64,12 +64,16 @@ class Downloader(object):
 
     def pick_cookie_agent_proxy(self, url):
         self.driver.cookies.update(dict(i.split('=', 1) \
-                for i in choice_cookie().split('; ')))
+                for i in choice_cookie(self.config['COOKIES']).split('; ')))
         self.driver.headers['User-Agent'] = choice_agent()
-#        proxies = choice_proxy(url)
+#        proxies = choice_proxy(self.config, url)
 #        self.driver.proxies.update(proxies)
 #        return proxies
 
+    def _get_sleep_period(self):
+        sleep = self.config['CRAWL_GAP'] / len(self.config['COOKIES'])
+        #print (sleep)
+        return sleep
 
     def request_download(self, url):
         for i in range(self.RETRY):
@@ -84,7 +88,7 @@ class Downloader(object):
 #                Proxy.instance().post(url, proxy)
                 pass
             finally:
-                time.sleep(get_sleep_period()) # sleep of cookie
+                time.sleep(self._get_sleep_period()) # sleep of cookie
         else:
             return u''
 
@@ -97,7 +101,7 @@ class Downloader(object):
             except:
                 continue
             finally:
-                time.sleep(get_sleep_period())
+                time.sleep(self._get_sleep_period())
         else:
             return u''
 
@@ -136,4 +140,3 @@ class Downloader(object):
         if key.startswith('%'):
             key = urllib.unquote(key)
         return key, page
-

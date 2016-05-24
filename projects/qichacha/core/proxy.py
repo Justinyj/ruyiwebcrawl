@@ -4,14 +4,13 @@
 
 from __future__ import print_function, division
 
-from settings import PROXYSERVER
 import base64
 import urlparse
 import requests
 
 class Proxy(object):
-    def __init__(self, server=None):
-        self.SERVER = server if server else PROXYSERVER
+    def __init__(self, config, server=None):
+        self.SERVER = server if server else config['PROXY_SERVER']
 
     @classmethod
     def instance(cls):
@@ -52,4 +51,3 @@ class Proxy(object):
         if u'error' in js:
             return js[u'error']
         return False
-

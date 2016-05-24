@@ -4,13 +4,19 @@
 
 from __future__ import print_function, division
 import json
-import sys
+import sys,os
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from core.qichacha import Qichacha
 
-qichacha = Qichacha(batch_id='qichacha', groups='哈药')
+def getTheFile(filename):
+    return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
+
+filename = getTheFile("../config/conf.179.json")
+with open(filename) as f:
+    config = json.load(f)['test']
+qichacha = Qichacha(config, batch_id='qichacha', groups='哈药')
 
 def test_search_person():
     person = '吴志军'

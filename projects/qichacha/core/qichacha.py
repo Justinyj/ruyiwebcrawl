@@ -14,15 +14,19 @@ import collections
 
 class Qichacha(object):
 
-    def __init__(self, batch_id=None, groups=None, refresh=False, request=True):
+    def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True):
         if batch_id is None:
             batch_id = 'qichacha'
+        if config is None:
+            raise Exception('error: missing config')
+
+        self.config = config
         self.list_url = 'http://qichacha.com/search?key={key}&index={index}&p={page}&province={province}'
         self.base_url = 'http://qichacha.com/company_base?unique={key_num}&companyname={name}'
         self.invest_url = 'http://qichacha.com/company_touzi?unique={key_num}&companyname={name}&p={page}'
 
-        self.VIP_MAX_PAGE_NUM = 500
-        self.MAX_PAGE_NUM = 10
+        #self.VIP_MAX_PAGE_NUM = 500
+        #self.MAX_PAGE_NUM = 10
         self.NUM_PER_PAGE = 10
         self.INDEX_LIST_PERSON = [4,6]
         self.INDEX_LIST_ORG = [2]
@@ -59,7 +63,8 @@ class Qichacha(object):
         "YN":[],
         "ZJ":[]}
 
-        self.downloader = Downloader(request=request,
+        self.downloader = Downloader(config=config,
+                                     request=request,
                                      batch_id=batch_id,
                                      groups=groups,
                                      refresh=refresh)
@@ -93,9 +98,12 @@ class Qichacha(object):
     def _list_keyword_search(self, keyword_list, index_list, limit=None):
         if not isinstance(keyword_list, list):
             keyword_list = [keyword_list]
-        max_page = self.MAX_PAGE_NUM if limit is None else \
-                   (limit - 1) // self.NUM_PER_PAGE + 1
-        max_page = (max_page > self.MAX_PAGE_NUM and [self.MAX_PAGE_NUM] or [max_page])[0]
+
+        if limit is None:
+            max_page = self.config['MAX_PAGE_NUM']
+        else:
+            max_page = (limit - 1) // self.NUM_PER_PAGE + 1
+            max_page = min(self.config['MAX_PAGE_NUM'], max_page)
 
         result = {}
         for idx, keyword in enumerate(keyword_list):
@@ -108,7 +116,7 @@ class Qichacha(object):
                 #metadata_dict['total_[index:{}]_expect'.format(index)]=cnt
 
                 province_list = []
-                if limit is None and cnt> self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
+                if limit is None and cnt>= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:
                     print ('auto expand {} results of [{}] with province filter '.format(cnt, keyword) )
                     for province in self.PROVINCE_LIST:
                         self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict)
@@ -140,8 +148,10 @@ class Qichacha(object):
                 metadata_dict['total_expect2']+=cnt
                 #metadata_dict['total_[index:{}]_expect2'.format(index)]+=cnt
                 #metadata_dict['total_[index:{}][省:{}]_expect2'.format(index, province)]=cnt
-                if cnt > self.MAX_PAGE_NUM * self.NUM_PER_PAGE:
+                if cnt >= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:
                     print ("TODO expand {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
+                elif province:
+                    print ("expect {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
 
             if tree.cssselect('div.noresult .noface'):
                 break
