@@ -63,7 +63,7 @@ class DownloadUFile(BaseUFile):
         except requests.RequestException as e:
             return None, ResponseInfo(None, e)
         if response.status_code in [200, 206]:
-            return response.content, ResponseInfo(response, None, content_consumed)
+            return response.content, ResponseInfo(response, None, True)
         else:
             return None, ResponseInfo(response)
 
