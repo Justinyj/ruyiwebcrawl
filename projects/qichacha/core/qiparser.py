@@ -194,7 +194,7 @@ class QiParser(object):
             return int(ret[0].text_content().strip().replace("+",""))
         else:
             return 0
-            
+
     def parse_company_investment(self, tree):
         invest_dict = {}
         for sub_company in tree.cssselect('.list-group a.list-group-item'):
