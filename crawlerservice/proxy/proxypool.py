@@ -14,6 +14,7 @@ import urlparse
 import tornado.gen
 
 from extractproxies import extract_proxies, extract_proxies_async
+from settings import FSCACHEDIR
 
 class ProxyPool(object):
     """
@@ -45,7 +46,7 @@ class ProxyPool(object):
         self.SUCCESS = u'success'
 
 
-        self.dump_file = 'datastructure.dump'
+        self.dump_file = os.path.join(FSCACHEDIR, 'datastructure.dump')
         if os.path.isfile(self.dump_file):
             with open(self.dump_file) as fd:
                 self._pool, self._table = json.load(fd)
@@ -61,9 +62,8 @@ class ProxyPool(object):
             for proxy in requests_proxies:
                 for protocol, address in proxy.items():
                     self._pool.add(address)
+            yield tornado.gen.sleep(432)
 
-            print(len(self._pool))
-            yield tornado.gen.sleep(300) # 432
 
 
     @tornado.gen.coroutine
@@ -74,8 +74,7 @@ class ProxyPool(object):
             extract_proxies_async(requests_proxies)
             for proxy in requests_proxies:
                 self._pool.add(proxy)
-
-            yield tornado.gen.sleep(432)
+            yield tornado.gen.sleep(300) # 432
 
 
     @classmethod
