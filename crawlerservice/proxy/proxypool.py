@@ -52,18 +52,28 @@ class ProxyPool(object):
             self._pool = set(self._pool)
             self._table = defaultdict(dict, self._table)
 
-        self.extract_proxies_task()
-
+        self.extract_proxies_task_async()
 
     @tornado.gen.coroutine
     def extract_proxies_task(self):
-        requests_proxies = []
+        while True:
+            requests_proxies = extract_proxies()
+            for proxy in requests_proxies:
+                for protocol, address in proxy.items():
+                    self._pool.add(address)
+
+            print(len(self._pool))
+            yield tornado.gen.sleep(300) # 432
+
+
+    @tornado.gen.coroutine
+    def extract_proxies_task_async(self):
+        requests_proxies = set()
         while True:
             # TODO yield fetch_duration next line
             extract_proxies_async(requests_proxies)
             for proxy in requests_proxies:
-                for protocol, address in proxy.items():
-                    self._pool.add(address)
+                self._pool.add(proxy)
 
             yield tornado.gen.sleep(432)
 

@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+#
+# service provider mimvp not given different proxies in different times,
+# we'd better fetch once a lot, fetch more than its limiation
 
 from __future__ import print_function, division
 
@@ -125,7 +128,7 @@ class ExtractProxies(object):
         success_count = self.SUCCESS_RATIO * self.CONNECTIVITY_TEST
         fail_count = self.CONNECTIVITY_TEST - success_count
         count = {} # callback of async_httpclient(handle_request) get local variable,
-                   # no conflict with multi coroutine
+                   # no conflict with multi coroutine, originally
         count[idx] = [success_count, fail_count]
 
         for protocol, pro_ip_port in proxy.items():
@@ -172,9 +175,9 @@ class ExtractProxies(object):
             gen.sleep(0.01)
             if count[idx][0] <= 0:
                 if pro_type == 'https':
-                    requests_proxies.append({'https': '{}://{}:{}'.format(pro_type, host, port)})
+                    requests_proxies.add('{}://{}:{}'.format(pro_type, host, port))
                 else:
-                    requests_proxies.append({'http': '{}://{}:{}'.format(pro_type, host, port)})
+                    requests_proxies.add('{}://{}:{}'.format(pro_type, host, port))
                 raise gen.Return(True)
             if count[idx][1] <= 0:
                 raise gen.Return(False)
@@ -182,7 +185,9 @@ class ExtractProxies(object):
 
 
 def extract_proxies():
-    """
+    """ http requests is synchronous program,
+        it will block the main thread of tornado.
+
     :rtype: [{'http': 'http://123.169.238.33:8888'}, ...]
     """
     instance = ExtractProxies.instance()
@@ -221,7 +226,7 @@ def worker(instance, idx, item, requests_proxies):
 @gen.coroutine
 def extract_proxies_async(requests_proxies):
     """
-    :rtype: [{'http': 'http://123.169.238.33:8888'}, ...]
+    :rtype: {'http://123.169.238.33:8888', ...}
     """
     instance = ExtractProxies.instance()
     raw_proxies = instance.get_proxies()
