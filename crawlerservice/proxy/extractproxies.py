@@ -10,20 +10,16 @@ from __future__ import print_function, division
 import requests
 import time
 import pycurl
-from collections import deque
 
-from tornado.locks import Semaphore
-from tornado.concurrent import Future
-from tornado.ioloop import IOLoop
-from tornado import httpclient
 from tornado import gen
-
+from tornado import httpclient
 from tornado.curl_httpclient import CurlAsyncHTTPClient as AsyncHTTPClient, CurlError
+from tornado.locks import Semaphore
 
+from settings import CONCURRENT_NUM
 
 DAY_LIMIATION = 200000
 ONCE_LIMIATION = 2000
-CONCURRENT_NUM = 10
 
 
 class ExtractProxies(object):
@@ -203,35 +199,25 @@ def extract_proxies():
     return requests_proxies
 
 
-
-futures_q = deque([Future() for _ in range(CONCURRENT_NUM)])
-
-@gen.coroutine
-def simulator(futures):
-    for f in futures:
-        yield gen.moment
-        f.set_result(None)
-
-IOLoop.current().add_callback(simulator, list(futures_q))
-
-SEM = Semaphore(CONCURRENT_NUM)
-
-@gen.coroutine
-def worker(instance, idx, item, requests_proxies):
-    with (yield SEM.acquire()):
-        proxies = instance.parse_proxies_async(item)
-        yield instance.async_http(proxies, idx, requests_proxies)
-
-
 @gen.coroutine
 def extract_proxies_async(requests_proxies):
     """
     :rtype: {'http://123.169.238.33:8888', ...}
     """
+
+    SEMA = Semaphore(CONCURRENT_NUM)
+
+    @gen.coroutine
+    def worker(instance, idx, item, requests_proxies):
+        with (yield SEMA.acquire()):
+            proxies = instance.parse_proxies_async(item)
+            yield instance.async_http(proxies, idx, requests_proxies)
+
+
     instance = ExtractProxies.instance()
     raw_proxies = instance.get_proxies()
     if raw_proxies is not None:
         yield [worker(instance, idx, item, requests_proxies) \
             for idx, item in enumerate(raw_proxies)]
 
-    print('\n*===================*\n')
+    # can add code here

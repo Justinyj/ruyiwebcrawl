@@ -47,6 +47,7 @@ class ProxyPool(object):
 
 
         self.dump_file = os.path.join(FSCACHEDIR, 'datastructure.dump')
+
         if os.path.isfile(self.dump_file):
             with open(self.dump_file) as fd:
                 self._pool, self._table = json.load(fd)
@@ -67,13 +68,19 @@ class ProxyPool(object):
 
 
     @tornado.gen.coroutine
-    def extract_proxies_task_async(self):
+    def extract_proxies_task_async(self, debug=False):
         requests_proxies = set()
         while True:
             # TODO yield fetch_duration next line
             extract_proxies_async(requests_proxies)
+            if debug:
+                print('before pool', len(self._pool))
+
             for proxy in requests_proxies:
                 self._pool.add(proxy)
+
+            if debug:
+                print('after pool', len(self._pool))
             yield tornado.gen.sleep(300) # 432
 
 

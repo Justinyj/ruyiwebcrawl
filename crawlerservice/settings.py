@@ -17,7 +17,8 @@ envs = {
         'DBPORT': 5432,
 
         'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
-        'FSCACHEDIR': '/data/crawler_file_cache/',
+        'FSCACHEDIR': '.',
+        'CONCURRENT_NUM': 200,
     },
     'PRODUCTION': {
         'DBNAME': 'crawlercache',
@@ -28,6 +29,7 @@ envs = {
 
         'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
+        'CONCURRENT_NUM': 200,
     }
 }
 
