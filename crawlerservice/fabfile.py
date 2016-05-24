@@ -46,9 +46,11 @@ def upload():
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
 
 
-def deploy():
-    upload()
+def kill():
+    run("ps aux | grep python | grep -v grep | awk '{print $2}' | xargs -n 1 --no-run-if-empty kill")
+    run('[ -e /tmp/*.sock ] && rm /tmp/*.sock || echo "no /tmp/*.sock"')
 
+def runapp():
     with cd('/opt/service/crawlerservice'):
 #        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
@@ -56,4 +58,10 @@ def deploy():
             run('pip install -r requirements.txt')
             run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py'))
             run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4'))
+
+
+def deploy():
+    upload()
+    kill()
+    runapp()
 
