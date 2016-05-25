@@ -133,6 +133,7 @@ class Qichacha(object):
         return result
 
     def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict):
+        cnt_actual =0
         for page in range(1, max_page + 1):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
@@ -156,7 +157,12 @@ class Qichacha(object):
             if tree.cssselect('div.noresult .noface'):
                 break
 
-            summary_dict.update( self.parser.parse_search_result(tree) )
+            temp = self.parser.parse_search_result(tree)
+            cnt_actual += len(temp)
+            summary_dict.update( temp )
+
+        if province:
+            print (" got {} of {} results, for [{}][index:{}][省:{}]".format( cnt_actual, len(summary_dict),keyword,index, province))
 
     def get_keyword_search_count(self, keyword, index):
         """.. :py:method::

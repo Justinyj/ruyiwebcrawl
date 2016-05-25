@@ -4,7 +4,8 @@
 
 from __future__ import print_function, division
 import json
-import sys,os
+import sys
+import os
 reload(sys)
 sys.setdefaultencoding('utf-8')
 

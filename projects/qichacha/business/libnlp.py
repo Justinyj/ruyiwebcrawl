@@ -12,8 +12,6 @@ from collections import defaultdict
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from core.qichacha import Qichacha
-
 sys.path.append(os.path.abspath(os.path.dirname(__file__)) )
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
@@ -67,10 +65,13 @@ def classify_invest(name):
     return False
 
 def classify_medical_invests(name):
-    if re.search(ur'(医院|医疗).*(投资|控股)', name):
+    if re.search(ur'(医院|医疗|健康).*(投资|控股)', name):
         return True
 
-    if re.search(ur'(医院|医疗).*(集团|集团.*公司)$', name):
+    if re.search(ur'(医院|医疗).*(管理)', name):
+        return True
+
+    if re.search(ur'(医院|医疗|健康).*(集团|集团.*公司)$', name):
         return True
 
     return False
@@ -82,7 +83,7 @@ def classify_hospital(name):
             return True
 
         #清远市红十字中心医院肿瘤防治中心
-        if re.search( ur'医院.*(肿瘤|孕|管理).*中心$', name):
+        if re.search( ur'医院.*(肿瘤|孕).*中心$', name):
             return True
 
         if re.search(ur'(医院（|医院\()', name):
@@ -91,6 +92,16 @@ def classify_hospital(name):
     return False
 
 
+def is_label_medical(label, strict=True):
+    if strict:
+        return label in [u'医院投资',u'医院公司']
+    else:
+        return label in [u'医院投资',u'医院公司',u'门诊医疗']
+
+def classify_company_name_medical(name, strict):
+    label = classify_company_name(name)
+    if is_label_medical(label, strict):
+        return label
 
 def classify_company_name(name):
     LABEL_DEFAULT = ""
@@ -105,7 +116,7 @@ def classify_company_name(name):
     if classify_hospital(name):
         return u'医院公司'
 
-    if re.search(ur'([医药诊孕男女母婴疗]|健康|肿瘤|生物|康复|养老|护理|推拿)', name):
+    if re.search(ur'([诊孕男女母婴药医疗]|健康|肿瘤|生物|体检|康复|养老|护理|推拿)', name):
         return u'门诊医疗'
 
     return LABEL_DEFAULT
