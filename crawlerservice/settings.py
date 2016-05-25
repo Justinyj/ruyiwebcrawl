@@ -31,6 +31,17 @@ envs = {
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
     }
+    'TEST': {
+        'DBNAME': 'crawlercache',
+        'DBUSER': 'postgres',
+        'DBPASS': '1qaz2wsx',
+        'DBHOST': '127.0.0.1',
+        'DBPORT': 5432,
+
+        'CACHEPAGE': 'fs', # ufile, fs, pg, qiniu
+        'FSCACHEDIR': '/data/crawler_file_cache/',
+        'CONCURRENT_NUM': 200,
+    }
 }
 
 for key, value in envs.get(ENV, envs['DEV']).items():
