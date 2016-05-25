@@ -30,7 +30,7 @@ envs = {
         'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
-    }
+    },
     'TEST': {
         'DBNAME': 'crawlercache',
         'DBUSER': 'postgres',

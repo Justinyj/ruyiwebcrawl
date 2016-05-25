@@ -10,6 +10,7 @@ from handler import *
 settings = {
 # autoreload is incompatible with multi-process mode. When autoreload is enabled you must run only one process.
 #    "autoreload": True,
+#    "debug": True,
 }
 
 urls = tornado.web.Application([
@@ -17,4 +18,9 @@ urls = tornado.web.Application([
 
     (r'/v1/proxy/datastructure/?', ProxyDataStructureHandler),
     (r'/v1/proxy/([a-zA-Z0-9=\-_]+)/?(\d+\.?\d*)?', ProxyHandler),
+
+
+    (r'/v1/prefetch/(?P<batch_id>[a-zA-Z0-9_]+)/(?P<method>[a-zA-Z]+)', PrefetchHandler),
+
+    (r'/v1/fetch/(?P<method>[a-zA-Z]+)/(?P<b64url>[a-zA-Z0-9=\-_]+)', FetchHandler),
 ], **settings)
