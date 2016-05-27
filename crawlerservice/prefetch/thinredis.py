@@ -32,7 +32,7 @@ class ThinSet(object):
     def __init__(self, name, totalcount, connection=None):
         self.name = name
         self.total = totalcount
-        self.modulo = totalcount//400
+        self.modulo = totalcount // 400
         self.counterkey = 'thinset_{}_count'.format(name)
         self.bucketskey = 'thinset_{}_buckets'.format(name)
         if connection is not None:
@@ -136,16 +136,29 @@ class ThinSet(object):
 
 
 class ThinHash(object):
-    """ counter key: string
-        buckets key: set, {bucket1, bucket2, ...}
-        bucket1 key: hashmap
+    """ Data Structure:
+            counter key: string
+            buckets key: set, {bucket1, bucket2, ...}
+            bucket1 key: hashmap
+
+        Usage:
+
+        >>> conn = ShardRedis(conns=[Redis(db=1), Redis(db=2)])
+        >>> thinhash = ThinHash('batch_id', 10000, conn)
+        >>> field = int(hashlib.sha1('field1').hexdigest(), 16)
+        >>> thinhash.hset(field, 'value1')
+        None
+
+        >>> thinhash.hget(field)
+        'value1'
+
     """
     def __init__(self, name, totalcount, connection=None):
         self.name = name
         self.counterkey = 'thinhash_{}_count'.format(name)
         self.bucketskey = 'thinhash_{}_buckets'.format(name)
         self.total = totalcount
-        self.modulo = totalcount//400
+        self.modulo = totalcount // 400
         if connection is not None:
             self.conn = connection
         else:

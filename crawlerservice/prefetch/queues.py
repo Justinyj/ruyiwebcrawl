@@ -60,7 +60,7 @@ class Queue(object):
 
     def get(self, block=True, timeout=None):
         """ get item from queue, block if needed
- 
+
         Usage::
 
         >>> q.get(block=True)
@@ -70,7 +70,7 @@ class Queue(object):
         """
         # TODO: 1.queue empty, 2.queue connect time out.
         if block:
-            t = 0  
+            t = 0
             while timeout is None or t < timeout:
                 result = conn.spop(self.key)
                 if not result:
@@ -147,3 +147,108 @@ def poll(queues, timeout=None):
         time.sleep(0.5)
 
 prefetch_urls_queue = Queue('prefetch-urls-queue', priority=1, timeout=90)
+
+
+class HashQueue(object):
+    """ All items under one hashkey, so we can test whether the Queue is empty.
+        That is to say, items can not be distributed in sharding redis.
+    """
+    def __init__(self, key, priority=1, timeout=90):
+        self.key = key
+        self.timehash = '{key}-timehash'.format(key=key)
+        self.priority = priority
+        self.timeout = timeout
+
+    def clear(self):
+        return conn.delete(self.key)
+
+    def qsize(self):
+        return conn.hlen(self.key)
+
+    def delete(self, *items):
+        if items:
+            return conn.hdel(self.key, *items)
+        else:
+            return 0
+
+    def put(self, *items):
+        """ put item(s) into queue """
+        if items:
+            return conn.hmset(self.key, {i:0 for i in items})
+        else:
+            return 0
+
+    def get(self, block=True, timeout=None):
+        """ get item(s) from queue, block if needed
+
+        Usage::
+
+        >>> q.get(block=True) # empty queue will block forever
+        >>> q.get(block=True, timeout=5)
+        """
+        # TODO: 1.queue empty, 2.queue connect time out.
+        if block:
+            t = 0
+            while timeout is None or t < timeout:
+                # items is {} object
+                next_seq, items = conn.hscan(self.key, cursor=0, count=1)
+                if not items:
+                    t += 0.1
+                    time.sleep(0.1)
+                else: break
+        else:
+            next_seq, items = conn.hscan(self.key, cursor=0, count=1)
+
+        # SCAN does not provide guarantees about the
+        # number of elements returned at every iteration.
+        result = []
+        if items:
+            for item, _ in items.iteritems():
+                self.task_start(item)
+                result.append(item)
+        return result
+
+
+    def task_start(self, result):
+        """ save start time in redis hash """
+        conn.hsetnx(self.timehash, result, time.time())
+
+    def task_done(self, result):
+        """ clear start time in redis hash, indicating the task done """
+        return conn.hdel(self.timehash, result)
+
+    def clean_task(self):
+        """ check task hash for unfinished long running tasks, requeue them.
+
+            Requeue safety:
+            `self.timeout` must longer than crawler(worker) job timeout,
+            or else `clean_task` add item back to queue, at the same time,
+            job finished and removed from `self.timehash`.
+        """
+        timeout = self.timeout
+        if timeout is None:
+            conn.delete(self.timehash)
+            return
+
+        BATCH = 5000
+        items = []
+        time_now = time.time()
+        for field, value in conn.hgetall(self.timehash).iteritems():
+            start_time = float(value)
+            if time_now - start_time > timeout:
+                items.append(field)
+
+        items, items_tail = items[:BATCH], items[BATCH:]
+        while items:
+            print('requeuing {} items(e.g. ... {}) to {}'.format(len(items), items[-10:], self.key))
+            pipeline = conn.pipeline()
+            pipeline.hdel(self.timehash, *items)
+            pipeline.hmset(self.key, {i:0 for i in items})
+            pipeline.execute()
+            items, items_tail = items_tail[:BATCH], items_tail[BATCH:]
+
+    def background_cleaning(self):
+        while True:
+            self.clean_task()
+            time.sleep(60)
+
