@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# All items under one hashkey, so we can test whether the Queue is empty.
+# That is to say, items can not be distributed in sharding redis.
 
 import re
 import time
@@ -150,8 +153,8 @@ prefetch_urls_queue = Queue('prefetch-urls-queue', priority=1, timeout=90)
 
 
 class HashQueue(object):
-    """ All items under one hashkey, so we can test whether the Queue is empty.
-        That is to say, items can not be distributed in sharding redis.
+    """ The Queue volume is very large, so can not use ziplists compression.
+        Then HashQueue is unnecessary.
     """
     def __init__(self, key, priority=1, timeout=90):
         self.key = key
