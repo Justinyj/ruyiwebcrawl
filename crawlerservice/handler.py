@@ -99,3 +99,29 @@ class ProxyDataStructureHandler(tornado.web.RequestHandler):
         self.write(response)
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
 
+
+
+class PrefetchHandler(tornado.web.RequestHandler):
+    def post(self, batch_id, method):
+        gap = self.get_body_argument(u'gap', u'')
+        js = self.get_body_argument(u'js', False)
+        urls = self.get_body_arguments(u'urls')
+        headers = self.get_body_arguments(u'headers')
+
+        try:
+            if not urls:
+                raise(Exception('not transmit urls parameter'))
+
+        except Exception as e:
+            response = {'success': False, 'error': e}
+
+        self.write(response)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+
+
+class FetchHandler(tornado.web.RequestHandler):
+    def post(self, method, b64url): # can be get either
+        header = self.get_body_argument(u'header', u'')
+        js = self.get_body_argument(u'js', False)
+
+
