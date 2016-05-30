@@ -335,7 +335,7 @@ def fetch_detail(batch):
 
 
 def get_crawler(option):
-    filename = getTheFile("../config/conf.179.json")
+    filename = getTheFile("../config/conf.x179.json")
     with open(filename) as f:
         config = json.load(f)[option]
     return Qichacha(config)
