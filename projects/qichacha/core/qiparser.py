@@ -5,6 +5,7 @@
 from __future__ import print_function, division
 
 import string
+import re
 
 class QiParser(object):
     def __init__(self):
@@ -61,7 +62,7 @@ class QiParser(object):
             elif label == u'发照日期：':
                 info['approval_date'] = text # datetime( *map(int, text.split('-')) )
             elif label == u'企业地址：':
-                info['address'] = text
+                info['address'] = text.replace(u'查看地图', '').strip()
             elif label == u'经营范围：':
                 info['business_scope'] = text
         return info

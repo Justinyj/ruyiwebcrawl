@@ -34,7 +34,7 @@ def file2list(filename):
     ret = list()
     visited = set()
     with codecs.open(filename,  encoding="utf-8") as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             #skip comment line
             if line.startswith('#'):
@@ -48,7 +48,7 @@ def file2list(filename):
 def file2set(filename):
     ret = set()
     with codecs.open(filename,  encoding="utf-8") as f:
-        for line in f.readlines():
+        for line in f:
             line = line.strip()
             #skip comment line
             if line.startswith('#'):
