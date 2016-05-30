@@ -149,7 +149,6 @@ def poll(queues, timeout=None):
         t += 0.5
         time.sleep(0.5)
 
-prefetch_urls_queue = Queue('prefetch-urls-queue', priority=1, timeout=90)
 
 
 class HashQueue(object):
@@ -255,3 +254,6 @@ class HashQueue(object):
             self.clean_task()
             time.sleep(60)
 
+
+task_queue = Queue('task-queue', priority=2, timeout=90)
+failed_queue = Queue('failed-queue', priority=1, timeout=90)
