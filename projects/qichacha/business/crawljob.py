@@ -173,11 +173,12 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
 }
     '''
 def stat(batch):
-    all_company, all_keyword = load_all_company()
-
-    for name in all_company:
-        if re.search(ur"医.*院", name):
-            gcounter[u"all_company_医院"] +=1
+    for filename in glob.glob(getLocalFile('crawl_search.{}.json.txt'.format(batch))):
+        for line in file2list(filename):
+            gcounter["line"] +=1
+            item = json.loads(line)
+            for keyword, keyword_entry in item["data"].items():
+                print keyword, len(keyword_entry['data']), json.dumps(keyword_entry['metadata'])
 
 
 
@@ -341,12 +342,17 @@ def get_crawler(option):
     return Qichacha(config)
 
 def test():
+    seed = "张庆华"
+    crawler = get_crawler('test')
+    ret = crawler.list_person_search(seed, None)
+    print json.dumps(ret, ensure_ascii=False,encoding='utf-8')
+
+def test2():
     seed = "博爱医院"
     crawler = get_crawler('test')
     ret = crawler.list_corporate_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding='utf-8')
 
-def test2():
     seed = "上海华衡投资"
     crawler = Qichacha()
     ret = crawler.list_corporate_search(seed, 1)
@@ -363,7 +369,9 @@ def main():
     batch = sys.argv[2]
     #filename = sys.argv[3]
     if "search" == option:
-        crawl_search(batch, getTheFile( batch+"/*_reg*"), False)
+#        crawl_search(batch, getTheFile( batch+"/*_reg*"), False)
+        crawl_search(batch, getTheFile( batch+"/seed_person*_reg*"), False)
+        crawl_search(batch, getTheFile( batch+"/seed_org_keywords_vip*"), False)
         #stat(batch)
         #fetch_detail(batch)
 

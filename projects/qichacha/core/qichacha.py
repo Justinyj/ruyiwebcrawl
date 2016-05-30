@@ -11,6 +11,7 @@ import lxml.html
 import re
 import json
 import collections
+import urllib
 
 class Qichacha(object):
 
@@ -21,9 +22,9 @@ class Qichacha(object):
             raise Exception('error: missing config')
 
         self.config = config
-        self.list_url = 'http://qichacha.com/search?key={key}&index={index}&p={page}&province={province}'
-        self.base_url = 'http://qichacha.com/company_base?unique={key_num}&companyname={name}'
-        self.invest_url = 'http://qichacha.com/company_touzi?unique={key_num}&companyname={name}&p={page}'
+        self.list_url = 'http://www.qichacha.com/search?key={key}&index={index}&p={page}&province={province}'
+        self.base_url = 'http://www.qichacha.com/company_base?unique={key_num}&companyname={name}'
+        self.invest_url = 'http://www.qichacha.com/company_touzi?unique={key_num}&companyname={name}&p={page}'
 
         #self.VIP_MAX_PAGE_NUM = 500
         #self.MAX_PAGE_NUM = 10
@@ -113,6 +114,7 @@ class Qichacha(object):
 
                 cnt = self.get_keyword_search_count(keyword, index)
                 metadata_dict['total_expect']+=cnt
+                metadata_dict['total_expect_index_{}'.format(index)]=cnt
                 #metadata_dict['total_[index:{}]_expect'.format(index)]=cnt
 
                 province_list = []
@@ -137,7 +139,6 @@ class Qichacha(object):
         for page in range(1, max_page + 1):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
-
             try:
                 source = self.downloader.access_page_with_cache(url)
                 tree = lxml.html.fromstring(source)
@@ -147,10 +148,12 @@ class Qichacha(object):
             if page ==1:
                 cnt = self.parser.parse_search_result_count(tree)
                 metadata_dict['total_expect2']+=cnt
+                metadata_dict['total_expect2_index_{}'.format(index)]=cnt
                 #metadata_dict['total_[index:{}]_expect2'.format(index)]+=cnt
                 #metadata_dict['total_[index:{}][省:{}]_expect2'.format(index, province)]=cnt
                 if cnt >= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:
                     print ("TODO expand {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
+                    metadata_dict['todo_expand']+=1
                 elif province:
                     print ("expect {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
 
@@ -170,9 +173,10 @@ class Qichacha(object):
         :param keyword: search keyword
         :rtype: count
         """
-        url = self.list_url.format(key=keyword, index=index, page=1, province='')
+        url = self.list_url.format(key=urllib.quote(keyword), index=index, page=1, province='')
 
         source = self.downloader.access_page_with_cache(url)
+        #print (url, source)
         tree = lxml.html.fromstring(source)
 
         return  self.parser.parse_search_result_count(tree)

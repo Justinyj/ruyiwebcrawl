@@ -8,6 +8,8 @@ from selenium import webdriver
 import requests
 import time
 import os
+import sys
+import json
 
 from headers import choice_cookie, choice_agent, choice_proxy
 from cache import Cache
@@ -63,8 +65,10 @@ class Downloader(object):
 
 
     def pick_cookie_agent_proxy(self, url):
-        self.driver.cookies.update(dict(i.split('=', 1) \
-                for i in choice_cookie(self.config['COOKIES']).split('; ')))
+        header_cookie = dict(i.split('=', 1) \
+                for i in choice_cookie(self.config['COOKIES']).split('; '))
+        print (json.dumps(header_cookie))
+        self.driver.cookies.update(header_cookie)
         self.driver.headers['User-Agent'] = choice_agent()
 #        proxies = choice_proxy(self.config, url)
 #        self.driver.proxies.update(proxies)
@@ -80,12 +84,15 @@ class Downloader(object):
             proxies = self.pick_cookie_agent_proxy(url)
 
             try:
+                #print(url)
                 response = self.driver.get(url, timeout=self.TIMEOUT)
+                #print (response.status_code, response.text)
                 if response.status_code == 200:
                     return response.text #unicode
             except:
 #                proxy = proxies.items()[0][1]
 #                Proxy.instance().post(url, proxy)
+                print ('failed', sys.exc_info()[0])
                 pass
             finally:
                 time.sleep(self._get_sleep_period()) # sleep of cookie

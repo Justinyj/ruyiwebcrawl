@@ -189,7 +189,7 @@ class QiParser(object):
         return summary_dict
 
     def parse_search_result_count(self, tree):
-        ret = tree.cssselect('.container .panel-default .pull-right span.text-danger')
+        ret = tree.cssselect('.container .panel-default .pull-left span.text-danger')
         #print (ret,ret[0].text_content().strip())
         if ret:
             return int(ret[0].text_content().strip().replace("+",""))
