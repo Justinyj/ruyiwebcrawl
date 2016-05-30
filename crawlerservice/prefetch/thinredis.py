@@ -24,24 +24,29 @@ The concept comes from `this stackoverflow question
 import redis
 import hashlib
 
+from shardredis import ShardRedis
+from redispool import RedisPool
+
 class ThinSet(object):
     """ counter key: string
         buckets key: set, {bucket1, bucket2, ...}
         bucket1 key: set
     """
-    def __init__(self, name, totalcount, connection=None):
-        self.name = name
+    def __init__(self, key, totalcount, connection=None):
+        """ connection can be redis.Redis()
+        """
+        self.key = key
         self.total = totalcount
         self.modulo = totalcount // 400
-        self.counterkey = 'thinset_{}_count'.format(name)
-        self.bucketskey = 'thinset_{}_buckets'.format(name)
+        self.counterkey = 'thinset_{}_count'.format(key)
+        self.bucketskey = 'thinset_{}_buckets'.format(key)
         if connection is not None:
             self.conn = connection
         else:
-            self.conn = redis.Redis()
+            self.conn = ShardRedis(conns=RedisPool.instance().caches)
 
     def _get_bucket(self, item):
-        return 'thinset_{}_{}'.format(self.name, int(item) % self.modulo)
+        return 'thinset_{}_{}'.format(self.key, int(item) % self.modulo)
 
 
     def count(self):
@@ -51,7 +56,7 @@ class ThinSet(object):
     def recount(self):
         p = self.conn.pipeline(transaction=False)
         for i in range(self.modulo):
-            bucket = 'thinset_{}_{}'.format(self.name, i)
+            bucket = 'thinset_{}_{}'.format(self.key, i)
             p.scard(bucket)
         count = sum(p.execute())
         return self.conn.set(self.counterkey, count)
@@ -153,24 +158,25 @@ class ThinHash(object):
         'value1'
 
     """
-    def __init__(self, name, totalcount, connection=None):
-        self.name = name
-        self.counterkey = 'thinhash_{}_count'.format(name)
-        self.bucketskey = 'thinhash_{}_buckets'.format(name)
-        self.total = totalcount
+    def __init__(self, key, totalcount, connection=None):
+        """ connection can be redis.Redis()
+        """
+        self.key = key
+        self.counterkey = 'thinhash_{}_count'.format(key)
+        self.bucketskey = 'thinhash_{}_buckets'.format(key)
         self.modulo = totalcount // 400
         if connection is not None:
             self.conn = connection
         else:
-            self.conn = redis.Redis()
+            self.conn = ShardRedis(conns=RedisPool.instance().caches)
 
     def _get_bucket(self, field):
-        return 'thinhash_{}_{}'.format(self.name, int(field) % self.modulo)
+        return 'thinhash_{}_{}'.format(self.key, int(field) % self.modulo)
 
     def delete(self):
         p = self.conn.pipeline(transaction=False)
         for i in range(self.modulo):
-            bucket = 'thinhash_{}_{}'.format(self.name, i)
+            bucket = 'thinhash_{}_{}'.format(self.key, i)
             p.delete(bucket)
         p.delete(self.counterkey)
         p.delete(self.bucketskey)
@@ -183,7 +189,7 @@ class ThinHash(object):
     def recount(self):
         p = self.conn.pipeline(transaction=False)
         for i in range(self.modulo):
-            bucket = 'thinhash_{}_{}'.format(self.name, i)
+            bucket = 'thinhash_{}_{}'.format(self.key, i)
             p.hlen(bucket) 
         count = sum(p.execute())
         return self.conn.set(self.counterkey, count)

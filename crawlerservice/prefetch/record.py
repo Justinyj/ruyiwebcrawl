@@ -5,18 +5,24 @@
 from __future__ import print_function, division
 from datetime import datetime
 
-import re
-
-from settings import RECORD_REDIS
+from redispool import RedisPool
 
 class Record(object):
+    """ preserve all task(`batch_id`) status.
+    """
     def __init__(self):
-        host, port, db = re.compile('(.+):(\d+)/(\d+)').search(RECORD_REDIS).groups()
-        self.conn = redis.Redis(host=host, port=int(port), db=int(db))
+# 'jobskey' is a hashkey used in global service
+#        self.jobs_key = 'jobskey'
+#        self.START = 0
+#        self.STOP = 1
 
-        self.jobs_key = 'jobskey'
-        self.START = 0
-        self.STOP = 1
+        self.connect()
+
+    def connect(self):
+        self.conn = RedisPool.instance().record.get_connection(None)
+
+    def disconnect(self):
+        RedisPool.instance().record.release(self.conn)
 
     @classmethod
     def instance(cls):
@@ -26,21 +32,35 @@ class Record(object):
         return cls._instance
 
 
-    def start(self, batch_id, parameter, total):
+    def begin(self, batch_id, parameter, total):
         """ before task finish, it is a reentrant function
 
         :param batch_id: str
         :param parameter: str
         """
-        self.conn.hsetnx(self.jobs_key, batch_id, self.START)
+#        self.conn.hsetnx(self.jobs_key, batch_id, self.START)
 
         self.conn.hsetnx(batch_id, 'parameter', parameter)
-        self.conn.hsetnx(batch_id, 'start', datetime.now())
+        self.conn.hsetnx(batch_id, 'start', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        self.conn.hincrby(batch_id, 'total', total)
+
         self.conn.hsetnx(batch_id, 'end', 0)
         self.conn.hsetnx(batch_id, 'failed', 0)
         self.conn.hsetnx(batch_id, 'success', 0)
-        self.conn.hincrby(batch_id, 'total', total)
 
 
-    def stop(self, batch_id):
-        self.conn.hset(self.jobskey, batch_id, self.STOP)
+    def end(self, batch_id):
+#        self.conn.hset(self.jobskey, batch_id, self.STOP)
+        self.conn.hset(batch_id, 'end', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+
+    def is_finished(self, batch_id):
+        ret = self.conn.hget(batch_id, 'end')
+        return False if ret == '0' else True
+
+    def increase_success(self, batch_id, count=1):
+        self.conn.hincrby(batch_id, 'success', count)
+
+    def increase_failed(self, batch_id, count=1):
+        self.conn.hincrby(batch_id, 'failed', count)
+

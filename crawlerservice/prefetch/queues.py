@@ -4,14 +4,10 @@
 # All items under one hashkey, so we can test whether the Queue is empty.
 # That is to say, items can not be distributed in sharding redis.
 
-import re
 import time
-import redis
 
-from settings import QUEUE_REDIS
-
-host, port, db = re.compile('(.*):(\d+)/(\d+)').search(QUEUE_REDIS).groups()
-conn = redis.Redis(host=host, port=int(port), db=int(db))
+from redispool import RedisPool
+conn = RedisPool.instance().queue.get_connection(None)
 
 class Queue(object):
     """ an unordered queue wrapper for redis, provides Queue.Queue like methods
@@ -42,8 +38,20 @@ class Queue(object):
         self.priority = priority
         self.timeout = timeout
 
+    def disconnect(self):
+        """ Do not need release in every instance of HashQueue.
+            Releas only once in one process.
+        """
+        RedisPool.instance().queue.release(conn)
+
     def clear(self):
+        """ timehash maybe still have items
+        """
         return conn.delete(self.key)
+
+    def flush(self):
+        conn.delete(self.timehash)
+        conn.delete(self.key)
 
     def qsize(self):
         return conn.scard(self.key)
@@ -153,16 +161,32 @@ def poll(queues, timeout=None):
 
 class HashQueue(object):
     """ The Queue volume is very large, so can not use ziplists compression.
-        Then HashQueue is unnecessary.
+
+        HashQueue has count on every task of get, failed after 3 times
     """
-    def __init__(self, key, priority=1, timeout=90):
+    def __init__(self, key, priority=1, timeout=90, failure_times=3):
         self.key = key
         self.timehash = '{key}-timehash'.format(key=key)
         self.priority = priority
         self.timeout = timeout
+        self.failure_times = failure_times
+
+        self.batch_size = 5000
+
+    def disconnect(self):
+        """ Do not need release in every instance of HashQueue.
+            Releas only once in one process.
+        """
+        RedisPool.instance().queue.release(conn)
 
     def clear(self):
+        """ timehash maybe still have items
+        """
         return conn.delete(self.key)
+
+    def flush(self):
+        conn.delete(self.timehash)
+        conn.delete(self.key)
 
     def qsize(self):
         return conn.hlen(self.key)
@@ -173,10 +197,20 @@ class HashQueue(object):
         else:
             return 0
 
-    def put(self, *items):
+    def put_init(self, *items):
         """ put item(s) into queue """
         if items:
             return conn.hmset(self.key, {i:0 for i in items})
+        else:
+            return 0
+
+    def put(self, *items):
+        """ put item(s) into queue
+
+        param *items: (item1, count), (item2, count), ...
+        """
+        if items:
+            return conn.hmset(self.key, dict(items))
         else:
             return 0
 
@@ -189,6 +223,8 @@ class HashQueue(object):
         >>> q.get(block=True, timeout=5)
         """
         # TODO: 1.queue empty, 2.queue connect time out.
+        # after 3 times of get, result is empty, Record.is_finished() False,
+        # set self.flush(), Record.end(), ThinHash.delete()
         if block:
             t = 0
             while timeout is None or t < timeout:
@@ -205,24 +241,32 @@ class HashQueue(object):
         # number of elements returned at every iteration.
         result = []
         if items:
-            for item, _ in items.iteritems():
-                self.task_start(item)
-                result.append(item)
+            for field, count in items.iteritems():
+                self.task_start(field, count)
+                result.append((field, count))
+                conn.hdel(self.key, field)
         return result
 
 
-    def task_start(self, result):
+    def task_start(self, result, count):
         """ save start time in redis hash """
-        conn.hsetnx(self.timehash, result, time.time())
+        conn.hsetnx(self.timehash, result, '{}:{}'.format(time.time(), count))
 
     def task_done(self, result):
-        """ clear start time in redis hash, indicating the task done """
+        """ clear start time in redis hash, indicating the task done
+            increase successful count in record hash
+        """
+        Record.instance().increase_success(self.key)
         return conn.hdel(self.timehash, result)
 
     def clean_task(self):
-        """ check task hash for unfinished long running tasks, requeue them.
+        """ check task hash for unfinished long running tasks,
+            requeue them and add failure count.
+            If failure count larger than valid scope,
+            add failure count in record hash
 
-            Requeue safety:
+
+        Requeue safety:
             `self.timeout` must longer than crawler(worker) job timeout,
             or else `clean_task` add item back to queue, at the same time,
             job finished and removed from `self.timehash`.
@@ -232,28 +276,30 @@ class HashQueue(object):
             conn.delete(self.timehash)
             return
 
-        BATCH = 5000
         items = []
         time_now = time.time()
         for field, value in conn.hgetall(self.timehash).iteritems():
-            start_time = float(value)
+            start_time, count = value.rsplit(':', 1)
+            start_time = float(start_time)
             if time_now - start_time > timeout:
-                items.append(field)
+                count = int(count) + 1
+                if count > self.failure_times:
+                    Record.instance().increase_failed(self.key)
+                    conn.hdel(self.timehash, field)
+                else:
+                    items.append((field, count))
 
-        items, items_tail = items[:BATCH], items[BATCH:]
+        items, items_tail = items[:self.batch_size], items[self.batch_size:]
         while items:
             print('requeuing {} items(e.g. ... {}) to {}'.format(len(items), items[-10:], self.key))
             pipeline = conn.pipeline()
-            pipeline.hdel(self.timehash, *items)
-            pipeline.hmset(self.key, {i:0 for i in items})
+            pipeline.hdel(self.timehash, *[i[0] for i in items])
+            pipeline.hmset(self.key, dict(items))
             pipeline.execute()
-            items, items_tail = items_tail[:BATCH], items_tail[BATCH:]
+            items, items_tail = items_tail[:self.batch_size], items_tail[self.batch_size:]
 
     def background_cleaning(self):
         while True:
             self.clean_task()
             time.sleep(60)
 
-
-task_queue = Queue('task-queue', priority=2, timeout=90)
-failed_queue = Queue('failed-queue', priority=1, timeout=90)
