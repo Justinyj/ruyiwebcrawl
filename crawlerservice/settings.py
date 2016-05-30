@@ -19,6 +19,12 @@ envs = {
         'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '.',
         'CONCURRENT_NUM': 200,
+
+        'RECORD_REDIS': 'redis://localhost:6379/1',
+        'QUEUE_REDIS': 'redis://localhost:6379/2',
+        'CACHE_REDIS': [
+            'redis://localhost:6379/0',
+        ],
     },
     'PRODUCTION': {
         'DBNAME': 'crawlercache',

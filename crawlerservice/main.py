@@ -35,7 +35,7 @@ def prepare_checkproxy():
     tornado.ioloop.IOLoop.current().add_callback(simulator, list(futures_q))
 
 if __name__ == "__main__":
-    # python main.py -port=8000 -process=4
+    # python main.py -port=8000 -process=4 -program=cache
     # python main.py -program=proxy
     tornado.options.parse_command_line()
 

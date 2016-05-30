@@ -57,7 +57,7 @@ def runapp():
         with prefix('source env.sh {}'.format('PRODUCTION')):
             run('pip install -r requirements.txt')
             run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -program=proxy'))
-            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4'))
+            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4 -program=cache'))
 
 
 def deploy():
