@@ -106,7 +106,7 @@ class FetchHandler(tornado.web.RequestHandler):
         try:
             json_data = json.loads(self.request.body)
             batch_id = json_data.get(u'batch_id', u'').encode('utf-8')
-            gap = json_data.get(u'gap', u'').encode('utf-8')
+            gap = json_data.get(u'gap', 0)
             header = json_data.get(u'header', {})
             js = json_data.get(u'js', False)
             encode = json_data.get(u'encode', u'utf-8').encode('utf-8')
@@ -114,7 +114,7 @@ class FetchHandler(tornado.web.RequestHandler):
 
             if not js:
                 downloader = Downloader(request=True,
-                                        gap=0 if gap == u'' else int(gap),
+                                        gap=gap,
                                         batch_id=batch_id)
                 downloader.login()
                 if header:

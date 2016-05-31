@@ -76,7 +76,7 @@ class Downloader(object):
                 else:
                     response = self.driver.get(url, timeout=self.TIMEOUT)
                     if response.status_code == 200:
-                        r.encoding = encode
+                        response.encoding = encode
                         return response.text # text is unicode
             except:
                 proxy = proxies.items()[0][1]
