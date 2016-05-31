@@ -140,7 +140,7 @@ class Qichacha(object):
             metadata_dict['total_actual'] = len(summary_dict)
             if abs(metadata_dict['total_expect2'] -  metadata_dict['total_actual'])>2:
                 print (u'[{}] {} '.format( keyword, json.dumps(metadata_dict, ensure_ascii=False,sort_keys=True) ))
-            print ( json.dumps(summary_dict.keys(), ensure_ascii=False) )
+            #print ( json.dumps(summary_dict.keys(), ensure_ascii=False) )
         #print(json.dumps(result, ensure_ascii=False))
         return result
 
@@ -179,7 +179,7 @@ class Qichacha(object):
 
         if province:
             print (" got {} results, for [{}][index:{}][省:{}]".format( len(summary_dict_local), keyword,index, province))
-            print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
+            #print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
 
     def get_keyword_search_count(self, keyword, index, refresh=False):
         """.. :py:method::
