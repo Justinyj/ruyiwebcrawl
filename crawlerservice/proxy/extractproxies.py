@@ -18,8 +18,8 @@ from tornado.locks import Semaphore
 
 from settings import CONCURRENT_NUM
 
-DAY_LIMIATION = 200000
-ONCE_LIMIATION = 2000
+DAY_LIMIATION = 600000
+ONCE_LIMIATION = 3000
 
 
 class ExtractProxies(object):
@@ -54,7 +54,7 @@ class ExtractProxies(object):
         if self.times_count > self.max_fetch_times:
             return
 
-        api = ("http://proxy.mimvp.com/api/fetch.php?orderid=1915654268662414&"
+        api = ("http://proxy.mimvp.com/api/fetch.php?orderid=860160531143501338&"
                "num={}&country_group=1&http_type=1&anonymous=5&ping_time=0.3&transfer_time=1&result_fields="
                "1,2&result_format=json".format(self.every_fetch_num))
 

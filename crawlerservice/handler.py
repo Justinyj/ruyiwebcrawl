@@ -9,6 +9,7 @@ import base64
 
 from cache.basecache import BaseCache
 from proxy.proxypool import ProxyPool
+from fetch.downloader import Downloader
 import exception
 
 class MissingParameter(Exception): pass
@@ -92,6 +93,40 @@ class ProxyDataStructureHandler(tornado.web.RequestHandler):
         try:
             _pool, ds = ProxyPool.instance().get_data_structure()
             response = {'success': True, 'pool': _pool, 'datastructure': ds}
+        except Exception as e:
+            response = {'success': False, 'error': e}
+
+        self.write(response)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+
+
+class FetchHandler(tornado.web.RequestHandler):
+    def post(self, method, b64url): # can be get either
+        try:
+            batch_id = batch_id.encode('utf-8')
+            gap = self.get_body_argument(u'gap', u'')
+
+            header = self.get_body_argument(u'header', u'')
+            js = self.get_body_argument(u'js', False)
+            data = self.get_body_argument(u'data', {}) # used in post
+
+            if not js:
+                downloader = Downloader(request=True,
+                                        gap=0 if gap == u'' else int(gap),
+                                        batch_id=batch_id).login()
+                if header:
+                    downloader.update_header(header)
+
+                url = base64.urlsafe_b64decode(b64url.encode('utf-8'))
+                if method.lower() == u'post':
+                    if data:
+                        ret = downloader.requests_with_cache(url, 'post', data=data)
+                    else:
+                        ret = downloader.requests_with_cache(url, 'post')
+                else:
+                    ret = downloader.requests_with_cache(url)
+
+            response = {'success': False, 'source': ret}
         except Exception as e:
             response = {'success': False, 'error': e}
 

@@ -7,9 +7,7 @@ from __future__ import print_function, division
 from selenium import webdriver
 import requests
 import time
-import os
 import sys
-import json
 
 from headers import choice_agent, choice_proxy
 from cache import Cache
@@ -51,6 +49,11 @@ class Downloader(object):
         if self.request is False:
             self.driver.quit()
 
+    def update_header(self, header):
+        if self.request is True:
+            self.driver.headers.update(header)
+
+
     def pick_cookie_agent_proxy(self, url):
         header_cookie = dict(i.split('=', 1) \
                 for i in choice_cookie(self.config['COOKIES']).split('; '))
@@ -62,22 +65,27 @@ class Downloader(object):
         return proxies
 
     def _get_sleep_period(self):
+        """ sleep for cookie
+        """
         return 0
 
-    def request_download(self, url):
+    def request_download(self, url, method='get', data=None):
         for i in range(self.RETRY):
             proxies = self.pick_cookie_agent_proxy(url)
 
             try:
-                response = self.driver.get(url, timeout=self.TIMEOUT)
-                if response.status_code == 200:
-                    return response.text #unicode
+                if method == 'post':
+                    response = self.driver.post(url, timeout=self.TIMEOUT, data=data)
+                else:
+                    response = self.driver.get(url, timeout=self.TIMEOUT)
+                    if response.status_code == 200:
+                        return response.text #unicode
             except:
                 proxy = proxies.items()[0][1]
                 Proxy.instance().post(url, proxy)
-                print ('failed', sys.exc_info()[0])
+                print('requests failed: ', sys.exc_info()[0])
             finally:
-                time.sleep(self._get_sleep_period()) # sleep of cookie
+                time.sleep(self._get_sleep_period())
         else:
             return u''
 
@@ -94,7 +102,7 @@ class Downloader(object):
         else:
             return u''
 
-    def access_page_with_cache(self, url, groups=None, refresh=None):
+    def requests_with_cache(self, url, method='get', groups=None, refresh=None, data=None):
 
         def save_cache(url, source, groups, refresh):
             refresh = self.refresh if refresh is None else refresh
@@ -108,7 +116,7 @@ class Downloader(object):
             return content
 
         if self.request is True:
-            source = self.request_download(url)
+            source = self.request_download(url, method, data)
             if source == u'':
                 return source
             save_cache(url, source, groups, refresh)
