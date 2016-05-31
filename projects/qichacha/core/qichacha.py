@@ -145,7 +145,6 @@ class Qichacha(object):
         return result
 
     def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh):
-        cnt_actual =0
         summary_dict_local ={}
         for page in range(1, max_page + 1):
 
@@ -171,8 +170,7 @@ class Qichacha(object):
                 break
 
             temp = self.parser.parse_search_result(tree)
-            print (page, len(temp), json.dumps(temp, ensure_ascii=False))
-            cnt_actual += len(temp)
+            #print (page, len(temp), json.dumps(temp, ensure_ascii=False))
             summary_dict_onepass.update( temp )
             summary_dict_local.update( temp )
 
