@@ -96,7 +96,7 @@ class Qichacha(object):
         """
         return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit, refresh )
 
-    def _list_keyword_search(self, keyword_list, index_list, limit=None, refresh):
+    def _list_keyword_search(self, keyword_list, index_list, limit, refresh):
         if not isinstance(keyword_list, list):
             keyword_list = [keyword_list]
 
