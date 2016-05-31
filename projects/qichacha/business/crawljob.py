@@ -19,6 +19,7 @@ sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
 import libnlp
+import libfile
 
 ###################
 # global config and functions
@@ -63,6 +64,35 @@ def lines2file(lines, filename):
         for line in lines:
             f.write(line)
             f.write("\n")
+
+def crawl_count(batch, dir_name, refresh=False):
+    crawler = get_crawler('regular')
+
+    ret = collections.defaultdict(dict)
+    filenames = glob.glob(dir_name)
+    for filename in filenames:
+        print filename
+        seeds = file2set(filename)
+        for seed in seeds:
+            ret[seed]['name'] = seed
+            if "seed_org" in filename:
+                indexes = crawler.INDEX_LIST_ORG
+                ret[seed]['type'] = "org"
+            elif "seed_person" in filename:
+                indexes = crawler.INDEX_LIST_PERSON
+                ret[seed]['type'] = "person"
+            else:
+                continue
+            total = 0
+            for index in indexes:
+                cnt = crawler.get_keyword_search_count( seed, index)
+                ret[seed]['total_{}'.format(index)] = cnt
+                total+=cnt
+            ret[seed]['total'] = total
+            print json.dumps(ret[seed], ensure_ascii=False)
+
+
+
 
 def crawl_search(batch, dir_name, refresh=False):
     filenames = glob.glob(dir_name)
@@ -296,11 +326,12 @@ def fetch_detail(batch):
 
     #load names
     print json.dumps(all_company.values()[0], ensure_ascii=False)
+    gcounter["all_company"] += len(all_company)
 
     #map names to id
     crawler = get_crawler('regular')
     counter = collections.Counter()
-    company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, True)]
+    company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
     counter['total'] = len(company_name_batch)
     company_raw = {}
     for name in company_name_batch:
@@ -335,6 +366,76 @@ def fetch_detail(batch):
     filename = getLocalFile('company_raw.{}.json'.format(batch))
     with codecs.open(filename,'w', encoding='utf-8') as f:
         json.dump(company_raw, f, ensure_ascii=False, indent=4 )
+
+
+def expand_person(batch, limit=2):
+    filename = getLocalFile('company_raw.{}.json'.format(batch))
+    with codecs.open(filename, encoding='utf-8') as f:
+        company_raw = json.load(f)
+        gcounter['company_raw'.format(batch)] = len(company_raw)
+
+
+    filename = getTheFile('{}/seed_person_reg.putian.txt'.format(batch))
+    root_persons = libfile.file2set(filename)
+    gcounter['root_persons'.format(batch)] = len(root_persons)
+    front_persons = {}
+    for name in root_persons:
+        front_persons[name]={"depth":0}
+
+    for depth in range(1,limit+1):
+        new_front_persons = expand_person_pass(front_persons, company_raw, depth)
+        if not new_front_persons:
+            break
+        front_persons.update(new_front_persons)
+
+
+def expand_person_pass(front_persons, company_raw, depth):
+    print json.dumps(gcounter,ensure_ascii=False,indent=4, sort_keys=True)
+
+    map_person_coimpact = collections.defaultdict(set)
+    for rawitem in company_raw.values():
+        name = rawitem['name']
+        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
+
+        controllers = libnlp.list_item_agent_name(rawitem, False, ['invests'],None)
+        if len(controllers)>500:
+            print (json.dumps(["skip too many controllers", name , len(controllers)],ensure_ascii=False))
+            continue
+
+        controller_inroot = controllers.intersection(front_persons)
+        if len(controller_inroot)<depth:
+            continue
+        elif len(controller_inroot)<len(controllers)*0.01:
+            continue
+
+        for controller in controllers:
+            map_person_coimpact[controller].add(name)
+
+    gcounter['map_person_coimpact_depth_{}'.format(depth)] = len(map_person_coimpact)
+
+    related_persons = {}
+    for name in map_person_coimpact:
+        if len(map_person_coimpact[name])<=1:
+            continue
+        if len(name)>4:
+            continue
+        if not name in front_persons:
+            related_persons[name]={"depth":depth}
+            msg =[name, len(map_person_coimpact[name]), list(map_person_coimpact[name])]
+            print (json.dumps(msg,ensure_ascii=False))
+
+            related_persons[name]["company"] = map_person_coimpact[name]
+        else:
+            front_persons[name]["company"] = map_person_coimpact[name]
+
+
+    gcounter['related_person_depth_{}'.format(depth)] = len(related_persons)
+
+    return related_persons
+
+
+
+
 
 
 def get_crawler(option):
@@ -376,6 +477,9 @@ def main():
         #crawl_search(batch, getTheFile( batch+"/seed_org_keywords_vip*"), False)
         #stat(batch)
         #fetch_detail(batch)
+    elif "count" == option:
+        crawl_count(batch, getTheFile( batch+"/*"), False)
+
 
     elif "search_vip" == option:
         crawl_search(batch, getTheFile( batch+"/*_vip*"), False)
@@ -387,6 +491,9 @@ def main():
 
     elif "fetch" == option:
         fetch_detail(batch)
+
+    elif "expand_person" == option:
+        expand_person(batch)
 
     elif "test" == option:
         test()

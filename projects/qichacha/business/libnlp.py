@@ -122,6 +122,36 @@ def classify_company_name(name):
     return LABEL_DEFAULT
 
 
+def get_item_name(item):
+    for p in ['name','legal_person']:
+        if p in item and item[p]:
+            return item[p]
+
+
+def list_item_agent_name(item, includeme=False, skip=None, exclusive=None):
+    names = set()
+    name = get_item_name(item)
+    if name:
+        names.add(name)
+
+    for key in item.keys():
+        if skip and key in skip:
+            continue
+        if exclusive and not key in exclusive:
+            continue
+
+        v = item[key]
+        if type(v) == list:
+            for xitem in v:
+                xname = get_item_name(xitem)
+                if xname:
+                    names.update( list_item_agent_name(xitem, True) )
+        elif type(v) == dict:
+            names.update( list_item_agent_name(v, True) )
+    return names
+
+
+
 
 def get_keywords(sentences, regex_skip_word,  limit=100 ):
     import jieba
