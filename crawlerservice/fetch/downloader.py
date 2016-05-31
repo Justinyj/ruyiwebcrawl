@@ -66,7 +66,7 @@ class Downloader(object):
         """
         return 0
 
-    def request_download(self, url, method='get', data=None):
+    def request_download(self, url, method='get', encode='utf-8', data=None):
         for i in range(self.RETRY):
             proxies = self.pick_cookie_agent_proxy(url)
 
@@ -76,7 +76,8 @@ class Downloader(object):
                 else:
                     response = self.driver.get(url, timeout=self.TIMEOUT)
                     if response.status_code == 200:
-                        return response.content # text is unicode
+                        r.encoding = encode
+                        return response.text # text is unicode
             except:
                 proxy = proxies.items()[0][1]
                 Proxy.instance().post(url, proxy)
@@ -113,10 +114,10 @@ class Downloader(object):
             return content
 
         if self.request is True:
-            source = self.request_download(url, method, data)
+            source = self.request_download(url, method, encode, data)
             if source == u'':
                 return source
-            source = source.decode(encode)
+#            source = source.decode(encode)
             save_cache(url, source, groups, refresh)
 
         else:

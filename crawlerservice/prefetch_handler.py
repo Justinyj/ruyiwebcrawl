@@ -28,6 +28,7 @@ class PrefetchHandler(tornado.web.RequestHandler):
 
             if not urls:
                 raise(Exception('not transmit urls parameter'))
+            total_count = len(urls)
 
             parameter = '{method}:{gap}:{js}:{headers}:{data}'.format(
                     method=method.encode('utf-8'),
@@ -36,7 +37,6 @@ class PrefetchHandler(tornado.web.RequestHandler):
                     headers=json.dumps(headers) if headers else '',
                     data=json.dumps(data) if data else '')
 
-            total_count = len(urls)
             Record.instance().begin(batch_id, parameter, total_count)
             queue = HashQueue(batch_id, priority=2, timeout=90, failure_times=3)
 
