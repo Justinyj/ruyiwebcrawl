@@ -6,6 +6,7 @@ from __future__ import print_function, division
 
 import tornado.web
 from handler import *
+from prefetch_handler import *
 
 settings = {
 # autoreload is incompatible with multi-process mode. When autoreload is enabled you must run only one process.

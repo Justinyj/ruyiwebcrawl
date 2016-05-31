@@ -4,18 +4,18 @@
 
 from __future__ import print_function, division
 
-from selenium import webdriver
+#from selenium import webdriver
 import requests
 import time
 import sys
 
-from headers import choice_agent, choice_proxy
+from header import choice_agent, choice_proxy
 from cache import Cache
 from proxy import Proxy
 
 class Downloader(object):
 
-    def __init__(self, request=False, gap, batch_id='', groups=None, refresh=False):
+    def __init__(self, request=False, gap=0, batch_id='', groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
@@ -55,9 +55,6 @@ class Downloader(object):
 
 
     def pick_cookie_agent_proxy(self, url):
-        header_cookie = dict(i.split('=', 1) \
-                for i in choice_cookie(self.config['COOKIES']).split('; '))
-        self.driver.cookies.update(header_cookie)
         self.driver.headers['User-Agent'] = choice_agent()
 
         proxies = choice_proxy(url, self.gap)
@@ -102,7 +99,7 @@ class Downloader(object):
         else:
             return u''
 
-    def requests_with_cache(self, url, method='get', groups=None, refresh=None, data=None):
+    def requests_with_cache(self, url, method='get', encode='utf-8', groups=None, refresh=None, data=None):
 
         def save_cache(url, source, groups, refresh):
             refresh = self.refresh if refresh is None else refresh
@@ -119,12 +116,14 @@ class Downloader(object):
             source = self.request_download(url, method, data)
             if source == u'':
                 return source
+            source = source.encode(encode)
             save_cache(url, source, groups, refresh)
 
         else:
             source = self.selenium_download(url)
             if source == u'':
                 return source
+            source = source.encode(encode)
             save_cache(url, source, groups, refresh)
 
         return source
