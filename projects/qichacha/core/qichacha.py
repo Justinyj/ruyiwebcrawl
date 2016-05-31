@@ -74,7 +74,7 @@ class Qichacha(object):
 
 
 
-    def list_person_search(self, person_list, limit=None):
+    def list_person_search(self, person_list, limit=None, refresh=False):
         """.. :py:method::
             need to catch exception of download error
 
@@ -83,9 +83,9 @@ class Qichacha(object):
         :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
                   keyword2: {}, ...}
         """
-        return self._list_keyword_search(person_list, self.INDEX_LIST_PERSON, limit )
+        return self._list_keyword_search(person_list, self.INDEX_LIST_PERSON, limit, refresh )
 
-    def list_corporate_search(self, corporate_list, limit=None):
+    def list_corporate_search(self, corporate_list, limit=None, refresh=False):
         """.. :py:method::
             need to catch exception of download error
 
@@ -94,9 +94,9 @@ class Qichacha(object):
         :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
                   keyword2: {}, ...}
         """
-        return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit )
+        return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit, refresh )
 
-    def _list_keyword_search(self, keyword_list, index_list, limit=None):
+    def _list_keyword_search(self, keyword_list, index_list, limit, refresh):
         if not isinstance(keyword_list, list):
             keyword_list = [keyword_list]
 
@@ -110,44 +110,54 @@ class Qichacha(object):
         for idx, keyword in enumerate(keyword_list):
             summary_dict = {}
             metadata_dict = collections.Counter()
+            total_expect_max = 0
+            total_expect2_max = 0
             for index in index_list:
 
-                cnt = self.get_keyword_search_count(keyword, index)
-                metadata_dict['total_expect']+=cnt
+                cnt = self.get_keyword_search_count(keyword, index, refresh)
+                total_expect_max = max(cnt, total_expect_max)
                 metadata_dict['total_expect_index_{}'.format(index)]=cnt
                 #metadata_dict['total_[index:{}]_expect'.format(index)]=cnt
 
                 province_list = []
+                summary_dict_onepass = {}
                 if limit is None and cnt>= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:
                     print ('auto expand {} results of [{}] with province filter '.format(cnt, keyword) )
                     for province in self.PROVINCE_LIST:
-                        self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict)
+                        self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh)
                 else:
-                    self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict)
+                    self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict_onepass, refresh)
+                summary_dict.update(summary_dict_onepass)
+                total_expect2_max = max(total_expect2_max, metadata_dict['total_expect2_index_{}'.format(index)] )
+                metadata_dict['total_actual_index_{}'.format(index)]=len(summary_dict_onepass)
+
             result[keyword] = {
                 "data":summary_dict,
                 "metadata":metadata_dict
             }
+            metadata_dict['total_expect']=total_expect_max
+            metadata_dict['total_expect2']=total_expect2_max
             metadata_dict['total_actual'] = len(summary_dict)
-            if metadata_dict['total_expect2'] -  metadata_dict['total_actual']>2:
-                print ('[{}] expect {}, expect2 {}, actual {} '.format( keyword, metadata_dict['total_expect'], metadata_dict['total_expect2'], metadata_dict['total_actual']) )
+            if abs(metadata_dict['total_expect2'] -  metadata_dict['total_actual'])>2:
+                print (u'[{}] {} '.format( keyword, json.dumps(metadata_dict, ensure_ascii=False,sort_keys=True) ))
+            print ( json.dumps(summary_dict.keys(), ensure_ascii=False) )
         #print(json.dumps(result, ensure_ascii=False))
         return result
 
-    def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict):
+    def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh):
         cnt_actual =0
+        summary_dict_local ={}
         for page in range(1, max_page + 1):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
             try:
-                source = self.downloader.access_page_with_cache(url)
+                source = self.downloader.access_page_with_cache(url, refresh=refresh)
                 tree = lxml.html.fromstring(source)
             except lxml.etree.XMLSyntaxError:
                 raise Exception('error: download source empty, need redownload')
 
             if page ==1:
                 cnt = self.parser.parse_search_result_count(tree)
-                metadata_dict['total_expect2']+=cnt
                 metadata_dict['total_expect2_index_{}'.format(index)]=cnt
                 #metadata_dict['total_[index:{}]_expect2'.format(index)]+=cnt
                 #metadata_dict['total_[index:{}][省:{}]_expect2'.format(index, province)]=cnt
@@ -161,13 +171,19 @@ class Qichacha(object):
                 break
 
             temp = self.parser.parse_search_result(tree)
+            print (page, len(temp), json.dumps(temp, ensure_ascii=False))
             cnt_actual += len(temp)
-            summary_dict.update( temp )
+            summary_dict_onepass.update( temp )
+            summary_dict_local.update( temp )
+
+            if len(temp)<self.NUM_PER_PAGE:
+                break
 
         if province:
-            print (" got {} of {} results, for [{}][index:{}][省:{}]".format( cnt_actual, len(summary_dict),keyword,index, province))
+            print (" got {} results, for [{}][index:{}][省:{}]".format( len(summary_dict_local), keyword,index, province))
+            print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
 
-    def get_keyword_search_count(self, keyword, index):
+    def get_keyword_search_count(self, keyword, index, refresh=False):
         """.. :py:method::
 
         :param keyword: search keyword
@@ -175,7 +191,7 @@ class Qichacha(object):
         """
         url = self.list_url.format(key=keyword, index=index, page=1, province='')
 
-        source = self.downloader.access_page_with_cache(url)
+        source = self.downloader.access_page_with_cache(url, refresh=refresh)
         #print (url, source)
         tree = lxml.html.fromstring(source)
 
