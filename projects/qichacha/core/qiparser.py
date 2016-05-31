@@ -182,6 +182,8 @@ class QiParser(object):
                 status = i.cssselect('.label')[0].text_content().strip()
                 href = i.attrib['href']
                 province, key_num = href.rstrip('.shtml').lstrip('/firm_').split('_', 1)
+                if not name:
+                    name = "NONAME-"+key_num
                 summary_dict[name] = {
                     'name': name,
                     'status': status,

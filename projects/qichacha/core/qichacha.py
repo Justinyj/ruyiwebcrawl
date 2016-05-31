@@ -128,15 +128,15 @@ class Qichacha(object):
                 else:
                     self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict_onepass, refresh)
                 summary_dict.update(summary_dict_onepass)
-                total_expect2_max = max(total_expect2_max, 'total_expect2_index_{}'.format(index))
+                total_expect2_max = max(total_expect2_max, metadata_dict['total_expect2_index_{}'.format(index)] )
                 metadata_dict['total_actual_index_{}'.format(index)]=len(summary_dict_onepass)
 
             result[keyword] = {
                 "data":summary_dict,
                 "metadata":metadata_dict
             }
-            metadata_dict['total_expect']+=total_expect_max
-            metadata_dict['total_expect2']+=total_expect2_max
+            metadata_dict['total_expect']=total_expect_max
+            metadata_dict['total_expect2']=total_expect2_max
             metadata_dict['total_actual'] = len(summary_dict)
             if abs(metadata_dict['total_expect2'] -  metadata_dict['total_actual'])>2:
                 print (u'[{}] {} '.format( keyword, json.dumps(metadata_dict, ensure_ascii=False,sort_keys=True) ))
@@ -146,6 +146,7 @@ class Qichacha(object):
 
     def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh):
         cnt_actual =0
+        summary_dict_local ={}
         for page in range(1, max_page + 1):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
@@ -173,13 +174,14 @@ class Qichacha(object):
             print (page, len(temp), json.dumps(temp, ensure_ascii=False))
             cnt_actual += len(temp)
             summary_dict_onepass.update( temp )
+            summary_dict_local.update( temp )
 
             if len(temp)<self.NUM_PER_PAGE:
                 break
 
         if province:
-            print (" got {} results, for [{}][index:{}][省:{}]".format( cnt_actual, keyword,index, province))
-            print ( json.dumps(summary_dict_onepass.keys(), ensure_ascii=False) )
+            print (" got {} results, for [{}][index:{}][省:{}]".format( len(summary_dict_local), keyword,index, province))
+            print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
 
     def get_keyword_search_count(self, keyword, index, refresh=False):
         """.. :py:method::
