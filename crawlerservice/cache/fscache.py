@@ -22,9 +22,10 @@ from tools import path, cachelog
 
 def fs_get_cache(b64url, batch_id):
     try:
-        assert batch_id != ''
+        assert len(batch_id) > 0
         sha256 = hashlib.sha256(b64url).hexdigest()
-        level1 = hashlib.sha1(b64url).hexdigest()[-1:]
+        #level1 = hashlib.sha1(b64url).hexdigest()[-1:]
+        level1 = sha256[0]
         level2 = sha256[-2:]
 
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
@@ -41,9 +42,10 @@ def fs_get_cache(b64url, batch_id):
 
 def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
     try:
-        assert batch_id != ''
+        assert len(batch_id) > 0
         sha256 = hashlib.sha256(b64url).hexdigest()
-        level1 = hashlib.sha1(b64url).hexdigest()[-1:]
+        #level1 = hashlib.sha1(b64url).hexdigest()[-1:]
+        level1 = sha256[0]
         level2 = sha256[-2:]
 
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
@@ -55,8 +57,9 @@ def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
                 fd.write(content)
 
         now = datetime.now()
+        # use iso format rather than string format to make it more parsable
         log_line = json.dumps({
-            'date': str(now), 
+            'date': now.isoformat(), 
             'batch_id': batch_id,
             'groups': groups,
             'url': base64.urlsafe_b64decode(b64url),
