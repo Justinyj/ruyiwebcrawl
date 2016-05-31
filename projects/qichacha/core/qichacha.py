@@ -173,7 +173,7 @@ class Qichacha(object):
         :param keyword: search keyword
         :rtype: count
         """
-        url = self.list_url.format(key=urllib.quote(keyword), index=index, page=1, province='')
+        url = self.list_url.format(key=keyword, index=index, page=1, province='')
 
         source = self.downloader.access_page_with_cache(url)
         #print (url, source)

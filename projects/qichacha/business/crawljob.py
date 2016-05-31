@@ -138,6 +138,8 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
                 counter['empty'] +=1
 
         except:
+            import traceback
+            traceback.print_exc(file=sys.stdout)
             counter['failed'] +=1
             pass
 
@@ -371,7 +373,7 @@ def main():
     if "search" == option:
 #        crawl_search(batch, getTheFile( batch+"/*_reg*"), False)
         crawl_search(batch, getTheFile( batch+"/seed_person*_reg*"), False)
-        crawl_search(batch, getTheFile( batch+"/seed_org_keywords_vip*"), False)
+        #crawl_search(batch, getTheFile( batch+"/seed_org_keywords_vip*"), False)
         #stat(batch)
         #fetch_detail(batch)
 

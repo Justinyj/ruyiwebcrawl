@@ -67,7 +67,7 @@ class Downloader(object):
     def pick_cookie_agent_proxy(self, url):
         header_cookie = dict(i.split('=', 1) \
                 for i in choice_cookie(self.config['COOKIES']).split('; '))
-        print (json.dumps(header_cookie))
+        #print (json.dumps(header_cookie))
         self.driver.cookies.update(header_cookie)
         self.driver.headers['User-Agent'] = choice_agent()
 #        proxies = choice_proxy(self.config, url)
