@@ -149,9 +149,9 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
 
 
             if "seed_org" in filename:
-                data = crawler.list_corporate_search( [seed], limit)
+                data = crawler.list_corporate_search( [seed], limit, refresh=refresh)
             elif "seed_person" in filename:
-                data = crawler.list_person_search( [seed], limit)
+                data = crawler.list_person_search( [seed], limit, refresh=refresh)
             else:
                 print "skip unsupported filename ", fileanme
                 continue
@@ -473,7 +473,7 @@ def main():
     #filename = sys.argv[3]
     if "search" == option:
 #        crawl_search(batch, getTheFile( batch+"/*_reg*"), False)
-        crawl_search(batch, getTheFile( batch+"/seed_person*_reg*"), False)
+        crawl_search(batch, getTheFile( batch+"/seed_person*_reg*"), True)
         #crawl_search(batch, getTheFile( batch+"/seed_org_keywords_vip*"), False)
         #stat(batch)
         #fetch_detail(batch)

@@ -175,21 +175,39 @@ class QiParser(object):
 
     def parse_search_result(self, tree):
         summary_dict = {}
-        for i in tree.cssselect('#searchlist'):
-            name = i.cssselect('.name')[0].text_content().strip()
-            status = i.cssselect('.label')[0].text_content().strip()
-            href = i.cssselect('.list-group-item')[0].attrib['href']
-            key_num = href.rstrip('.shtml').rsplit('_', 1)[-1]
-            summary_dict[name] = {
-                'name': name,
-                'status': status,
-                'key_num': key_num,
-                'href': href,
-            }
+        if tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
+            #new version after 2016-05-31
+            for i in tree.cssselect('.list-group-item'):
+                name = i.cssselect('.name')[0].text_content().strip()
+                status = i.cssselect('.label')[0].text_content().strip()
+                href = i.attrib['href']
+                province, key_num = href.rstrip('.shtml').lstrip('/firm_').split('_', 1)
+                summary_dict[name] = {
+                    'name': name,
+                    'status': status,
+                    'key_num': key_num,
+                    'href': href,
+                    'province': province,
+                }
+        else:
+            for i in tree.cssselect('#searchlist'):
+                name = i.cssselect('.name')[0].text_content().strip()
+                status = i.cssselect('.label')[0].text_content().strip()
+                href = i.cssselect('.list-group-item')[0].attrib['href']
+                key_num = href.rstrip('.shtml').rsplit('_', 1)[-1]
+                summary_dict[name] = {
+                    'name': name,
+                    'status': status,
+                    'key_num': key_num,
+                    'href': href,
+                }
+
+
+
         return summary_dict
 
     def parse_search_result_count(self, tree):
-        ret = tree.cssselect('.container .panel-default .pull-left span.text-danger')
+        ret = tree.cssselect('.container .panel-default span.text-danger')
         #print (ret,ret[0].text_content().strip())
         if ret:
             return int(ret[0].text_content().strip().replace("+",""))
