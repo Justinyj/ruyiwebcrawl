@@ -26,7 +26,7 @@ envs = {
             'redis://localhost:6379/0',
         ],
 
-        'PROXY_SERVER': 'http://127.0.0.1:8888',
+        'PROXY_SERVER': 'http://127.0.0.1:8001',
         'CACHE_SERVER': 'http://127.0.0.1:8000',
     },
     'PRODUCTION': {
@@ -45,6 +45,9 @@ envs = {
         'CACHE_REDIS': [
             'redis://localhost:6379/0',
         ],
+
+        'PROXY_SERVER': 'http://127.0.0.1:8001',
+        'CACHE_SERVER': 'http://127.0.0.1:8000',
     },
     'TEST': {
         'DBNAME': 'crawlercache',
@@ -63,7 +66,7 @@ envs = {
             'redis://localhost:6379/0',
         ],
 
-        'PROXY_SERVER': 'http://127.0.0.1:8888',
+        'PROXY_SERVER': 'http://127.0.0.1:8001',
         'CACHE_SERVER': 'http://127.0.0.1:8000',
     }
 }
