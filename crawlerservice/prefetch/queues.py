@@ -265,7 +265,6 @@ class HashQueue(object):
             If failure count larger than valid scope,
             add failure count in record hash
 
-
         Requeue safety:
             `self.timeout` must longer than crawler(worker) job timeout,
             or else `clean_task` add item back to queue, at the same time,
@@ -299,7 +298,9 @@ class HashQueue(object):
             items, items_tail = items_tail[:self.batch_size], items_tail[self.batch_size:]
 
     def background_cleaning(self):
-        while True:
+        background = []
+        while not background or sum(background[-self.failure_times:]) != 0:
             self.clean_task()
+            background.append( conn.hlen(self.timehash) )
             time.sleep(60)
 

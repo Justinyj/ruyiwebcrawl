@@ -58,7 +58,16 @@ class PrefetchHandler(tornado.web.RequestHandler):
 
 class FetchHandler(tornado.web.RequestHandler):
     def post(self, method, b64url): # can be get either
-        header = self.get_body_argument(u'header', u'')
-        js = self.get_body_argument(u'js', False)
+        try:
+            gap = self.get_body_argument(u'gap', u'')
+            header = self.get_body_argument(u'header', u'')
+            js = self.get_body_argument(u'js', False)
+            data = self.get_body_argument(u'data', {}) # used in post
 
+            get proxy, get 
+        except Exception as e:
+            response = {'success': False, 'error': e}
+
+        self.write(response)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
 

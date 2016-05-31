@@ -28,18 +28,20 @@ class ReQueueWorker(Worker):
         [gevent.spawn(queue.background_cleaning) for queue in [task_queue]]
 
 
-class PutWorker(Worker):
-    def work(self):
-        pass
-
 class GetWorker(Worker):
     def work(self):
         print(self.pool)
         task_queue = HashQueue(batch_id, priority=2, timeout=90, failure_times=3)
 
+    def monitor(self):
+        keys = Record.instance().get_unfinished_batch()
+        for key in keys:
+            queue = HashQueue(key, priority=2, timeout=90, failure_times=3)
+
+#            queue.get(block=True, timeout=5)
+
 
 def producer(poolsize):
-    PutWorker(poolsize).work()
     ReQueueWorker().work()
     while True:
         time.sleep(60)
@@ -47,4 +49,5 @@ def producer(poolsize):
 def consumer(poolsize, backhaul):
     GetWorker(poolsize, backhaul).work()
 
-GetWorker(3)
+print( GetWorker(3).pool )
+
