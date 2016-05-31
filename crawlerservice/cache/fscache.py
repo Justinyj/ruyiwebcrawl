@@ -59,7 +59,7 @@ def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
         now = datetime.now()
         # use iso format rather than string format to make it more parsable
         log_line = json.dumps({
-            'date': now.isoformat(), 
+            'date': str(now), 
             'batch_id': batch_id,
             'groups': groups,
             'url': base64.urlsafe_b64decode(b64url),
