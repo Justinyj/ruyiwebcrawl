@@ -45,7 +45,7 @@ class Downloader(object):
                 'Accept-Encoding': 'gzip, deflate, sdch',
                 'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36',
-                'Host': 'qichacha.com',
+                'Host': 'www.qichacha.com',
             }
             self.driver = session
 
