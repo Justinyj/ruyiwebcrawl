@@ -6,9 +6,11 @@ from __future__ import print_function, division
 
 import tornado.web
 import base64
+import json
 
 from cache.basecache import BaseCache
 from proxy.proxypool import ProxyPool
+from fetch.downloader import Downloader
 import exception
 
 class MissingParameter(Exception): pass
@@ -92,6 +94,42 @@ class ProxyDataStructureHandler(tornado.web.RequestHandler):
         try:
             _pool, ds = ProxyPool.instance().get_data_structure()
             response = {'success': True, 'pool': _pool, 'datastructure': ds}
+        except Exception as e:
+            response = {'success': False, 'error': e}
+
+        self.write(response)
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+
+
+class FetchHandler(tornado.web.RequestHandler):
+    def post(self, method, b64url): # can be get either
+        try:
+            json_data = json.loads(self.request.body)
+            batch_id = json_data.get(u'batch_id', u'').encode('utf-8')
+            gap = json_data.get(u'gap', u'').encode('utf-8')
+            header = json_data.get(u'header', {})
+            js = json_data.get(u'js', False)
+            encode = json_data.get(u'encode', u'utf-8').encode('utf-8')
+            data = json_data.get(u'data', {}) # used in post
+
+            if not js:
+                downloader = Downloader(request=True,
+                                        gap=0 if gap == u'' else int(gap),
+                                        batch_id=batch_id)
+                downloader.login()
+                if header:
+                    downloader.update_header(header)
+
+                url = base64.urlsafe_b64decode(b64url.encode('utf-8'))
+                if method.lower() == u'post':
+                    if data:
+                        ret = downloader.requests_with_cache(url, 'post', encode, data=data)
+                    else:
+                        ret = downloader.requests_with_cache(url, 'post', encode)
+                else:
+                    ret = downloader.requests_with_cache(url, encode=encode)
+
+            response = {'success': False, 'source': ret}
         except Exception as e:
             response = {'success': False, 'error': e}
 

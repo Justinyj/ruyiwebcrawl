@@ -4,6 +4,7 @@
 
 from __future__ import print_function, division
 from datetime import datetime
+from redis import ResponseError
 
 from redispool import RedisPool
 
@@ -63,4 +64,15 @@ class Record(object):
 
     def increase_failed(self, batch_id, count=1):
         self.conn.hincrby(batch_id, 'failed', count)
+
+    def get_unfinished_batch(self):
+        keys = []
+        for key in self.conn.keys('*'):
+            try:
+                self.conn.hkeys(key)
+            except ResponseError:
+                continue
+            if self.is_finished(key) is False:
+                keys.append(key)
+        return keys
 

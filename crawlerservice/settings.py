@@ -25,6 +25,9 @@ envs = {
         'CACHE_REDIS': [
             'redis://localhost:6379/0',
         ],
+
+        'PROXY_SERVER': 'http://127.0.0.1:8001',
+        'CACHE_SERVER': 'http://127.0.0.1:8000',
     },
     'PRODUCTION': {
         'DBNAME': 'crawlercache',
@@ -36,6 +39,15 @@ envs = {
         'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
+
+        'RECORD_REDIS': 'redis://localhost:6379/1',
+        'QUEUE_REDIS': 'redis://localhost:6379/2',
+        'CACHE_REDIS': [
+            'redis://localhost:6379/0',
+        ],
+
+        'PROXY_SERVER': 'http://127.0.0.1:8001',
+        'CACHE_SERVER': 'http://127.0.0.1:8000',
     },
     'TEST': {
         'DBNAME': 'crawlercache',
@@ -47,6 +59,15 @@ envs = {
         'CACHEPAGE': 'fs', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
+
+        'RECORD_REDIS': 'redis://localhost:6379/1',
+        'QUEUE_REDIS': 'redis://localhost:6379/2',
+        'CACHE_REDIS': [
+            'redis://localhost:6379/0',
+        ],
+
+        'PROXY_SERVER': 'http://127.0.0.1:8001',
+        'CACHE_SERVER': 'http://127.0.0.1:8000',
     }
 }
 

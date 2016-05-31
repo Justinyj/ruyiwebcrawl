@@ -55,10 +55,3 @@ class PrefetchHandler(tornado.web.RequestHandler):
         self.write(response)
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
 
-
-class FetchHandler(tornado.web.RequestHandler):
-    def post(self, method, b64url): # can be get either
-        header = self.get_body_argument(u'header', u'')
-        js = self.get_body_argument(u'js', False)
-
-

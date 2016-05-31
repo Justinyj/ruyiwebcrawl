@@ -36,7 +36,8 @@ def prepare_checkproxy():
 
 if __name__ == "__main__":
     # python main.py -port=8000 -process=4 -program=cache
-    # python main.py -program=proxy
+    # python main.py -port=8001 -process=1 -program=proxy
+    # python main.py -port=8002 -process=4 -program=fetch
     tornado.options.parse_command_line()
 
     http_server = tornado.httpserver.HTTPServer(urls, xheaders=True)
