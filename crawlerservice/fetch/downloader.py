@@ -76,7 +76,7 @@ class Downloader(object):
                 else:
                     response = self.driver.get(url, timeout=self.TIMEOUT)
                     if response.status_code == 200:
-                        return response.text #unicode
+                        return response.content # text is unicode
             except:
                 proxy = proxies.items()[0][1]
                 Proxy.instance().post(url, proxy)
@@ -116,14 +116,13 @@ class Downloader(object):
             source = self.request_download(url, method, data)
             if source == u'':
                 return source
-            source = source.encode(encode)
+            source = source.decode(encode)
             save_cache(url, source, groups, refresh)
 
         else:
             source = self.selenium_download(url)
             if source == u'':
                 return source
-            source = source.encode(encode)
             save_cache(url, source, groups, refresh)
 
         return source
