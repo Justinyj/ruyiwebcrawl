@@ -121,9 +121,10 @@ class Downloader(object):
             if ret not in [True, False]:
                 print(ret)
 
-        content = self.cache.get(url)
-        if content != u'':
-            return content
+        if not refresh:
+            content = self.cache.get(url)
+            if content != u'':
+                return content
 
         if self.request is True:
             source = self.request_download(url)
