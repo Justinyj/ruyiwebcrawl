@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+# upgrade to qichacha2 2016-06-01 for its website revision, new batch_id qichacha2
 
 from __future__ import print_function, division
 
 from downloader import Downloader
-from qiparser import QiParser
+from qiparser2 import QiParser
 
 import lxml.html
 import lxml.etree
@@ -18,7 +19,7 @@ class Qichacha(object):
 
     def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True):
         if batch_id is None:
-            batch_id = 'qichacha'
+            batch_id = 'qichacha2'
         if config is None:
             raise Exception('error: missing config')
 
@@ -111,36 +112,31 @@ class Qichacha(object):
         for idx, keyword in enumerate(keyword_list):
             summary_dict = {}
             metadata_dict = collections.Counter()
-            total_expect_max = 0
-            total_expect2_max = 0
             for index in index_list:
 
                 cnt = self.get_keyword_search_count(keyword, index, refresh)
-                total_expect_max += cnt
-                metadata_dict['total_expect_index_{}'.format(index)]=cnt
+                metadata_dict['all_expect'] += cnt
+                metadata_dict['idx{}_e_all'.format(index)]=cnt
                 #metadata_dict['total_[index:{}]_expect'.format(index)]=cnt
 
                 province_list = []
-                summary_dict_onepass = {}
+                summary_dict_by_index = {}
                 if limit is None and cnt>= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:
                     print ('auto expand {} results of [{}] with province filter '.format(cnt, keyword) )
                     for province in self.PROVINCE_LIST:
-                        self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh)
+                        self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_by_index, refresh)
                 else:
-                    self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict_onepass, refresh)
-                summary_dict.update(summary_dict_onepass)
-                total_expect2_max += metadata_dict['total_expect2_index_{}'.format(index)]
-                metadata_dict['total_actual_index_{}'.format(index)]=len(summary_dict_onepass)
+                    self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict_by_index, refresh)
+                summary_dict.update(summary_dict_by_index)
+                metadata_dict['idx{}_actual'.format(index)]=len(summary_dict_by_index)
 
             result[keyword] = {
                 "data":summary_dict,
                 "metadata":metadata_dict
             }
-            metadata_dict['total_expect']=total_expect_max
-            metadata_dict['total_expect2']=total_expect2_max
-            metadata_dict['total_actual'] = len(summary_dict)
-            if abs(metadata_dict['total_expect2'] -  metadata_dict['total_actual'])>2:
-                print (u'[{}] {} '.format( keyword, json.dumps(metadata_dict, ensure_ascii=False,sort_keys=True) ))
+            metadata_dict['all_actual'] = len(summary_dict)
+            if abs(metadata_dict['all_expect'] -  metadata_dict['all_actual'])>2:
+                print (u'[{}] {} '.format( keyword, json.dumps(metadata_dict, ensure_ascii=False, sort_keys=True) ))
             #print ( json.dumps(summary_dict.keys(), ensure_ascii=False) )
         #print(json.dumps(result, ensure_ascii=False))
         return result
@@ -156,7 +152,7 @@ class Qichacha(object):
 
             if page ==1:
                 cnt = self.parser.parse_search_result_count(tree)
-                metadata_dict['total_expect2_index_{}'.format(index)]=cnt
+                metadata_dict['idx{}_e_sum'.format(index)]+=cnt
                 #metadata_dict['total_[index:{}]_expect2'.format(index)]+=cnt
                 #metadata_dict['total_[index:{}][省:{}]_expect2'.format(index, province)]=cnt
                 if cnt >= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:

@@ -464,7 +464,26 @@ def validate_cookie(option='test'):
 
 
 def test():
-    validate_cookie('regular')
+    #validate_cookie('regular')
+    test4()
+
+def test4():
+    import lxml
+    crawler = get_crawler('test')
+
+    keyword = "李国华"
+    index = 6
+    page = 0
+    province= 'FJ'
+    url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
+
+    print url
+    source = crawler.downloader.access_page_with_cache(url, groups='test')
+    #print source
+    tree = lxml.html.fromstring(source)
+    cnt = crawler.parser.parse_search_result_count(tree)
+
+    print json.dumps(cnt, ensure_ascii=False,encoding='utf-8')
 
 def test3():
     seed = "黄钰孙"
