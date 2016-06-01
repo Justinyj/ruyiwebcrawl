@@ -8,6 +8,7 @@ from downloader import Downloader
 from qiparser import QiParser
 
 import lxml.html
+import lxml.etree
 import re
 import json
 import collections
@@ -29,7 +30,7 @@ class Qichacha(object):
         #self.VIP_MAX_PAGE_NUM = 500
         #self.MAX_PAGE_NUM = 10
         self.NUM_PER_PAGE = 10
-        self.INDEX_LIST_PERSON = [4,6]
+        self.INDEX_LIST_PERSON = [4,6,14]
         self.INDEX_LIST_ORG = [2]
         self.PROVINCE_LIST = {
         "AH":[1,2,3,4,5,6,7,8,10,11,12,13,15,16,17,18,24,25,26,29],
@@ -115,7 +116,7 @@ class Qichacha(object):
             for index in index_list:
 
                 cnt = self.get_keyword_search_count(keyword, index, refresh)
-                total_expect_max = max(cnt, total_expect_max)
+                total_expect_max += cnt
                 metadata_dict['total_expect_index_{}'.format(index)]=cnt
                 #metadata_dict['total_[index:{}]_expect'.format(index)]=cnt
 
@@ -128,7 +129,7 @@ class Qichacha(object):
                 else:
                     self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict_onepass, refresh)
                 summary_dict.update(summary_dict_onepass)
-                total_expect2_max = max(total_expect2_max, metadata_dict['total_expect2_index_{}'.format(index)] )
+                total_expect2_max += metadata_dict['total_expect2_index_{}'.format(index)]
                 metadata_dict['total_actual_index_{}'.format(index)]=len(summary_dict_onepass)
 
             result[keyword] = {
@@ -149,11 +150,9 @@ class Qichacha(object):
         for page in range(1, max_page + 1):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
-            try:
-                source = self.downloader.access_page_with_cache(url, refresh=refresh)
-                tree = lxml.html.fromstring(source)
-            except lxml.etree.XMLSyntaxError:
-                raise Exception('error: download source empty, need redownload')
+
+            source = self.downloader.access_page_with_cache(url, groups='v0531,search,index{}'.format(index), refresh=refresh)
+            tree = lxml.html.fromstring(source)
 
             if page ==1:
                 cnt = self.parser.parse_search_result_count(tree)
@@ -161,10 +160,10 @@ class Qichacha(object):
                 #metadata_dict['total_[index:{}]_expect2'.format(index)]+=cnt
                 #metadata_dict['total_[index:{}][省:{}]_expect2'.format(index, province)]=cnt
                 if cnt >= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:
-                    print ("TODO expand {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
+                    print ("TODO expand {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province),)
                     metadata_dict['todo_expand']+=1
                 elif province:
-                    print ("expect {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province))
+                    print ("expect {} results for [{}][index:{}][省:{}]".format( cnt,keyword,index, province),)
 
             if tree.cssselect('div.noresult .noface'):
                 break
@@ -178,7 +177,7 @@ class Qichacha(object):
                 break
 
         if province:
-            print (" got {} results, for [{}][index:{}][省:{}]".format( len(summary_dict_local), keyword,index, province))
+            print (" ...... got {} results".format( len(summary_dict_local)))
             #print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
 
     def get_keyword_search_count(self, keyword, index, refresh=False):
@@ -189,7 +188,7 @@ class Qichacha(object):
         """
         url = self.list_url.format(key=keyword, index=index, page=1, province='')
 
-        source = self.downloader.access_page_with_cache(url, refresh=refresh)
+        source = self.downloader.access_page_with_cache(url, groups='v0531,search,index{}'.format(index),refresh=refresh)
         #print (url, source)
         tree = lxml.html.fromstring(source)
 

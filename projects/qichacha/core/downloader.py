@@ -11,7 +11,7 @@ import os
 import sys
 import json
 
-from headers import choice_cookie, choice_agent, choice_proxy
+from headers import choice_agent, choice_proxy
 from cache import Cache
 from proxy import Proxy
 
@@ -34,6 +34,16 @@ class Downloader(object):
         self.groups = groups
         self.config = config
         self.refresh = refresh
+
+        self.cookie_index = 0
+        self.cookies =[]
+        for name in self.config['COOKIES']:
+            v = self.config['COOKIES'][name]
+            item = {
+                'name': name,
+                'header': dict(i.split('=', 1) for i in v.split('; '))
+            }
+            self.cookies.append(item)
 
 
     def login(self):
@@ -63,12 +73,15 @@ class Downloader(object):
         if self.request is False:
             self.driver.quit()
 
+    def get_cookie_header(self):
+        self.cookie_index = (self.cookie_index +1 ) % len(self.cookies)
+        cookie = self.cookies[self.cookie_index]
+        if self.config.get('debug'):
+            print( "[debug] use cookie "+ cookie['name'] )
+        return cookie['header']
 
     def pick_cookie_agent_proxy(self, url):
-        header_cookie = dict(i.split('=', 1) \
-                for i in choice_cookie(self.config['COOKIES']).split('; '))
-        #print (json.dumps(header_cookie))
-        self.driver.cookies.update(header_cookie)
+        self.driver.cookies.update( self.get_cookie_header() )
         self.driver.headers['User-Agent'] = choice_agent()
 #        proxies = choice_proxy(self.config, url)
 #        self.driver.proxies.update(proxies)
@@ -80,24 +93,22 @@ class Downloader(object):
         return sleep
 
     def request_download(self, url):
-        for i in range(self.RETRY):
-            proxies = self.pick_cookie_agent_proxy(url)
+        try:
+            self.pick_cookie_agent_proxy(url)
 
-            try:
-                #print(url)
-                response = self.driver.get(url, timeout=self.TIMEOUT)
-                #print (response.status_code, response.text)
-                if response.status_code == 200:
-                    return response.text #unicode
-            except:
-#                proxy = proxies.items()[0][1]
-#                Proxy.instance().post(url, proxy)
-                print ('failed', sys.exc_info()[0])
-                pass
-            finally:
-                time.sleep(self._get_sleep_period()) # sleep of cookie
-        else:
-            return u''
+            response = self.driver.get(url) #unspported argument, timeout=self.TIMEOUT)
+            if response.status_code != 200:
+                return u''
+
+            return response.text  #unicode
+        except:
+            print ('failed', sys.exc_info()[0])
+            pass
+        finally:
+            time.sleep(self._get_sleep_period()) # sleep of cookie
+
+        return u''
+
 
     def selenium_download(self, url):
         for i in range(self.RETRY):
@@ -112,39 +123,52 @@ class Downloader(object):
         else:
             return u''
 
-    def access_page_with_cache(self, url, groups=None, refresh=None):
+    def is_content_valid(self, content):
+        if not content:
+            return False
 
-        def save_cache(url, source, groups, refresh):
+        if len(content) ==0:
+            return False
+
+        if u"window.location=" in content:
+            print ("download failed redirection", )
+            return False
+
+        return True
+
+    def access_page_with_cache(self, url, groups=None, refresh=False):
+
+        def save_cache(url, content, groups, refresh):
             refresh = self.refresh if refresh is None else refresh
             groups = self.groups if groups is None else groups
-            ret = self.cache.post(url, source, groups, refresh)
+            ret = self.cache.post(url, content, groups, refresh)
             if ret not in [True, False]:
                 print(ret)
 
         if not refresh:
             content = self.cache.get(url)
-            if content != u'':
-                return content
+            #cache hit
+            if content:
+                if self.is_content_valid(content):
+                    return content
+                else:
+                    print ("cache hit, but content invalid")
 
         if self.request is True:
-            source = self.request_download(url)
-            if source == u'':
-                return source
-            save_cache(url, source, groups, refresh)
-
+            content = self.request_download(url)
         else:
-            source = self.selenium_download(url)
-            if source == u'':
-                return source
-            save_cache(url, source, groups, refresh)
+            content = self.selenium_download(url)
 
-        return source
-
+        if self.is_content_valid(content):
+            save_cache(url, content, groups, refresh)
+            return content
+        else:
+            return u''
 
     def split_url(self, url):
         import urllib
         import re
-        key, page = re.compile('http://qichacha.com/search?key=(.+)&index=0&p=(\d+)').match(url).groups()
+        key, page = re.compile('http://www.qichacha.com/search?key=(.+)&index=0&p=(\d+)').match(url).groups()
         if key.startswith('%'):
             key = urllib.unquote(key)
         return key, page

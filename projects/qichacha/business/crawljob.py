@@ -8,6 +8,7 @@ import codecs
 import re
 import hashlib
 import datetime
+import logging
 from collections import defaultdict
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -153,7 +154,7 @@ def crawl_search_pass( filename, searched, flog, limit, refresh):
             elif "seed_person" in filename:
                 data = crawler.list_person_search( [seed], limit, refresh=refresh)
             else:
-                print "skip unsupported filename ", fileanme
+                print "skip unsupported filename ", filename
                 continue
 
             if data:
@@ -438,17 +439,39 @@ def expand_person_pass(front_persons, company_raw, depth):
 
 
 
+
 def get_crawler(option):
     filename = getTheFile("../config/conf.x179.json")
     with open(filename) as f:
         config = json.load(f)[option]
     return Qichacha(config)
 
+
+def validate_cookie(option='test'):
+    filename = getTheFile("../config/conf.x179.json")
+    with open(filename) as f:
+        config = json.load(f)[option]
+        config['debug'] = True
+    crawler = Qichacha(config)
+
+
+    seed = "卓国洪"
+    index = 14
+    province = 'ZJ'
+    for i in range(0, len(config['COOKIES'])):
+        cnt = crawler.get_keyword_search_count( seed, index, refresh=True)
+        print cnt
+
+
 def test():
-    seed = "张庆华"
+    validate_cookie('regular')
+
+def test3():
+    seed = "黄钰孙"
     crawler = get_crawler('test')
     ret = crawler.list_person_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding='utf-8')
+
 
 def test2():
     seed = "博爱医院"
@@ -465,7 +488,7 @@ def main():
     #print sys.argv
 
     if len(sys.argv)<2:
-        show_help()
+        test()
         return
 
     option= sys.argv[1]
@@ -473,7 +496,7 @@ def main():
     #filename = sys.argv[3]
     if "search" == option:
 #        crawl_search(batch, getTheFile( batch+"/*_reg*"), False)
-        crawl_search(batch, getTheFile( batch+"/seed_person*_reg*"), True)
+        crawl_search(batch, getTheFile( batch+"/seed_person*_reg*"), False)
         #crawl_search(batch, getTheFile( batch+"/seed_org_keywords_vip*"), False)
         #stat(batch)
         #fetch_detail(batch)
@@ -498,6 +521,7 @@ def main():
     elif "test" == option:
         test()
         pass
+
 
 
 if __name__ == "__main__":
