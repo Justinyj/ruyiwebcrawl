@@ -30,7 +30,7 @@ class BaseCache(object):
         elif CACHEPAGE == 'fs':
             return fs_get_cache(b64url, batch_id)
         elif CACHEPAGE == 'ufile':
-            return ufile_get_cache(b64url)
+            return ufile_get_cache(batch_id, url_hash)
 
 
     @staticmethod

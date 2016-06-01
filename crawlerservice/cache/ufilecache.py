@@ -22,14 +22,14 @@ bucket_domain = 'crawlercache.ufile.ucloud.cn'
 private_bucket = 'crawlercache'
 
 
-def ufile_get_cache(b64url):
+def ufile_get_cache(batch_id, url_hash):
     if not hasattr(ufile_get_cache, '_auth'):
         down_auth = downloadufile.DownloadUFile(public_key, private_key)
         setattr(ufile_get_cache, '_auth', down_auth)
 
     try:
-        hashkey = hashlib.sha256(b64url).hexdigest()
-        ret, resp = ufile_get_cache._auth.download_stream(private_bucket, hashkey)
+        ufilename = '{}_{}'.format(batch_id, url_hash)
+        ret, resp = ufile_get_cache._auth.download_stream(private_bucket, ufilename)
         if resp.status_code != 200:
             return {'success': False, 'error': resp.content}
     except Exception as e:
@@ -44,8 +44,8 @@ def ufile_set_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
 
     try:
         sio = StringIO(content)
-        hashkey = hashlib.sha256(b64url).hexdigest()
-        ret, resp = ufile_set_cache._auth.putstream(private_bucket, hashkey, sio)
+        ufilename = '{}_{}'.format(batch_id, url_hash)
+        ret, resp = ufile_set_cache._auth.putstream(private_bucket, ufilename, sio)
         if resp.status_code != 200:
             raise Exception('{} upload ufile error: {}'.format(batch_id, b64url))
 
