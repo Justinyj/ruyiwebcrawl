@@ -10,7 +10,7 @@ from proxy import Proxy
 import random
 import time
 
-header = {
+common_header = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, sdch',
     'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',

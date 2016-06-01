@@ -492,6 +492,7 @@ AGENTS_ALL = [
             "iTunes/4.2 (Macintosh; U; PPC Mac OS X 10.2)",
             "Microsoft URL Control - 6.00.8862",
             "SearchExpress",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36",
 ]
 AGENT_GOOGLE_IMAGE=["Googlebot-Image/1.0"]
 #AGENTS=["Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)"]

@@ -9,7 +9,7 @@ import requests
 import time
 import sys
 
-from header import choice_agent, choice_proxy
+from header import choice_agent, choice_proxy, common_header
 from cache import Cache
 from proxy import Proxy
 
@@ -32,12 +32,7 @@ class Downloader(object):
         if self.request is True:
             session = requests.Session()
             session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30, max_retries=self.RETRY))
-            session.headers = {
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, sdch',
-                'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36',
-            }
+            session.headers = common_header
             self.driver = session
 
         else:
@@ -66,7 +61,7 @@ class Downloader(object):
         """
         return 0
 
-    def request_download(self, url, method='get', encode='utf-8', data=None):
+    def request_download(self, url, method='get', encode='utf-8', redirect_check=False, data=None):
         for i in range(self.RETRY):
             proxies = self.pick_cookie_agent_proxy(url)
 
@@ -75,9 +70,12 @@ class Downloader(object):
                     response = self.driver.post(url, timeout=self.TIMEOUT, data=data)
                 else:
                     response = self.driver.get(url, timeout=self.TIMEOUT)
-                    if response.status_code == 200:
-                        response.encoding = encode
-                        return response.text # text is unicode
+
+                if response.status_code == 200:
+                    if redirect_check and response.url != url:
+                        continue
+                    response.encoding = encode
+                    return response.text # text is unicode
             except:
                 proxy = proxies.items()[0][1]
                 Proxy.instance().post(url, proxy)
@@ -100,7 +98,14 @@ class Downloader(object):
         else:
             return u''
 
-    def requests_with_cache(self, url, method='get', encode='utf-8', groups=None, refresh=None, data=None):
+    def requests_with_cache(self,
+                            url,
+                            method='get',
+                            encode='utf-8',
+                            redirect_check=False,
+                            data=None,
+                            groups=None,
+                            refresh=None):
 
         def save_cache(url, source, groups, refresh):
             refresh = self.refresh if refresh is None else refresh
@@ -114,17 +119,13 @@ class Downloader(object):
             return content
 
         if self.request is True:
-            source = self.request_download(url, method, encode, data)
-            if source == u'':
-                return source
-#            source = source.decode(encode)
-            save_cache(url, source, groups, refresh)
-
+            source = self.request_download(url, method, encode, redirect_check, data)
         else:
             source = self.selenium_download(url)
-            if source == u'':
-                return source
-            save_cache(url, source, groups, refresh)
+
+        if source == u'':
+            return source
+        save_cache(url, source, groups, refresh)
 
         return source
 
