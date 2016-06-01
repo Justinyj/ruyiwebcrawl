@@ -60,9 +60,11 @@ class ExtractProxies(object):
 
         for i in range(5):
             try:
-                response = requests.get(api)
+                response = requests.get(api, timeout=self.TIMEOUT)
                 if response.status_code == 200:
                     break
+            except requests.exceptions.ConnectTimeout:
+                pass
             except Exception as e:
                 pass
             time.sleep(5)
