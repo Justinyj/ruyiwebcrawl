@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+# upgrade to qichacha2 2016-06-01 for its website revision, new batch_id qichacha2
 
 from __future__ import print_function, division
 
 from downloader import Downloader
-from qiparser import QiParser
+from qiparser2 import QiParser
 
 import lxml.html
 import lxml.etree
@@ -18,7 +19,7 @@ class Qichacha(object):
 
     def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True):
         if batch_id is None:
-            batch_id = 'qichacha'
+            batch_id = 'qichacha2'
         if config is None:
             raise Exception('error: missing config')
 
