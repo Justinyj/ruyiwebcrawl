@@ -174,7 +174,7 @@ class QiParser(object):
 
 
     def parse_search_result(self, tree):
-        summary_dict = {}
+        ret = []
         if tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
             #new version after 2016-05-31
             items = tree.cssselect('.list-group-item')
@@ -186,13 +186,14 @@ class QiParser(object):
                 province, key_num = href.rstrip('.shtml').lstrip('/firm_').split('_', 1)
                 if not name:
                     name = "NONAME-"+key_num
-                summary_dict[name] = {
+                item = {
                     'name': name,
                     'status': status,
                     'key_num': key_num,
                     'href': href,
                     'province': province,
                 }
+                ret.append(item)
                 #print (name)
         else:
             for i in tree.cssselect('#searchlist'):
@@ -200,17 +201,18 @@ class QiParser(object):
                 status = i.cssselect('.label')[0].text_content().strip()
                 href = i.cssselect('.list-group-item')[0].attrib['href']
                 key_num = href.rstrip('.shtml').rsplit('_', 1)[-1]
-                summary_dict[name] = {
+                item = {
                     'name': name,
                     'status': status,
                     'key_num': key_num,
                     'href': href,
                 }
+                ret.append(item)
 
         #import json
         #print  (len(summary_dict), json.dumps(summary_dict.keys(),ensure_ascii=False))
 
-        return summary_dict
+        return ret
 
     def parse_search_result_count(self, tree):
         ret = tree.cssselect('.panel-default .pull-left .text-danger')

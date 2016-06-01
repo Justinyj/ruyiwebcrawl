@@ -121,7 +121,7 @@ def crawl_search(batch, limit=None, refresh=False):
     else:
         path_expr = batch +"/*"
     dir_name = getTheFile( path_expr )
-    print ("search on path_expr={}".format(path_expr) +help)
+    #print ("search on path_expr={}".format(path_expr) +help)
 
     filenames = glob.glob(dir_name)
     for filename in filenames:
@@ -173,7 +173,7 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
             continue
         searched.add(seed)
 
-        print seed, limit
+        #print seed, limit
         try:
             data = crawler.list_keyword_search( [seed], list_index, limit=limit, refresh=refresh)
 
