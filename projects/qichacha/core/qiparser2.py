@@ -177,7 +177,9 @@ class QiParser(object):
         summary_dict = {}
         if tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
             #new version after 2016-05-31
-            for i in tree.cssselect('.list-group-item'):
+            items = tree.cssselect('.list-group-item')
+            #print ("v2",len(items) )
+            for i in items:
                 name = i.cssselect('.name')[0].text_content().strip()
                 status = i.cssselect('.label')[0].text_content().strip()
                 href = i.attrib['href']
@@ -191,6 +193,7 @@ class QiParser(object):
                     'href': href,
                     'province': province,
                 }
+                #print (name)
         else:
             for i in tree.cssselect('#searchlist'):
                 name = i.cssselect('.name')[0].text_content().strip()
@@ -204,7 +207,8 @@ class QiParser(object):
                     'href': href,
                 }
 
-
+        #import json
+        #print  (len(summary_dict), json.dumps(summary_dict.keys(),ensure_ascii=False))
 
         return summary_dict
 

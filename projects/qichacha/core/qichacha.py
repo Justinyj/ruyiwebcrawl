@@ -76,29 +76,29 @@ class Qichacha(object):
 
 
 
-    def list_person_search(self, person_list, limit=None, refresh=False):
-        """.. :py:method::
-            need to catch exception of download error
+    # def list_person_search(self, person_list, limit=None, refresh=False):
+    #     """.. :py:method::
+    #         need to catch exception of download error
+    #
+    #     :param person_list: str or list type, search keyword
+    #     :param limit: result number of every search keyword
+    #     :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
+    #               keyword2: {}, ...}
+    #     """
+    #     return self._list_keyword_search(person_list, self.INDEX_LIST_PERSON, limit, refresh )
+    #
+    # def list_corporate_search(self, corporate_list, limit=None, refresh=False):
+    #     """.. :py:method::
+    #         need to catch exception of download error
+    #
+    #     :param corporate_list: str or list type, search keyword
+    #     :param limit: result number of every search keyword
+    #     :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
+    #               keyword2: {}, ...}
+    #     """
+    #     return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit, refresh )
 
-        :param person_list: str or list type, search keyword
-        :param limit: result number of every search keyword
-        :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
-                  keyword2: {}, ...}
-        """
-        return self._list_keyword_search(person_list, self.INDEX_LIST_PERSON, limit, refresh )
-
-    def list_corporate_search(self, corporate_list, limit=None, refresh=False):
-        """.. :py:method::
-            need to catch exception of download error
-
-        :param corporate_list: str or list type, search keyword
-        :param limit: result number of every search keyword
-        :rtype: {keyword1: {data: {name1: {}, name2: {}, ...}, metadata:{}},
-                  keyword2: {}, ...}
-        """
-        return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit, refresh )
-
-    def _list_keyword_search(self, keyword_list, index_list, limit, refresh):
+    def list_keyword_search(self, keyword_list, index_list, limit=None, refresh=False):
         if not isinstance(keyword_list, list):
             keyword_list = [keyword_list]
 
@@ -124,9 +124,9 @@ class Qichacha(object):
                 if limit is None and cnt>= self.config['MAX_PAGE_NUM'] * self.NUM_PER_PAGE:
                     print ('auto expand {} results of [{}] with province filter '.format(cnt, keyword) )
                     for province in self.PROVINCE_LIST:
-                        self._list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_by_index, refresh)
+                        self.list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_by_index, refresh)
                 else:
-                    self._list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict_by_index, refresh)
+                    self.list_keyword_search_onepass(keyword, index, '', max_page, metadata_dict, summary_dict_by_index, refresh)
                 summary_dict.update(summary_dict_by_index)
                 metadata_dict['idx{}_actual'.format(index)]=len(summary_dict_by_index)
 
@@ -141,7 +141,7 @@ class Qichacha(object):
         #print(json.dumps(result, ensure_ascii=False))
         return result
 
-    def _list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh):
+    def list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh):
         summary_dict_local ={}
         for page in range(1, max_page + 1):
 
