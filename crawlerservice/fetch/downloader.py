@@ -10,6 +10,7 @@ import time
 import sys
 
 from header import choice_agent, choice_proxy, common_header
+from tools.log import log_traceback
 from cache import Cache
 from proxy import Proxy
 
@@ -76,8 +77,7 @@ class Downloader(object):
                     if redirect_check and response.url != url:
                         continue
                     if error_check:
-                        checker = __import__('error_check.{}'.format(self.batch_key), fromlist=['error_check'])
-                        if checker(response) is True:
+                        if __import__('fetch.error_checker.{}'.format(self.batch_key), fromlist=['error_checker']).error_checker(response):
                             continue
                     response.encoding = encode
                     return response.text # text is unicode
@@ -85,13 +85,12 @@ class Downloader(object):
                 proxy = proxies.items()[0][1]
                 Proxy.instance().post(url, proxy)
                 print('requests failed: ', sys.exc_info()[0])
+                log_traceback()
             finally:
                 time.sleep(self._get_sleep_period())
         else:
             return u''
 
-    def error_check(response):
-        return False if response.headers['Content-Type'] == 'text/html' else True
 
     def selenium_download(self, url):
         for i in range(self.RETRY):

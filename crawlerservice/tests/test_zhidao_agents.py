@@ -23,7 +23,7 @@ session = requests.Session()
 session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30, max_retries=3))
 session.headers = header
 
-def test_agent():
+def test_question():
   global session
   zhidao_url = 'http://zhidao.baidu.com/question/100.html'
   error_count = 0
@@ -41,4 +41,14 @@ def test_agent():
     time.sleep(3)
   print('Error percentage: {}'.format(error_count / i))
 
-test_agent()
+def test_api():
+    global session
+    zhidao_api = 'http://zhidao.baidu.com/question/api/mini?qid=100&rid=769&tag=timeliness'
+
+    for i, agent in enumerate(AGENTS_ALL):
+        session.headers['User-Agent'] = agent
+        resp = session.get(zhidao_api, timeout=10)
+        print(resp.status_code, resp.url)
+        time.sleep(3)
+
+test_api()
