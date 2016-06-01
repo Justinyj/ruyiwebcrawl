@@ -23,6 +23,7 @@ class Downloader(object):
         self.RETRY = 3
 
         self.gap = gap
+        self.batch_key = batch_id.split('_', 1)[0]
         self.cache = Cache(batch_id)
         self.groups = groups
         self.refresh = refresh
@@ -61,7 +62,7 @@ class Downloader(object):
         """
         return 0
 
-    def request_download(self, url, method='get', encode='utf-8', redirect_check=False, data=None):
+    def request_download(self, url, method='get', encode='utf-8', redirect_check=False, error_check=False, data=None):
         for i in range(self.RETRY):
             proxies = self.pick_cookie_agent_proxy(url)
 
@@ -74,6 +75,10 @@ class Downloader(object):
                 if response.status_code == 200:
                     if redirect_check and response.url != url:
                         continue
+                    if error_check:
+                        checker = __import__('error_check.{}'.format(self.batch_key), fromlist=['error_check'])
+                        if checker(response) is True:
+                            continue
                     response.encoding = encode
                     return response.text # text is unicode
             except:
@@ -84,6 +89,9 @@ class Downloader(object):
                 time.sleep(self._get_sleep_period())
         else:
             return u''
+
+    def error_check(response):
+        return False if response.headers['Content-Type'] == 'text/html' else True
 
     def selenium_download(self, url):
         for i in range(self.RETRY):
@@ -103,6 +111,7 @@ class Downloader(object):
                             method='get',
                             encode='utf-8',
                             redirect_check=False,
+                            error_check=False,
                             data=None,
                             groups=None,
                             refresh=None):

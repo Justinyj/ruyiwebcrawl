@@ -31,10 +31,13 @@ def test_agent():
   for i, agent in enumerate(AGENTS_ALL):
     session.headers['User-Agent'] = agent
     resp = session.get(zhidao_url, timeout=10)
+    print('\n', resp.headers['Content-Type'])
     if len(resp.content) < 100000:
       print(resp.status_code, resp.url)
       print(i, agent)
       error_count += 1
+      if resp.url == zhidao_url:
+        print('url same, still error')
     time.sleep(3)
   print('Error percentage: {}'.format(error_count / i))
 
