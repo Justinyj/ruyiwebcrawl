@@ -129,7 +129,7 @@ class Downloader(object):
                 return content
 
         if self.request is True:
-            source = self.request_download(url, method, encode, redirect_check, data)
+            source = self.request_download(url, method, encode, redirect_check, error_check, data)
         else:
             source = self.selenium_download(url)
 

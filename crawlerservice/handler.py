@@ -111,6 +111,7 @@ class FetchHandler(tornado.web.RequestHandler):
             js = json_data.get(u'js', False)
             encode = json_data.get(u'encode', u'utf-8').encode('utf-8')
             redirect_check = json_data.get(u'redirect_check', False)
+            error_check = json_data.get(u'error_check', False)
             data = json_data.get(u'data', {}) # used in post
             refresh = json_data.get(u'refresh', False)
 
@@ -125,11 +126,11 @@ class FetchHandler(tornado.web.RequestHandler):
                 url = base64.urlsafe_b64decode(b64url.encode('utf-8'))
                 if method.lower() == u'post':
                     if data:
-                        ret = downloader.requests_with_cache(url, 'post', encode, redirect_check, data, refresh=refresh)
+                        ret = downloader.requests_with_cache(url, 'post', encode, redirect_check, error_check, data, refresh=refresh)
                     else:
-                        ret = downloader.requests_with_cache(url, 'post', encode, redirect_check, data, refresh=refresh)
+                        ret = downloader.requests_with_cache(url, 'post', encode, redirect_check, error_check, data, refresh=refresh)
                 else:
-                    ret = downloader.requests_with_cache(url, 'get', encode, redirect_check, data, refresh=refresh)
+                    ret = downloader.requests_with_cache(url, 'get', encode, redirect_check, error_check, data, refresh=refresh)
 
             response = {'success': False, 'source': ret}
         except Exception as e:

@@ -54,8 +54,11 @@ class Downloader(object):
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
                 'Accept-Encoding': 'gzip, deflate, sdch',
                 'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36',
+                'Cache-Control': 'max-age=0',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests' :'1',
                 'Host': 'www.qichacha.com',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36',
             }
             self.driver = session
 
