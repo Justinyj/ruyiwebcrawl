@@ -464,7 +464,7 @@ def expand_person_pass(front_persons, company_raw, depth):
 
 
 def get_crawler(batch_id, option):
-    filename = getTheFile("../config/conf.x179.json")
+    filename = getTheFile("../config/conf.179.json")
     with open(filename) as f:
         config = json.load(f)[option]
     return Qichacha(config, batch_id)
@@ -481,7 +481,7 @@ def test_cookie():
     """
     print ("test_cookie with opion="+ option+" .  also try:"+help)
 
-    filename = getTheFile("../config/conf.x179.json")
+    filename = getTheFile("../config/conf.179.json")
     with open(filename) as f:
         config = json.load(f)[option]
         config["debug"] = True
