@@ -16,10 +16,10 @@ def get_logger(batch_id, today_str):
     :param today_str: datetime.now().strftime('%Y%m%d')
     """
 
-    def filename_in_logger_out():
-        absdir = os.path.join(FSCACHEDIR, batch_id, 'meta')
+    def filename_in_logger_out(the_batch_id):
+        absdir = os.path.join(FSCACHEDIR, the_batch_id, 'meta')
         path.makedir(absdir)
-        absfname = os.path.join(absdir, 
+        absfname = os.path.join(absdir,
                                 '{}_{}.log'.format(
                                     get_logger._ipaddr,
                                     get_logger._today_str)
@@ -27,17 +27,17 @@ def get_logger(batch_id, today_str):
         if not os.path.isfile(absfname):
             with open(absfname, 'a'):
                 pass
-        return log.init(batch_id, absfname, level=logging.INFO, size=100*1024*1024)
+        return log.init(the_batch_id, absfname, level=logging.INFO, size=100*1024*1024)
 
     if not hasattr(get_logger, '_ipaddr'):
         setattr(get_logger, '_ipaddr', ip.get_local_ip_address())
 
-    if not hasattr(get_logger, '_today_str'):
+    if not hasattr(get_logger, '_today_str') or get_logger._today_str != today_str:
         setattr(get_logger, '_today_str', today_str)
-        setattr(get_logger, '_logger', filename_in_logger_out())
+        
+        the_logger = filename_in_logger_out(batch_id)
+        loggers = getattr(get_logger, '_logger', {})
+        loggers[batch_id] = the_logger
+        setattr(get_logger, '_logger', loggers)
 
-    if get_logger._today_str != today_str:
-        setattr(get_logger, '_today_str', today_str)
-        setattr(get_logger, '_logger', filename_in_logger_out())
-
-    return get_logger._logger
+    return get_logger._logger[batch_id]
