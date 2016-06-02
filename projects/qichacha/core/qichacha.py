@@ -127,8 +127,10 @@ class Qichacha(object):
                     print (" ---- expand [{}][index:{}] auto expand by province , expect {} ".format(keyword, index, index_expect) )
                     for province in self.PROVINCE_LIST:
                         self.list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_by_index, refresh)
-                else:
+                elif index_expect>0:
                     self.list_keyword_search_onepass(keyword, index, "", max_page, metadata_dict, summary_dict_by_index, refresh)
+                else:
+                    print (" ---- skip [{}][index:{}] no expected result".format(keyword, index))
                 summary_dict.update(summary_dict_by_index)
                 #metadata_dict["i{}_actual".format(index)]=len(summary_dict_by_index)
                 i_sum_e =  metadata_dict["i{}_sum_e".format(index)]
@@ -190,6 +192,9 @@ class Qichacha(object):
             for item in items:
                 name = item['name']
                 summary_dict_local[name]= item
+
+            if cnt_items == cnt_expect:
+                break
 
             if len(items)<self.NUM_PER_PAGE:
                 break

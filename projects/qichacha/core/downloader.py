@@ -144,8 +144,8 @@ class Downloader(object):
             print (content)
             return "invalid,redirection"
 
-        if u"nodata.png" in content:
-            return "invalid, nodata"
+#        if u"nodata.png" in content:
+#            return "invalid, nodata"
 
     def access_page_with_cache(self, url, groups=None, refresh=False):
 
