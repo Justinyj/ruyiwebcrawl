@@ -25,6 +25,8 @@ import libfile
 ###################
 # global config and functions
 gcounter = collections.Counter()
+COOKIE_INDEX_REG = "safe"
+COOKIE_INDEX_TEST = "test"
 
 def getLocalFile(filename):
     return os.path.abspath(os.path.dirname(__file__)).replace("/qichacha/","/qichacha/local/") +"/"+filename
@@ -79,7 +81,7 @@ def search_count(batch, refresh=False):
     dir_name = getTheFile( path_expr )
     print ("search_count on path_expr={}".format(path_expr) +help)
 
-    crawler = get_crawler("qichacha0601search", "regular")
+    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_REG)
 
     ret = collections.defaultdict(dict)
     filenames = glob.glob(dir_name)
@@ -147,7 +149,7 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
     if "_vip" in search_option:
         crawler = get_crawler("qichacha0601search","vip")
     else:
-        crawler = get_crawler("qichacha0601search","regular")
+        crawler = get_crawler("qichacha0601search",COOKIE_INDEX_REG)
 
     if "org" in search_option:
         list_index = crawler.INDEX_LIST_ORG
@@ -351,7 +353,7 @@ def fetch_detail(batch):
     gcounter["all_company"] += len(all_company)
 
     #map names to id
-    crawler = get_crawler("qichacha0601fetch","regular")
+    crawler = get_crawler("qichacha0601fetch",COOKIE_INDEX_REG)
     counter = collections.Counter()
     company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
     counter["total"] = len(company_name_batch)
@@ -518,7 +520,7 @@ def test_count():
 
 def test_count_x(keyword, index, page, province):
     import lxml
-    crawler = get_crawler("qichacha0601search", "test")
+    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_TEST)
 
     url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
     print url
@@ -532,7 +534,7 @@ def test_count_x(keyword, index, page, province):
 
 def test_cache_get(keyword, index, page, province):
     import lxml
-    crawler = get_crawler("qichacha0601search", "test")
+    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_TEST)
 
     url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
     print url
@@ -552,7 +554,7 @@ def test_search():
     """
 
     import lxml
-    crawler = get_crawler("qichacha0601search","test")
+    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
 
     keyword = sys.argv[2] #"李国华"
     page = 0
@@ -580,14 +582,14 @@ def test():
 
 def test3():
     seed = "黄钰孙"
-    crawler = get_crawler("qichacha0601search","test")
+    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
     ret = crawler.list_person_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
 
 def test2():
     seed = "博爱医院"
-    crawler = get_crawler("qichacha0601search","test")
+    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
     ret = crawler.list_corporate_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
