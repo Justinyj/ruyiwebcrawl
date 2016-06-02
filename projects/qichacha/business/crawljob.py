@@ -79,7 +79,7 @@ def search_count(batch, refresh=False):
     dir_name = getTheFile( path_expr )
     print ("search_count on path_expr={}".format(path_expr) +help)
 
-    crawler = get_crawler("regular")
+    crawler = get_crawler("qichacha0601search", "regular")
 
     ret = collections.defaultdict(dict)
     filenames = glob.glob(dir_name)
@@ -145,9 +145,9 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
 
     #init crawler
     if "_vip" in search_option:
-        crawler = get_crawler("vip")
+        crawler = get_crawler("qichacha0601search","vip")
     else:
-        crawler = get_crawler("regular")
+        crawler = get_crawler("qichacha0601search","regular")
 
     if "org" in search_option:
         list_index = crawler.INDEX_LIST_ORG
@@ -351,7 +351,7 @@ def fetch_detail(batch):
     gcounter["all_company"] += len(all_company)
 
     #map names to id
-    crawler = get_crawler("regular")
+    crawler = get_crawler("qichacha0601fetch","regular")
     counter = collections.Counter()
     company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
     counter["total"] = len(company_name_batch)
@@ -461,11 +461,11 @@ def expand_person_pass(front_persons, company_raw, depth):
 
 
 
-def get_crawler(option):
+def get_crawler(batch_id, option):
     filename = getTheFile("../config/conf.x179.json")
     with open(filename) as f:
         config = json.load(f)[option]
-    return Qichacha(config)
+    return Qichacha(config, batch_id)
 
 
 def test_cookie():
@@ -494,22 +494,6 @@ def test_cookie():
         assert (cnt==6)
 
 
-def test_parse():
-    help ="""  indexmap  2:企业名   4:法人  6:高管  14:股东
-        python business/crawljob.py test_count 李国华 4
-        python business/crawljob.py test_count 李国华 14
-        python business/crawljob.py test_count 李国华 6 FJ
-        python business/crawljob.py test_count 医院投资 2
-    """
-
-    import lxml
-    crawler = get_crawler("test")
-
-    keyword = sys.argv[2] #"李国华"
-    page = 0
-    index= sys.argv[3] # "6"
-
-
 def test_count():
     help ="""  indexmap  2:企业名   4:法人  6:高管  14:股东
         python business/crawljob.py test_count 李国华 4
@@ -518,8 +502,6 @@ def test_count():
         python business/crawljob.py test_count 医院投资 2
     """
 
-    import lxml
-    crawler = get_crawler("test")
 
     keyword = sys.argv[2] #"李国华"
     page = 0
@@ -532,11 +514,17 @@ def test_count():
 
     print ("test_count with keyword="+ keyword+" .  also try:"+help)
 
+    test_count_x(keyword, index, page, province)
+
+def test_count_x(keyword, index, page, province):
+    import lxml
+    crawler = get_crawler("qichacha0601search", "test")
+
     url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
     print url
 
-    source = crawler.downloader.access_page_with_cache(url, groups="test")
-    #print source
+    source = crawler.downloader.access_page_with_cache(url, groups="test", refresh=False)
+    print source
     tree = lxml.html.fromstring(source)
     cnt = crawler.parser.parse_search_result_count(tree)
     print cnt
@@ -548,7 +536,7 @@ def test_search():
     """
 
     import lxml
-    crawler = get_crawler("test")
+    crawler = get_crawler("qichacha0601search","test")
 
     keyword = sys.argv[2] #"李国华"
     page = 0
@@ -563,30 +551,29 @@ def test_search():
 
     metadata_dict = collections.Counter()
     summary_dict_by_index ={}
-    crawler.list_keyword_search_onepass(keyword, index, province, 10, metadata_dict, summary_dict_by_index, refresh=False)
+    crawler.list_keyword_search_onepass(keyword, index, province, 10, metadata_dict, summary_dict_by_index, refresh=True)
     print len(summary_dict_by_index)
     print json.dumps(metadata_dict)
 
+
 def test():
     print "test"
+    test_count_x(u"吴国旺", 4, 0, "")
+
 
 def test3():
     seed = "黄钰孙"
-    crawler = get_crawler("test")
+    crawler = get_crawler("qichacha0601search","test")
     ret = crawler.list_person_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
 
 def test2():
     seed = "博爱医院"
-    crawler = get_crawler("test")
+    crawler = get_crawler("qichacha0601search","test")
     ret = crawler.list_corporate_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
-    seed = "上海华衡投资"
-    crawler = Qichacha()
-    ret = crawler.list_corporate_search(seed, 1)
-    print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
 def main():
     #print sys.argv

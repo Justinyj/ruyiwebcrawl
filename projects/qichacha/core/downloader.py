@@ -41,6 +41,7 @@ class Downloader(object):
             v = self.config['COOKIES'][name]
             item = {
                 'name': name,
+                'value': v,
                 'header': dict(i.split('=', 1) for i in v.split('; '))
             }
             self.cookies.append(item)
@@ -76,16 +77,20 @@ class Downloader(object):
         if self.request is False:
             self.driver.quit()
 
-    def get_cookie_header(self):
+    def get_a_cookie(self):
         self.cookie_index = (self.cookie_index +1 ) % len(self.cookies)
         cookie = self.cookies[self.cookie_index]
         if self.config.get('debug'):
             print( "[debug] use cookie "+ cookie['name'] )
-        return cookie['header']
+        return cookie
 
     def pick_cookie_agent_proxy(self, url):
-        self.driver.cookies.update( self.get_cookie_header() )
-        self.driver.headers['User-Agent'] = choice_agent()
+        self.driver.cookies.update( self.get_a_cookie()['header'] )
+        #self.driver.headers['Cookie'] = self.get_a_cookie()['value']
+        #self.driver.headers['Cookie'] = 'PHPSESSID=hd4pcd4a1hkdmtj7huc0akupr2; SERVERID=4ec4b3b70ba1eea2ca3e9ee7bf352bba|1464828343|1464828343; CNZZDATA1254842228=1066138900-1464827822-%7C1464827822'
+        #self.driver.headers['Cookie'] = 'PHPSESSID=hd4pcd4a1hkdmtj7huc0akupr2; SERVERID=4ec4b3b70ba1eea2ca3e9ee7bf352bba|1464828343|1464828343; CNZZDATA1254842228=1066138900-1464827822-%7C1464827822'
+        #print (self.driver.headers)
+#        self.driver.headers['User-Agent'] = choice_agent()
 #        proxies = choice_proxy(self.config, url)
 #        self.driver.proxies.update(proxies)
 #        return proxies
@@ -96,21 +101,23 @@ class Downloader(object):
         return sleep
 
     def request_download(self, url):
+        ret = u''
         try:
             self.pick_cookie_agent_proxy(url)
 
-            response = self.driver.get(url) #unspported argument, timeout=self.TIMEOUT)
-            if response.status_code != 200:
-                return u''
-
-            return response.text  #unicode
+            #print ("request_download", url)
+            response = self.driver.get(url, timeout=self.TIMEOUT)
+            if response.status_code == 200:
+                ret = response.text  #unicode
         except:
-            print ('failed', sys.exc_info()[0])
+            print ('failed', url, sys.exc_info()[0])
             pass
         finally:
-            time.sleep(self._get_sleep_period()) # sleep of cookie
+            pass
 
-        return u''
+        time.sleep(self._get_sleep_period()) # sleep of cookie
+
+        return ret
 
 
     def selenium_download(self, url):
@@ -126,18 +133,18 @@ class Downloader(object):
         else:
             return u''
 
-    def is_content_valid(self, content):
+    def check_content_invalid(self, content):
         if not content:
-            return False
+            return "invalid, empty"
 
         if len(content) ==0:
-            return False
+            return "invalid, empty"
 
         if u"window.location=" in content:
-            print ("download failed redirection", )
-            return False
+            return "invalid,redirection"
 
-        return True
+        if u"nodata.png" in content:
+            return "invalid, nodata"
 
     def access_page_with_cache(self, url, groups=None, refresh=False):
 
@@ -146,23 +153,30 @@ class Downloader(object):
             groups = self.groups if groups is None else groups
             ret = self.cache.post(url, content, groups, refresh)
             if ret not in [True, False]:
-                print(ret)
+                print('save_cache failed',ret)
 
         if not refresh:
             content = self.cache.get(url)
             #cache hit
             if content:
-                if self.is_content_valid(content):
-                    return content
+                temp = self.check_content_invalid(content)
+                if temp:
+                    #print ("cache hit", url, temp)
+                    pass
                 else:
-                    print ("cache hit, but content invalid")
+                    #print ("cache hit", url)
+                    return content
+
+        #print ("download", url)
 
         if self.request is True:
             content = self.request_download(url)
         else:
             content = self.selenium_download(url)
 
-        if self.is_content_valid(content):
+        #print (content,"\n---------------", type(content))
+
+        if not self.check_content_invalid(content):
             save_cache(url, content, groups, refresh)
             return content
         else:

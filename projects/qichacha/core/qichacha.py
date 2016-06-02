@@ -19,7 +19,7 @@ class Qichacha(object):
 
     def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True):
         if batch_id is None:
-            batch_id = "qichacha2"
+            batch_id = "qichacha0601"
         if config is None:
             raise Exception("error: missing config")
 
@@ -116,30 +116,33 @@ class Qichacha(object):
             sum_a = 0
             for index in index_list:
 
-                cnt = self.get_keyword_search_count(keyword, index, refresh)
-                metadata_dict["expect"] += cnt
-                #metadata_dict["idx{}_e_all".format(index)]=cnt
+                index_expect = self.get_keyword_search_count(keyword, index, refresh)
+                metadata_dict["expect"] += index_expect
+                metadata_dict["i{}_e".format(index)] = index_expect
                 #metadata_dict["total_[index:{}]_expect".format(index)]=cnt
 
                 province_list = []
                 summary_dict_by_index = {}
-                if limit is None and cnt>= self.config["MAX_PAGE_NUM"] * self.NUM_PER_PAGE:
-                    print (" ---- expand [{}][index:{}] auto expand by province , expect {} ".format(keyword, index, cnt) )
+                if limit is None and index_expect>= self.config["MAX_PAGE_NUM"] * self.NUM_PER_PAGE:
+                    print (" ---- expand [{}][index:{}] auto expand by province , expect {} ".format(keyword, index, index_expect) )
                     for province in self.PROVINCE_LIST:
                         self.list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_by_index, refresh)
                 else:
                     self.list_keyword_search_onepass(keyword, index, "", max_page, metadata_dict, summary_dict_by_index, refresh)
                 summary_dict.update(summary_dict_by_index)
                 #metadata_dict["i{}_actual".format(index)]=len(summary_dict_by_index)
-                sum_e += metadata_dict["i{}_sum_e".format(index)]
+                i_sum_e =  metadata_dict["i{}_sum_e".format(index)]
+                sum_e += i_sum_e
                 sum_a += metadata_dict["i{}_sum_a".format(index)]
+                if index_expect != i_sum_e:
+                    print ( "[{}][index:{}] expect {} but sum_e is {}".format(keyword, index, index_expect, i_sum_e) )
 
             result[keyword] = {
                 "data":summary_dict,
                 "metadata":metadata_dict
             }
             metadata_dict["actual"] = len(summary_dict)
-            if abs( sum_e - sum_a ) == 0:
+            if sum_e == sum_a:
                 print (u" ---- ok [{}] {} ".format( keyword, json.dumps(metadata_dict, ensure_ascii=False, sort_keys=True) ))
             else:
                 print (u"[{}] {} ".format( keyword, json.dumps(metadata_dict, ensure_ascii=False, sort_keys=True) ))
@@ -158,11 +161,15 @@ class Qichacha(object):
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
 
             source = self.downloader.access_page_with_cache(url, groups="v0531,search,index{}".format(index), refresh=refresh)
+            if not source:
+                # no more results, cannot get data
+                break
+
             tree = lxml.html.fromstring(source)
 
             if page ==1:
                 cnt_expect = self.parser.parse_search_result_count(tree)
-                metadata_dict["i{}_e_sum".format(index)]+=cnt_expect
+                metadata_dict["i{}_sum_e".format(index)]+=cnt_expect
                 #metadata_dict["total_[index:{}]_expect2".format(index)]+=cnt
                 #metadata_dict["total_[index:{}][省:{}]_expect2".format(index, province)]=cnt
                 if cnt_expect >= self.config["MAX_PAGE_NUM"] * self.NUM_PER_PAGE:
@@ -188,7 +195,7 @@ class Qichacha(object):
                 break
 
         #if province:
-        metadata_dict["i{}_a_sum".format(index)]= cnt_items
+        metadata_dict["i{}_a_sum".format(index)]+= cnt_items
         cnt_actual = len(summary_dict_local)
         summary_dict_onepass.update( summary_dict_local )
         if cnt_expect==0 or cnt_actual==0 or abs(cnt_expect - cnt_actual)>0:
@@ -206,6 +213,9 @@ class Qichacha(object):
         url = self.list_url.format(key=keyword, index=index, page=1, province="")
 
         source = self.downloader.access_page_with_cache(url, groups="v0531,search,index{}".format(index),refresh=refresh)
+        if not source:
+            return 0
+
         #print (url, source)
         tree = lxml.html.fromstring(source)
 
