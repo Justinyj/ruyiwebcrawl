@@ -81,7 +81,7 @@ class Downloader(object):
                             continue
                     response.encoding = encode
                     return response.text # text is unicode
-            except:
+            except: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
                 proxy = proxies.items()[0][1]
                 Proxy.instance().post(url, proxy)
                 print('requests failed: ', sys.exc_info()[0])

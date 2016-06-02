@@ -31,12 +31,13 @@ class ReQueueWorker(Worker):
 class GetWorker(Worker):
     def work(self):
         print(self.pool)
-        task_queue = HashQueue(batch_id, priority=2, timeout=90, failure_times=3)
 
     def monitor(self):
+        queues = []
         keys = Record.instance().get_unfinished_batch()
         for key in keys:
             queue = HashQueue(key, priority=2, timeout=90, failure_times=3)
+            queues.append(queue)
 
 #            queue.get(block=True, timeout=5)
 

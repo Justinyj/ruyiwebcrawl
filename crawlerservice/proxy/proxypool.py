@@ -41,7 +41,7 @@ class ProxyPool(object):
         self._pool = set() # (url1, url2, ...)
         self._table = defaultdict(dict)
 
-        self.FAIL_THRESHOLD = 5 # times
+        self.FAIL_THRESHOLD = 2 # times
         self.FAILED = u'fail'
         self.SUCCESS = u'success'
 

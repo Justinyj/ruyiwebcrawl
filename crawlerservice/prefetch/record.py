@@ -69,10 +69,9 @@ class Record(object):
         keys = []
         for key in self.conn.keys('*'):
             try:
-                self.conn.hkeys(key)
+                if self.is_finished(key) is False:
+                    keys.append(key)
             except ResponseError:
                 continue
-            if self.is_finished(key) is False:
-                keys.append(key)
         return keys
 
