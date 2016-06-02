@@ -530,6 +530,22 @@ def test_count_x(keyword, index, page, province):
     print cnt
     assert (int(cnt)>0)
 
+def test_cache_get(keyword, index, page, province):
+    import lxml
+    crawler = get_crawler("qichacha0601search", "test")
+
+    url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
+    print url
+
+    source = crawler.downloader.cache.get(url)
+    print crawler.downloader.check_content_invalid(source)
+    print source
+    tree = lxml.html.fromstring(source)
+    cnt = crawler.parser.parse_search_result_count(tree)
+    print cnt
+    assert (int(cnt)>0)
+
+
 def test_search():
     help ="""  indexmap  2:企业名   4:法人  6:高管  14:股东
         python business/crawljob.py test_search 任丽娟 14 BJ
@@ -558,7 +574,8 @@ def test_search():
 
 def test():
     print "test"
-    test_count_x(u"吴国旺", 4, 0, "")
+    #hit http://www.qichacha.com/search?key=吴永同&index=14&p=1&province=
+    test_cache_get(u"吴文忠", 14, 0, "YN")
 
 
 def test3():

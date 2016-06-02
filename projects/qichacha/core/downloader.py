@@ -137,10 +137,10 @@ class Downloader(object):
         if not content:
             return "invalid, empty"
 
-        if len(content) ==0:
+        if len(content.strip()) ==0:
             return "invalid, empty"
 
-        if u"window.location=" in content:
+        if u"window.location.href" in content:
             return "invalid,redirection"
 
         if u"nodata.png" in content:

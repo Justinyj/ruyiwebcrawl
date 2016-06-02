@@ -195,7 +195,7 @@ class Qichacha(object):
                 break
 
         #if province:
-        metadata_dict["i{}_a_sum".format(index)]+= cnt_items
+        metadata_dict["i{}_sum_a".format(index)]+= cnt_items
         cnt_actual = len(summary_dict_local)
         summary_dict_onepass.update( summary_dict_local )
         if cnt_expect==0 or cnt_actual==0 or abs(cnt_expect - cnt_actual)>0:
