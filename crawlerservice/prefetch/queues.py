@@ -297,10 +297,21 @@ class HashQueue(object):
             pipeline.execute()
             items, items_tail = items_tail[:self.batch_size], items_tail[self.batch_size:]
 
+
     def background_cleaning(self):
+        ret = conn.hsetnx(self.timehash, 'background_cleaning', 1)
+        if ret == '0':
+            return
+
         background = []
         while not background or sum(background[-self.failure_times:]) != 0:
             self.clean_task()
             background.append( conn.hlen(self.timehash) )
             time.sleep(60)
+
+        conn.hset(self.timehash, 'background_cleaning', 0)
+
+
+    def get_background_cleaning_status(self):
+        return conn.hget(self.timehash, 'background_cleaning')
 
