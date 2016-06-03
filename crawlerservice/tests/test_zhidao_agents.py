@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+#
+#            无cookie          有cookie
+#sleep 3   28.1947261663% - 26.369168357%
+#sleep 4   25.354969574% -  25.5578093306%
+#sleep 5   25.354969574%
+#
 
 from __future__ import print_function, division
 
