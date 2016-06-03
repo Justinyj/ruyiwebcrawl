@@ -32,39 +32,11 @@ def getLocalFile(filename):
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
-def file2list(filename):
-    ret = list()
-    visited = set()
-    with codecs.open(filename,  encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            #skip comment line
-            if line.startswith("#"):
-                continue
+COOKIE_INDEX_REG = "safe2"
+COOKIE_INDEX_TEST = "test"
+FILE_CONFIG = getTheFile("../config/conf.fs.json")
 
-            if line and line not in visited:
-                ret.append(line)
-                visited.add(line)
-    return ret
 
-def file2set(filename):
-    ret = set()
-    with codecs.open(filename,  encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            #skip comment line
-            if line.startswith("#"):
-                continue
-
-            if line and line not in ret:
-                ret.add(line)
-    return ret
-
-def lines2file(lines, filename):
-    with codecs.open(filename, "w", encoding="utf-8") as f:
-        for line in lines:
-            f.write(line)
-            f.write("\n")
 
 def search_count(batch, refresh=False):
     help =""" also try
@@ -79,13 +51,13 @@ def search_count(batch, refresh=False):
     dir_name = getTheFile( path_expr )
     print ("search_count on path_expr={}".format(path_expr) +help)
 
-    crawler = get_crawler("qichacha0601search", "regular")
+    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_REG)
 
     ret = collections.defaultdict(dict)
     filenames = glob.glob(dir_name)
     for filename in filenames:
         print filename
-        seeds = file2set(filename)
+        seeds = libfile.file2set(filename)
         for seed in seeds:
             ret[seed]["name"] = seed
             if "seed_org" in filename:
@@ -127,13 +99,13 @@ def crawl_search(batch, limit=None, refresh=False):
     for filename in filenames:
         print filename
 
-        seeds = file2set(filename)
+        seeds = libfile.file2set(filename)
 
         searched = set()
         #load prev state if refresh
         if not refresh:
             if os.path.exists(filename_metadata_search):
-                for line in file2list(filename_metadata_search):
+                for line in libfile.file2list(filename_metadata_search):
                     item = json.loads(line)
                     searched.update(item["data"].keys())
 
@@ -147,7 +119,7 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
     if "_vip" in search_option:
         crawler = get_crawler("qichacha0601search","vip")
     else:
-        crawler = get_crawler("qichacha0601search","regular")
+        crawler = get_crawler("qichacha0601search",COOKIE_INDEX_REG)
 
     if "org" in search_option:
         list_index = crawler.INDEX_LIST_ORG
@@ -189,6 +161,9 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
             else:
                 counter["empty"] +=1
 
+        except SystemExit as e:
+            print datetime.datetime.now().isoformat()
+            sys.exit(e)
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)
@@ -228,7 +203,7 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
     """
 def stat(batch):
     for filename in glob.glob(getLocalFile("crawl_search.{}.json.txt".format(batch))):
-        for line in file2list(filename):
+        for line in libfile.file2list(filename):
             gcounter["line"] +=1
             item = json.loads(line)
             for keyword, keyword_entry in item["data"].items():
@@ -245,7 +220,7 @@ def load_all_company():
     all_company_temp = set()
     for filename in glob.glob(getLocalFile("crawl_search*.json.txt")):
         batch = os.path.basename(filename).replace("crawl_search.","").replace(".json.txt","")
-        for line in file2list(filename):
+        for line in libfile.file2list(filename):
             gcounter["line"] +=1
             item = json.loads(line)
 
@@ -274,7 +249,7 @@ def load_all_company():
 
     #load prev result
     for filename in glob.glob(getLocalFile("company_prev*.txt")):
-        names = file2set(filename)
+        names = libfile.file2set(filename)
         gcounter["company_name_dup_prev"] += len(names)
         names.difference_update(all_company)
         for name in names:
@@ -288,7 +263,7 @@ def load_all_company():
     #write to text file
     company_name_all = all_company.keys()
     filename = getLocalFile("company_name.all.txt")
-    lines2file(sorted(list(company_name_all)), filename)
+    libfile.lines2file(sorted(list(company_name_all)), filename)
 
     #medical company
     company_name_batch = set()
@@ -301,7 +276,7 @@ def load_all_company():
 
     gcounter["company_name_{}".format(batch)] = len(company_name_batch)
     filename = getLocalFile("company_name.{}.txt".format(batch))
-    lines2file(sorted(list(company_name_batch)), filename)
+    libfile.lines2file(sorted(list(company_name_batch)), filename)
 
     return (all_company, all_keyword)
 
@@ -322,7 +297,7 @@ def merge_company(batch):
     new_keywords.difference_update(all_keyword.keys())
     gcounter["new_keywords"] = len(new_keywords)
     filename = getLocalFile("keywords_new.{}.txt".format(batch))
-    lines2file(sorted(list(new_keywords)), filename)
+    libfile.lines2file(sorted(list(new_keywords)), filename)
 
     #medical company
 
@@ -337,7 +312,7 @@ def fetch_detail(batch):
     filename_metadata_search = getLocalFile("crawl_search.{}.json.txt".format(batch))
     if os.path.exists(filename_metadata_search):
 
-        for line in file2list(filename_metadata_search):
+        for line in libfile.file2list(filename_metadata_search):
             gcounter["line"] +=1
             item = json.loads(line)
             for keyword, keyword_entry in item["data"].items():
@@ -351,7 +326,7 @@ def fetch_detail(batch):
     gcounter["all_company"] += len(all_company)
 
     #map names to id
-    crawler = get_crawler("qichacha0601fetch","regular")
+    crawler = get_crawler("qichacha0601fetch",COOKIE_INDEX_REG)
     counter = collections.Counter()
     company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
     counter["total"] = len(company_name_batch)
@@ -398,7 +373,7 @@ def expand_person(batch, limit=2):
 
 
     filename = getTheFile("{}/seed_person_reg.putian.txt".format(batch))
-    root_persons = libfile.file2set(filename)
+    root_persons = libfile.libfile.file2set(filename)
     gcounter["root_persons".format(batch)] = len(root_persons)
     front_persons = {}
     for name in root_persons:
@@ -462,8 +437,7 @@ def expand_person_pass(front_persons, company_raw, depth):
 
 
 def get_crawler(batch_id, option):
-    filename = getTheFile("../config/conf.x179.json")
-    with open(filename) as f:
+    with open(FILE_CONFIG) as f:
         config = json.load(f)[option]
     return Qichacha(config, batch_id)
 
@@ -479,8 +453,7 @@ def test_cookie():
     """
     print ("test_cookie with opion="+ option+" .  also try:"+help)
 
-    filename = getTheFile("../config/conf.x179.json")
-    with open(filename) as f:
+    with open(FILE_CONFIG) as f:
         config = json.load(f)[option]
         config["debug"] = True
     crawler = Qichacha(config)
@@ -518,7 +491,7 @@ def test_count():
 
 def test_count_x(keyword, index, page, province):
     import lxml
-    crawler = get_crawler("qichacha0601search", "test")
+    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_TEST)
 
     url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
     print url
@@ -532,7 +505,7 @@ def test_count_x(keyword, index, page, province):
 
 def test_cache_get(keyword, index, page, province):
     import lxml
-    crawler = get_crawler("qichacha0601search", "test")
+    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_TEST)
 
     url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
     print url
@@ -552,7 +525,7 @@ def test_search():
     """
 
     import lxml
-    crawler = get_crawler("qichacha0601search","test")
+    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
 
     keyword = sys.argv[2] #"李国华"
     page = 0
@@ -580,14 +553,14 @@ def test():
 
 def test3():
     seed = "黄钰孙"
-    crawler = get_crawler("qichacha0601search","test")
+    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
     ret = crawler.list_person_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
 
 def test2():
     seed = "博爱医院"
-    crawler = get_crawler("qichacha0601search","test")
+    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
     ret = crawler.list_corporate_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
