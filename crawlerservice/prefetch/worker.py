@@ -32,14 +32,16 @@ class GetWorker(Worker):
     def work(self):
         print(self.pool)
 
-    def monitor(self):
+    def get_task_queue(self):
         queues = []
         keys = Record.instance().get_unfinished_batch()
         for key in keys:
             queue = HashQueue(key, priority=2, timeout=90, failure_times=3)
-            queues.append(queue)
+            return queue
 
-#            queue.get(block=True, timeout=5)
+    def monitor(self):
+        queue = self.get_task_queue()
+        queue.get(block=True, timeout=5)
 
 
 def producer(poolsize):
