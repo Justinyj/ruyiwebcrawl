@@ -34,7 +34,7 @@ def getTheFile(filename):
 
 COOKIE_INDEX_REG = "safe2"
 COOKIE_INDEX_TEST = "test"
-FILE_CONFIG = getTheFile("../config/conf.localhost.json")
+FILE_CONFIG = getTheFile("../config/conf.fs.json")
 
 
 
@@ -161,6 +161,9 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
             else:
                 counter["empty"] +=1
 
+        except SystemExit as e:
+            print datetime.datetime.now().isoformat()
+            sys.exit(e)
         except:
             import traceback
             traceback.print_exc(file=sys.stdout)

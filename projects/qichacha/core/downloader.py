@@ -37,6 +37,7 @@ class Downloader(object):
 
         self.cookie_index = 0
         self.cookies =[]
+        print ("cookies ", len(self.config['COOKIES']),"gap",self._get_sleep_period())
         for name in self.config['COOKIES']:
             v = self.config['COOKIES'][name]
             item = {
@@ -142,6 +143,7 @@ class Downloader(object):
 
         if u"window.location.href" in content:
             print (content)
+            sys.exit(1)
             return "invalid,redirection"
 
 #        if u"nodata.png" in content:

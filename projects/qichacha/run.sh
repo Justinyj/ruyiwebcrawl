@@ -31,6 +31,7 @@ fi
 
 if [ "$1" = "cache-up" ]; then
   rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha0601search  data@106.75.14.79:/data/crawler_file_cache
+#  rsync -azvrtopg -e 'ssh'  /data/crawler_file_cache/qichacha0601search  lidingpku@wukong:/data/crawler_file_cache
   rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha0601fetch  data@106.75.14.79:/data/crawler_file_cache
   echo "ssh -p50001 data@106.75.14.79"
 fi
