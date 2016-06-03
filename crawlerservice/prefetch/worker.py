@@ -29,15 +29,17 @@ class ReQueueWorker(Worker):
 
 
 class GetWorker(Worker):
-    def work(self):
-        print(self.pool)
+    def __init__(self, poolsize=100):
+        super(GetWorker, self).__init__(poolsize)
+        self.queues = [i for i in self._get_task_queue()]
 
-    def get_task_queue(self):
-        queues = []
+    def _get_task_queue(self):
         keys = Record.instance().get_unfinished_batch()
         for key in keys:
-            queue = HashQueue(key, priority=2, timeout=90, failure_times=3)
-            return queue
+            yield HashQueue(key, priority=2, timeout=90, failure_times=3)
+
+    def work(self):
+        print(self.pool)
 
     def _check_empty_queue(self, queue):
         """ after 3 times of get, result is empty
@@ -49,33 +51,49 @@ class GetWorker(Worker):
         return True
 
     def delete_queue_check(self, queue):
+        ret = self._check_empty_queue(queue)
+        if ret is False:
+            return False
+        ret = Record.instance().is_finished(queue.key)
+        if ret is True:
+            return False
         status = queue.get_background_cleaning_status()
         if status != '0':
             return False
-        ret = Record.instance().is_finished()
-        if ret is True:
-            return False
-        ret = self._check_empty_queue()
-        if ret is False:
-            return False
         return True
+
     def run(self):
-        queue = self.get_task_queue()
-        status = queue.get_background_cleaning_status()
-        if status is None: # not running yet
+        """ end, background_cleansing, status:
+            0,   None,                 begin
+            0,   1,                    begin cleansing
+            0,   0,                    finish cleansing
+         time,   0,                    begin delete
+         time,   None,                 finish delete
+            0,   0,                    finish cleansing with exception
+        """
+        queue = self.queues[0]
+        background = queue.get_background_cleaning_status()
+        if Record.instance().is_finished(queue.key) is True:
+            return
+
+        if background is None:
             gevent.spawn(queue.background_cleaning)
-            # TODO start crawling
-        elif status == '1': # running
+            # start crawling
+        elif background == '1':
+            # start crawling
             pass
-        elif status == '0': # finished job
+        elif background == '0':
             ret = self.delete_queue_check(queue)
             if ret is True:
-                # caution!! atom operation
-                Record.instance().end()
-                queue.flush()
-                ThinHash.delete()
-                
-            # delete queue and distribute queue
+                # caution! atom operation
+                try:
+                    Record.instance().end(queue.key)
+                    total_count = int( Record.instance().get_total_number() )
+                    thinhash = ThinHash(batch_id, total_count)
+                    thinhash.delete()
+                    queue.flush()
+                except:
+                    Record.instance().from_end_rollback(queue.key)
 
 
 

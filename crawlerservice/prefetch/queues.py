@@ -302,7 +302,7 @@ class HashQueue(object):
             return
 
         background = []
-        while not background or sum(background[-self.failure_times:]) != 0:
+        while len(background) < 3 or sum(background[-self.failure_times:]) != 0:
             self.clean_task()
             background.append( conn.hlen(self.timehash) )
             time.sleep(60)
@@ -311,5 +311,7 @@ class HashQueue(object):
 
 
     def get_background_cleaning_status(self):
+        """ if self.flush, hget will not generate self.timehash key again
+        """
         return conn.hget(self.timehash, 'background_cleaning')
 

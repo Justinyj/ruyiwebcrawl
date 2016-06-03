@@ -37,7 +37,7 @@ class ThinSet(object):
         """
         self.key = key
         self.total = totalcount
-        self.modulo = totalcount // 400
+        self.modulo = totalcount // 200
         self.counterkey = 'thinset_{}_count'.format(key)
         self.bucketskey = 'thinset_{}_buckets'.format(key)
         if connection is not None:
@@ -164,7 +164,7 @@ class ThinHash(object):
         self.key = key
         self.counterkey = 'thinhash_{}_count'.format(key)
         self.bucketskey = 'thinhash_{}_buckets'.format(key)
-        self.modulo = totalcount // 400
+        self.modulo = totalcount // 200
         if connection is not None:
             self.conn = connection
         else:

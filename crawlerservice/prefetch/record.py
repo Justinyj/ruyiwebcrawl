@@ -49,6 +49,8 @@ class Record(object):
         self.conn.hsetnx(batch_id, 'failed', 0)
         self.conn.hsetnx(batch_id, 'success', 0)
 
+    def from_end_rollback(self, batch_id):
+        self.conn.hset(batch_id, 'end', 0)
 
     def end(self, batch_id):
 #        self.conn.hset(self.jobskey, batch_id, self.STOP)
@@ -64,6 +66,9 @@ class Record(object):
 
     def increase_failed(self, batch_id, count=1):
         self.conn.hincrby(batch_id, 'failed', count)
+
+    def get_total_number(self, batch_id):
+        return self.conn.hget(batch_id, 'total')
 
     def get_unfinished_batch(self):
         keys = []
