@@ -214,7 +214,7 @@ class HashQueue(object):
         else:
             return 0
 
-    def get(self, block=True, timeout=None):
+    def get(self, block=True, timeout=None, interval=0.1):
         """ get item(s) from queue, block if needed
 
         Usage::
@@ -222,17 +222,15 @@ class HashQueue(object):
         >>> q.get(block=True) # empty queue will block forever
         >>> q.get(block=True, timeout=5)
         """
-        # TODO: 1.queue empty, 2.queue connect time out.
-        # after 3 times of get, result is empty, Record.is_finished() False,
-        # set self.flush(), Record.end(), ThinHash.delete()
+        # TODO: queue connect time out.
         if block:
             t = 0
             while timeout is None or t < timeout:
                 # items is {} object
                 next_seq, items = conn.hscan(self.key, cursor=0, count=1)
                 if not items:
-                    t += 0.1
-                    time.sleep(0.1)
+                    t += interval
+                    time.sleep(interval)
                 else: break
         else:
             next_seq, items = conn.hscan(self.key, cursor=0, count=1)

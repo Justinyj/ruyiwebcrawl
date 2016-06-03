@@ -35,7 +35,7 @@ def crawl_url(url):
         fetch_url = api_url.format(b64url)
         batch_id = get_batch_id()
         data = {'batch_id': batch_id, 'gap': 2, 'encode': 'gb18030', 'header': {'Host': 'zhidao.baidu.com', 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.63 Safari/537.36', 'Connection': 'keep-alive', 'Cache-Control': 'max-age=0', 'Upgrade-Insecure-Requests': '1'}}
-        r = requests.post(fetch_url, data=json.dumps(data))
+        r = requests.get(fetch_url, data=json.dumps(data))
         
         assert r.status_code == 200
         content = r.json()[u'source'].encode("utf-8")

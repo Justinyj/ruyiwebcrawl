@@ -102,7 +102,7 @@ class ProxyDataStructureHandler(tornado.web.RequestHandler):
 
 
 class FetchHandler(tornado.web.RequestHandler):
-    def post(self, method, b64url): # can be get either
+    def get(self, method, b64url):
         try:
             json_data = json.loads(self.request.body)
             batch_id = json_data.get(u'batch_id', u'').encode('utf-8')
