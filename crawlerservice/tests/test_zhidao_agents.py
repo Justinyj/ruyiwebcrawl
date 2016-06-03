@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+#
+#            无cookie          有cookie
+#sleep 3   28.1947261663% - 26.369168357%
+#sleep 4   25.354969574% -  25.5578093306%
+#sleep 5   25.354969574%
+#
 
 from __future__ import print_function, division
 
-import requests
 import time
+import random
+import requests
 from fetch.agents import AGENTS_ALL
 
 header = {
@@ -23,6 +30,14 @@ session = requests.Session()
 session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30, max_retries=3))
 session.headers = header
 
+def get_cookie_template():
+    return ("BAIDUID=F4FA68EF6541217A317954F8E5A83B09:FG=1; IK_CID_82=1;"
+            " IK_CID_74=5; Hm_lvt_6859ce5aaf00fb00387e6434e4fcc925=1464845871;"
+            " Hm_lpvt_6859ce5aaf00fb00387e6434e4fcc925={now}; "
+            "IK_F4FA68EF6541217A317954F8E5A83B09={num}; IK_CID_80=6".format(
+                now=int(time.time()),
+                num=str(random.random())[2:4]))
+
 def test_question():
   global session
   zhidao_url = 'http://zhidao.baidu.com/question/100.html'
@@ -30,6 +45,9 @@ def test_question():
 
   for i, agent in enumerate(AGENTS_ALL):
     session.headers['User-Agent'] = agent
+    cookiestr = get_cookie_template()
+    cookie = dict(l.split('=', 1) for l in cookiestr.split('; '))
+    session.cookies.update(cookie)
     resp = session.get(zhidao_url, timeout=10)
     print('\n', resp.headers['Content-Type'])
     if len(resp.content) < 100000:
@@ -38,7 +56,7 @@ def test_question():
       error_count += 1
       if resp.url == zhidao_url:
         print('url same, still error')
-    time.sleep(3)
+    time.sleep(5)
   print('Error percentage: {}'.format(error_count / i))
 
 def test_api():
@@ -51,4 +69,4 @@ def test_api():
         print(resp.status_code, resp.url)
         time.sleep(3)
 
-test_api()
+test_question()
