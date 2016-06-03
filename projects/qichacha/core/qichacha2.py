@@ -25,8 +25,9 @@ class Qichacha(object):
 
         self.config = config
         self.list_url = "http://www.qichacha.com/search?key={key}&index={index}&p={page}&province={province}"
-        self.base_url = "http://www.qichacha.com/company_base?unique={key_num}&companyname={name}"
-        self.invest_url = "http://www.qichacha.com/company_touzi?unique={key_num}&companyname={name}&p={page}"
+        self.base_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=base"
+        self.invest_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=touzi&p={page}"
+        self.legal_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=susong&p={page}"
 
         #self.VIP_MAX_PAGE_NUM = 500
         #self.MAX_PAGE_NUM = 10
