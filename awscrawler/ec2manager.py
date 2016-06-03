@@ -59,17 +59,43 @@ class Ec2Manager(object):
 
         self.stop([instance.id])
         while 1:
-            time.sleep(1)
-            instance.load()
+            instance.load() # load cost network time
             if instance.meta.data[u'State'][u'Name'] == 'stopped':
                 break
 
         self.start([instance.id])
         while 1:
-            time.sleep(1)
             instance.load()
             if instance.meta.data[u'State'][u'Name'] == 'running':
                 break
 
         self.queue.append(instance)
 
+
+    def stop_and_start(self, group_num):
+        group_instances = []
+        ids = []
+        for _ in xrange(group_num):
+            item = self.queue.popleft()
+            group_instances.append(item)
+            ids.append(item.id)
+
+        self.stop(ids)
+        while 1:
+            count = []
+            for i in group_instances:
+                i.load()
+                count.append(1 if i.meta.data[u'State'][u'Name'] == 'stoped' else 0)
+            if sum(count) == len(ids):
+                break
+
+        self.start(ids)
+        while 1:
+            count = []
+            for i in group_instances:
+                i.load()
+                count.append(1 if i.meta.data[u'State'][u'Name'] == 'running' else 0)
+            if sum(count) == len(ids):
+                break
+
+        self.queue.extend(group_instances)

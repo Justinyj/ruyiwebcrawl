@@ -25,10 +25,11 @@ class schedule(object):
 
         before = time.time()
         while 1:
-            self.ec2manager.stop_one_and_restart()
+            self.ec2manager.stop_and_restart(self.group_num)
             if self.restart_interval != 0:
                 now = time.time()
                 sleep_interval = before + self.restart_interval - now
                 if sleep_interval > 0:
                     time.sleep(sleep_interval)
                 before = now
+
