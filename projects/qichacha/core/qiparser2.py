@@ -231,10 +231,11 @@ class QiParser(object):
         for sub_company in tree.cssselect('.list-group a.list-group-item'):
             sub_name = sub_company.cssselect('span.clear .text-lg')[0].text_content().strip()
             href = sub_company.get('href')
-            key_num = href.rsplit('_', 1)[-1]
+            province, key_num = href.rsplit('_', 2)[-2:]
             invest_dict[sub_name] = {
                 'name': sub_name,
                 'key_num': key_num,
+                'province': province,
                 'href': href,
             }
         return invest_dict
