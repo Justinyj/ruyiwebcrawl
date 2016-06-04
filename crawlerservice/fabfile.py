@@ -7,12 +7,19 @@ from __future__ import print_function, division
 from fabric.api import *
 from settings import DBPASS
 
-env.hosts = ['106.75.6.152']
-env.user = 'ubuntu'
+hostos = 'debian'
+if hostos == 'ubuntu':
+    env.hosts = ['106.75.6.152']
+    env.user = 'ubuntu'
+    PG_VERSION = 'trusty-pgdg'
+elif hostos == 'debian':
+    env.hosts = ['52.196.158.37']
+    env.user = 'admin'
+    PG_VERSION = 'jessie-pgdg'
 
 def _build_pg():
     sudo('touch /etc/apt/sources.list.d/pg.list')
-    sudo("""sh -c "echo 'deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main' > /etc/apt/sources.list.d/pg.list" """)
+    sudo("""sh -c "echo 'deb http://apt.postgresql.org/pub/repos/apt/ {} main' > /etc/apt/sources.list.d/pg.list" """.format(PG_VERSION))
     sudo('wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -')
     sudo('apt-get update')
     sudo('apt-get -y install postgresql-server-dev-9.5 postgresql')
@@ -38,7 +45,7 @@ def upload():
 
     with cd('/tmp'):
         run('tar jxf /tmp/{}'.format(archive))
-        sudo('mkdir -p /opt/service/raw; chown -R ubuntu:ubuntu /opt/service')
+        sudo('mkdir -p /opt/service/raw; chown -R {user}:{user} /opt/service'.format(user=env.user))
         run('mv /tmp/crawlerservice /opt/service/raw/crawlerservice`date +%Y%m%d%H%M%S`')
 
     with cd('/opt/service/'):
