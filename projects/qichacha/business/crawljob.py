@@ -350,25 +350,29 @@ def fetch_detail(batch, worker_id=None, expand=False):
     #map names to id
     crawler = get_crawler(BATCH_ID_FETCH, COOKIE_INDEX_FETCH, worker_id = worker_id)
     counter = collections.Counter()
-    company_name_batch = map_key_num_name_crawl.keys()
+    company_name_batch = sorted(list(map_key_num_name_crawl.keys()))
     #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
     counter["company_total"] = len(company_name_batch)
     worker_num = crawler.config.get("WORKER_NUM",1)
     company_raw = {}
-    for name in company_name_batch:
-        key_num = map_key_num_name_crawl[name]
+    for key_num in company_name_batch:
+        name = map_key_num_name_crawl[key_num]
+        
+        if not name:
+            continue
 
         if counter["visited"] % 2000 ==0:
             counter["company_raw"] =len(company_raw)
             print batch, datetime.datetime.now().isoformat(), counter
         counter["visited"]+=1
 
-        exit(0)
-
         if worker_id is not None and worker_num>1:
             if (counter["visited"] % worker_num) != worker_id:
                 counter["skipped"]+=1
                 continue
+
+        if crawler.config.get("debug"):
+            print "name",name, "key",key_num
 
         try:
             company_raw_one = {}
