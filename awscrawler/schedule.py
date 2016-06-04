@@ -9,7 +9,7 @@ import time
 
 from ec2manager import Ec2Manager
 
-class schedule(object):
+class Schedule(object):
 
     def __init__(self, machine_num, cycle=600, *args, **kwargs):
         self.machine_num = machine_num

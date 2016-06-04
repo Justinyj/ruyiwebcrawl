@@ -10,8 +10,9 @@ import json
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
+from schedule import Schedule
 
-def post_job(self, batch_id, method, gap, js, header, urls):
+def post_job(self, batch_id, method, gap, js, header, urls, machine_num):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
@@ -37,11 +38,15 @@ def post_job(self, batch_id, method, gap, js, header, urls):
 
         queue.put_init(field)
 
+    schedule = Schedule(machine_num)
+    schedule.run()
+
+
 def load_urls(fname):
     with open(fname) as fd:
         return [i.strip() for i in fd if i.strip() != '']
 
 if __name__ == '__main__':
     urls = load_urls('prefetch.txt')
-    post_job('qichacha_fetch_20160604', 'get', 5, False, {}, urls)
+    post_job('qichacha_fetch_20160604', 'get', 5, False, {}, urls, 10)
 
