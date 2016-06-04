@@ -13,7 +13,7 @@ from collections import defaultdict
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-from core.qichacha import Qichacha
+from core.qichacha2 import Qichacha
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)) )
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -32,10 +32,13 @@ def getLocalFile(filename):
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
-COOKIE_INDEX_REG = "safe2"
+COOKIE_INDEX_VIP = "vip"
+COOKIE_INDEX_SEARCH = "search"
 COOKIE_INDEX_TEST = "test"
+COOKIE_INDEX_FETCH = "fetch"
 FILE_CONFIG = getTheFile("../config/conf.fs.json")
-
+BATCH_ID_SEARCH ='qichacha_search_20160603'
+BATCH_ID_FETCH ='qichacha_fetch_20160603'
 
 
 def search_count(batch, refresh=False):
@@ -51,7 +54,7 @@ def search_count(batch, refresh=False):
     dir_name = getTheFile( path_expr )
     print ("search_count on path_expr={}".format(path_expr) +help)
 
-    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_REG)
+    crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_SEARCH)
 
     ret = collections.defaultdict(dict)
     filenames = glob.glob(dir_name)
@@ -111,20 +114,22 @@ def crawl_search(batch, limit=None, refresh=False):
 
         #add new
         with codecs.open(filename_metadata_search,"a") as flog:
-            crawl_search_pass( seeds, os.path.basename(filename), searched, flog=flog, limit=limit, refresh=refresh )
+            crawl_search_pass( seeds, os.path.basename(filename), searched, flog=flog, limit=limit, refresh=refresh)
 
-def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, refresh=None):
+def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, refresh=None, skip_index_max=None):
 
     #init crawler
     if "_vip" in search_option:
-        crawler = get_crawler("qichacha0601search","vip")
+        crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_VIP)
     else:
-        crawler = get_crawler("qichacha0601search",COOKIE_INDEX_REG)
+        crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_SEARCH)
 
     if "org" in search_option:
         list_index = crawler.INDEX_LIST_ORG
     elif "person" in search_option:
         list_index = crawler.INDEX_LIST_PERSON
+        #!!!!
+        skip_index_max=2000
     else:
         print ("skip unsupported search option ", search_option)
         return
@@ -147,7 +152,7 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
 
         #print seed, limit
         try:
-            data = crawler.list_keyword_search( [seed], list_index, limit=limit, refresh=refresh)
+            data = crawler.list_keyword_search( [seed], list_index, limit=limit, refresh=refresh, skip_index_max=skip_index_max)
 
             if data:
                 item = {
@@ -304,7 +309,7 @@ def merge_company(batch):
 
 #################
 
-def fetch_detail(batch):
+def fetch_detail(batch, worker_id=None, expand=False):
 
     #load search history
     all_company = {}
@@ -319,16 +324,17 @@ def fetch_detail(batch):
                 #print type(keyword_entry)
                 all_company.update(keyword_entry["data"])
                 gcounter["all_company_dup"] += len(keyword_entry["data"])
-                all_keyword[keyword] = keyword_entry["metadata"]["total_expect2"]
+                all_keyword[keyword] = keyword_entry["metadata"]
 
     #load names
     print json.dumps(all_company.values()[0], ensure_ascii=False)
     gcounter["all_company"] += len(all_company)
 
     #map names to id
-    crawler = get_crawler("qichacha0601fetch",COOKIE_INDEX_REG)
+    crawler = get_crawler(BATCH_ID_FETCH,COOKIE_INDEX_FETCH, worker_id = worker_id)
     counter = collections.Counter()
-    company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
+    company_name_batch = all_company.keys()
+    #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
     counter["total"] = len(company_name_batch)
     company_raw = {}
     for name in company_name_batch:
@@ -336,23 +342,25 @@ def fetch_detail(batch):
         key_num = company.get("key_num")
 
         if counter["visited"] % 100 ==0:
+            counter["company_raw"] =len(company_raw)
             print batch, datetime.datetime.now().isoformat(), counter
         counter["visited"]+=1
 
         try:
             company_raw_one = {}
-            #temp = crawler.crawl_company_detail(name, key_num)
-            #company_raw_one.update(temp)
+            if expand:
+                temp = crawler.crawl_descendant_company(name, key_num)
+                company_raw_one.update(temp)
 
-            temp = crawler.crawl_descendant_company(name, key_num)
-            company_raw_one.update(temp)
+                temp = crawler.crawl_ancestors_company(name, key_num)
+                company_raw_one.update(temp)
+            else:
+                temp = crawler.crawl_company_detail(name, key_num)
+                company_raw_one.update(temp)
 
-            temp = crawler.crawl_ancestors_company(name, key_num)
-            company_raw_one.update(temp)
 
             company_raw.update(company_raw_one)
-            counter["company_raw_one"] =len(company_raw_one)
-            counter["company_raw"] =len(company_raw)
+            #counter["company_raw_one"] =len(company_raw_one)
             counter["ok"] +=1
         except:
             print "fail", name
@@ -364,6 +372,100 @@ def fetch_detail(batch):
     with codecs.open(filename,"w", encoding="utf-8") as f:
         json.dump(company_raw, f, ensure_ascii=False, indent=4 )
 
+
+
+
+
+
+def prefetch(batch):
+    help ="""
+        python business/crawljob.py prefetch medical
+    """
+    #map names to id
+    crawler = get_crawler(BATCH_ID_FETCH,COOKIE_INDEX_SEARCH)
+    counter = collections.Counter()
+
+
+    #load loaded prefetch urls, will skip them since they have been already submitted
+    filename = getLocalFile("prefetch.done.txt".format(batch))
+    if os.path.exists(filename):
+        urls_done = libfile.file2set(filename)
+    else:
+        urls_done =set()
+
+
+    #load prev company 0531
+    urls_0531 = set()
+    filename = getLocalFile("prefetch.0531.tsv".format(batch))
+    for line in libfile.file2set(filename):
+        key_num,name = line.split('\t',1)
+        url = crawler.get_info_url("touzi", key_num, name)
+        urls_0531.add(url)
+
+        url = crawler.get_info_url("base", key_num, name)
+        urls_0531.add(url)
+
+
+    #load search history
+    all_company = {}
+    all_keyword = {}
+    filename_metadata_search = getLocalFile("crawl_search.{}.json.txt".format(batch))
+    if os.path.exists(filename_metadata_search):
+
+        for line in libfile.file2list(filename_metadata_search):
+            gcounter["line"] +=1
+            item = json.loads(line)
+            for keyword, keyword_entry in item["data"].items():
+                #print type(keyword_entry)
+                all_company.update(keyword_entry["data"])
+                gcounter["all_company_dup"] += len(keyword_entry["data"])
+                all_keyword[keyword] = json.dumps(keyword_entry["metadata"], sort_keys=True).replace("\"","")
+
+    #load names
+    print json.dumps(all_company.values()[0], ensure_ascii=False)
+    gcounter["all_company"] = len(all_company)
+
+    print json.dumps(all_keyword, sort_keys=True, indent=4, ensure_ascii=False)
+
+
+
+    #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
+    company_name_batch = all_company.keys()
+    #gcounter["prefetch_candidate"] = len(all_company)
+    gcounter["prefetch_company_selected"] = len(company_name_batch)
+    urls  = set()
+    worker_num = crawler.config.get("WORKER_NUM",1)
+    for name in company_name_batch:
+        company = all_company[name]
+        key_num = company.get("key_num")
+
+        if counter["visited"] % 1000 ==0:
+            print batch, datetime.datetime.now().isoformat(), counter
+        counter["visited"]+=1
+
+        if worker_id is not None and worker_num>1:
+            if (counter["visited"] % worker_num) != worker_id:
+                counter["skip_not_this_worker"]+=1
+                continue
+
+        if "NONAME" in name:
+            name = ""
+
+        url = crawler.get_info_url("touzi", key_num, name)
+        urls.add(url)
+
+        url = crawler.get_info_url("base", key_num, name)
+        urls.add(url)
+
+        #url = crawler.legal_url.format(key_num=key_num, name=name, page=1)
+        #urls.add(url)
+    #urls.update(urls_0531)
+    urls.difference_update(urls_done)
+    gcounter["prefetch_url_actual"] = len(urls)
+
+    gcounter["prefetch.{}.txt".format(batch)] = len(urls)
+    filename = getLocalFile("prefetch.{}.txt".format(batch))
+    libfile.lines2file(sorted(list(urls)), filename)
 
 def expand_person(batch, limit=2):
     filename = getLocalFile("company_raw.{}.json".format(batch))
@@ -436,9 +538,11 @@ def expand_person_pass(front_persons, company_raw, depth):
 
 
 
-def get_crawler(batch_id, option):
+def get_crawler(batch_id, option, worker_id=None):
     with open(FILE_CONFIG) as f:
         config = json.load(f)[option]
+        if worker_id is not None:
+            config['WORKER_ID'] = worker_id
     return Qichacha(config, batch_id)
 
 
@@ -491,7 +595,7 @@ def test_count():
 
 def test_count_x(keyword, index, page, province):
     import lxml
-    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_TEST)
+    crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_TEST)
 
     url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
     print url
@@ -505,7 +609,7 @@ def test_count_x(keyword, index, page, province):
 
 def test_cache_get(keyword, index, page, province):
     import lxml
-    crawler = get_crawler("qichacha0601search", COOKIE_INDEX_TEST)
+    crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_TEST)
 
     url = crawler.list_url.format(key=keyword, index=index, page=page, province=province)
     print url
@@ -519,13 +623,21 @@ def test_cache_get(keyword, index, page, province):
     assert (int(cnt)>0)
 
 
+def test_fetch(name, key_num):
+    crawler = get_crawler(BATCH_ID_FETCH, COOKIE_INDEX_TEST)
+
+    ret = crawler.crawl_company_detail(name, key_num)
+    print json.dumps(ret, ensure_ascii=False, indent=4)
+
+
+
 def test_search():
     help ="""  indexmap  2:企业名   4:法人  6:高管  14:股东
         python business/crawljob.py test_search 任丽娟 14 BJ
     """
 
     import lxml
-    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
+    crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_TEST)
 
     keyword = sys.argv[2] #"李国华"
     page = 0
@@ -548,19 +660,20 @@ def test_search():
 def test():
     print "test"
     #hit http://www.qichacha.com/search?key=吴永同&index=14&p=1&province=
-    test_cache_get(u"吴文忠", 14, 0, "YN")
+    #test_cache_get(u"吴文忠", 14, 0, "YN")
+    test_fetch(u"苏州远大投资有限公司","36a64ffac2863a8ae6a4edd0dc33b271")
 
 
 def test3():
     seed = "黄钰孙"
-    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
+    crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_TEST)
     ret = crawler.list_person_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
 
 def test2():
     seed = "博爱医院"
-    crawler = get_crawler("qichacha0601search",COOKIE_INDEX_TEST)
+    crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_TEST)
     ret = crawler.list_corporate_search(seed, None)
     print json.dumps(ret, ensure_ascii=False,encoding="utf-8")
 
@@ -589,6 +702,8 @@ def main():
 
     elif "fetch" == option:
         fetch_detail(batch)
+    elif "prefetch" == option:
+        prefetch(batch)
 
     elif "expand_person" == option:
         expand_person(batch)
@@ -605,6 +720,8 @@ def main():
         test_count()
     elif "test_search" == option:
         test_search()
+    elif "test_fetch" == option:
+        test_fetch()
 
 
 if __name__ == "__main__":

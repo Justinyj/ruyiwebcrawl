@@ -17,6 +17,19 @@ import urllib
 
 class Qichacha(object):
 
+    def get_info_url(self, tab, key_num, name, page=None):
+        if "NONAME" in name:
+            name = "%20"
+        if None == page or page == 1:
+            ret = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab={tab}".format(key_num=key_num, name=name, tab=tab)
+        else:
+            ret = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab={tab}&page={page}".format(key_num=key_num, name=name, page=page, tab=tab)
+
+        if self.config.get('debug'):
+            print (ret)
+
+        return ret
+
     def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True):
         if batch_id is None:
             batch_id = "qichacha0601"
@@ -25,12 +38,13 @@ class Qichacha(object):
 
         self.config = config
         self.list_url = "http://www.qichacha.com/search?key={key}&index={index}&p={page}&province={province}"
-        self.base_url = "http://www.qichacha.com/company_base?unique={key_num}&companyname={name}"
-        self.invest_url = "http://www.qichacha.com/company_touzi?unique={key_num}&companyname={name}&p={page}"
+        #self.base_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=base"
+        #self.invest_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=touzi&p={page}"
+        #self.legal_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=susong&p={page}"
 
         #self.VIP_MAX_PAGE_NUM = 500
         #self.MAX_PAGE_NUM = 10
-        self.NUM_PER_PAGE = 10
+        self.NUM_PER_PAGE = 10  #10
         self.INDEX_LIST_PERSON = [4,6,14]
         self.INDEX_LIST_ORG = [2]
         self.PROVINCE_LIST = {
@@ -264,7 +278,7 @@ class Qichacha(object):
                        }
                 }
         """
-        url = self.base_url.format(name=name, key_num=key_num)
+        url = self.get_info_url("base", key_num, name)
         try:
             source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
@@ -311,7 +325,7 @@ class Qichacha(object):
                     "_re_page_num",
                     re.compile("javascript:touzilist\((\d+)\)"))
 
-        url = self.invest_url.format(key_num=key_num, name=name, page=page)
+        url = self.get_info_url("touzi",key_num, name, page=page)
         try:
             source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
