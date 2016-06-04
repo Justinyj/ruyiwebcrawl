@@ -40,7 +40,7 @@ class Downloader(object):
         worker_num = self.config.get('WORKER_NUM',1)
         worker_id = self.config.get('WORKER_ID',0)
 
-        for idx, name in enumerate(self.config['COOKIES'].keys()):
+        for idx, name in enumerate(sorted(list(self.config['COOKIES'].keys()))):
             if (idx % worker_num) != worker_id:
                 #print ('skip cookies not for this worker', name)
                 continue
