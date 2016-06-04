@@ -11,7 +11,7 @@ from secret import EC2_ACCESS_ID, EC2_SECRET_KEY
 
 REGION_NAME = 'ap-northeast-1'
 AMI_ID = 'ami-d7d4c5b9'
-KEYPAIR = 'kg-proxy-tokyo'
+KEYPAIR = 'crawl-tokyo.pem'
 INSTANCE_TYPE = 't2.micro'
 SECURITYGROUPID = 'sg-fcbf0998'
 

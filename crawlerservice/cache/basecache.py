@@ -31,6 +31,8 @@ class BaseCache(object):
             return fs_get_cache(b64url, url_hash, batch_id)
         elif CACHEPAGE == 'ufile':
             return ufile_get_cache(batch_id, url_hash)
+        elif CACHEPAGE == 's3':
+            return s3_get_cache()
 
 
     @staticmethod
