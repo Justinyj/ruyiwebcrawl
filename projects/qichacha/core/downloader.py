@@ -37,8 +37,14 @@ class Downloader(object):
 
         self.cookie_index = 0
         self.cookies =[]
-        print ("cookies ", len(self.config['COOKIES']),"gap",self._get_sleep_period())
-        for name in self.config['COOKIES']:
+        worker_num = self.config.get('WORKER_NUM',1)
+        worker_id = self.config.get('WORKER_ID',0)
+
+        for idx, name in enumerate(self.config['COOKIES'].keys()):
+            if (idx % worker_num) != worker_id:
+                #print ('skip cookies not for this worker', name)
+                continue
+
             v = self.config['COOKIES'][name]
             item = {
                 'name': name,
@@ -46,6 +52,10 @@ class Downloader(object):
                 'header': dict(i.split('=', 1) for i in v.split('; '))
             }
             self.cookies.append(item)
+        if worker_num  == 1:
+            print ("cookies:", len(self.cookies),"gap:",self._get_sleep_period())
+        else:
+            print ("worker_id:",worker_id, " all_workers:",worker_num, "; cookies:", len(self.cookies),"gap:",self._get_sleep_period())
 
 
     def login(self):

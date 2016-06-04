@@ -309,7 +309,7 @@ def merge_company(batch):
 
 #################
 
-def fetch_detail(batch, expand=False):
+def fetch_detail(batch, worker_id=None, expand=False):
 
     #load search history
     all_company = {}
@@ -331,7 +331,7 @@ def fetch_detail(batch, expand=False):
     gcounter["all_company"] += len(all_company)
 
     #map names to id
-    crawler = get_crawler(BATCH_ID_FETCH,COOKIE_INDEX_FETCH)
+    crawler = get_crawler(BATCH_ID_FETCH,COOKIE_INDEX_FETCH, worker_id = worker_id)
     counter = collections.Counter()
     company_name_batch = all_company.keys()
     #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
@@ -434,6 +434,7 @@ def prefetch(batch):
     #gcounter["prefetch_candidate"] = len(all_company)
     gcounter["prefetch_company_selected"] = len(company_name_batch)
     urls  = set()
+    worker_num = crawler.config.get("WORKER_NUM",1)
     for name in company_name_batch:
         company = all_company[name]
         key_num = company.get("key_num")
@@ -441,6 +442,11 @@ def prefetch(batch):
         if counter["visited"] % 1000 ==0:
             print batch, datetime.datetime.now().isoformat(), counter
         counter["visited"]+=1
+
+        if worker_id is not None and worker_num>1:
+            if (counter["visited"] % worker_num) != worker_id:
+                counter["skip_not_this_worker"]+=1
+                continue
 
         if "NONAME" in name:
             name = ""
@@ -453,7 +459,7 @@ def prefetch(batch):
 
         #url = crawler.legal_url.format(key_num=key_num, name=name, page=1)
         #urls.add(url)
-    urls.update(urls_0531)
+    #urls.update(urls_0531)
     urls.difference_update(urls_done)
     gcounter["prefetch_url_actual"] = len(urls)
 
@@ -532,9 +538,11 @@ def expand_person_pass(front_persons, company_raw, depth):
 
 
 
-def get_crawler(batch_id, option):
+def get_crawler(batch_id, option, worker_id=None):
     with open(FILE_CONFIG) as f:
         config = json.load(f)[option]
+        if worker_id is not None:
+            config['WORKER_ID'] = worker_id
     return Qichacha(config, batch_id)
 
 
