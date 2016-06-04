@@ -13,12 +13,12 @@ from collections import defaultdict
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-from core.qichacha2 import Qichacha
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)) )
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
+from core.qichacha2 import Qichacha
 import libnlp
 import libfile
 
@@ -243,7 +243,7 @@ def load_all_company():
                     #print len(company_dict)
                     all_company_temp.update(company_dict.keys())
 
-    filename_company_temp = getLocalFile("company_temp.txt")
+    filename_company_temp = getLocalFile("temp/company_temp.txt")
     with codecs.open(filename_company_temp,"w") as f:
         f.write(u"\n".join(all_company_temp))
         f.write(u"\n")
@@ -253,7 +253,7 @@ def load_all_company():
     gcounter["all_keyword"] = len(all_keyword)
 
     #load prev result
-    for filename in glob.glob(getLocalFile("company_prev*.txt")):
+    for filename in glob.glob(getLocalFile("raw/company_prev*.txt")):
         names = libfile.file2set(filename)
         gcounter["company_name_dup_prev"] += len(names)
         names.difference_update(all_company)
@@ -267,7 +267,7 @@ def load_all_company():
 
     #write to text file
     company_name_all = all_company.keys()
-    filename = getLocalFile("company_name.all.txt")
+    filename = getLocalFile("temp/company_name.all.txt")
     libfile.lines2file(sorted(list(company_name_all)), filename)
 
     #medical company
@@ -280,7 +280,7 @@ def load_all_company():
             company_name_batch.add(x)
 
     gcounter["company_name_{}".format(batch)] = len(company_name_batch)
-    filename = getLocalFile("company_name.{}.txt".format(batch))
+    filename = getLocalFile("temp/company_name.{}.txt".format(batch))
     libfile.lines2file(sorted(list(company_name_batch)), filename)
 
     return (all_company, all_keyword)
@@ -301,7 +301,7 @@ def merge_company(batch):
     gcounter["new_keywords_1"] = len(new_keywords)
     new_keywords.difference_update(all_keyword.keys())
     gcounter["new_keywords"] = len(new_keywords)
-    filename = getLocalFile("keywords_new.{}.txt".format(batch))
+    filename = getLocalFile("temp/keywords_new.{}.txt".format(batch))
     libfile.lines2file(sorted(list(new_keywords)), filename)
 
     #medical company
@@ -336,6 +336,7 @@ def fetch_detail(batch, worker_id=None, expand=False):
     company_name_batch = all_company.keys()
     #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
     counter["total"] = len(company_name_batch)
+    worker_num = crawler.config.get("WORKER_NUM",1)
     company_raw = {}
     for name in company_name_batch:
         company = all_company[name]
@@ -345,6 +346,11 @@ def fetch_detail(batch, worker_id=None, expand=False):
             counter["company_raw"] =len(company_raw)
             print batch, datetime.datetime.now().isoformat(), counter
         counter["visited"]+=1
+
+        if worker_id is not None and worker_num>1:
+            if (counter["visited"] % worker_num) != worker_id:
+                counter["skipped"]+=1
+                continue
 
         try:
             company_raw_one = {}
@@ -363,8 +369,10 @@ def fetch_detail(batch, worker_id=None, expand=False):
             #counter["company_raw_one"] =len(company_raw_one)
             counter["ok"] +=1
         except:
-            print "fail", name
-            counter["fail"] +=1
+            import traceback
+            traceback.print_exc(file=sys.stdout)
+            #print "fail",
+            counter["failed"] +=1
             pass
 
     gcounter["company_raw.{}.json".format(batch)] = len(company_raw)
@@ -434,7 +442,6 @@ def prefetch(batch):
     #gcounter["prefetch_candidate"] = len(all_company)
     gcounter["prefetch_company_selected"] = len(company_name_batch)
     urls  = set()
-    worker_num = crawler.config.get("WORKER_NUM",1)
     for name in company_name_batch:
         company = all_company[name]
         key_num = company.get("key_num")
@@ -442,11 +449,6 @@ def prefetch(batch):
         if counter["visited"] % 1000 ==0:
             print batch, datetime.datetime.now().isoformat(), counter
         counter["visited"]+=1
-
-        if worker_id is not None and worker_num>1:
-            if (counter["visited"] % worker_num) != worker_id:
-                counter["skip_not_this_worker"]+=1
-                continue
 
         if "NONAME" in name:
             name = ""
