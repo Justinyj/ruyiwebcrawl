@@ -81,20 +81,26 @@ class Ec2Manager(object):
             ids.append(item.id)
 
         self.stop(ids)
+        count = [0] * len(ids)
         while 1:
-            count = []
-            for i in group_instances:
-                i.load()
-                count.append(1 if i.meta.data[u'State'][u'Name'] == 'stoped' else 0)
+            for idx, val in enumerate(count):
+                if val == 0:
+                    i = group_instances[idx]
+                    i.load()
+                    if i.meta.data[u'State'][u'Name'] == 'stoped':
+                        count[idx] = 1
             if sum(count) == len(ids):
                 break
 
         self.start(ids)
+        count = [0] * len(ids)
         while 1:
-            count = []
-            for i in group_instances:
-                i.load()
-                count.append(1 if i.meta.data[u'State'][u'Name'] == 'running' else 0)
+            for idx, val in enumerate(count):
+                if val == 0:
+                    i = group_instances[idx]
+                    i.load()
+                    if i.meta.data[u'State'][u'Name'] == 'running':
+                        count[idx] = 1
             if sum(count) == len(ids):
                 break
 
