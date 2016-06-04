@@ -31,7 +31,7 @@ class InstanceMgr:
 
     def create(self, crawler_num):
         instances = self.conn.create_instances(DryRun=False,
-            ImageId='ami-a6a846c7',
+            ImageId='ami-7bbe501a',
             MinCount=crawler_num,
             MaxCount=crawler_num,
             KeyName='crawl-tokyo',
@@ -125,12 +125,13 @@ class InstanceMgr:
         print "upload", len(list(instances))
         for i in instances:
             cmds = [
-                "pwd",
-                "rsync -azvrtopg -e 'ssh -i {}'  *  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects/qichacha".format(FILENAME_PEM, i.public_ip_address)
+                "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
+                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(self.FILENAME_PEM, i.public_ip_address)
                 #"ping {}".format( i.public_ip_address)
             ]
             for cmd in cmds:
-                ret = subprocess.call(cmd)
+                print "{}".format(cmd)
+                ret = subprocess.call(cmd, shell=True)
                 print ret
 
 
@@ -155,9 +156,9 @@ def main():
     elif "start" == option:
         mgr.start()
     elif "run" == option:
-        mgr.run(4)
+        mgr.run(18)
     elif "upload" == option:
-        mgr.upload(4)
+        mgr.upload(18)
 
 
 if __name__ == "__main__":

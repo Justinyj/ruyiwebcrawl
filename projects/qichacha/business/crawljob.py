@@ -312,7 +312,7 @@ def merge_company(batch):
 def fetch_detail(batch, worker_id=None, expand=False):
 
     #load search history
-    all_company = {}
+    map_key_num_name_crawl = {}
     all_keyword = {}
     filename_metadata_search = getLocalFile("crawl_search.{}.json.txt".format(batch))
     if os.path.exists(filename_metadata_search):
@@ -322,30 +322,48 @@ def fetch_detail(batch, worker_id=None, expand=False):
             item = json.loads(line)
             for keyword, keyword_entry in item["data"].items():
                 #print type(keyword_entry)
-                all_company.update(keyword_entry["data"])
+                for name in keyword_entry["data"]:
+                    company = keyword_entry["data"][name]
+                    key_num = company['key_num']
+                    map_key_num_name_crawl[key_num] = name
+
                 gcounter["all_company_dup"] += len(keyword_entry["data"])
                 all_keyword[keyword] = keyword_entry["metadata"]
 
     #load names
-    print json.dumps(all_company.values()[0], ensure_ascii=False)
-    gcounter["all_company"] += len(all_company)
+    gcounter["company_crawl"] += len(map_key_num_name_crawl)
+
+    #load prev company 0531
+    map_key_num_name_0531 = {}
+    filename = getLocalFile("prefetch.0531.raw.tsv".format(batch))
+    for line in libfile.file2set(filename):
+        key_num,name = line.split('\t',1)
+        if name:
+            map_key_num_name_0531[key_num] = name
+
+    gcounter["company_0531"] += len(map_key_num_name_0531)
+
+
+    #merge data
+    map_key_num_name_crawl.update(map_key_num_name_0531)
 
     #map names to id
-    crawler = get_crawler(BATCH_ID_FETCH,COOKIE_INDEX_FETCH, worker_id = worker_id)
+    crawler = get_crawler(BATCH_ID_FETCH, COOKIE_INDEX_FETCH, worker_id = worker_id)
     counter = collections.Counter()
-    company_name_batch = all_company.keys()
+    company_name_batch = map_key_num_name_crawl.keys()
     #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
-    counter["total"] = len(company_name_batch)
+    counter["company_total"] = len(company_name_batch)
     worker_num = crawler.config.get("WORKER_NUM",1)
     company_raw = {}
     for name in company_name_batch:
-        company = all_company[name]
-        key_num = company.get("key_num")
+        key_num = map_key_num_name_crawl[name]
 
-        if counter["visited"] % 100 ==0:
+        if counter["visited"] % 2000 ==0:
             counter["company_raw"] =len(company_raw)
             print batch, datetime.datetime.now().isoformat(), counter
         counter["visited"]+=1
+
+        exit(0)
 
         if worker_id is not None and worker_num>1:
             if (counter["visited"] % worker_num) != worker_id:
@@ -364,8 +382,10 @@ def fetch_detail(batch, worker_id=None, expand=False):
                 temp = crawler.crawl_company_detail(name, key_num)
                 company_raw_one.update(temp)
 
+            #only create company_raw when it is single threaded OP
+            if worker_id is None:
+                company_raw.update(company_raw_one)
 
-            company_raw.update(company_raw_one)
             #counter["company_raw_one"] =len(company_raw_one)
             counter["ok"] +=1
         except:
@@ -375,10 +395,12 @@ def fetch_detail(batch, worker_id=None, expand=False):
             counter["failed"] +=1
             pass
 
-    gcounter["company_raw.{}.json".format(batch)] = len(company_raw)
-    filename = getLocalFile("company_raw.{}.json".format(batch))
-    with codecs.open(filename,"w", encoding="utf-8") as f:
-        json.dump(company_raw, f, ensure_ascii=False, indent=4 )
+    #only create company_raw when it is single threaded OP
+    if worker_id is None:
+        gcounter["company_raw.{}.json".format(batch)] = len(company_raw)
+        filename = getLocalFile("company_raw.{}.json".format(batch))
+        with codecs.open(filename,"w", encoding="utf-8") as f:
+            json.dump(company_raw, f, ensure_ascii=False, indent=4, sort_keys=True )
 
 
 
@@ -404,7 +426,7 @@ def prefetch(batch):
 
     #load prev company 0531
     urls_0531 = set()
-    filename = getLocalFile("prefetch.0531.tsv".format(batch))
+    filename = getLocalFile("prefetch.0531.raw.tsv".format(batch))
     for line in libfile.file2set(filename):
         key_num,name = line.split('\t',1)
         url = crawler.get_info_url("touzi", key_num, name)
@@ -564,13 +586,12 @@ def test_cookie():
         config["debug"] = True
     crawler = Qichacha(config)
 
-    seed = "卓国洪"
-    index = 14
-    province = "ZJ"
+    seed = "王健林"
+    index = 4
     for i in range(0, len(config["COOKIES"])):
         cnt = crawler.get_keyword_search_count( seed, index, refresh=True)
         print cnt
-        assert (cnt==6)
+        assert (cnt>30)
 
 
 def test_count():
