@@ -6,6 +6,7 @@ from __future__ import print_function, division
 from math import ceil
 
 import time
+import paramiko
 
 from ec2manager import Ec2Manager
 
@@ -21,6 +22,7 @@ class Schedule(object):
         self.ids = self.ec2manager.create_instances(self.machine_num)
         self.id_cookie_dict = self._assign_cookies(kwargs.get('cookies', []))
 
+        self.ssh = paramiko.SSHClient()
 
     def _assign_cookies(self, cookies):
         id_cookie_dict = {}
@@ -47,9 +49,10 @@ class Schedule(object):
             ids = self.ec2manager.stop_and_restart(self.group_num)
             for i in ids:
                 if i in self.id_cookie_dict:
-                    "python worker.py -c '{}'".format(self.id_cookie_dict[i])
+                    command = "python worker.py -c '{}'".format(self.id_cookie_dict[i])
                 else:
-                    "python worker.py"
+                    command = "python worker.py"
+                self.remote_command(ipaddr, command)
 
             if self.restart_interval != 0:
                 now = time.time()
@@ -57,4 +60,9 @@ class Schedule(object):
                 if sleep_interval > 0:
                     time.sleep(sleep_interval)
                 before = now
+
+    def remote_command(self, ipaddr, command):
+#        self.ssh.connect(ipaddr, username=username, password=password)
+        self.ssh.connect(ipaddr, username='ubuntu')
+        ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)
 
