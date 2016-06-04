@@ -12,12 +12,14 @@ class Cache(object):
     def __init__(self, config, batch_id, server=None):
         self.SERVER = server if server else config['CACHE_SERVER']
         self.batch_id = batch_id
+        self.config = config
 
     def get(self, url):
         b64url = base64.urlsafe_b64encode(url)
         api_url = 'v1/cache/{}/{}'.format(b64url, self.batch_id)
         get_api_url = urlparse.urljoin(self.SERVER, api_url)
 
+        print (get_api_url)
         response = requests.get(get_api_url)
 
         js = response.json()
