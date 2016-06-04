@@ -24,6 +24,7 @@ def _build_pg():
     sudo('apt-get update')
     sudo('apt-get -y install postgresql-server-dev-9.5 postgresql')
     sudo('mkdir -p /data/pg; chown -R postgres:postgres /data/pg')
+    sudo('mkdir -p /data/crawler_file_cache/; chown -R {user}:{user} /data/crawler_file_cache'.format(user=env.user))
     sudo('sed -i "s/postgres\ *peer/postgres           trust/" /etc/postgresql/9.5/main/pg_hba.conf')
     sudo("""sed -i "s/'\/var\/lib\/postgresql\/9.5\/main'/'\/data\/pg\/main'/" /etc/postgresql/9.5/main/postgresql.conf""")
     sudo('mv /var/lib/postgresql/9.5/main /data/pg/')
@@ -61,11 +62,11 @@ def runapp():
     with cd('/opt/service/crawlerservice'):
 #        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
-        with prefix('source env.sh {}'.format('PRODUCTION')):
+        with prefix('source env.sh {}'.format('TEST')):
             run('pip install -r requirements.txt')
             run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4 -program=cache'))
-            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))
-            run('dtach -n /tmp/{}.sock {}'.format('crawlerfetch', 'python main.py -port=8002 -process=4 -program=fetch'))
+#            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))
+#            run('dtach -n /tmp/{}.sock {}'.format('crawlerfetch', 'python main.py -port=8002 -process=4 -program=fetch'))
 
 
 def deploy():

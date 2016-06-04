@@ -27,7 +27,7 @@ def fs_get_cache(b64url, url_hash, batch_id):
         level2 = url_hash[-2:]
 
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
-        cache_file = os.path.join(absdir, sha256)
+        cache_file = os.path.join(absdir, url_hash)
         if os.path.isfile(cache_file):
             with open(cache_file) as fd:
                 html = fd.read()
@@ -45,7 +45,7 @@ def fs_set_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
         level2 = url_hash[-2:]
 
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
-        cache_file = os.path.join(absdir, sha256)
+        cache_file = os.path.join(absdir, url_hash)
 
         path.makedir(absdir)
         if refresh or not os.path.isfile(cache_file):

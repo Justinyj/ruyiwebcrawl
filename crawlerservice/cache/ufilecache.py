@@ -21,9 +21,9 @@ import requests
 import string
 
 def ensure_bucket(batch_key):
-    if not hasattr(get_bucket, '_auth'):
+    if not hasattr(ensure_bucket, '_auth'):
         bucketmanager_handler = bucketmanager.BucketManager(public_key, private_key)
-        setattr(get_bucket, '_auth', bucketmanager_handler)
+        setattr(ensure_bucket, '_auth', bucketmanager_handler)
 
     ret, resp = bucketmanager_handler.describebucket(batch_key)
     if ret[u'RetCode'] != 0:
