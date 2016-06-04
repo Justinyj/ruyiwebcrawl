@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+# TODO worker启动程序，检测队列的batch_id, 未必是我schedule调度的batch_id
 
 from __future__ import print_function, division
 
