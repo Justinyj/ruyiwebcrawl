@@ -52,6 +52,7 @@ class Schedule(object):
                     command = "python worker.py -c '{}'".format(self.id_cookie_dict[i])
                 else:
                     command = "python worker.py"
+                ipaddr = self.ec2manager.get_ipaddr(i)
                 self.remote_command(ipaddr, command)
 
             if self.restart_interval != 0:

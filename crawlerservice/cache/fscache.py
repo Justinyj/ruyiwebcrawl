@@ -20,12 +20,11 @@ from settings import FSCACHEDIR
 from tools import path, cachelog
 
 
-def fs_get_cache(b64url, batch_id):
+def fs_get_cache(b64url, url_hash, batch_id):
     try:
         assert len(batch_id) > 0
-        sha256 = hashlib.sha256(b64url).hexdigest()
-        level1 = hashlib.sha1(b64url).hexdigest()[-1:]
-        level2 = sha256[-2:]
+        level1 = url_hash[0]
+        level2 = url_hash[-2:]
 
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
         cache_file = os.path.join(absdir, sha256)
@@ -39,12 +38,11 @@ def fs_get_cache(b64url, batch_id):
     return {'success': True, 'content': html}
 
 
-def fs_set_cache(b64url, batch_id, groups, content, refresh=False):
+def fs_set_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
     try:
         assert len(batch_id) > 0
-        sha256 = hashlib.sha256(b64url).hexdigest()
-        level1 = hashlib.sha1(b64url).hexdigest()[-1:]
-        level2 = sha256[-2:]
+        level1 = url_hash[0]
+        level2 = url_hash[-2:]
 
         absdir = os.path.join(FSCACHEDIR, batch_id, 'raw', 'latest', level1, level2)
         cache_file = os.path.join(absdir, sha256)

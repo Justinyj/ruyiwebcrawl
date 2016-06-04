@@ -28,7 +28,7 @@ class BaseCache(object):
         elif CACHEPAGE == 'qiniu':
             pass
         elif CACHEPAGE == 'fs':
-            return fs_get_cache(b64url, batch_id)
+            return fs_get_cache(b64url, url_hash, batch_id)
         elif CACHEPAGE == 'ufile':
             return ufile_get_cache(batch_id, url_hash)
 
@@ -43,7 +43,7 @@ class BaseCache(object):
         elif CACHEPAGE == 'qiniu':
             pass
         elif CACHEPAGE == 'fs':
-            return fs_set_cache(b64url, batch_id, groups, content, refresh)
+            return fs_set_cache(b64url, url_hash, batch_id, groups, content, refresh)
         elif CACHEPAGE == 'ufile':
             return ufile_set_cache(b64url, url_hash, batch_id, groups, content, refresh)
 
