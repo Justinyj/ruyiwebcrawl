@@ -5,22 +5,23 @@
 from __future__ import print_function, division
 
 from gevent import monkey; monkey.patch_all()
-from queues import HashQueue
 
-import gevent.pool
+from rediscluster.record import Record
+from rediscluster.queues import HashQueue
+from rediscluster.thinredis import ThinHash
 
 class Worker(object):
     """ General worker
     """
-    def __init__(self, poolsize=100):
-        self.pool = gevent.pool.Pool(poolsize)
+    def __init__(self):
+        pass
 
     def work(self):
         raise NotImplementedError('This method should implemented by subclasses')
 
 class GetWorker(Worker):
-    def __init__(self, poolsize=100):
-        super(GetWorker, self).__init__(poolsize)
+    def __init__(self):
+        super(GetWorker, self).__init__()
         self.queues = [i for i in self._get_task_queue()]
 
     def _get_task_queue(self):

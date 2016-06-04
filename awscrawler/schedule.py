@@ -11,11 +11,11 @@ from ec2manager import Ec2Manager
 
 class schedule(object):
 
-    def __init__(self, machine_num, *args, **kwargs):
+    def __init__(self, machine_num, cycle=600, *args, **kwargs):
         self.machine_num = machine_num
-        self.cycle = kwargs.get('cycle', 600)
-        self.group_num = int(ceil(machine_num * 2 / self.cycle)) if machine_num * 2 >= self.cycle else 1
-        self.restart_interval = 0 if machine_num * 2 >= self.cycle else self.cycle / machine_num 
+        self.cycle = cycle
+        self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
+        self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num 
 
         self.ec2manager = Ec2Manager()
 
