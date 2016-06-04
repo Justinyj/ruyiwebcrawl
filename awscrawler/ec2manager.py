@@ -28,13 +28,14 @@ class Ec2Manager(object):
                          SecurityGroupIds=[SECURITYGROUPID]):
         """ ec2.Instance(id='i-336303ac')
         """
-        self.ins = self.ec2.create_instances(ImageId=ImageId,
-                                             MinCount=MachineNum,
-                                             MaxCount=MachineNum,
-                                             KeyName=KeyName,
-                                             InstanceType=InstanceType,
-                                             SecurityGroupIds=SecurityGroupIds)
-        self.queue = deque(self.ins)
+        ins = self.ec2.create_instances(ImageId=ImageId,
+                                        MinCount=MachineNum,
+                                        MaxCount=MachineNum,
+                                        KeyName=KeyName,
+                                        InstanceType=InstanceType,
+                                        SecurityGroupIds=SecurityGroupIds)
+        self.queue = deque(ins)
+        return (i.id for i in ins)
 
 
     def start(self, ids):
@@ -70,11 +71,11 @@ class Ec2Manager(object):
                 break
 
         self.queue.append(instance)
+        return instance.id
 
 
     def stop_and_start(self, group_num):
-        group_instances = []
-        ids = []
+        group_instances, ids = [], []
         for _ in xrange(group_num):
             item = self.queue.popleft()
             group_instances.append(item)
@@ -105,3 +106,4 @@ class Ec2Manager(object):
                 break
 
         self.queue.extend(group_instances)
+        return ids

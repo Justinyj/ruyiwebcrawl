@@ -5,6 +5,7 @@
 from __future__ import print_function, division
 
 from gevent import monkey; monkey.patch_all()
+import gevent
 
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
@@ -90,4 +91,17 @@ class GetWorker(Worker):
         queue = self.queues[0]
         module = __import__('prefetch.workers.{}'.format(queue.key.rsplit('_', 1)[0]), fromlist=['worker'])
         module.worker(*args, **kwargs)
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Call Worker with arguments')
+    parser.add_argument('--cookie', '-c', type=str, help='cookie for this machine')
+    option = parser.parse_args()
+    if option.cookie:
+        obj = GetWorker()
+        obj.run(cookie=option.cookie)
+
+if __name__ == '__main__':
+    main()
 
