@@ -6,30 +6,63 @@ from __future__ import print_function, division
 from math import ceil
 
 import time
+import paramiko
 
 from ec2manager import Ec2Manager
 
-class schedule(object):
+class Schedule(object):
 
-    def __init__(self, machine_num, *args, **kwargs):
+    def __init__(self, machine_num, cycle=600, *args, **kwargs):
         self.machine_num = machine_num
-        self.cycle = kwargs.get('cycle', 600)
-        self.group_num = int(ceil(machine_num * 2 / self.cycle)) if machine_num * 2 >= self.cycle else 1
-        self.restart_interval = 0 if machine_num * 2 >= self.cycle else self.cycle / machine_num 
+        self.cycle = cycle
+        self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
+        self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num 
 
         self.ec2manager = Ec2Manager()
+        self.ids = self.ec2manager.create_instances(self.machine_num)
+        self.id_cookie_dict = self._assign_cookies(kwargs.get('cookies', []))
 
-    def run(self):
-        self.ec2manager.create_instances(self.machine_num)
+        self.ssh = paramiko.SSHClient()
+
+    def _assign_cookies(self, cookies):
+        id_cookie_dict = {}
+        if len(cookies) == 0:
+            pass
+        elif len(cookies) == 1:
+            id_cookie_dict = {i:cookies[0] for i in self.ids}
+        elif len(self.ids) % len(cookies) == 0:
+            quotient = len(self.ids) // len(cookies)
+            begin = 0
+            for i in range(len(cookies)):
+                id_cookie_dict.update( {j:cookies[i] for j in self.ids[begin:begin+quotient]} )
+                begin += quotient
+        else:
+            print('length of machine is not divisible by length of cookies')
+        return id_cookie_dict
+
+
+    def run(self, *args, **kwargs):
         time.sleep(30)
 
         before = time.time()
         while 1:
-            self.ec2manager.stop_and_restart(self.group_num)
+            ids = self.ec2manager.stop_and_restart(self.group_num)
+            for i in ids:
+                if i in self.id_cookie_dict:
+                    command = "python worker.py -c '{}'".format(self.id_cookie_dict[i])
+                else:
+                    command = "python worker.py"
+                self.remote_command(ipaddr, command)
+
             if self.restart_interval != 0:
                 now = time.time()
                 sleep_interval = before + self.restart_interval - now
                 if sleep_interval > 0:
                     time.sleep(sleep_interval)
                 before = now
+
+    def remote_command(self, ipaddr, command):
+#        self.ssh.connect(ipaddr, username=username, password=password)
+        self.ssh.connect(ipaddr, username='ubuntu')
+        ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)
 

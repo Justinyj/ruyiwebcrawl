@@ -28,13 +28,14 @@ class Ec2Manager(object):
                          SecurityGroupIds=[SECURITYGROUPID]):
         """ ec2.Instance(id='i-336303ac')
         """
-        self.ins = self.ec2.create_instances(ImageId=ImageId,
-                                             MinCount=MachineNum,
-                                             MaxCount=MachineNum,
-                                             KeyName=KeyName,
-                                             InstanceType=InstanceType,
-                                             SecurityGroupIds=SecurityGroupIds)
-        self.queue = deque(self.ins)
+        ins = self.ec2.create_instances(ImageId=ImageId,
+                                        MinCount=MachineNum,
+                                        MaxCount=MachineNum,
+                                        KeyName=KeyName,
+                                        InstanceType=InstanceType,
+                                        SecurityGroupIds=SecurityGroupIds)
+        self.queue = deque(ins)
+        return (i.id for i in ins)
 
 
     def start(self, ids):
@@ -70,32 +71,39 @@ class Ec2Manager(object):
                 break
 
         self.queue.append(instance)
+        return instance.id
 
 
     def stop_and_start(self, group_num):
-        group_instances = []
-        ids = []
+        group_instances, ids = [], []
         for _ in xrange(group_num):
             item = self.queue.popleft()
             group_instances.append(item)
             ids.append(item.id)
 
         self.stop(ids)
+        count = [0] * len(ids)
         while 1:
-            count = []
-            for i in group_instances:
-                i.load()
-                count.append(1 if i.meta.data[u'State'][u'Name'] == 'stoped' else 0)
+            for idx, val in enumerate(count):
+                if val == 0:
+                    i = group_instances[idx]
+                    i.load()
+                    if i.meta.data[u'State'][u'Name'] == 'stoped':
+                        count[idx] = 1
             if sum(count) == len(ids):
                 break
 
         self.start(ids)
+        count = [0] * len(ids)
         while 1:
-            count = []
-            for i in group_instances:
-                i.load()
-                count.append(1 if i.meta.data[u'State'][u'Name'] == 'running' else 0)
+            for idx, val in enumerate(count):
+                if val == 0:
+                    i = group_instances[idx]
+                    i.load()
+                    if i.meta.data[u'State'][u'Name'] == 'running':
+                        count[idx] = 1
             if sum(count) == len(ids):
                 break
 
         self.queue.extend(group_instances)
+        return ids

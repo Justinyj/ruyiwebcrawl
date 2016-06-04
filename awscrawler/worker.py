@@ -1,26 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+# TODO worker启动程序，检测队列的batch_id, 未必是我schedule调度的batch_id
 
 from __future__ import print_function, division
 
 from gevent import monkey; monkey.patch_all()
-from queues import HashQueue
+import gevent
 
-import gevent.pool
+from rediscluster.record import Record
+from rediscluster.queues import HashQueue
+from rediscluster.thinredis import ThinHash
 
 class Worker(object):
     """ General worker
     """
-    def __init__(self, poolsize=100):
-        self.pool = gevent.pool.Pool(poolsize)
+    def __init__(self):
+        pass
 
     def work(self):
         raise NotImplementedError('This method should implemented by subclasses')
 
 class GetWorker(Worker):
-    def __init__(self, poolsize=100):
-        super(GetWorker, self).__init__(poolsize)
+    def __init__(self):
+        super(GetWorker, self).__init__()
         self.queues = [i for i in self._get_task_queue()]
 
     def _get_task_queue(self):
@@ -89,4 +92,17 @@ class GetWorker(Worker):
         queue = self.queues[0]
         module = __import__('prefetch.workers.{}'.format(queue.key.rsplit('_', 1)[0]), fromlist=['worker'])
         module.worker(*args, **kwargs)
+
+
+def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Call Worker with arguments')
+    parser.add_argument('--cookie', '-c', type=str, help='cookie for this machine')
+    option = parser.parse_args()
+    if option.cookie:
+        obj = GetWorker()
+        obj.run(cookie=option.cookie)
+
+if __name__ == '__main__':
+    main()
 
