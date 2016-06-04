@@ -7,16 +7,24 @@ from __future__ import print_function, division
 from fabric.api import *
 from settings import DBPASS
 
-env.hosts = ['106.75.6.152']
-env.user = 'ubuntu'
+hostos = 'debian'
+if hostos == 'ubuntu':
+    env.hosts = ['106.75.6.152']
+    env.user = 'ubuntu'
+    PG_VERSION = 'trusty-pgdg'
+elif hostos == 'debian':
+    env.hosts = ['52.196.158.37']
+    env.user = 'admin'
+    PG_VERSION = 'jessie-pgdg'
 
 def _build_pg():
     sudo('touch /etc/apt/sources.list.d/pg.list')
-    sudo("""sh -c "echo 'deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main' > /etc/apt/sources.list.d/pg.list" """)
+    sudo("""sh -c "echo 'deb http://apt.postgresql.org/pub/repos/apt/ {} main' > /etc/apt/sources.list.d/pg.list" """.format(PG_VERSION))
     sudo('wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -')
     sudo('apt-get update')
     sudo('apt-get -y install postgresql-server-dev-9.5 postgresql')
     sudo('mkdir -p /data/pg; chown -R postgres:postgres /data/pg')
+    sudo('mkdir -p /data/crawler_file_cache/; chown -R {user}:{user} /data/crawler_file_cache'.format(user=env.user))
     sudo('sed -i "s/postgres\ *peer/postgres           trust/" /etc/postgresql/9.5/main/pg_hba.conf')
     sudo("""sed -i "s/'\/var\/lib\/postgresql\/9.5\/main'/'\/data\/pg\/main'/" /etc/postgresql/9.5/main/postgresql.conf""")
     sudo('mv /var/lib/postgresql/9.5/main /data/pg/')
@@ -38,7 +46,7 @@ def upload():
 
     with cd('/tmp'):
         run('tar jxf /tmp/{}'.format(archive))
-        sudo('mkdir -p /opt/service/raw; chown -R ubuntu:ubuntu /opt/service')
+        sudo('mkdir -p /opt/service/raw; chown -R {user}:{user} /opt/service'.format(user=env.user))
         run('mv /tmp/crawlerservice /opt/service/raw/crawlerservice`date +%Y%m%d%H%M%S`')
 
     with cd('/opt/service/'):
@@ -54,11 +62,11 @@ def runapp():
     with cd('/opt/service/crawlerservice'):
 #        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
-        with prefix('source env.sh {}'.format('PRODUCTION')):
+        with prefix('source env.sh {}'.format('TEST')):
             run('pip install -r requirements.txt')
             run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4 -program=cache'))
-            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))
-            run('dtach -n /tmp/{}.sock {}'.format('crawlerfetch', 'python main.py -port=8002 -process=4 -program=fetch'))
+#            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))
+#            run('dtach -n /tmp/{}.sock {}'.format('crawlerfetch', 'python main.py -port=8002 -process=4 -program=fetch'))
 
 
 def deploy():
