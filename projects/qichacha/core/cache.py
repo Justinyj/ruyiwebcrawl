@@ -19,7 +19,7 @@ class Cache(object):
         api_url = 'v1/cache/{}/{}'.format(b64url, self.batch_id)
         get_api_url = urlparse.urljoin(self.SERVER, api_url)
 
-        print (get_api_url)
+        #print (get_api_url)
         response = requests.get(get_api_url)
 
         js = response.json()
