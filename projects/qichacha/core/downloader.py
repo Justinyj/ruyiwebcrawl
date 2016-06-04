@@ -10,6 +10,7 @@ import time
 import os
 import sys
 import json
+import random
 
 from headers import choice_agent, choice_proxy
 from cache import Cache
@@ -112,6 +113,9 @@ class Downloader(object):
 
     def _get_sleep_period(self):
         sleep = self.config['CRAWL_GAP'] / len(self.cookies)
+
+        #add a little bit random factor to crawler delay
+        #sleep *= (1+random.random())
         #print (sleep)
         return sleep
 

@@ -18,6 +18,21 @@ if [ "$1" = "search" ]; then
   python business/crawljob.py search medical
 fi
 
+if [ "$1" = "aws-init" ]; then
+  # i-da8fef45
+
+  # ssh -i ~/.ssh/crawl-tokyo.pem ubuntu@52.196.223.131
+
+  # sudo  mkdir /data
+  # sudo chown ubuntu /data
+  # mkdir -p /data/ruyi/ruyiwebcrawl/projects/qichacha
+
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  *  ubuntu@52.196.223.131:/data/ruyi/ruyiwebcrawl/projects/qichacha
+  echo "ssh -p50001 data@52.196.223.131"
+fi
+
+
+
 if [ "$1" = "upload" ]; then
   rsync -azvrtopg -e 'ssh -p50001'  ./local  data@106.75.14.79:/data/ruyi/ruyiwebcrawl/projects/qichacha
   echo "ssh -p50001 data@106.75.14.79"
