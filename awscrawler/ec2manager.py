@@ -35,7 +35,8 @@ class Ec2Manager(object):
                                         InstanceType=InstanceType,
                                         SecurityGroupIds=SecurityGroupIds)
         self.queue = deque(ins)
-        return (i.id for i in ins)
+        self.id_instance = {i.id: i for i in ins}
+        return self.id_instance.keys()
 
 
     def start(self, ids):
@@ -47,9 +48,12 @@ class Ec2Manager(object):
     def terminate(self, ids):
         self.ec2.instances.filter(InstanceIds=ids).terminate()
 
+    def get_ipaddr(self, one_id):
+        return self.id_instance[one_id].private_ip_address
+
     def get_ids_in_status(self, status):
         """
-        :param status: pending, running, stopping,, stopped, shutting-down
+        :param status: pending, running, stopping, stopped, shutting-down
         """
         instances = self.ec2.instances.filter(
                 Filters=[{'Name': 'instance-state-name', 'Values': [status]}])
