@@ -701,7 +701,12 @@ def main():
 
 
     elif "fetch" == option:
-        fetch_detail(batch)
+        if len(sys.argv)>3:
+            worker_id = int(sys.argv[3])
+        else:
+            worker_id = None
+        fetch_detail(batch, worker_id)
+
     elif "prefetch" == option:
         prefetch(batch)
 

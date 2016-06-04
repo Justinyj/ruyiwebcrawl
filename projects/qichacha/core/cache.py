@@ -25,6 +25,7 @@ class Cache(object):
             return u''
         return js[u'content']
 
+
     def post(self, url, content, groups=None, refresh=False):
         b64url = base64.urlsafe_b64encode(url)
         api_url = 'v1/cache/{}/{}'.format(b64url, self.batch_id)
