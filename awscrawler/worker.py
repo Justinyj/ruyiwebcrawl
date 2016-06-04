@@ -26,6 +26,10 @@ class GetWorker(Worker):
         super(GetWorker, self).__init__()
         self.queues = [i for i in self._get_task_queue()]
 
+        batch_id = self.queues[0].key
+        total_count = int( Record.instance().get_total_number(batch_id) )
+        self.thinhash = ThinHash(batch_id, total_count)
+
     def _get_task_queue(self):
         keys = Record.instance().get_unfinished_batch()
         for key in keys:
@@ -78,9 +82,7 @@ class GetWorker(Worker):
                 # caution! atom operation
                 try:
                     Record.instance().end(queue.key)
-                    total_count = int( Record.instance().get_total_number() )
-                    thinhash = ThinHash(batch_id, total_count)
-                    thinhash.delete()
+                    self.thinhash.delete()
                     queue.flush()
                 except:
                     Record.instance().from_end_rollback(queue.key)
@@ -90,8 +92,11 @@ class GetWorker(Worker):
 
     def work(self, *args, **kwargs):
         queue = self.queues[0]
+        result = queue.get(block=True, timeout=3, interval=1)
+        url = self.thinhash.hget(result)
+
         module = __import__('prefetch.workers.{}'.format(queue.key.rsplit('_', 1)[0]), fromlist=['worker'])
-        module.worker(*args, **kwargs)
+        module.worker(url, *args, **kwargs)
 
 
 def main():
