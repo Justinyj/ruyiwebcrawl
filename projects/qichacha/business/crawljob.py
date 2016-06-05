@@ -34,8 +34,9 @@ def getTheFile(filename):
 
 COOKIE_INDEX_VIP = "vip"
 COOKIE_INDEX_SEARCH = "search"
-COOKIE_INDEX_TEST = "test"
 COOKIE_INDEX_FETCH = "fetch"
+COOKIE_INDEX_TEST = "test"
+COOKIE_INDEX_PREFETCH = "prefetch"
 FILE_CONFIG = getTheFile("../config/conf.fs.json")
 BATCH_ID_SEARCH ='qichacha_search_20160603'
 BATCH_ID_FETCH ='qichacha_fetch_20160603'
@@ -309,7 +310,7 @@ def merge_company(batch):
 
 #################
 
-def fetch_detail(batch, worker_id=None, expand=False):
+def fetch_detail(batch, worker_id=None, expand=False, cookie_index =COOKIE_INDEX_PREFETCH):
 
     #load search history
     map_key_num_name_crawl = {}
@@ -342,13 +343,11 @@ def fetch_detail(batch, worker_id=None, expand=False):
             map_key_num_name_0531[key_num] = name
 
     gcounter["company_0531"] += len(map_key_num_name_0531)
-
-
     #merge data
     map_key_num_name_crawl.update(map_key_num_name_0531)
 
     #map names to id
-    crawler = get_crawler(BATCH_ID_FETCH, COOKIE_INDEX_FETCH, worker_id = worker_id)
+    crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id)
     counter = collections.Counter()
     company_name_batch = sorted(list(map_key_num_name_crawl.keys()))
     #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
@@ -357,7 +356,6 @@ def fetch_detail(batch, worker_id=None, expand=False):
     company_raw = {}
     for key_num in company_name_batch:
         name = map_key_num_name_crawl[key_num]
-        
         if not name:
             continue
 
@@ -371,8 +369,8 @@ def fetch_detail(batch, worker_id=None, expand=False):
                 counter["skipped"]+=1
                 continue
 
-        if crawler.config.get("debug"):
-            print "name",name, "key",key_num
+        #if crawler.config.get("debug"):
+        #    print "name",name, "key",key_num
 
         try:
             company_raw_one = {}
@@ -730,9 +728,11 @@ def main():
     elif "fetch" == option:
         if len(sys.argv)>3:
             worker_id = int(sys.argv[3])
+            print "fetch with prefetch"
+            fetch_detail(batch, worker_id, cookie_index=COOKIE_INDEX_PREFETCH)
         else:
-            worker_id = None
-        fetch_detail(batch, worker_id)
+            print "fetch mono"
+            fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH)
 
     elif "prefetch" == option:
         prefetch(batch)

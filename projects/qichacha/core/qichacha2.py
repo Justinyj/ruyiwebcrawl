@@ -25,8 +25,8 @@ class Qichacha(object):
         else:
             ret = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab={tab}&page={page}".format(key_num=key_num, name=name, page=page, tab=tab)
 
-        if self.config.get('debug'):
-            print (ret)
+        #if self.config.get('debug'):
+        #    print (ret)
 
         return ret
 

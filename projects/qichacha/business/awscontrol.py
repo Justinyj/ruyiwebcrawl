@@ -35,7 +35,7 @@ class InstanceMgr:
             MinCount=crawler_num,
             MaxCount=crawler_num,
             KeyName='crawl-tokyo',
-            InstanceType='t2.nano',
+            InstanceType='t2.micro',
             SecurityGroupIds=['launch-wizard-1'])
 
         print "create", len(list(instances))
@@ -73,10 +73,19 @@ class InstanceMgr:
         print "stop", len(list(instances))
         instances.stop()
 
-    def start(self):
+    def start(self, worker_num=None):
         instances = self.select('stopped')
-        print "start", len(list(instances))
-        instances.start()
+        i_num = len(list(instances))
+        print "start", worker_num, "out of ", i_num
+        if worker_num is None:
+            instances.start()
+        else:
+            if i_num < worker_num:
+                print "not enough workers", i_num, worker_num
+            for idx, instance in enumerate(instances):
+                if idx< worker_num:
+                    instance.start()
+
 
     def list(self):
         instances = self.select()
@@ -103,26 +112,26 @@ class InstanceMgr:
         ssh.close()
         print 'closed'
 
-    def run(self, worker_num):
+    def run(self, worker_num, cmds):
         instances = self.select('running')
-        if worker_num!=len(list(instances)):
-            print "not enough running worker ", len(list(instances))
+        i_num = len(list(instances))
+        if worker_num != i_num:
+            print "mismatch running:{}, expect worker:{} ".format(i_num, worker_num)
             return
 
-        print "run", len(list(instances))
-        for idx, instance in enumerate(instances):
-            cmds = [
-                "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical {} > out.{} &".format(idx, datetime.datetime.now().isoformat())
-            ]
-            self._execute_cmd(instance.public_ip_address,'ubuntu', cmds)
+        print "run",i_num
+        for idx, i in enumerate(instances):
+            self._execute_cmd(i.public_ip_address,'ubuntu', cmds)
+            print "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
 
     def upload(self, worker_num):
         instances = self.select('running')
-        if worker_num!=len(list(instances)):
-            print "not enough running worker ", len(list(instances))
+        i_num = len(list(instances))
+        if worker_num != i_num:
+            print "mismatch running:{}, expect worker:{} ".format(i_num, worker_num)
             return
 
-        print "upload", len(list(instances))
+        print "upload", i_num
         for i in instances:
             cmds = [
                 "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
@@ -154,11 +163,28 @@ def main():
     elif "stop" == option:
         mgr.stop()
     elif "start" == option:
-        mgr.start()
-    elif "run" == option:
-        mgr.run(18)
+        if len(sys.argv)>2:
+            work_num = int(sys.argv[2])
+        else:
+            work_num = None
+        mgr.start(work_num)
+
+    elif "run_prefetch" == option:
+        cmds = [
+            "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical {} > out.prefetch.{} &".format(idx, datetime.datetime.now().isoformat())
+        ]
+        mgr.run(15,cmds)
+    elif "run_fetch" == option:
+        cmds = [
+            "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical > out.fetch{} &".format(datetime.datetime.now().isoformat())
+        ]
+        mgr.run(1,cmds)
     elif "upload" == option:
-        mgr.upload(18)
+        if len(sys.argv)>2:
+            work_num = int(sys.argv[2])
+        else:
+            work_num = 15
+        mgr.upload(work_num)
 
 
 if __name__ == "__main__":
