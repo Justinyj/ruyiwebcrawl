@@ -35,7 +35,7 @@ class InstanceMgr:
             MinCount=crawler_num,
             MaxCount=crawler_num,
             KeyName='crawl-tokyo',
-            InstanceType='t2.micro',
+            InstanceType='t2.nano',
             SecurityGroupIds=['launch-wizard-1'])
 
         print "create", len(list(instances))
@@ -126,7 +126,7 @@ class InstanceMgr:
         for i in instances:
             cmds = [
                 "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
-                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(self.FILENAME_PEM, i.public_ip_address)
+                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(self.FILENAME_PEM, i.public_ip_address)
                 #"ping {}".format( i.public_ip_address)
             ]
             for cmd in cmds:

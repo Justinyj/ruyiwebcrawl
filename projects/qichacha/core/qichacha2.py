@@ -323,7 +323,7 @@ class Qichacha(object):
         if not hasattr(self, "_re_page_num"):
             setattr(self,
                     "_re_page_num",
-                    re.compile("javascript:touzilist\((\d+)\)"))
+                    re.compile("javascript:getTabList\((\d+)"))
 
         url = self.get_info_url("touzi",key_num, name, page=page)
         try:
