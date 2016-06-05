@@ -83,19 +83,15 @@ def search_count(batch, refresh=False):
 
 
 
-def crawl_search(batch, limit=None, refresh=False):
+def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, cookie_index=COOKIE_INDEX_SEARCH):
     help = """
-        python business/crawljob.py search medical  seed_person_reg
+        python business/crawljob.py search medical  seed_person_reg 0
         python business/crawljob.py search medical  seed_org_names_reg
         python business/crawljob.py search medical  _reg
         python business/crawljob.py search medical  _vip
     """
     filename_metadata_search = getLocalFile("crawl_search.{}.json.txt".format(batch))
 
-    if len(sys.argv)>3:
-        path_expr = batch+ "/*{}*".format( sys.argv[3])
-    else:
-        path_expr = batch +"/*"
     dir_name = getTheFile( path_expr )
     #print ("search on path_expr={}".format(path_expr) +help)
 
@@ -115,15 +111,15 @@ def crawl_search(batch, limit=None, refresh=False):
 
         #add new
         with codecs.open(filename_metadata_search,"a") as flog:
-            crawl_search_pass( seeds, os.path.basename(filename), searched, flog=flog, limit=limit, refresh=refresh)
+            crawl_search_pass( seeds, os.path.basename(filename), searched, flog=flog, limit=limit, refresh=refresh, worker_id=worker_id, cookie_index=cookie_index)
 
-def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, refresh=None, skip_index_max=None):
+def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, refresh=None, skip_index_max=None, worker_id=None, cookie_index=None):
 
     #init crawler
     if "_vip" in search_option:
-        crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_VIP)
+        crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_VIP, worker_id=worker_id)
     else:
-        crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_SEARCH)
+        crawler = get_crawler(BATCH_ID_SEARCH, cookie_index, worker_id=worker_id)
 
     if "org" in search_option:
         list_index = crawler.INDEX_LIST_ORG
@@ -139,6 +135,7 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
     counter["total"] = len(seeds)
     counter["searched"] = len(seeds.intersection(searched))
     company_set = set()
+    worker_num = crawler.config.get("WORKER_NUM",1)
 
     #print len(seeds),list(seeds)[0:3]
 
@@ -150,6 +147,11 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
         if not refresh and seed in searched:
             continue
         searched.add(seed)
+
+        if worker_id is not None and worker_num>1:
+            if (counter["visited"] % worker_num) != worker_id:
+                counter["skipped"]+=1
+                continue
 
         #print seed, limit
         try:
@@ -730,7 +732,18 @@ def main():
     batch = sys.argv[2]
     #filename = sys.argv[3]
     if "search" == option:
-        crawl_search(batch, refresh=True)
+        if len(sys.argv)>3:
+            path_expr = batch+ "/*{}*".format( sys.argv[3])
+        else:
+            path_expr = batch +"/*"
+
+        if len(sys.argv)>4:
+            worker_id = int(sys.argv[4])
+            print "search with prefetch"
+            crawl_search(batch, path_expr, refresh=False, worker_id=worker_id, cookie_index=COOKIE_INDEX_PREFETCH)
+        else:
+            print "search mono"
+            crawl_search(batch, path_expr, refresh=False, cookie_index=COOKIE_INDEX_SEARCH)
 
     elif "search_count" == option:
         search_count(batch, refresh=False)

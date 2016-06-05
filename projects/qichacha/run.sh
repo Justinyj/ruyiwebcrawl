@@ -28,6 +28,7 @@ if [ "$1" = "aws-init" ]; then
   # mkdir -p /data/ruyi/ruyiwebcrawl/projects/qichacha
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_fetch_20160603 /data/crawler_file_cache
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_search_20160603 /data/crawler_file_cache
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  *  ubuntu@52.196.223.131:/data/ruyi/ruyiwebcrawl/projects/qichacha
   echo "ssh -p50001 data@52.196.223.131"
