@@ -44,7 +44,7 @@ class Qichacha(object):
 
         #self.VIP_MAX_PAGE_NUM = 500
         #self.MAX_PAGE_NUM = 10
-        self.NUM_PER_PAGE = 10  #10
+        self.NUM_PER_PAGE = config.get('NUM_PER_PAGE',20 )  #10
         self.INDEX_LIST_PERSON = [4,6,14]
         self.INDEX_LIST_ORG = [2]
         self.PROVINCE_LIST = {
@@ -185,6 +185,10 @@ class Qichacha(object):
                 # no more results, cannot get data
                 break
 
+            if "nodata.png" in source:
+                # no more results, cannot get data
+                break
+
             tree = lxml.html.fromstring(source)
 
             if page ==1:
@@ -196,10 +200,10 @@ class Qichacha(object):
                     msg = " ---- todo [{}][index:{}][省:{}] TO BE EXPAND , expect {}, ".format( keyword,index, province, cnt_expect)
                     print (msg)
                     metadata_dict["todo_expand"]+=1
-                elif province:
-                    #msg = "[{}][index:{}][省:{}], expect {}, ".format( keyword,index, province, cnt_expect)
-                    #print (msg, end="")
-                    pass
+                else:
+                    if self.config.get("debug"):
+                        msg = "---- regular [{}][index:{}][省:{}], expect {}, ".format( keyword,index, province, cnt_expect)
+                        print (msg)
 
             if tree.cssselect("div.noresult .noface"):
                 break
@@ -214,8 +218,10 @@ class Qichacha(object):
             if cnt_items == cnt_expect:
                 break
 
-            if len(items)<self.NUM_PER_PAGE:
-                break
+            if self.config.get("debug"):
+                print (len(items), page)
+            #if len(items)<self.NUM_PER_PAGE:
+            #    break
 
         #if province:
         metadata_dict["i{}_sum_a".format(index)]+= cnt_items

@@ -100,6 +100,9 @@ class Downloader(object):
             print( "[debug] use cookie "+ cookie['name'] )
         return cookie
 
+    def get_cur_cookie(self):
+        return self.cookies[self.cookie_index]
+
     def pick_cookie_agent_proxy(self, url):
         self.driver.cookies.update( self.get_a_cookie()['header'] )
         #self.driver.headers['Cookie'] = self.get_a_cookie()['value']

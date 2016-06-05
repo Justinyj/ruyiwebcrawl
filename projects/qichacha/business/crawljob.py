@@ -577,7 +577,7 @@ def test_cookie():
     option = sys.argv[2]
 
     help ="""
-        python business/crawljob.py test_cookie regular
+        python business/crawljob.py test_cookie search
         python business/crawljob.py test_cookie test
         python business/crawljob.py test_cookie vip
     """
@@ -590,11 +590,24 @@ def test_cookie():
 
     seed = "王健林"
     index = 4
+    bad_cookies = []
     for i in range(0, len(config["COOKIES"])):
-        cnt = crawler.get_keyword_search_count( seed, index, refresh=True)
-        print cnt
-        assert (cnt>30)
+        metadata_dict = collections.Counter()
+        summary_dict_onepass = {}
+        crawler.list_keyword_search_onepass( seed, index, "", 1, metadata_dict, summary_dict_onepass, True)
 
+        cookie = crawler.downloader.get_cur_cookie()
+
+        print json.dumps(metadata_dict, sort_keys=True)
+        if not len(summary_dict_onepass) == crawler.NUM_PER_PAGE:
+            print "ERROR, BAD COOKIE. max", crawler.NUM_PER_PAGE, "actual", len(summary_dict_onepass)
+            bad_cookies.append(cookie)
+
+    if bad_cookies:
+        print json.dumps(bad_cookies, sort_keys=True, ensure_ascii=False, indent=4)
+        gcounter["bad_cookies"] = len (bad_cookies)
+    else:
+        print "OK, all cookies are great!"
 
 def test_count():
     help ="""  indexmap  2:企业名   4:法人  6:高管  14:股东
@@ -659,10 +672,11 @@ def test_fetch(name, key_num):
 def test_search():
     help ="""  indexmap  2:企业名   4:法人  6:高管  14:股东
         python business/crawljob.py test_search 任丽娟 14 BJ
+        python business/crawljob.py test_search 卓伟 6
     """
 
     import lxml
-    crawler = get_crawler(BATCH_ID_SEARCH,COOKIE_INDEX_TEST)
+    crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_TEST)
 
     keyword = sys.argv[2] #"李国华"
     page = 0
@@ -677,7 +691,7 @@ def test_search():
 
     metadata_dict = collections.Counter()
     summary_dict_by_index ={}
-    crawler.list_keyword_search_onepass(keyword, index, province, 10, metadata_dict, summary_dict_by_index, refresh=True)
+    crawler.list_keyword_search_onepass(keyword, index, province, 20, metadata_dict, summary_dict_by_index, refresh=True)
     print len(summary_dict_by_index)
     print json.dumps(metadata_dict)
 
@@ -714,7 +728,7 @@ def main():
     batch = sys.argv[2]
     #filename = sys.argv[3]
     if "search" == option:
-        crawl_search(batch, refresh=False)
+        crawl_search(batch, refresh=True)
 
     elif "search_count" == option:
         search_count(batch, refresh=False)
