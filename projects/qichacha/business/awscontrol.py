@@ -112,16 +112,25 @@ class InstanceMgr:
         ssh.close()
         print 'closed'
 
-    def run(self, worker_num, cmds):
+    def run(self, worker_num, cmd_option):
         instances = self.select('running')
         i_num = len(list(instances))
         if worker_num != i_num:
             print "mismatch running:{}, expect worker:{} ".format(i_num, worker_num)
             return
 
-        print "run",i_num
+
+        print "run",i_num, cmd_option
         for idx, i in enumerate(instances):
-            self._execute_cmd(i.public_ip_address,'ubuntu', cmds)
+            cmds = {
+                "run_prefetch":[
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical {} > out.prefetch.{} &".format(idx, datetime.datetime.now().isoformat())
+                ],
+                "run_fetch":[
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical > out.fetch{} &".format(datetime.datetime.now().isoformat())
+                ]
+            }
+            self._execute_cmd(i.public_ip_address,'ubuntu', cmds[cmd_option])
             print "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
 
     def upload(self, worker_num):
@@ -170,15 +179,14 @@ def main():
         mgr.start(work_num)
 
     elif "run_prefetch" == option:
-        cmds = [
-            "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical {} > out.prefetch.{} &".format(idx, datetime.datetime.now().isoformat())
-        ]
-        mgr.run(15,cmds)
+        if len(sys.argv)>2:
+            work_num = int(sys.argv[2])
+        else:
+            work_num = 15
+        mgr.run(work_num,option)
     elif "run_fetch" == option:
-        cmds = [
-            "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical > out.fetch{} &".format(datetime.datetime.now().isoformat())
-        ]
-        mgr.run(1,cmds)
+        mgr.run(1,option)
+
     elif "upload" == option:
         if len(sys.argv)>2:
             work_num = int(sys.argv[2])

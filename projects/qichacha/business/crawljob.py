@@ -586,6 +586,8 @@ def test_cookie():
     with open(FILE_CONFIG) as f:
         config = json.load(f)[option]
         config["debug"] = True
+        config["WORKER_NUM"] =1
+        #config["CRAWL_GAP"] =5 *len(config["COOKIES"])
     crawler = Qichacha(config)
 
     seed = "王健林"
@@ -595,7 +597,7 @@ def test_cookie():
         metadata_dict = collections.Counter()
         summary_dict_onepass = {}
         crawler.list_keyword_search_onepass( seed, index, "", 1, metadata_dict, summary_dict_onepass, True)
-
+        gcounter["list_keyword_search_onepass"] += 1
         cookie = crawler.downloader.get_cur_cookie()
 
         print json.dumps(metadata_dict, sort_keys=True)
