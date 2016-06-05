@@ -13,9 +13,16 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['52.196.158.37']
+    env.hosts = ['52.69.161.139']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
+
+def _aws():
+    sudo('mkfs -t ext4 /dev/xvdb')
+    sudo('mkdir /data')
+    sudo('mount /dev/xvdb /data')
+    sudo('cp /etc/fstab /etc/fstab.orig')
+    sudo("""sh -c "echo '/dev/xvdb /data ext4 defaults,nofail 0 2' > /etc/fstab" """)
 
 def _build_pg():
     sudo('touch /etc/apt/sources.list.d/pg.list')
