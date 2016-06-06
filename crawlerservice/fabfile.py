@@ -43,8 +43,8 @@ def _build_pg():
 
 def build_env():
     _build_pg()
-    sudo('sudo apt-get -y install libcurl4-gnutls-dev libghc-gnutls-dev python-pip python-dev dtach')
-    sudo('sudo pip install virtualenvwrapper')
+    sudo('apt-get -y install libcurl4-gnutls-dev libghc-gnutls-dev python-pip python-dev dtach')
+    sudo('pip install virtualenvwrapper')
 
 
 def upload():

@@ -22,8 +22,9 @@ class Worker(object):
         raise NotImplementedError('This method should implemented by subclasses')
 
 class GetWorker(Worker):
-    def __init__(self):
+    def __init__(self, index):
         super(GetWorker, self).__init__()
+        self.index = index
         self.queues = [i for i in self._get_task_queue()]
 
         batch_id = self.queues[0].key
@@ -103,11 +104,15 @@ class GetWorker(Worker):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Call Worker with arguments')
+    parser.add_argument('--index', '-i', type=int, help='index of this machine in all this batch machines')
     parser.add_argument('--cookie', '-c', type=str, help='cookie for this machine')
     option = parser.parse_args()
-    if option.cookie:
-        obj = GetWorker()
-        obj.run(cookie=option.cookie)
+    if option.index:
+        obj = GetWorker(option.index)
+        if option.cookie:
+            obj.run(cookie=option.cookie)
+        else:
+            obj.run()
 
 if __name__ == '__main__':
     main()

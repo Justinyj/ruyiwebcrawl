@@ -6,7 +6,9 @@
 #sleep 3   28.1947261663% - 26.369168357%
 #sleep 4   25.354969574% -  25.5578093306%
 #sleep 5   25.354969574% -  25.1521298174%
+#sleep 3 single agent  2.23123732252% -  2.6369168357%
 #
+# conclusion: we don't need cookie, we don't need rotated agents
 
 from __future__ import print_function, division
 
@@ -45,9 +47,9 @@ def test_question():
 
   for i, agent in enumerate(AGENTS_ALL):
     session.headers['User-Agent'] = agent
-    cookiestr = get_cookie_template()
-    cookie = dict(l.split('=', 1) for l in cookiestr.split('; '))
-    session.cookies.update(cookie)
+#    cookiestr = get_cookie_template()
+#    cookie = dict(l.split('=', 1) for l in cookiestr.split('; '))
+#    session.cookies.update(cookie)
     resp = session.get(zhidao_url, timeout=10)
     print('\n', resp.headers['Content-Type'])
     if len(resp.content) < 100000:
@@ -56,7 +58,7 @@ def test_question():
       error_count += 1
       if resp.url == zhidao_url:
         print('url same, still error')
-    time.sleep(5)
+    time.sleep(3)
   print('Error percentage: {}'.format(error_count / i))
 
 def test_api():

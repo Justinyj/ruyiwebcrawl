@@ -38,7 +38,7 @@ def post_job(self, batch_id, method, gap, js, header, urls, machine_num):
 
         queue.put_init(field)
 
-    schedule = Schedule(machine_num)
+    schedule = Schedule(machine_num, tag=batch_id.split('-', 1)[0])
     schedule.run()
 
 
@@ -47,6 +47,6 @@ def load_urls(fname):
         return [i.strip() for i in fd if i.strip() != '']
 
 if __name__ == '__main__':
-    urls = load_urls('prefetch.txt')
-    post_job('qichacha_fetch_20160604', 'get', 5, False, {}, urls, 10)
+    urls = load_urls('zhidao_question_url.txt')
+    post_job('zhidao-question-20160606', 'get', 5, False, {}, urls, 10)
 

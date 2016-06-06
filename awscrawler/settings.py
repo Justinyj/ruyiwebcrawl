@@ -19,6 +19,7 @@ envs = {
         ],
 
         'CACHE_SERVER': 'http://127.0.0.1:8000',
+        'REGION_NAME': 'us-west-1',
     },
     'PRODUCTION': {
         'CONCURRENT_NUM': 200,
@@ -30,6 +31,7 @@ envs = {
         ],
 
         'CACHE_SERVER': 'http://127.0.0.1:8000',
+        'REGION_NAME': 'ap-northeast-1',
     },
     'TEST': {
         'CONCURRENT_NUM': 200,
@@ -40,7 +42,8 @@ envs = {
             'redis://localhost:6379/0',
         ],
 
-        'CACHE_SERVER': 'http://127.0.0.1:8000',
+        'CACHE_SERVER': 'http://172.31.23.63:8000',
+        'REGION_NAME': 'us-west-1',
     }
 }
 

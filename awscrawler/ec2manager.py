@@ -9,16 +9,26 @@ from collections import deque
 
 from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
-REGION_NAME = 'ap-northeast-1'
-REGION_NAME = 'us-west-1'
-AMI_ID = 'ami-d7d4c5b9'
-KEYPAIR = 'crawl-tokyo.pem'
+from settings import REGION_NAME
+
+if REGION_NAME == 'us-west-1':
+    KEYPAIR = 'crawler-california.pem'
+    SECURITYGROUPID = 'sg-cdd863a9' # ssh
+    AMI_ID = ''
+elif REGION_NAME == 'ap-northeast-1':
+    KEYPAIR = 'crawl-tokyo.pem'
+    SECURITYGROUPID = 'sg-fcbf0998'
+    AMI_ID = 'ami-d7d4c5b9'
+
 INSTANCE_TYPE = 't2.micro'
-SECURITYGROUPID = 'sg-fcbf0998'
 
 class Ec2Manager(object):
 
-    def __init__(self):
+    def __init__(self, tag='crawler'):
+        self.tag = tag
+        self.id_instance = {}
+        self.id_idx = {}
+
         self.ec2 = boto3.resource('ec2', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
     def create_instances(self,
@@ -35,8 +45,13 @@ class Ec2Manager(object):
                                         KeyName=KeyName,
                                         InstanceType=InstanceType,
                                         SecurityGroupIds=SecurityGroupIds)
+        for idx, i in enumerate(ins):
+            self.ec2.create_tags(Resources=[i.id],
+                    Tags=[{'Key': 'crawler', 'Value': self.tag}])
+            self.id_instance[i.id] = i
+            self.id_idx[i.id] = idx
+
         self.queue = deque(ins)
-        self.id_instance = {i.id: i for i in ins}
         return self.id_instance.keys()
 
 
@@ -51,6 +66,9 @@ class Ec2Manager(object):
 
     def get_ipaddr(self, one_id):
         return self.id_instance[one_id].private_ip_address
+
+    def get_idx_by_id(self, one_id):
+        return self.id_idx[one_id]
 
     def get_ids_in_status(self, status):
         """
