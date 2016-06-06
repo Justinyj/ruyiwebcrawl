@@ -16,7 +16,7 @@ import subprocess
 import time
 
 gcounter = collections.Counter()
-
+THE_WORKER_NUM=18
 
 class InstanceMgr:
     def __init__(self):
@@ -130,7 +130,7 @@ class InstanceMgr:
                     "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical > out.fetch{} &".format(datetime.datetime.now().isoformat())
                 ],
                 "run_presearch":[
-                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
                 ]
             }
             self._execute_cmd(i.public_ip_address,'ubuntu', cmds[cmd_option])
@@ -185,13 +185,13 @@ def main():
         if len(sys.argv)>2:
             work_num = int(sys.argv[2])
         else:
-            work_num = 15
+            work_num = THE_WORKER_NUM
         mgr.run(work_num,option)
     elif "run_presearch" == option:
         if len(sys.argv)>2:
             work_num = int(sys.argv[2])
         else:
-            work_num = 15
+            work_num = THE_WORKER_NUM
         mgr.run(work_num,option)
     elif "run_fetch" == option:
         mgr.run(1,option)
@@ -200,7 +200,7 @@ def main():
         if len(sys.argv)>2:
             work_num = int(sys.argv[2])
         else:
-            work_num = 15
+            work_num = THE_WORKER_NUM
         mgr.upload(work_num)
 
 
