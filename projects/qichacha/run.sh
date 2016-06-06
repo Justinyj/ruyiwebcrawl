@@ -29,6 +29,7 @@ if [ "$1" = "aws-init" ]; then
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_fetch_20160603 /data/crawler_file_cache
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_search_20160603 /data/crawler_file_cache
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_json_20160603 /data/crawler_file_cache
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /data/crawler_file_cache/qichacha_search_20160603 admin@52.69.161.139:/data/crawler_file_cache/
 

@@ -348,14 +348,14 @@ def fetch_detail(batch, worker_id=None, expand=True, cookie_index =COOKIE_INDEX_
     #filename_cache_fetch_result = getLocalFile("cache_fetch_result.expand_{}.json.txt".format(expand).lower())
 
     #load cache_fetch_result
-    if flag_mono:
-        cache_fetch_result = {}
-        if os.path.exists(filename_cache_fetch_result):
-            #may have duplicated, the earlier one will be overwrite by the newer one
-            for line in libfile.file2list(filename_cache_fetch_result):
-                fetch_result = json.loads(line)
-                key_num = fetch_result["key_num"]
-                cache_fetch_result[key_num] = fetch_result["data"]
+    #if flag_mono:
+        # cache_fetch_result = {}
+        # if os.path.exists(filename_cache_fetch_result):
+        #     #may have duplicated, the earlier one will be overwrite by the newer one
+        #     for line in libfile.file2list(filename_cache_fetch_result):
+        #         fetch_result = json.loads(line)
+        #         key_num = fetch_result["key_num"]
+        #         cache_fetch_result[key_num] = fetch_result["data"]
 
     #load search history
     map_key_num_name_crawl = {}
@@ -841,7 +841,7 @@ def main():
         if len(sys.argv)>3:
             worker_id = int(sys.argv[3])
             print "fetch with prefetch"
-            fetch_detail(batch, worker_id, cookie_index=COOKIE_INDEX_PREFETCH, expand=False)
+            fetch_detail(batch, worker_id, cookie_index=COOKIE_INDEX_PREFETCH, expand=True)
         else:
             print "fetch mono"
             fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH)

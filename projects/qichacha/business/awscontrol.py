@@ -36,7 +36,7 @@ class InstanceMgr:
             MaxCount=crawler_num,
             KeyName='crawl-tokyo',
             InstanceType='t2.micro',
-            SecurityGroupIds=['launch-wizard-1'])
+            SecurityGroupIds=['sg-fcbf0998'])
 
         print "create", len(list(instances))
         for instance in instances:
