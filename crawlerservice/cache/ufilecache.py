@@ -5,7 +5,7 @@
 from __future__ import print_function, division
 
 from secret import public_key, private_key
-from tools import path, cachelog
+from tools import cachelog
 from ucloud.ufile import putufile, downloadufile
 from ucloud.ufile import bucketmanager
 
