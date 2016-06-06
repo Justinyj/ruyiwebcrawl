@@ -7,15 +7,15 @@ from __future__ import print_function, division
 import boto3
 import botocore
 import string
+import base64
+import json
 
 from datetime import datetime
 
 from dbconnector import dbwrapper
 from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 from tools import cachelog
-
-REGION_NAME = 'ap-northeast-1'
-REGION_NAME = 'us-west-1'
+from settings import REGION_NAME
 
 
 S3 = boto3.resource('s3', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
@@ -28,24 +28,24 @@ def ensure_bucket(batch_key):
             create_bucket(batch_key)
 
 def create_bucket(batch_key):
-    for i in range(3):
+    for _ in range(3):
         try:
-            # S3.create_bucket(Bucket=batch_key, CreateBucketConfiguration={'LocationConstraint': REGION_NAME})
-            s3bucket = S3.create_bucket(Bucket=batch_key)
+            return S3.create_bucket(Bucket=batch_key, CreateBucketConfiguration={'LocationConstraint': REGION_NAME})
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
                 pass
             elif e.response['Error']['Code'] == 'OperationAborted':
                 continue
-        return s3bucket
-
+            elif e.response['Error']['Code'] == 'InvalidBucketName':
+                return e.response['Error']['Code']
 
 
 def s3_get_cache(batch_id, url_hash, exists=False):
 
     def get_cache(batch_key, filename):
         try:
-            content = S3.Object(batch_key, filename).get()
+            streaming_body = S3.Object(batch_key, filename).get()
+            content = streaming_body[u'Body'].read()
         except botocore.exceptions.ClientError as e:
             # NoSuchKey, NoSuchBucket
             return {'error': e.response['Error']['Code']}
@@ -61,7 +61,7 @@ def s3_get_cache(batch_id, url_hash, exists=False):
 
     try:
         filename = '{}_{}'.format(batch_id, url_hash)
-        batch_key = batch_id.rsplit('_', 1)[0]
+        batch_key = batch_id.rsplit('-', 1)[0]
 
         if exists:
             return {'success': True, 'exists': head_cache(batch_key, filename)}
@@ -78,7 +78,7 @@ def s3_get_cache(batch_id, url_hash, exists=False):
 
 def s3_put_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
     """
-    :param groups: 'g1, g2'
+    :param groups: e.g. 'g1, g2'
     """
 
     def put_cache(batch_key, filename, content):
@@ -88,7 +88,9 @@ def s3_put_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
                 return {'success': True}
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == 'NoSuchBucket':
-                create_bucket(batch_key)
+                ret = create_bucket(batch_key)
+                if type(ret) == str:
+                    return {'error': ret}
 
             return {'error': e.response['Error']['Code']}
         except Exception as e:
@@ -96,9 +98,9 @@ def s3_put_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
 
     try:
         filename = '{}_{}'.format(batch_id, url_hash)
-        batch_key = batch_id.rsplit('_', 1)[0]
+        batch_key = batch_id.rsplit('-', 1)[0]
 
-        ret = put_cache(batch_key, filename, sio)
+        ret = put_cache(batch_key, filename, content)
         if 'error' in ret and ret['error'] == 'NoSuchBucket':
             ret = put_cache(batch_key, filename, content)
         if 'error' in ret:

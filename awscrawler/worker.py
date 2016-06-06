@@ -96,7 +96,7 @@ class GetWorker(Worker):
         result = queue.get(block=True, timeout=3, interval=1)
         url = self.thinhash.hget(result)
 
-        module = __import__('prefetch.workers.{}'.format(queue.key.rsplit('_', 1)[0]), fromlist=['worker'])
+        module = __import__('prefetch.workers.{}'.format(queue.key.rsplit('-', 1)[0]), fromlist=['worker'])
         module.worker(url, *args, **kwargs)
 
 

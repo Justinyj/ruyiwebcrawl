@@ -11,6 +11,7 @@ from settings import CACHEPAGE
 from .fscache import fs_get_cache, fs_set_cache
 from .dbcache import db_get_cache, db_set_cache, db_get_all_cache
 from .ufilecache import ufile_get_cache, ufile_set_cache
+from .s3cache import s3_get_cache, s3_put_cache
 #from .qiniucache import *
 
 
