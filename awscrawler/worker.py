@@ -91,6 +91,7 @@ class GetWorker(Worker):
 
 
     def work(self, *args, **kwargs):
+        # success count / failure count
         queue = self.queues[0]
         result = queue.get(block=True, timeout=3, interval=1)
         url = self.thinhash.hget(result)

@@ -36,9 +36,9 @@ def ufile_get_cache(batch_id, url_hash):
         setattr(ufile_get_cache, '_auth', down_auth)
 
     try:
-        ufilename = '{}_{}'.format(batch_id, url_hash)
+        filename = '{}_{}'.format(batch_id, url_hash)
         batch_key = batch_id.split('_', 1)[0]
-        ret, resp = ufile_get_cache._auth.download_stream(batch_key, ufilename)
+        ret, resp = ufile_get_cache._auth.download_stream(batch_key, filename)
         if resp.status_code != 200:
 
             if resp.status_code == 400:
@@ -59,9 +59,9 @@ def ufile_set_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
 
     try:
         sio = StringIO(content)
-        ufilename = '{}_{}'.format(batch_id, url_hash)
+        filename = '{}_{}'.format(batch_id, url_hash)
         batch_key = batch_id.split('_', 1)[0]
-        ret, resp = ufile_set_cache._auth.putstream(batch_key, ufilename, sio)
+        ret, resp = ufile_set_cache._auth.putstream(batch_key, filename, sio)
         if resp.status_code != 200:
 
             if resp.status_code == 400:
