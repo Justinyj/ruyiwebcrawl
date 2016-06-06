@@ -7,9 +7,10 @@ from __future__ import print_function, division
 import boto3
 from collections import deque
 
-from secret import EC2_ACCESS_ID, EC2_SECRET_KEY
+from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
 REGION_NAME = 'ap-northeast-1'
+REGION_NAME = 'us-west-1'
 AMI_ID = 'ami-d7d4c5b9'
 KEYPAIR = 'crawl-tokyo.pem'
 INSTANCE_TYPE = 't2.micro'
@@ -18,7 +19,7 @@ SECURITYGROUPID = 'sg-fcbf0998'
 class Ec2Manager(object):
 
     def __init__(self):
-        self.ec2 = boto3.resource('ec2', region_name=REGION_NAME, aws_access_key_id=EC2_ACCESS_ID, aws_secret_access_key=EC2_SECRET_KEY)
+        self.ec2 = boto3.resource('ec2', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
     def create_instances(self,
                          MachineNum=1,
