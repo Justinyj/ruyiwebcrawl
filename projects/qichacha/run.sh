@@ -29,6 +29,9 @@ if [ "$1" = "aws-init" ]; then
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_fetch_20160603 /data/crawler_file_cache
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_search_20160603 /data/crawler_file_cache
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_json_20160603 /data/crawler_file_cache
+
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /data/crawler_file_cache/qichacha_search_20160603 admin@52.69.161.139:/data/crawler_file_cache/
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  *  ubuntu@52.196.223.131:/data/ruyi/ruyiwebcrawl/projects/qichacha
   echo "ssh -p50001 data@52.196.223.131"
@@ -48,9 +51,12 @@ fi
 
 
 if [ "$1" = "cache-up" ]; then
-  rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha0601search  data@106.75.14.79:/data/crawler_file_cache
+#  rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha0601search  data@106.75.14.79:/data/crawler_file_cache
 #  rsync -azvrtopg -e 'ssh'  /data/crawler_file_cache/qichacha0601search  lidingpku@wukong:/data/crawler_file_cache
-  rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha0601fetch  data@106.75.14.79:/data/crawler_file_cache
+#  rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha0601fetch  data@106.75.14.79:/data/crawler_file_cache
+
+  rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha_fetch_20160603  data@106.75.14.79:/data/crawler_file_cache
+  rsync -azvrtopg -e 'ssh -p50001'  /data/crawler_file_cache/qichacha_search_20160603  data@106.75.14.79:/data/crawler_file_cache
   echo "ssh -p50001 data@106.75.14.79"
 fi
 

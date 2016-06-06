@@ -19,8 +19,10 @@ sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
 from core.qichacha2 import Qichacha
+from core.cache import Cache
 import libnlp
 import libfile
+
 
 ###################
 # global config and functions
@@ -45,7 +47,7 @@ BATCH_ID_FETCH ='qichacha_fetch_20160603'
 def search_count(batch, refresh=False):
     help =""" also try
         python business/crawljob.py search_count medical seed_org_names_reg
-        python business/crawljob.py search_count medical seed_person_reg
+        python business/crawljob.py search_count medical seed_person_core_reg
     """
 
     if len(sys.argv)>3:
@@ -85,7 +87,8 @@ def search_count(batch, refresh=False):
 
 def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, cookie_index=COOKIE_INDEX_SEARCH):
     help = """
-        python business/crawljob.py search medical  seed_person_reg 0
+        python business/crawljob.py search medical  seed_person_core_reg 0
+        python business/crawljob.py search medical  seed_person_ext_reg 0
         python business/crawljob.py search medical  seed_org_names_reg
         python business/crawljob.py search medical  _reg
         python business/crawljob.py search medical  _vip
@@ -210,13 +213,41 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
 }
     """
 def stat(batch):
+    #load list
+    map_step = {
+        u"莆田系关键人": {"filename":getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch))},
+#        u"莆田系相关人": {"filename":getTheFile("{}/seed_person_ext_reg.putian.auto.txt".format(batch))},
+        u"医疗类公司关键词": {"filename":getTheFile("{}/seed_org_keywords_vip.putian.human.txt".format(batch))},
+    }
+    for step in map_step:
+        temp = libfile.file2set(map_step[step]["filename"])
+        gcounter[step+u"_cnt_keywords"] = len(temp)
+        map_step[step]["keyword_list"] = sorted(list(temp))
+
+    #load search result file
+    map_keyword_companies = {}
     for filename in glob.glob(getLocalFile("crawl_search.{}.json.txt".format(batch))):
         for line in libfile.file2list(filename):
             gcounter["line"] +=1
             item = json.loads(line)
             for keyword, keyword_entry in item["data"].items():
-                print keyword, len(keyword_entry["data"]), json.dumps(keyword_entry["metadata"])
+                #print keyword, len(keyword_entry["data"]), json.dumps(keyword_entry["metadata"])
+                map_keyword_companies[keyword] = keyword_entry
+    gcounter[u"total_keywords"] = len(map_keyword_companies)
 
+    # step actual
+    for step in map_step:
+        print u"=========keywords {}".format(step)
+        temp_company = set()
+        for keyword in map_step[step]["keyword_list"]:
+            if not keyword in map_keyword_companies:
+                print "missing", keyword, step
+                continue
+
+            print keyword, map_keyword_companies[keyword]["metadata"]["actual"]
+            temp_company.update(map_keyword_companies[keyword]["data"].keys())
+        gcounter[step+u"_cnt_company"] = len(temp_company)
+        map_step[step]["company_list"] = sorted(list(temp_company))
 
 
 def load_all_company():
@@ -312,7 +343,19 @@ def merge_company(batch):
 
 #################
 
-def fetch_detail(batch, worker_id=None, expand=False, cookie_index =COOKIE_INDEX_PREFETCH):
+def fetch_detail(batch, worker_id=None, expand=True, cookie_index =COOKIE_INDEX_PREFETCH, cache_only=False, refresh=False):
+    flag_mono = (worker_id is None)
+    #filename_cache_fetch_result = getLocalFile("cache_fetch_result.expand_{}.json.txt".format(expand).lower())
+
+    #load cache_fetch_result
+    #if flag_mono:
+        # cache_fetch_result = {}
+        # if os.path.exists(filename_cache_fetch_result):
+        #     #may have duplicated, the earlier one will be overwrite by the newer one
+        #     for line in libfile.file2list(filename_cache_fetch_result):
+        #         fetch_result = json.loads(line)
+        #         key_num = fetch_result["key_num"]
+        #         cache_fetch_result[key_num] = fetch_result["data"]
 
     #load search history
     map_key_num_name_crawl = {}
@@ -349,7 +392,9 @@ def fetch_detail(batch, worker_id=None, expand=False, cookie_index =COOKIE_INDEX
     map_key_num_name_crawl.update(map_key_num_name_0531)
 
     #map names to id
-    crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id)
+    crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id, cache_only=cache_only)
+    cache_json = Cache(crawler.config, batch_id="qichacha_json_20160603")
+
     counter = collections.Counter()
     company_name_batch = sorted(list(map_key_num_name_crawl.keys()))
     #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
@@ -361,9 +406,9 @@ def fetch_detail(batch, worker_id=None, expand=False, cookie_index =COOKIE_INDEX
         if not name:
             continue
 
-        if counter["visited"] % 2000 ==0:
+        if counter["visited"] % 1000 ==0:
             counter["company_raw"] =len(company_raw)
-            print batch, datetime.datetime.now().isoformat(), counter
+            print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True), json.dumps(crawler.downloader.counter, sort_keys=True)
         counter["visited"]+=1
 
         if worker_id is not None and worker_num>1:
@@ -376,19 +421,50 @@ def fetch_detail(batch, worker_id=None, expand=False, cookie_index =COOKIE_INDEX
 
         try:
             company_raw_one = {}
-            if expand:
-                temp = crawler.crawl_descendant_company(name, key_num)
-                company_raw_one.update(temp)
 
-                temp = crawler.crawl_ancestors_company(name, key_num)
-                company_raw_one.update(temp)
+            #两级缓存
+            #load cached company_raw_one
+            tag = "expand" if expand else "regular"
+            cache_json_uri = "uri:qcc:{}:{}".format(tag,key_num)
+            if not refresh:
+                cache_json_content = cache_json.get(cache_json_uri)
+                if cache_json_content:
+                    company_raw_one = json.loads(cache_json_content)["data"]
+
+            if company_raw_one:
+                counter["cached"]+=1
             else:
-                temp = crawler.crawl_company_detail(name, key_num)
-                company_raw_one.update(temp)
+                if expand:
+                    temp = crawler.crawl_descendant_company(name, key_num)
+                    if temp:
+                        company_raw_one.update(temp)
+
+                    temp = crawler.crawl_ancestors_company(name, key_num)
+                    if temp:
+                        company_raw_one.update(temp)
+                else:
+                    temp = crawler.crawl_company_detail(name, key_num)
+                    if temp:
+                        company_raw_one.update(temp)
+
+                #cache the company_raw_one
+                if company_raw_one:
+                    fetch_result = {
+                        "key_num":key_num,
+                        "name": name,
+                        "ts": datetime.datetime.now().isoformat(),
+                        "data": company_raw_one
+                    }
+                    cache_json_content = cache_json.post(cache_json_uri, json.dumps(fetch_result))
+
+            if not company_raw_one:
+                gcounter["missing"]+=1
+                continue
 
             #only create company_raw when it is single threaded OP
-            if worker_id is None:
-                company_raw.update(company_raw_one)
+            if flag_mono:
+                #company_raw.update(company_raw_one)
+                pass
 
             #counter["company_raw_one"] =len(company_raw_one)
             counter["ok"] +=1
@@ -400,13 +476,18 @@ def fetch_detail(batch, worker_id=None, expand=False, cookie_index =COOKIE_INDEX
             pass
 
     #only create company_raw when it is single threaded OP
-    if worker_id is None:
+    if flag_mono:
         gcounter["company_raw.{}.json".format(batch)] = len(company_raw)
         filename = getLocalFile("company_raw.{}.json".format(batch))
         with codecs.open(filename,"w", encoding="utf-8") as f:
             json.dump(company_raw, f, ensure_ascii=False, indent=4, sort_keys=True )
 
 
+        lines = []
+        for name in sorted(list(company_raw.keys())):
+            lines.append(u"{}\t{}".format(company_raw[name]["key_num"],name))
+        filename = getLocalFile("company_raw.{}.txt".format(batch))
+        libfile.lines2file(lines, filename)
 
 
 
@@ -496,13 +577,14 @@ def prefetch(batch):
     libfile.lines2file(sorted(list(urls)), filename)
 
 def expand_person(batch, limit=2):
+    #load
     filename = getLocalFile("company_raw.{}.json".format(batch))
     with codecs.open(filename, encoding="utf-8") as f:
         company_raw = json.load(f)
         gcounter["company_raw".format(batch)] = len(company_raw)
 
 
-    filename = getTheFile("{}/seed_person_reg.putian.txt".format(batch))
+    filename = getTheFile("{}/seed_person_core_reg.putian.txt".format(batch))
     root_persons = libfile.libfile.file2set(filename)
     gcounter["root_persons".format(batch)] = len(root_persons)
     front_persons = {}
@@ -566,12 +648,12 @@ def expand_person_pass(front_persons, company_raw, depth):
 
 
 
-def get_crawler(batch_id, option, worker_id=None):
+def get_crawler(batch_id, option, worker_id=None, cache_only=False):
     with open(FILE_CONFIG) as f:
         config = json.load(f)[option]
         if worker_id is not None:
             config['WORKER_ID'] = worker_id
-    return Qichacha(config, batch_id)
+    return Qichacha(config, batch_id, cache_only=cache_only)
 
 
 def test_cookie():
@@ -589,6 +671,7 @@ def test_cookie():
         config = json.load(f)[option]
         config["debug"] = True
         config["WORKER_NUM"] =1
+        config["CACHE_SERVER"] ="http://localhost:8000"
         #config["CRAWL_GAP"] =5 *len(config["COOKIES"])
     crawler = Qichacha(config)
 
@@ -758,10 +841,13 @@ def main():
         if len(sys.argv)>3:
             worker_id = int(sys.argv[3])
             print "fetch with prefetch"
-            fetch_detail(batch, worker_id, cookie_index=COOKIE_INDEX_PREFETCH)
+            fetch_detail(batch, worker_id, cookie_index=COOKIE_INDEX_PREFETCH, expand=True)
         else:
             print "fetch mono"
             fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH)
+    elif "fetch_cache_only" == option:
+            print "fetch mono cache_only"
+            fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH, expand=False, cache_only=True)
 
     elif "prefetch" == option:
         prefetch(batch)

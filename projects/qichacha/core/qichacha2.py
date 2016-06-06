@@ -30,7 +30,7 @@ class Qichacha(object):
 
         return ret
 
-    def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True):
+    def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True, cache_only=False):
         if batch_id is None:
             batch_id = "qichacha0601"
         if config is None:
@@ -84,7 +84,8 @@ class Qichacha(object):
                                      request=request,
                                      batch_id=batch_id,
                                      groups=groups,
-                                     refresh=refresh)
+                                     refresh=refresh,
+                                     cache_only=cache_only)
         self.downloader.login()
         self.parser = QiParser()
 
@@ -218,8 +219,8 @@ class Qichacha(object):
             if cnt_items == cnt_expect:
                 break
 
-            if self.config.get("debug"):
-                print (len(items), page)
+            #if self.config.get("debug"):
+            #    print (len(items), page)
             #if len(items)<self.NUM_PER_PAGE:
             #    break
 
@@ -373,9 +374,12 @@ class Qichacha(object):
             max_page_num = max_page_num[0]
 
         for page_idx in range(2, max_page_num + 1):
-            invest_dict.update(self._crawl_company_investment_single_page(name,
+            more_invest_dict = self._crawl_company_investment_single_page(name,
                                                                      key_num,
-                                                                     page_idx))
+                                                                     page_idx)
+            if more_invest_dict:
+                invest_dict.update(more_invest_dict)
+                
         return {name: invest_dict}
 
 

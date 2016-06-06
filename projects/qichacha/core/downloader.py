@@ -11,6 +11,7 @@ import os
 import sys
 import json
 import random
+import collections
 
 from headers import choice_agent, choice_proxy
 from cache import Cache
@@ -24,10 +25,11 @@ class Downloader(object):
 
     """
 
-    def __init__(self, config, request=False, batch_id='', groups=None, refresh=False):
+    def __init__(self, config, request=False, batch_id='', groups=None, refresh=False, cache_only=False):
         self.request = request
         self.TIMEOUT = 10
         self.RETRY = 3
+        self.cache_only = cache_only
 
         if batch_id == '':
             batch_id = os.path.dirname(__file__)
@@ -35,6 +37,7 @@ class Downloader(object):
         self.groups = groups
         self.config = config
         self.refresh = refresh
+        self.counter = collections.Counter()
 
         self.cookie_index = 0
         self.cookies =[]
@@ -175,27 +178,36 @@ class Downloader(object):
         def save_cache(url, content, groups, refresh):
             refresh = self.refresh if refresh is None else refresh
             groups = self.groups if groups is None else groups
+            self.counter["cache_write"]+=1
             ret = self.cache.post(url, content, groups, refresh)
             if ret not in [True, False]:
                 print('save_cache failed',ret)
 
         if not refresh:
+            self.counter["cache_get"]+=1
             content = self.cache.get(url)
             #cache hit
             if content:
+                self.counter["cache_hit"]+=1
                 temp = self.check_content_invalid(content)
                 if temp:
                     #print ("cache hit", url, temp)
                     pass
                 else:
                     #print ("cache hit", url)
+                    self.counter["cache_ok"]+=1
                     return content
 
         #print ("download", url)
+        if self.cache_only:
+            self.counter["cache_miss"]+=1
+            return u''
 
         if self.request is True:
+            self.counter["down_requests"]+=1
             content = self.request_download(url)
         else:
+            self.counter["down_selenium"]+=1
             content = self.selenium_download(url)
 
         #print (content,"\n---------------", type(content))
