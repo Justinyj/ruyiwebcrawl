@@ -92,15 +92,25 @@ class GetWorker(Worker):
 
 
     def work(self, *args, **kwargs):
+        if not hasattr(worker, '_batch_param'):
+            setattr(worker, '_batch_param', {})
+
         queue = self.queues[0]
-        parameter = Record.instance().get_parameter(queue.key)
+        batch_id = queue.key
+        param = worker._batch_param.get(batch_id)
+        if param is None:
+            parameter = Record.instance().get_parameter(batch_id)
+            worker._batch_param[batch_id] = parameter
 
         url_id = queue.get(block=True, timeout=3, interval=1)
         url = self.thinhash.hget(url_id)
 
-        batch_key_filename = queue.key.rsplit('-', 1)[0].replace('-', '_')
+        batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
         module = __import__('prefetch.workers.{}'.format(batch_key_filename, fromlist=['worker'])
-        success, failure = module.worker(url, parameter, *args, **kwargs)
+        success, failure = module.worker(url,
+                                         worker._batch_param[batch_id],
+                                         *args,
+                                         **kwargs)
         if success > 0:
             Record.instance().increase_success(queue.key, success)
         elif failure > 0:

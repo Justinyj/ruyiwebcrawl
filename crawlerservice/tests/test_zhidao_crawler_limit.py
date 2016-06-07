@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 #
+#test_question():
 #            无cookie          有cookie
 #sleep 3   28.1947261663% - 26.369168357%
 #sleep 4   25.354969574% -  25.5578093306%
@@ -9,9 +10,14 @@
 #sleep 3 single agent  2.23123732252% -  2.6369168357%
 #
 # conclusion: we don't need cookie, we don't need rotated agents
+#
+#
+#test_api():
+#
 
 from __future__ import print_function, division
 
+import json
 import time
 import random
 import requests
@@ -51,8 +57,8 @@ def test_question():
 #    cookie = dict(l.split('=', 1) for l in cookiestr.split('; '))
 #    session.cookies.update(cookie)
     resp = session.get(zhidao_url, timeout=10)
-    print('\n', resp.headers['Content-Type'])
-    if len(resp.content) < 100000:
+    print('\n', resp.headers['Content-Type']) # normally: 'text/html'
+    if len(resp.content) < 100000: # mobile utf8 or error resp url
       print(resp.status_code, resp.url)
       print(i, agent)
       error_count += 1
@@ -61,14 +67,24 @@ def test_question():
     time.sleep(3)
   print('Error percentage: {}'.format(error_count / i))
 
+
 def test_api():
     global session
     zhidao_api = 'http://zhidao.baidu.com/question/api/mini?qid=100&rid=769&tag=timeliness'
+    error_count = 0
 
     for i, agent in enumerate(AGENTS_ALL):
         session.headers['User-Agent'] = agent
         resp = session.get(zhidao_api, timeout=10)
-        print(resp.status_code, resp.url)
+        print('\n', resp.headers['Content-Type'])
+        try:
+            json = resp.json()
+            assert json['c_timestamp'] == 1118579793
+        except Exception as e:
+            print('decode json error: {}'.format(e))
+            print(resp.status_code, resp.url, len(resp.content))
+            error_count += 1
         time.sleep(3)
+    print('Error percentage: {}'.format(error_count / i))
 
-test_question()
+test_api()

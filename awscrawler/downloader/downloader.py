@@ -13,16 +13,16 @@ from .cache import Cache
 
 class Downloader(object):
 
-    def __init__(self, request=False, gap=0, batch_id='', groups=None, refresh=False):
+    def __init__(self, request=False, batch_id='', gap=0, groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
         self.TIMEOUT = 10
         self.RETRY = 3
 
-        self.gap = gap
-        self.batch_key = batch_id.rsplit('-', 1)[0]
+        self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
         self.cache = Cache(batch_id)
+        self.gap = gap
         self.groups = groups
         self.refresh = refresh
 
@@ -50,7 +50,7 @@ class Downloader(object):
     def _get_sleep_period(self):
         """ sleep for cookie
         """
-        return 0
+        return self.gap
 
     def request_download(self, url, method='get', encode='utf-8', redirect_check=False, error_check=False, data=None):
         for i in range(self.RETRY):
@@ -65,7 +65,7 @@ class Downloader(object):
                     if redirect_check and response.url != url:
                         continue
                     if error_check:
-                        if __import__('fetch.error_checker.{}'.format(self.batch_key), fromlist=['error_checker']).error_checker(response):
+                        if __import__('fetch.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
                             continue
                     response.encoding = encode
                     return response.text # text is unicode
