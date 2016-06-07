@@ -92,13 +92,19 @@ class GetWorker(Worker):
 
 
     def work(self, *args, **kwargs):
-        # success count / failure count
         queue = self.queues[0]
-        result = queue.get(block=True, timeout=3, interval=1)
-        url = self.thinhash.hget(result)
+        parameter = Record.instance().get_parameter(queue.key)
 
-        module = __import__('prefetch.workers.{}'.format(queue.key.rsplit('-', 1)[0]), fromlist=['worker'])
-        module.worker(url, *args, **kwargs)
+        url_id = queue.get(block=True, timeout=3, interval=1)
+        url = self.thinhash.hget(url_id)
+
+        batch_key_filename = queue.key.rsplit('-', 1)[0].replace('-', '_')
+        module = __import__('prefetch.workers.{}'.format(batch_key_filename, fromlist=['worker'])
+        success, failure = module.worker(url, parameter, *args, **kwargs)
+        if success > 0:
+            Record.instance().increase_success(queue.key, success)
+        elif failure > 0:
+            Record.instance().increase_failed(queue.key, failure)
 
 
 def main():

@@ -70,6 +70,9 @@ class Record(object):
     def get_total_number(self, batch_id):
         return self.conn.hget(batch_id, 'total')
 
+    def get_parameter(self, batch_id):
+        return self.conn.hget(batch_id, 'parameter')
+
     def get_unfinished_batch(self):
         keys = []
         for key in self.conn.keys('*'):
