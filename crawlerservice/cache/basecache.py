@@ -11,6 +11,7 @@ from settings import CACHEPAGE
 from .fscache import fs_get_cache, fs_set_cache
 from .dbcache import db_get_cache, db_set_cache, db_get_all_cache
 from .ufilecache import ufile_get_cache, ufile_set_cache
+from .s3cache import s3_get_cache, s3_put_cache
 #from .qiniucache import *
 
 
@@ -19,7 +20,7 @@ class BaseCache(object):
         pass
 
     @staticmethod
-    def get_cache(b64url, batch_id):
+    def get_cache(b64url, batch_id, exists=False):
         url = base64.urlsafe_b64decode(b64url)
         url_hash = hashlib.sha1(url).hexdigest()
 
@@ -32,7 +33,7 @@ class BaseCache(object):
         elif CACHEPAGE == 'ufile':
             return ufile_get_cache(batch_id, url_hash)
         elif CACHEPAGE == 's3':
-            return s3_get_cache()
+            return s3_get_cache(batch_id, url_hash, exists)
 
 
     @staticmethod
@@ -48,6 +49,8 @@ class BaseCache(object):
             return fs_set_cache(b64url, url_hash, batch_id, groups, content, refresh)
         elif CACHEPAGE == 'ufile':
             return ufile_set_cache(b64url, url_hash, batch_id, groups, content, refresh)
+        elif CACHEPAGE == 's3':
+            return s3_put_cache(b64url, url_hash, batch_id, groups, content, refresh)
 
 
     @staticmethod

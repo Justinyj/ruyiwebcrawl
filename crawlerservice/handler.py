@@ -19,8 +19,10 @@ class CacheHandler(tornado.web.RequestHandler):
 
     @exception.exception
     def get(self, b64url, batch_id):
+        exists = self.get_body_argument(u'exists', False)
         response = BaseCache.get_cache(b64url.encode('utf-8'),
-                                       batch_id.encode('utf-8'))
+                                       batch_id.encode('utf-8'),
+                                       exists)
         self.write(response)
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
-# TODO worker启动程序，检测队列的batch_id, 未必是我schedule调度的batch_id
+# TODO worker启动程序，检测队列的batch_id, 未必是我schedule调度的domain batch_id
 
 from __future__ import print_function, division
 
@@ -22,8 +22,9 @@ class Worker(object):
         raise NotImplementedError('This method should implemented by subclasses')
 
 class GetWorker(Worker):
-    def __init__(self):
+    def __init__(self, index):
         super(GetWorker, self).__init__()
+        self.index = index
         self.queues = [i for i in self._get_task_queue()]
 
         batch_id = self.queues[0].key
@@ -65,6 +66,8 @@ class GetWorker(Worker):
          time,   None,                 finish delete
             0,   0,                    finish cleansing with exception
         """
+        # delete queue and get another in while cycle.
+        # TODO if another worker delete queue, how can I know and delete obj
         queue = self.queues[0]
         background = queue.get_background_cleaning_status()
         if Record.instance().is_finished(queue.key) is True:
@@ -91,22 +94,43 @@ class GetWorker(Worker):
 
 
     def work(self, *args, **kwargs):
-        queue = self.queues[0]
-        result = queue.get(block=True, timeout=3, interval=1)
-        url = self.thinhash.hget(result)
+        if not hasattr(worker, '_batch_param'):
+            setattr(worker, '_batch_param', {})
 
-        module = __import__('prefetch.workers.{}'.format(queue.key.rsplit('_', 1)[0]), fromlist=['worker'])
-        module.worker(url, *args, **kwargs)
+        queue = self.queues[0]
+        batch_id = queue.key
+        param = worker._batch_param.get(batch_id)
+        if param is None:
+            parameter = Record.instance().get_parameter(batch_id)
+            worker._batch_param[batch_id] = parameter
+
+        url_id = queue.get(block=True, timeout=3, interval=1)
+        url = self.thinhash.hget(url_id)
+
+        batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
+        module = __import__('prefetch.workers.{}'.format(batch_key_filename, fromlist=['worker'])
+        ret_status = module.worker(url,
+                                         worker._batch_param[batch_id],
+                                         *args,
+                                         **kwargs)
+        if ret_status:
+            Record.instance().increase_success(batch_id, success)
+        else:
+            Record.instance().increase_failed(batch_id, failure)
 
 
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='Call Worker with arguments')
+    parser.add_argument('--index', '-i', type=int, help='index of this machine in all this batch machines')
     parser.add_argument('--cookie', '-c', type=str, help='cookie for this machine')
     option = parser.parse_args()
-    if option.cookie:
-        obj = GetWorker()
-        obj.run(cookie=option.cookie)
+    if option.index:
+        obj = GetWorker(option.index)
+        if option.cookie:
+            obj.run(cookie=option.cookie)
+        else:
+            obj.run()
 
 if __name__ == '__main__':
     main()

@@ -13,9 +13,11 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['52.69.161.139']
+    env.hosts = ['52.53.180.142']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
+
+DEPLOY_ENV = 'ZHIDAO'
 
 def _aws():
     sudo('mkfs -t ext4 /dev/xvdb')
@@ -41,8 +43,8 @@ def _build_pg():
 
 def build_env():
     _build_pg()
-    sudo('sudo apt-get -y install libcurl4-gnutls-dev libghc-gnutls-dev python-pip python-dev dtach')
-    sudo('sudo pip install virtualenvwrapper')
+    sudo('apt-get -y install libcurl4-gnutls-dev libghc-gnutls-dev python-pip python-dev dtach')
+    sudo('pip install virtualenvwrapper')
 
 
 def upload():
@@ -69,7 +71,7 @@ def runapp():
     with cd('/opt/service/crawlerservice'):
 #        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
-        with prefix('source env.sh {}'.format('TEST')):
+        with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
             run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4 -program=cache'))
 #            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))

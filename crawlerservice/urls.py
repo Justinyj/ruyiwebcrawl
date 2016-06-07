@@ -15,7 +15,7 @@ settings = {
 }
 
 urls = tornado.web.Application([
-    (r'/v1/cache/([a-zA-Z0-9=\-_]+)/?([a-zA-Z0-9_]*)', CacheHandler),
+    (r'/v1/cache/([a-zA-Z0-9=\-_]+)/?([a-zA-Z0-9_\-]*)', CacheHandler),
 
     (r'/v1/proxy/datastructure/?', ProxyDataStructureHandler),
     (r'/v1/proxy/([a-zA-Z0-9=\-_]+)/?(\d+\.?\d*)?', ProxyHandler),
