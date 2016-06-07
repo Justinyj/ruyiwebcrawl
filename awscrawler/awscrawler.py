@@ -25,6 +25,13 @@ def post_job(self, batch_id, method, gap, js, urls, machine_num):
             js=1 if js else 0,
             data='')
 
+    init_distribute_queue(batch_id, parameter, total_count)
+
+    schedule = Schedule(machine_num, tag=batch_id.split('-', 1)[0])
+    schedule.run()
+
+
+def init_distribute_queue(batch_id, parameter, total_count):
     Record.instance().begin(batch_id, parameter, total_count)
     queue = HashQueue(batch_id, priority=2, timeout=90, failure_times=3)
 
@@ -36,9 +43,6 @@ def post_job(self, batch_id, method, gap, js, urls, machine_num):
         thinhash.hset(field, url)
 
         queue.put_init(field)
-
-    schedule = Schedule(machine_num, tag=batch_id.split('-', 1)[0])
-    schedule.run()
 
 
 def load_urls(fname):

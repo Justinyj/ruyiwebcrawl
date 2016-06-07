@@ -75,11 +75,14 @@ def test_api():
 
     for i, agent in enumerate(AGENTS_ALL):
         session.headers['User-Agent'] = agent
-        resp = session.get(zhidao_api, timeout=10)
-        print('\n', resp.headers['Content-Type'])
+
         try:
+            resp = session.get(zhidao_api, timeout=10)
+            print('\n', resp.headers['Content-Type'])
             json = resp.json()
             assert json['c_timestamp'] == 1118579793
+        except requests.exceptions.ConnectionError:
+            error_count += 1
         except Exception as e:
             print('decode json error: {}'.format(e))
             print(resp.status_code, resp.url, len(resp.content))
