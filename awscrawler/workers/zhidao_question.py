@@ -33,18 +33,18 @@ def parse_title(content):
         title = m.group(1)
         if ("_百度知道") not in title:
             if ("百度知道-信息提示") == title:
-                return 
-            return 
+                return
+            return
         title = re.sub("_百度知道", "", title)
         return title
-    return 
+    return
 
 
 def parse_q_time(content):
     m = re.search(
         '<em class="accuse-enter">.*\n*</ins>\n*(.*)\n*</span>', content)
     if m is None:
-        return 
+        return
     q_time = m.group(1)
     return q_time
 
@@ -61,7 +61,7 @@ def parse_q_content(content):
             supply = n.group(1)
             q_content = q_content + supply
         return q_content
-    return 
+    return
 
 
 def parse_answer_ids(content):
@@ -69,11 +69,11 @@ def parse_answer_ids(content):
     return result
 
 
-def generate_question_js(content):
+def generate_question_json(content,rids):
     q_title = parse_title(content)
     if q_title is None:
         # print('未找到title或者页面不存在')
-        return 
+        return
     q_id = parse_q_id(content)
     q_content = parse_q_content(content)
     q_time = parse_q_time(content)
@@ -100,8 +100,9 @@ def worker(url, parameter, *args, **kwargs):
             url, method, gap, HEADER, batch_id)
     if content is u'':
         return False
-
-    question_content = generate_question_js(content)
+    answer_ids=[]
+    question_content = generate_question_json(content,answer_ids)
+    answer_ids=answer_ids[:3]
     if question_contentis is None:
         return False
     m = Cache(BATCH_ID['json'])
@@ -110,7 +111,9 @@ def worker(url, parameter, *args, **kwargs):
         flag = m.post(url, ans_content)
 
     distributed = get_distributed_queue(BATCH_ID['answer'])
-    answer_url = get_answer_url(qid, rid)
-    put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
+    qid = re.search('http://zhidao.baidu.com/question/(\d+).html',url).group(1)
+    for answer_id in answer_ids:
+        answer_url = get_answer_url(qid, answer_id)
+        put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
 
     return flag
