@@ -14,7 +14,7 @@ import traceback
 import logging
 import requests
 from invoker.zhidao import BATCH_ID
-from zhidao_tools import get_content
+from zhidao_tools import get_zhidao_content
 HEADER = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, sdch',
