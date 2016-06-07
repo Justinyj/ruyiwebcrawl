@@ -21,7 +21,7 @@ class RedisPool(object):
     >>> RedisPool.instance().queue.release(conn)
     """
     def __init__(self, pool_size=5):
-        regx_redis = re.compile('(.+):(\d+)/(\d+)')
+        regx_redis = re.compile('redis://(.+):(\d+)/(\d+)')
 
         host, port, db = regx_redis.search(RECORD_REDIS).groups()
         self.record = redis.StrictRedis(host=host, port=int(port), db=int(db))
