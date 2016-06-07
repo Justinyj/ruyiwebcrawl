@@ -111,7 +111,7 @@ def worker(url, parameter, *args, **kwargs):
         flag = m.post(url, ans_content)
 
     distributed = get_distributed_queue(BATCH_ID['answer'])
-    qid = re.search('(\d+)',url).group(1)
+    qid = re.search('http://zhidao.baidu.com/question/(\d+).html',url).group(1)
     for answer_id in answer_ids:
         answer_url = get_answer_url(qid, answer_id)
         put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
