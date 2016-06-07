@@ -100,6 +100,10 @@ def worker(url, parameter, *args, **kwargs):
         return False
     m = Cache(BATCH_ID['json'])
     flag = m.post(url, question_content)
+    if not flag:
+        time.sleep(10)
+        flag=m.post(url, ans_content)
+    return flag
     # return flag['success']
     # answer_list=parse_answer_ids(content)
     # answer_url_list=get_answer_url(q_id,ans_id)
