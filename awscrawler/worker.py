@@ -66,6 +66,8 @@ class GetWorker(Worker):
          time,   None,                 finish delete
             0,   0,                    finish cleansing with exception
         """
+        # delete queue and get another in while cycle.
+        # TODO if another worker delete queue, how can I know and delete obj
         queue = self.queues[0]
         background = queue.get_background_cleaning_status()
         if Record.instance().is_finished(queue.key) is True:
@@ -112,9 +114,9 @@ class GetWorker(Worker):
                                          *args,
                                          **kwargs)
         if success > 0:
-            Record.instance().increase_success(queue.key, success)
+            Record.instance().increase_success(batch_id, success)
         elif failure > 0:
-            Record.instance().increase_failed(queue.key, failure)
+            Record.instance().increase_failed(batch_id, failure)
 
 
 def main():

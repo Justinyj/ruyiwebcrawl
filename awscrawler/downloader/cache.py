@@ -25,6 +25,9 @@ class Cache(object):
         js = response.json()
         if js[u'success'] is False:
             return u''
+
+        if exists:
+            return js[u'exists']
         return js[u'content']
 
     def post(self, url, content, groups=None, refresh=False):
