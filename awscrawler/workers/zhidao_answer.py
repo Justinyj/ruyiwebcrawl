@@ -13,8 +13,9 @@ import traceback
 import logging
 import requests
 import time
-from invoker.zhidao import BATCH_ID,HEADER
+from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content
+
 
 def generate_answer_js(ans_content):
     try:
@@ -40,7 +41,7 @@ def generate_answer_js(ans_content):
         print('q_id:', q_id)
         print('answer_id', answer_id)
         logging.debug('获取答案出错,q_id:{},answer_id:{}'.format(q_id, answer_id))
-        return None
+        return
 
 
 def worker(url, parameter, *args, **kwargs):
@@ -48,7 +49,8 @@ def worker(url, parameter, *args, **kwargs):
     content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
     if content is u'':
         time.sleep(gap)
-        content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
+        content = get_zhidao_content(
+            url, method, gap, HEADER, BATCH_ID['answer'])
     if content is u'':
         return False
     ans_content = generate_answer_js(content)
@@ -57,5 +59,5 @@ def worker(url, parameter, *args, **kwargs):
     m = Cache(BATCH_ID['json'])
     flag = m.post(url, ans_content)
     if not flag:
-        flag=m.post(url, ans_content)
+        flag = m.post(url, ans_content)
     return flag

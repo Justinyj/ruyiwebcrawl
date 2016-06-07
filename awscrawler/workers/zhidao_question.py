@@ -23,7 +23,7 @@ def parse_q_id(content):
     if q_id:
         q_id = q_id.group(1)
         return q_id
-    return None
+    return
 
 
 def parse_title(content):
@@ -32,18 +32,18 @@ def parse_title(content):
         title = m.group(1)
         if ("_百度知道") not in title:
             if ("百度知道-信息提示") == title:
-                return None
-            return None
+                return 
+            return 
         title = re.sub("_百度知道", "", title)
         return title
-    return None
+    return 
 
 
 def parse_q_time(content):
     m = re.search(
         '<em class="accuse-enter">.*\n*</ins>\n*(.*)\n*</span>', content)
     if m is None:
-        return None
+        return 
     q_time = m.group(1)
     return q_time
 
@@ -60,7 +60,7 @@ def parse_q_content(content):
             supply = n.group(1)
             q_content = q_content + supply
         return q_content
-    return None
+    return 
 
 
 def parse_answer_ids(content):
@@ -72,7 +72,7 @@ def generate_question_js(content):
     q_title = parse_title(content)
     if q_title is None:
         # print('未找到title或者页面不存在')
-        return None
+        return 
     q_id = parse_q_id(content)
     q_content = parse_q_content(content)
     q_time = parse_q_time(content)
