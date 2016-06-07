@@ -36,20 +36,17 @@ def get_answer_url(q_id, r_id):
 
 
 def get_zhidao_content(url, method, gap, header, batch_id):
-    ret = None
-    if not hasattr(func, '_batches'):
-        setattr(func, '_batches', {})
-    ret = func._batches.get(batch_id)
+    if not hasattr(get_zhidao_content, '_batches'):
+        setattr(get_zhidao_content, '_batches', {})
+    ret = get_zhidao_content._batches.get(batch_id)
     if ret is None:
         downloader = Downloader(request=True, gap=gap, batch_id=batch_id)
         downloader.login()
-        func._batches[batch_id] = downloader
+        get_zhidao_content._batches[batch_id] = downloader
     if header:
-        func._batches[batch_id].update_header(header)
+        get_zhidao_content._batches[batch_id].update_header(header)
         
     url = base64.urlsafe_b64decode(b64url.encode('utf-8'))
     ret = downloader.requests_with_cache(
         url, 'get', encode='gb18030',  refresh=False)
-    if ret == None:
-        print("Download failed")
     return ret
