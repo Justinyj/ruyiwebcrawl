@@ -85,7 +85,6 @@ def generate_question_json(content,rids):
         'question_time': q_time,
         'answers': answer_ids,
     }
-    rids.extend(answer_ids[:3])
     question_content = json.dumps(item)
     return question_content
 
@@ -103,6 +102,7 @@ def worker(url, parameter, *args, **kwargs):
         return False
     answer_ids=[]
     question_content = generate_question_json(content,answer_ids)
+    answer_ids=answer_ids[:3]
     if question_contentis is None:
         return False
     m = Cache(BATCH_ID['json'])
