@@ -3,7 +3,7 @@
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 # add answer api url to zhidao-answer-xxx queue
 from __future__ import print_function, division
-
+import time
 import os
 import sys
 import logging
@@ -13,7 +13,7 @@ import base64
 import traceback
 import logging
 import requests
-from invoker.zhidao import BATCH_ID,HEADER
+from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content
 
 
@@ -93,6 +93,10 @@ def worker(url, parameter, *args, **kwargs):
     content = get_zhidao_content(
         url, method, gap, HEADER, BATCH_ID['question'])
     if content is u'':
+        time.sleep(gap)
+        content = get_zhidao_content(
+            url, method, gap, HEADER, BATCH_ID['question'])
+    if content is u'':
         return False
 
     question_content = generate_question_js(content)
@@ -101,8 +105,7 @@ def worker(url, parameter, *args, **kwargs):
     m = Cache(BATCH_ID['json'])
     flag = m.post(url, question_content)
     if not flag:
-        time.sleep(10)
-        flag=m.post(url, ans_content)
+        flag = m.post(url, ans_content)
     return flag
     # return flag['success']
     # answer_list=parse_answer_ids(content)

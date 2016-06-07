@@ -47,6 +47,9 @@ def worker(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
     content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
     if content is u'':
+        time.sleep(gap)
+        content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
+    if content is u'':
         return False
     ans_content = generate_answer_js(content)
     if ans_content is None:
@@ -54,6 +57,5 @@ def worker(url, parameter, *args, **kwargs):
     m = Cache(BATCH_ID['json'])
     flag = m.post(url, ans_content)
     if not flag:
-        time.sleep(10)
         flag=m.post(url, ans_content)
     return flag
