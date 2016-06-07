@@ -6,12 +6,17 @@ from __future__ import print_function, division
 
 from awscrawler import post_job
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 13b6908d965985381765df5cfc06dc475a546bc4
 BATCH_ID = {
     'question': 'zhidao-question-20160606',
     'answer': 'zhidao-answer-20160606',
     'json': 'zhidao-json-20160606',  #
     'result': 'zhidao-result-20160606'  # 合并后
 }
+<<<<<<< HEAD
 HEADER = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, sdch',
@@ -22,12 +27,15 @@ HEADER = {
     'Cache-Control': 'max-age=0',
     'Upgrade-Insecure-Requests': '1'
 }
+=======
+
+>>>>>>> 13b6908d965985381765df5cfc06dc475a546bc4
 def load_urls(fname):
     with open(fname) as fd:
         return [i.strip() for i in fd if i.strip() != '']
 
-urls = load_urls()
-post_job('zhidao-question-20160607', 'get', 3, urls)
-post_job('zhidao-answer-20160607', 'get', 3, [])
-schedule = Schedule(10, tag=batch_id.split('-', 1)[0])
-schedule.run()
+filename = 'userful_zhidao_urls.txt'
+urls = load_urls(filename)
+post_job(BATCH_ID['question'], 'get', 3, urls)
+post_job(BATCH_ID['answer'], 'get', 3, [], len(urls) * 3)
+start_up_ec2(10, BATCH_ID['question'].split('-', 1)[0])
