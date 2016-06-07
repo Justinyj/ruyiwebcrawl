@@ -14,7 +14,7 @@ import traceback
 import logging
 import requests
 from invoker.zhidao import BATCH_ID
-from tools import get_content
+from zhidao_tools import get_content
 HEADER = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, sdch',
@@ -22,11 +22,11 @@ HEADER = {
     'Host': 'zhidao.baidu.com',
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.63 Safari/537.36',
     'Connection': 'keep-alive',
-    'Cache-Control': 'max-age=0',
+    'Cache-Control': 'no-cache',
     'Upgrade-Insecure-Requests': '1'
 }
 
-def get_answer_js(ans_content):
+def generate_answer_js(ans_content):
     try:
         content = json.loads(ans_content)
         answer = {
@@ -55,8 +55,11 @@ def get_answer_js(ans_content):
 
 def worker(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
-    ans_content = get_content(url, method, gap, HEADER, BATCH_ID['answer'])
-    ans_content = get_answer_js(ans_content)
-
+    content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
+    if content is None:
+        return False
+    ans_content = generate_answer_js(content)
+    if ans_content is None:
+        return False
     m = Cache(BATCH_ID['json'])
     flag = m.post(url, ans_content)

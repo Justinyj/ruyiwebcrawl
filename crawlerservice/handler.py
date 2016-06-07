@@ -10,7 +10,7 @@ import json
 
 from cache.basecache import BaseCache
 from proxy.proxypool import ProxyPool
-from fetch.downloader import Downloader
+
 import exception
 
 class MissingParameter(Exception): pass
