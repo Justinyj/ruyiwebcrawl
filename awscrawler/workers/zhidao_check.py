@@ -1,5 +1,5 @@
 #-*- coding:utf-8 -*-
-OUTPUT_FILE = 'OUTPUT'
+
 import os
 import sys
 import re
@@ -11,7 +11,7 @@ import requests
 import time
 from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content
-
+OUTPUT_FILE = 'OUTPUT'
 
 def check_question(question_raw):
     question = json.loads(question_raw)
