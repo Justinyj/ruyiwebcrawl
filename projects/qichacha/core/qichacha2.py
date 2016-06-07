@@ -286,12 +286,17 @@ class Qichacha(object):
                 }
         """
         url = self.get_info_url("base", key_num, name)
+        source = self.downloader.access_page_with_cache(url)
+        if not source:
+            return {}
         try:
-            source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
         except:
-            source = self.downloader.access_page_with_cache(url)
-            tree = lxml.html.fromstring(source)
+            if self.config.get("debug"):
+                print (source)
+            import traceback
+            traceback.print_exc(file=sys.stdout)
+            return {}
 
         all_info = self.parser.parse_detail(tree)
         all_info["info"]["name"] = name
@@ -333,12 +338,17 @@ class Qichacha(object):
                     re.compile("javascript:getTabList\((\d+)"))
 
         url = self.get_info_url("touzi",key_num, name, page=page)
+        source = self.downloader.access_page_with_cache(url)
+        if not source:
+            return
         try:
-            source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
         except:
-            source = self.downloader.access_page_with_cache(url)
-            tree = lxml.html.fromstring(source)
+            if self.config.get("debug"):
+                print (source)
+            import traceback
+            traceback.print_exc(file=sys.stdout)
+            return
 
         if tree.cssselect("div.noresult .noface"):
             return
@@ -379,7 +389,7 @@ class Qichacha(object):
                                                                      page_idx)
             if more_invest_dict:
                 invest_dict.update(more_invest_dict)
-                
+
         return {name: invest_dict}
 
 
@@ -392,7 +402,7 @@ class Qichacha(object):
 
         name_info_dict = self.crawl_company_detail(name, key_num, subcompany=True)
         already_crawled_names.add(name)
-        if "invests" in name_info_dict[name]:
+        if "invests" in name_info_dict.get(name,{}):
             next_layer_name_id_set.update(
                 [(i["name"], i["key_num"]) for i in name_info_dict[name]["invests"]\
                     if i["name"] not in already_crawled_names]

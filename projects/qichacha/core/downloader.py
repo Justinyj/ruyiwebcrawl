@@ -4,7 +4,6 @@
 
 from __future__ import print_function, division
 
-from selenium import webdriver
 import requests
 import time
 import os
@@ -67,6 +66,7 @@ class Downloader(object):
 
 
     def login(self):
+
         if self.request is True:
             session = requests.Session()
             session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30, max_retries=3))
@@ -83,6 +83,7 @@ class Downloader(object):
             self.driver = session
 
         else:
+            from selenium import webdriver
             self.driver = webdriver.Firefox()
             self.driver.get('http://qichacha.com/user_login')
             self.driver.find_element_by_css_selector('#user_login .form-group [name=name]').send_keys('18623390999')
