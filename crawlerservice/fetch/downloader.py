@@ -24,7 +24,7 @@ class Downloader(object):
         self.RETRY = 3
 
         self.gap = gap
-        self.batch_key = batch_id.split('_', 1)[0]
+        self.batch_key = batch_id.rsplit('-', 1)[0]
         self.cache = Cache(batch_id)
         self.groups = groups
         self.refresh = refresh

@@ -15,12 +15,12 @@ class Cache(object):
         self.server = server if server else CACHE_SERVER
         self.batch_id = batch_id
 
-    def get(self, url):
+    def get(self, url, exists=False):
         b64url = base64.urlsafe_b64encode(url)
         api_url = 'v1/cache/{}/{}'.format(b64url, self.batch_id)
         get_api_url = urlparse.urljoin(self.server, api_url)
 
-        response = requests.get(get_api_url)
+        response = requests.get(get_api_url, data={'exists': False})
 
         js = response.json()
         if js[u'success'] is False:

@@ -46,7 +46,7 @@ def test_question():
   error_count = 0
 
   for i, agent in enumerate(AGENTS_ALL):
-    session.headers['User-Agent'] = agent
+#    session.headers['User-Agent'] = agent
 #    cookiestr = get_cookie_template()
 #    cookie = dict(l.split('=', 1) for l in cookiestr.split('; '))
 #    session.cookies.update(cookie)

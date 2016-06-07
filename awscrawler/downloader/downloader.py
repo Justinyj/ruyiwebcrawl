@@ -9,10 +9,7 @@ import requests
 import time
 import sys
 
-from header import choice_agent, choice_proxy, common_header
-from tools.log import log_traceback
-from cache import Cache
-from proxy import Proxy
+from .cache import Cache
 
 class Downloader(object):
 
@@ -24,7 +21,7 @@ class Downloader(object):
         self.RETRY = 3
 
         self.gap = gap
-        self.batch_key = batch_id.split('_', 1)[0]
+        self.batch_key = batch_id.rsplit('-', 1)[0]
         self.cache = Cache(batch_id)
         self.groups = groups
         self.refresh = refresh
@@ -50,14 +47,6 @@ class Downloader(object):
         if self.request is True:
             self.driver.headers.update(header)
 
-
-    def pick_cookie_agent_proxy(self, url):
-        self.driver.headers['User-Agent'] = choice_agent()
-
-        proxies = choice_proxy(url, self.gap)
-        self.driver.proxies.update(proxies)
-        return proxies
-
     def _get_sleep_period(self):
         """ sleep for cookie
         """
@@ -65,7 +54,6 @@ class Downloader(object):
 
     def request_download(self, url, method='get', encode='utf-8', redirect_check=False, error_check=False, data=None):
         for i in range(self.RETRY):
-            proxies = self.pick_cookie_agent_proxy(url)
 
             try:
                 if method == 'post':
@@ -82,10 +70,7 @@ class Downloader(object):
                     response.encoding = encode
                     return response.text # text is unicode
             except: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
-                proxy = proxies.items()[0][1]
-                Proxy.instance().post(url, proxy)
                 print('requests failed: ', sys.exc_info()[0])
-                log_traceback()
             finally:
                 time.sleep(self._get_sleep_period())
         else:
