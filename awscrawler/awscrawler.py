@@ -12,7 +12,7 @@ from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
 from schedule import Schedule
 
-def post_job(self, batch_id, method, gap, js, urls, total_count=None):
+def post_job(batch_id, method, gap, js, urls, total_count=None):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
@@ -39,7 +39,7 @@ def init_distribute_queue(batch_id, parameter, total_count):
         put_url_enqueue(batch_id, url, distributed)
 
 
-def get_distributed_queue(batch_id, queue=None, thinhash=None, refresh=False)
+def get_distributed_queue(batch_id, queue=None, thinhash=None, refresh=False):
     """
     :param refresh: True means write, False means read
     """

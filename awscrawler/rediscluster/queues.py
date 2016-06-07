@@ -7,7 +7,7 @@
 import time
 
 from redispool import RedisPool
-conn = RedisPool.instance().queue.get_connection(None)
+conn = RedisPool.instance().queue
 
 class Queue(object):
     """ an unordered queue wrapper for redis, provides Queue.Queue like methods
@@ -79,7 +79,7 @@ class Queue(object):
         >>> # before poping one key, block forever or 5 secnods.
 
         """
-        # TODO: 1.queue empty, 2.queue connect time out.
+        # 1.queue empty, 2.queue connect time out.
         if block:
             t = 0
             while timeout is None or t < timeout:
@@ -173,11 +173,6 @@ class HashQueue(object):
 
         self.batch_size = 5000
 
-    def disconnect(self):
-        """ Do not need release in every instance of HashQueue.
-            Releas only once in one process.
-        """
-        RedisPool.instance().queue.release(conn)
 
     def clear(self):
         """ timehash maybe still have items

@@ -24,10 +24,10 @@ class RedisPool(object):
         regx_redis = re.compile('(.+):(\d+)/(\d+)')
 
         host, port, db = regx_redis.search(RECORD_REDIS).groups()
-        self.record = redis.ConnectionPool(host=host, port=int(port), db=int(db), max_connections=pool_size)
+        self.record = redis.StrictRedis(host=host, port=int(port), db=int(db))
 
         host, port, db = regx_redis.search(QUEUE_REDIS).groups()
-        self.queue = redis.ConnectionPool(host=host, port=int(port), db=int(db), max_connections=pool_size)
+        self.queue = redis.StrictRedis(host=host, port=int(port), db=int(db))
 
         self.caches = []
         for cache_redis in CACHE_REDIS:

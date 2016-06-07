@@ -12,18 +12,10 @@ class Record(object):
     """ preserve all task(`batch_id`) status.
     """
     def __init__(self):
-# 'jobskey' is a hashkey used in global service
-#        self.jobs_key = 'jobskey'
-#        self.START = 0
-#        self.STOP = 1
-
         self.connect()
 
     def connect(self):
-        self.conn = RedisPool.instance().record.get_connection(None)
-
-    def disconnect(self):
-        RedisPool.instance().record.release(self.conn)
+        self.conn = RedisPool.instance().record
 
     @classmethod
     def instance(cls):
@@ -39,8 +31,6 @@ class Record(object):
         :param batch_id: str
         :param parameter: str
         """
-#        self.conn.hsetnx(self.jobs_key, batch_id, self.START)
-
         self.conn.hsetnx(batch_id, 'parameter', parameter)
         self.conn.hsetnx(batch_id, 'start', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         self.conn.hincrby(batch_id, 'total', total)
@@ -53,7 +43,6 @@ class Record(object):
         self.conn.hset(batch_id, 'end', 0)
 
     def end(self, batch_id):
-#        self.conn.hset(self.jobskey, batch_id, self.STOP)
         self.conn.hset(batch_id, 'end', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 
