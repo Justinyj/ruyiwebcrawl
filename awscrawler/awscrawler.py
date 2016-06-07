@@ -33,15 +33,40 @@ def init_distribute_queue(batch_id, parameter, total_count):
 
     Record.instance().begin(batch_id, parameter, total_count)
     queue = HashQueue(batch_id, priority=2, timeout=90, failure_times=3)
-
     thinhash = ThinHash(batch_id, total_count)
-    for url in urls:
-        if isinstance(url, unicode):
-            url = url.encode('utf-8')
-        field = int(hashlib.sha1(url).hexdigest(), 16)
-        thinhash.hset(field, url)
+    get_distributed_queue(batch_id, queue, thinhash, refresh=True)
 
-        queue.put_init(field)
+    for url in urls:
+        put_url_enqueue(batch_id, url)
+
+
+def get_distributed_queue(batch_id, queue=None, thinhash=None, refresh=False)
+    """
+    :param refresh: True means write, False means read
+    """
+    if not hasattr(get_distributed_queue, '_cache'):
+        setattr(get_distributed_queue, '_cache', {})
+
+    if refresh and queue and thinhash:
+        get_distributed_queue._cache[batch_id] = \
+            {'queue': queue, 'thinhash': thinhash}
+    elif refresh and not (queue and thinhash):
+        pass
+
+    return get_distributed_queue._cache.get(batch_id)
+
+
+def put_url_enqueue(batch_id, url):
+    distributed = get_distributed_queue(batch_id)
+    if not distributed:
+        return
+
+    if isinstance(url, unicode):
+        url = url.encode('utf-8')
+    field = int(hashlib.sha1(url).hexdigest(), 16)
+    distributed['thinhash'].hset(field, url)
+    distributed['queue'].put_init(field)
+
 
 def start_up_ec2(machine_num, batch_tag):
     schedule = Schedule(machine_num, tag=batch_tag)

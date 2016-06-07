@@ -109,13 +109,13 @@ class GetWorker(Worker):
 
         batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
         module = __import__('prefetch.workers.{}'.format(batch_key_filename, fromlist=['worker'])
-        success, failure = module.worker(url,
+        ret_status = module.worker(url,
                                          worker._batch_param[batch_id],
                                          *args,
                                          **kwargs)
-        if success > 0:
+        if ret_status:
             Record.instance().increase_success(batch_id, success)
-        elif failure > 0:
+        else:
             Record.instance().increase_failed(batch_id, failure)
 
 
