@@ -35,3 +35,4 @@ urls = load_urls(filename)
 post_job(BATCH_ID['question'], 'get', 3, urls)
 post_job(BATCH_ID['answer'], 'get', 3, [], len(urls) * 3)
 start_up_ec2(10, BATCH_ID['question'].split('-', 1)[0])
+

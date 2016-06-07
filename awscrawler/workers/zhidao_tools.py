@@ -22,7 +22,7 @@ logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
 logging.info('info message')
 
 question_template = 'http://zhidao.baidu.com/question/{}.html'
-answer_template = 'http://zhidao.baidu.com/question/api/mini?qid={}&rid={}&tag=timeliness'
+ANSWER_URL = 'http://zhidao.baidu.com/question/api/mini?qid={}&rid={}&tag=timeliness'
 BATCH_ID = {
     'question': 'zhidao-question-20160606',
     'answer': 'zhidao-answer-20160606',
@@ -32,7 +32,7 @@ BATCH_ID = {
 
 
 def get_answer_url(q_id, r_id):
-    return answer_template.format(q_id, r_id)
+    return ANSWER_URL.format(q_id, r_id)
 
 
 def get_zhidao_content(url, method, gap, header, batch_id):

@@ -29,15 +29,14 @@ def post_job(self, batch_id, method, gap, js, urls, total_count=None):
 
 def init_distribute_queue(batch_id, parameter, total_count):
     # total_count can be a predetermined number larger than the real total_cout
-    # TODO dnynmic add url to queue
 
     Record.instance().begin(batch_id, parameter, total_count)
     queue = HashQueue(batch_id, priority=2, timeout=90, failure_times=3)
     thinhash = ThinHash(batch_id, total_count)
-    get_distributed_queue(batch_id, queue, thinhash, refresh=True)
+    distributed = get_distributed_queue(batch_id, queue, thinhash, refresh=True)
 
     for url in urls:
-        put_url_enqueue(batch_id, url)
+        put_url_enqueue(batch_id, url, distributed)
 
 
 def get_distributed_queue(batch_id, queue=None, thinhash=None, refresh=False)
@@ -56,11 +55,7 @@ def get_distributed_queue(batch_id, queue=None, thinhash=None, refresh=False)
     return get_distributed_queue._cache.get(batch_id)
 
 
-def put_url_enqueue(batch_id, url):
-    distributed = get_distributed_queue(batch_id)
-    if not distributed:
-        return
-
+def put_url_enqueue(batch_id, url, distributed):
     if isinstance(url, unicode):
         url = url.encode('utf-8')
     field = int(hashlib.sha1(url).hexdigest(), 16)

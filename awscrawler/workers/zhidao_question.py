@@ -14,7 +14,8 @@ import traceback
 import logging
 import requests
 from invoker.zhidao import BATCH_ID, HEADER
-from zhidao_tools import get_zhidao_content
+from zhidao_tools import get_zhidao_content, get_answer_url
+from awscrawler import get_distributed_queue, put_url_enqueue
 
 
 def parse_q_id(content):
@@ -90,12 +91,13 @@ def generate_question_js(content):
 
 def worker(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
+    batch_id = BATCH_ID['question']
     content = get_zhidao_content(
-        url, method, gap, HEADER, BATCH_ID['question'])
+        url, method, gap, HEADER, batch_id)
     if content is u'':
         time.sleep(gap)
         content = get_zhidao_content(
-            url, method, gap, HEADER, BATCH_ID['question'])
+            url, method, gap, HEADER, batch_id)
     if content is u'':
         return False
 
@@ -106,7 +108,9 @@ def worker(url, parameter, *args, **kwargs):
     flag = m.post(url, question_content)
     if not flag:
         flag = m.post(url, ans_content)
+
+    distributed = get_distributed_queue(BATCH_ID['answer'])
+    answer_url = get_answer_url(qid, rid)
+    put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
+
     return flag
-    # return flag['success']
-    # answer_list=parse_answer_ids(content)
-    # answer_url_list=get_answer_url(q_id,ans_id)
