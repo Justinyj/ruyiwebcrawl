@@ -69,7 +69,7 @@ def parse_answer_ids(content):
     return result
 
 
-def generate_question_json(content):
+def generate_question_json(content,rids):
     q_title = parse_title(content)
     if q_title is None:
         # print('未找到title或者页面不存在')
@@ -85,6 +85,7 @@ def generate_question_json(content):
         'question_time': q_time,
         'answers': answer_ids,
     }
+    rids.extend(answer_ids[:3])
     question_content = json.dumps(item)
     return question_content
 
@@ -100,8 +101,8 @@ def worker(url, parameter, *args, **kwargs):
             url, method, gap, HEADER, batch_id)
     if content is u'':
         return False
-
-    question_content = generate_question_json(content)
+    answer_ids=[]
+    question_content = generate_question_json(content,answer_ids)
     if question_contentis is None:
         return False
     m = Cache(BATCH_ID['json'])
@@ -110,8 +111,7 @@ def worker(url, parameter, *args, **kwargs):
         flag = m.post(url, ans_content)
 
     distributed = get_distributed_queue(BATCH_ID['answer'])
-    qid = parse_q_id(content)
-    answer_ids = json.loads(question_content)['answers'][:3]
+    qid = re.search('(\d+)',url).group(1)
     for answer_id in answer_ids:
         answer_url = get_answer_url(qid, answer_id)
         put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
