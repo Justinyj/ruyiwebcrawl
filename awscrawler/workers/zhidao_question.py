@@ -74,7 +74,7 @@ def parse_q_content(content):
 
 
 def parse_answer_ids(content):
-    result = map(int, re.findall('id="answer-(\d+)', content))[:3]
+    result = map(int, re.findall('id="answer-(\d+)', content))
     return result
 
 
