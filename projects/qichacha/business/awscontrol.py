@@ -102,7 +102,7 @@ class InstanceMgr:
         k = paramiko.RSAKey.from_private_key_file(self.FILENAME_PEM)
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        print "Connecting to {}@{}".format(user, host)
+        print "\nConnecting to {}@{}".format(user, host)
         ssh.connect(host, username = user, pkey = k)
         for command in cmds:
             print "Executing {}".format(command)
@@ -129,8 +129,16 @@ class InstanceMgr:
                 "run_fetch":[
                     "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical > out.fetch{} &".format(datetime.datetime.now().isoformat())
                 ],
+                "run_fetch_cache_only":[
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch_cache_only medical > out.fetch_cache_only{} &".format(datetime.datetime.now().isoformat())
+                ],
                 "run_presearch":[
-                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_ext_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
+#                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
+                ],
+                "run_init":[
+                    "mkdir -p /data/ruyi/ruyiwebcrawl/local/qichacha/business",
+                    "ps -Af |grep python",
                 ]
             }
             self._execute_cmd(i.public_ip_address,'ubuntu', cmds[cmd_option])
@@ -147,7 +155,8 @@ class InstanceMgr:
         for i in instances:
             cmds = [
                 "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
-                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(self.FILENAME_PEM, i.public_ip_address)
+                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(self.FILENAME_PEM, i.public_ip_address),
+                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(self.FILENAME_PEM, i.public_ip_address),
                 #"ping {}".format( i.public_ip_address)
             ]
             for cmd in cmds:
@@ -195,6 +204,13 @@ def main():
         mgr.run(work_num,option)
     elif "run_fetch" == option:
         mgr.run(1,option)
+    elif "run_init" == option:
+        if len(sys.argv)>2:
+            work_num = int(sys.argv[2])
+        else:
+            work_num = THE_WORKER_NUM
+        mgr.run(work_num,option)
+
 
     elif "upload" == option:
         if len(sys.argv)>2:

@@ -84,7 +84,6 @@ def readExcel(headers, filename, start_row=0, non_empty_col=-1):
     return ret
 
 
-
 def file2list(filename, encoding='utf-8'):
     ret = list()
     visited = set()
