@@ -12,23 +12,19 @@ from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
 from schedule import Schedule
 
-def post_job(self, batch_id, method, gap, js, urls, machine_num):
+def post_job(self, batch_id, method, gap, js, urls, total_count=None):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
     """
-    total_count = len(urls)
+    total_count = len(urls) if len(urls) > 0 else total_count
 
-    parameter = '{method}:{gap}:{js}:{data}'.format(
+    parameter = '{method}:{gap}:{js}:'.format(
             method=method,
             gap=gap,
-            js=1 if js else 0,
-            data='')
+            js=1 if js else 0)
 
     init_distribute_queue(batch_id, parameter, total_count)
-
-    schedule = Schedule(machine_num, tag=batch_id.split('-', 1)[0])
-    schedule.run()
 
 
 def init_distribute_queue(batch_id, parameter, total_count):
@@ -47,6 +43,9 @@ def init_distribute_queue(batch_id, parameter, total_count):
 
         queue.put_init(field)
 
+def start_up_ec2(machine_num, batch_tag):
+    schedule = Schedule(machine_num, tag=batch_tag)
+    schedule.run()
 
 def main():
     pass
