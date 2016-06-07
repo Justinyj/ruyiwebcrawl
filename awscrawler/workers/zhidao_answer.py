@@ -17,7 +17,7 @@ from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content
 
 
-def generate_answer_js(ans_content):
+def generate_answer_json(ans_content):
     content = json.loads(ans_content)
     answer = {
         'question_id': content[u'qid'],
@@ -45,7 +45,7 @@ def worker(url, parameter, *args, **kwargs):
             url, method, gap, HEADER, BATCH_ID['answer'])
     if content is u'':
         return False
-    ans_content = generate_answer_js(content)
+    ans_content = generate_answer_json(content)
     if ans_content is None:
         return False
     m = Cache(BATCH_ID['json'])
