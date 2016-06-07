@@ -18,30 +18,22 @@ from zhidao_tools import get_zhidao_content
 
 
 def generate_answer_js(ans_content):
-    try:
-        content = json.loads(ans_content)
-        answer = {
-            'question_id': content[u'qid'],
-            'answer_id': content[u'id'],
-            'isBest': content[u'isBest'],
-            'isHighQuality': content[u'isHighQuality'],
-            'isExcellent': content[u'isExcellent'],
-            'isRecommend': content[u'isRecommend'],
-            'isSpecial': content[u'isSpecial'],
-            'createTime': content[u'createTime'],
-            'recommendCanceled': content[u'recommendCanceled'],
-            'content': content[u'content'].encode('utf-8'),
-            'valueNum': content[u'valueNum'],
-            'valueBadNum': content[u'valueBadNum'],
-        }
-        return json.dumps(answer)
-    except:
-        traceback.print_exc()
-        print('获取答案出错')
-        print('q_id:', q_id)
-        print('answer_id', answer_id)
-        logging.debug('获取答案出错,q_id:{},answer_id:{}'.format(q_id, answer_id))
-        return
+    content = json.loads(ans_content)
+    answer = {
+        'question_id': content[u'qid'],
+        'answer_id': content[u'id'],
+        'isBest': content[u'isBest'],
+        'isHighQuality': content[u'isHighQuality'],
+        'isExcellent': content[u'isExcellent'],
+        'isRecommend': content[u'isRecommend'],
+        'isSpecial': content[u'isSpecial'],
+        'createTime': content[u'createTime'],
+        'recommendCanceled': content[u'recommendCanceled'],
+        'content': content[u'content'].encode('utf-8'),
+        'valueNum': content[u'valueNum'],
+        'valueBadNum': content[u'valueBadNum'],
+    }
+    return json.dumps(answer)
 
 
 def worker(url, parameter, *args, **kwargs):

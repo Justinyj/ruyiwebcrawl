@@ -45,8 +45,7 @@ def get_zhidao_content(url, method, gap, header, batch_id):
         get_zhidao_content._batches[batch_id] = downloader
     if header:
         get_zhidao_content._batches[batch_id].update_header(header)
-        
+
     url = base64.urlsafe_b64decode(b64url.encode('utf-8'))
-    ret = downloader.requests_with_cache(
+    return downloader.requests_with_cache(
         url, 'get', encode='gb18030',  refresh=False)
-    return ret

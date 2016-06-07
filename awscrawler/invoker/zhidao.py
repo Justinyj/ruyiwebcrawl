@@ -5,6 +5,15 @@
 from __future__ import print_function, division
 
 from awscrawler import post_job
+
+
+BATCH_ID = {
+    'question': 'zhidao-question-20160606',
+    'answer': 'zhidao-answer-20160606',
+    'json': 'zhidao-json-20160606',
+    'result': 'zhidao-result-20160606'
+}
+
 HEADER = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
     'Accept-Encoding': 'gzip, deflate, sdch',
@@ -15,6 +24,7 @@ HEADER = {
     'Cache-Control': 'max-age=0',
     'Upgrade-Insecure-Requests': '1'
 }
+
 
 def load_urls(fname):
     with open(fname) as fd:
