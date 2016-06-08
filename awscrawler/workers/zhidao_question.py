@@ -52,17 +52,15 @@ def parse_q_content(content):
     q_content = ''
     m = re.search('accuse="qContent">(.*?)(</pre>|</div>)', content)
     n = re.search('accuse="qSupply">(.*?)(</pre>|</div>)', content)
-    s1=''
-    s2=''
+
     if m:
         q_content = m.group(1)
-        q_content = re.sub("<.*?>", "\n", q_content)
-        s1 = q_content.strip()
+        q_content = re.sub('<.*?>', '\n', q_content)
+        q_content = q_content.strip()
     if n:
         supply = n.group(1)
-        s2 =  supply
-    q_content=s1+s2
-    if (q_content):
+        q_content += supply
+    if q_content:
         return q_content
     return
 
@@ -118,7 +116,8 @@ def process(url, parameter, *args, **kwargs):
         return flag
 
     distributed = get_distributed_queue(BATCH_ID['answer'])
-    qid = re.search('http://zhidao.baidu.com/question/(\d+).html', url).group(1)
+    qid = re.search(
+        'http://zhidao.baidu.com/question/(\d+).html', url).group(1)
     for answer_id in answer_ids[:3]:
         answer_url = get_answer_url(qid, answer_id)
         put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
