@@ -271,6 +271,7 @@ class HashQueue(object):
         items = []
         time_now = time.time()
         for field, value in conn.hgetall(self.timehash).iteritems():
+            print(value)
             start_time, count = value.rsplit(':', 1)
             start_time = float(start_time)
             if time_now - start_time > timeout:

@@ -11,7 +11,7 @@ import gevent
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
-from awscrawler import get_distributed_queue
+from awscrawler import init_distribute_queue
 
 class Worker(object):
     """ General worker
@@ -27,8 +27,20 @@ class GetWorker(Worker):
     def __init__(self, index):
         super(GetWorker, self).__init__()
         self.index = index
+
         self.queues = [i for i in self._get_task_queue()]
-        self.distributed_queues = [get_distributed_queue(q.key) for q in self.queues]
+        self.distributed_queues = [] # distributed init at scheduler end,
+                                     # not worker end
+
+        for q in self.queues:
+            parameter = Record.instance().get_parameter(q.key)
+            total_count = Record.instance().get_total_number(q.key)
+            if total_count is None:
+                self.distributed_queues.append(None)
+                continue
+            obj = init_distribute_queue(q.key, parameter, int(total_count))
+            self.distributed_queues.append(obj)
+
 
     def _get_task_queue(self):
         keys = Record.instance().get_unfinished_batch()
@@ -76,11 +88,12 @@ class GetWorker(Worker):
                 continue
 
             tasks = []
+            queue_dict = self.distributed_queues[idx]
             if background is None:
                 tasks.append( gevent.spawn(queue.background_cleaning) )
-                tasks.append( gevent.spawn(self.work, queue, *args, **kwargs) )
+                tasks.append( gevent.spawn(self.work, queue_dict, *args, **kwargs) )
             elif background == '1':
-                tasks.append( gevent.spawn(self.work, queue, *args, **kwargs) )
+                tasks.append( gevent.spawn(self.work, queue_dict, *args, **kwargs) )
 
             elif background == '0':
                 ret = self.delete_queue_check(queue)
@@ -88,7 +101,7 @@ class GetWorker(Worker):
                     # caution! atom operation
                     try:
                         Record.instance().end(queue.key)
-                        self.distributed_queues[idx]['thinhash'].delete()
+                        queue_dict['thinhash'].delete()
                         queue.flush()
                     except:
                         Record.instance().from_end_rollback(queue.key)
@@ -96,31 +109,31 @@ class GetWorker(Worker):
             gevent.joinall(tasks)
 
 
-    def work(self, queue, *args, **kwargs):
-        if not hasattr(worker, '_batch_param'):
-            setattr(worker, '_batch_param', {})
+    def work(self, queue_dict, *args, **kwargs):
+        if not hasattr(self, '_batch_param'):
+            setattr(self, '_batch_param', {})
 
-        batch_id = queue.key
-        param = worker._batch_param.get(batch_id)
+        batch_id = queue_dict['queue'].key
+        param = self._batch_param.get(batch_id)
         if param is None:
             parameter = Record.instance().get_parameter(batch_id)
-            worker._batch_param[batch_id] = parameter
+            self._batch_param[batch_id] = parameter
 
         batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
         module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
 
         while 1:
-            results = queue.get(block=True, timeout=3, interval=1)
+            results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
             if results == []: break
             for url_id, count in results:
-                url = self.thinhash.hget(url_id)
+                url = queue_dict['thinhash'].hget(url_id)
 
                 ret_status = module.process(url,
-                                            worker._batch_param[batch_id],
+                                            self._batch_param[batch_id],
                                             *args,
                                             **kwargs)
                 if ret_status:
-                    queue.task_done(url_id)
+                    queue_dict['queue'].task_done(url_id)
                 else:
                     Record.instance().increase_failed(batch_id)
 

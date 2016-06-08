@@ -89,6 +89,7 @@ def generate_question_json(content,rids):
 
 def process(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
+    gap = int(gap)
     batch_id = BATCH_ID['question']
     content = get_zhidao_content(
         url, method, gap, HEADER, batch_id)

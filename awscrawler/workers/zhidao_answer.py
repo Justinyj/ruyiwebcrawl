@@ -37,6 +37,7 @@ def generate_answer_json(ans_content):
 
 def process(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
+    gap = int(gap)
     content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
     if content is u'':
         time.sleep(gap)
