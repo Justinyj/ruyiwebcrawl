@@ -60,6 +60,7 @@ def put_url_enqueue(batch_id, url, distributed):
     if isinstance(url, unicode):
         url = url.encode('utf-8')
     field = int(hashlib.sha1(url).hexdigest(), 16)
+
     distributed['thinhash'].hset(field, url)
     distributed['queue'].put_init(field)
 

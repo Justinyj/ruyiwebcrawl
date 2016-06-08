@@ -75,7 +75,8 @@ class Downloader(object):
                             continue
                     response.encoding = encode
                     return response.text # text is unicode
-            except: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
+            except Exception as e: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
+                                   # requests.exceptions.MissingSchema
                 print('requests failed: ', sys.exc_info()[0])
             finally:
                 time.sleep(self._get_sleep_period())
