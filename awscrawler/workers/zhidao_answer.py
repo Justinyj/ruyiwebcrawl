@@ -16,7 +16,7 @@ from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content, get_answer_url
 
 
-def generate_answer_json(ans_content):
+def generate_answer_json    (ans_content):
     content = json.loads(ans_content)
     answer = {
         'question_id': content[u'qid'],
