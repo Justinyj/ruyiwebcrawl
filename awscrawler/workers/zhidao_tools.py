@@ -38,4 +38,10 @@ def get_zhidao_content(url, method, gap, header, batch_id):
         get_zhidao_content._batches[batch_id].update_header(header)
 
     return get_zhidao_content._batches[batch_id].requests_with_cache(
-            url, 'get', encode='gb18030', refresh=False)
+                url,
+                'get',
+                encode='gb18030',
+                redirect_check=True,
+                error_check=True,
+                refresh=False)
+
