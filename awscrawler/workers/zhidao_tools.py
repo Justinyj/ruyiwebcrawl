@@ -5,11 +5,9 @@ from __future__ import print_function, division
 
 import os
 import sys
-import logging
 import json
 import base64
 import traceback
-import logging
 import requests
 from invoker.zhidao import BATCH_ID
 
@@ -18,8 +16,6 @@ DATA_PATH = os.path.abspath(os.path.dirname(
     __file__))
 VERSION = "201606"
 LOG_FILE = "log"
-logging.basicConfig(filename=LOG_FILE, level=logging.DEBUG)
-logging.info('info message')
 
 question_template = 'http://zhidao.baidu.com/question/{}.html'
 ANSWER_URL = 'http://zhidao.baidu.com/question/api/mini?qid={}&rid={}&tag=timeliness'

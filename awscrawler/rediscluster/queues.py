@@ -232,13 +232,13 @@ class HashQueue(object):
 
         # SCAN does not provide guarantees about the
         # number of elements returned at every iteration.
-        result = []
+        results = []
         if items:
             for field, count in items.iteritems():
                 self.task_start(field, count)
-                result.append((field, count))
+                results.append((field, count))
                 conn.hdel(self.key, field)
-        return result
+        return results
 
 
     def task_start(self, result, count):

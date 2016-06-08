@@ -11,6 +11,7 @@ import gevent
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
+from awscrawler import get_distributed_queue
 
 class Worker(object):
     """ General worker
@@ -22,14 +23,12 @@ class Worker(object):
         raise NotImplementedError('This method should implemented by subclasses')
 
 class GetWorker(Worker):
+
     def __init__(self, index):
         super(GetWorker, self).__init__()
         self.index = index
         self.queues = [i for i in self._get_task_queue()]
-
-        batch_id = self.queues[0].key
-        total_count = int( Record.instance().get_total_number(batch_id) )
-        self.thinhash = ThinHash(batch_id, total_count)
+        self.distributed_queues = [get_distributed_queue(q.key) for q in self.queues]
 
     def _get_task_queue(self):
         keys = Record.instance().get_unfinished_batch()
@@ -40,8 +39,8 @@ class GetWorker(Worker):
         """ after 3 times of get, result is empty
         """
         for i in range(3):
-            result = queue.get(block=True, timeout=3, interval=1)
-            if result != []:
+            results = queue.get(block=True, timeout=3, interval=1)
+            if results != []:
                 return False
         return True
 
@@ -66,57 +65,64 @@ class GetWorker(Worker):
          time,   None,                 finish delete
             0,   0,                    finish cleansing with exception
         """
-        # delete queue and get another in while cycle.
-        # TODO if another worker delete queue, how can I know and delete obj
-        queue = self.queues[0]
-        background = queue.get_background_cleaning_status()
-        if Record.instance().is_finished(queue.key) is True:
-            return
+        for idx, queue in enumerate(self.queues):
+            background = queue.get_background_cleaning_status()
+            if Record.instance().is_finished(queue.key) is True:
+                # this queue and queue object in distributed_queues can be
+                # delete, but not needed. When run finish and
+                # background_cleansing finsh, this process end.
+                # BTW, worker instance will reboot every 10 minutes.
+                # If another worker delete queue, I don't need to do anything.
+                continue
 
-        tasks = []
-        if background is None:
-            tasks.append( gevent.spawn(queue.background_cleaning) )
-            tasks.append( gevent.spawn(self.work, *args, **kwargs) )
-        elif background == '1':
-            tasks.append( gevent.spawn(self.work, *args, **kwargs) )
-        elif background == '0':
-            ret = self.delete_queue_check(queue)
-            if ret is True:
-                # caution! atom operation
-                try:
-                    Record.instance().end(queue.key)
-                    self.thinhash.delete()
-                    queue.flush()
-                except:
-                    Record.instance().from_end_rollback(queue.key)
+            tasks = []
+            if background is None:
+                tasks.append( gevent.spawn(queue.background_cleaning) )
+                tasks.append( gevent.spawn(self.work, queue, *args, **kwargs) )
+            elif background == '1':
+                tasks.append( gevent.spawn(self.work, queue, *args, **kwargs) )
 
-        gevent.joinall(tasks)
+            elif background == '0':
+                ret = self.delete_queue_check(queue)
+                if ret is True:
+                    # caution! atom operation
+                    try:
+                        Record.instance().end(queue.key)
+                        self.distributed_queues[idx]['thinhash'].delete()
+                        queue.flush()
+                    except:
+                        Record.instance().from_end_rollback(queue.key)
+
+            gevent.joinall(tasks)
 
 
-    def work(self, *args, **kwargs):
+    def work(self, queue, *args, **kwargs):
         if not hasattr(worker, '_batch_param'):
             setattr(worker, '_batch_param', {})
 
-        queue = self.queues[0]
         batch_id = queue.key
         param = worker._batch_param.get(batch_id)
         if param is None:
             parameter = Record.instance().get_parameter(batch_id)
             worker._batch_param[batch_id] = parameter
 
-        url_id = queue.get(block=True, timeout=3, interval=1)
-        url = self.thinhash.hget(url_id)
-
         batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
-        module = __import__('prefetch.workers.{}'.format(batch_key_filename, fromlist=['worker'])
-        ret_status = module.worker(url,
-                                         worker._batch_param[batch_id],
-                                         *args,
-                                         **kwargs)
-        if ret_status:
-            Record.instance().increase_success(batch_id, success)
-        else:
-            Record.instance().increase_failed(batch_id, failure)
+        module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
+
+        while 1:
+            results = queue.get(block=True, timeout=3, interval=1)
+            if results == []: break
+            for url_id, count in results:
+                url = self.thinhash.hget(url_id)
+
+                ret_status = module.process(url,
+                                            worker._batch_param[batch_id],
+                                            *args,
+                                            **kwargs)
+                if ret_status:
+                    queue.task_done(url_id)
+                else:
+                    Record.instance().increase_failed(batch_id)
 
 
 def main():

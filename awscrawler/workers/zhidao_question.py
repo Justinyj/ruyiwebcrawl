@@ -6,12 +6,10 @@ from __future__ import print_function, division
 import time
 import os
 import sys
-import logging
 import re
 import json
 import base64
 import traceback
-import logging
 import requests
 from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content, get_answer_url
@@ -89,7 +87,7 @@ def generate_question_json(content,rids):
     return question_content
 
 
-def worker(url, parameter, *args, **kwargs):
+def process(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
     batch_id = BATCH_ID['question']
     content = get_zhidao_content(

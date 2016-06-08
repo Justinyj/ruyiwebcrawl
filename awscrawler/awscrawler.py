@@ -36,6 +36,7 @@ def init_distribute_queue(batch_id, parameter, total_count):
     Record.instance().begin(batch_id, parameter, total_count)
     queue = HashQueue(batch_id, priority=2, timeout=90, failure_times=3)
     thinhash = ThinHash(batch_id, total_count)
+
     return get_distributed_queue(batch_id, queue, thinhash, refresh=True)
 
 

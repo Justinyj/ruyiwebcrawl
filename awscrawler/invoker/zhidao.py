@@ -30,9 +30,13 @@ def load_urls(fname):
     with open(fname) as fd:
         return [i.strip() for i in fd if i.strip() != '']
 
-filename = '/Users/bishop/Documents/海知智能/useful_zhidao_urls.txt'
-urls = load_urls(filename)
-post_job(BATCH_ID['question'], 'get', 3, False, urls)
-post_job(BATCH_ID['answer'], 'get', 3, False, [], len(urls) * 3)
-start_up_ec2(10, BATCH_ID['question'].split('-', 1)[0])
+def run_zhidao():
+    filename = '/Users/bishop/Documents/海知智能/useful_zhidao_urls.txt'
+    urls = load_urls(filename)
+    post_job(BATCH_ID['question'], 'get', 3, False, urls)
+    post_job(BATCH_ID['answer'], 'get', 3, False, [], len(urls) * 3)
+    start_up_ec2(10, BATCH_ID['question'].split('-', 1)[0])
+
+if __name__ == '__main__':
+    run_zhidao()
 
