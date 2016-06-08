@@ -10,10 +10,11 @@ import re
 import json
 import base64
 import traceback
+import logging
 import requests
 import time
 from invoker.zhidao import BATCH_ID, HEADER
-from zhidao_tools import get_zhidao_content
+from zhidao_tools import get_zhidao_content,get_answer_url
 
 
 def generate_answer_json(ans_content):
@@ -34,10 +35,8 @@ def generate_answer_json(ans_content):
     }
     return json.dumps(answer)
 
-
-def process(url, parameter, *args, **kwargs):
+def worker(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
-    gap = int(gap)
     content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
     if content is u'':
         time.sleep(gap)
