@@ -47,7 +47,7 @@ class Schedule(object):
 
         before = time.time()
         while 1:
-            ids = self.ec2manager.stop_and_restart(self.group_num)
+            ids = self.ec2manager.stop_and_start(self.group_num)
             for i in ids:
                 idx = self.ec2manager.get_idx_by_id(i)
                 base_cmd = ('/home/admin/.virtualenvs/crawlerservice/bin/python'

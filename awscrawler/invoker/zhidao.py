@@ -31,11 +31,11 @@ def load_urls(fname):
         return [i.strip() for i in fd if i.strip() != '']
 
 def run_zhidao():
-    filename = 'useful_zhidao_urls.pyc'
+    filename = 'useful_zhidao_urls.txt'
     urls = load_urls(filename)
     post_job(BATCH_ID['question'], 'get', 3, False, urls)
     post_job(BATCH_ID['answer'], 'get', 3, False, [], len(urls) * 3)
-    start_up_ec2(10, BATCH_ID['question'].split('-', 1)[0])
+    start_up_ec2(9, BATCH_ID['question'].split('-', 1)[0])
 
 if __name__ == '__main__':
     run_zhidao()
