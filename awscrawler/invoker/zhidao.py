@@ -31,7 +31,7 @@ def load_urls(fname):
         return [i.strip() for i in fd if i.strip() != '']
 
 def run_zhidao():
-    filename = '/Users/bishop/Documents/海知智能/useful_zhidao_urls.txt'
+    filename = 'useful_zhidao_urls.pyc'
     urls = load_urls(filename)
     post_job(BATCH_ID['question'], 'get', 3, False, urls)
     post_job(BATCH_ID['answer'], 'get', 3, False, [], len(urls) * 3)

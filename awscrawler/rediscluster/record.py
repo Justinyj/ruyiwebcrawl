@@ -33,7 +33,7 @@ class Record(object):
         """
         self.conn.hsetnx(batch_id, 'parameter', parameter)
         self.conn.hsetnx(batch_id, 'start', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        self.conn.hincrby(batch_id, 'total', total)
+        self.conn.hsetnx(batch_id, 'total', total)
 
         self.conn.hsetnx(batch_id, 'end', 0)
         self.conn.hsetnx(batch_id, 'failed', 0)
