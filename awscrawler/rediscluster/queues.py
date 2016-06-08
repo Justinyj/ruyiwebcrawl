@@ -7,6 +7,7 @@
 import time
 
 from redispool import RedisPool
+from record import Record
 conn = RedisPool.instance().queue
 
 class Queue(object):

@@ -29,11 +29,11 @@ def parse_title(content):
     m = re.search('<title>(.*)</title>', content)
     if m:
         title = m.group(1)
-        if ("_百度知道") not in title:
-            if ("百度知道-信息提示") == title:
+        if u'_百度知道' not in title:
+            if u'百度知道-信息提示' == title:
                 return
             return
-        title = re.sub("_百度知道", "", title)
+        title = re.sub(u'_百度知道', u'', title)
         return title
     return
 
@@ -113,12 +113,9 @@ def process(url, parameter, *args, **kwargs):
         return flag
 
     distributed = get_distributed_queue(BATCH_ID['answer'])
-    qid = re.search('http://zhidao.baidu.com/question/(\d+).html',url).group(1)
+    qid = re.search('http://zhidao.baidu.com/question/(\d+).html', url).group(1)
     for answer_id in answer_ids[:3]:
         answer_url = get_answer_url(qid, answer_id)
         put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
 
     return flag
-
-if __name__ == '__main__':
-    process('http://zhidao.baidu.com/question/616384071196966452.html', 'get:3:0:')

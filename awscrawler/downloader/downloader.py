@@ -113,6 +113,8 @@ class Downloader(object):
             ret = self.cache.post(url, source, groups, refresh)
             if ret not in [True, False]:
                 print(ret)
+                return False
+            return ret
 
         if refresh is True:
             content = self.cache.get(url)

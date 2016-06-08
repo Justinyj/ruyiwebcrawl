@@ -41,6 +41,8 @@ class Cache(object):
             'refresh': refresh,
         }
         response = requests.post(post_api_url, data=data)
+        if response.status_code != 200:
+            return response.content
 
         js = response.json()
         if js['success'] is True:
