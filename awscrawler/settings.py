@@ -36,13 +36,13 @@ envs = {
     'TEST': {
         'CONCURRENT_NUM': 200,
 
-        'RECORD_REDIS': 'redis://localhost:6379/1',
-        'QUEUE_REDIS': 'redis://localhost:6379/2',
+        'RECORD_REDIS': 'redis://172.31.11.170:6379/1',
+        'QUEUE_REDIS': 'redis://172.31.11.170:6379/2',
         'CACHE_REDIS': [
-            'redis://localhost:6379/0',
+            'redis://172.31.11.170:6379/0',
         ],
 
-        'CACHE_SERVER': 'http://172.31.23.63:8000',
+        'CACHE_SERVER': 'http://172.31.11.170:8000',
         'REGION_NAME': 'us-west-1',
     }
 }

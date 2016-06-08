@@ -6,12 +6,15 @@ from __future__ import print_function, division
 
 from fabric.api import *
 
-env.hosts = ['52.53.180.142']
+env.hosts = ['54.183.222.55']
 env.user = 'admin'
 
 DEPLOY_ENV = 'TEST'
 
 def _aws():
+    """ main server need 200G disk for cache logging
+        lots of memory for redis
+    """
     sudo('mkfs -t ext4 /dev/xvdb')
     sudo('mkdir /data')
     sudo('mount /dev/xvdb /data')
@@ -20,16 +23,20 @@ def _aws():
 
 
 def build_env():
+    sudo('apt-get update')
     sudo('apt-get -y install libcurl4-gnutls-dev libghc-gnutls-dev python-pip python-dev dtach')
+    sudo('apt-get -y install libssl-dev')
     sudo('pip install virtualenvwrapper')
-    sudo('apt-get -y install redis-server')
+#    sudo('apt-get -y install redis-server') # worker not needed
+#    sudo('sed -i "s/bind 127.0.0.1/bind 0.0.0.0/" /etc/redis/redis.conf')
+#    sudo('/etc/init.d/redis-server restart')
 
 def upload():
     archive = 'awscrawler.tar.bz2'
     with lcd('..'):
         local('tar jcf {} --exclude *.pyc awscrawler'.format(archive))
         put('{}'.format(archive), '/tmp/')
-        put('~/.ssh/crawler-california.pem', '/home/.ssh/')
+        put('~/.ssh/crawler-california.pem', '/home/admin/.ssh/')
 
     with cd('/tmp'):
         run('tar jxf /tmp/{}'.format(archive))
@@ -49,7 +56,7 @@ def runapp():
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
-            run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python main.py'))
+#            run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/zhidao.py'))
 
 def deploy():
     upload()

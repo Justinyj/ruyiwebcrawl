@@ -13,7 +13,7 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['52.53.180.142']
+    env.hosts = ['54.183.222.55']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
