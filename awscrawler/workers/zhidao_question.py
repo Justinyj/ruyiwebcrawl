@@ -50,15 +50,19 @@ def parse_q_time(content):
 
 def parse_q_content(content):
     q_content = ''
-    m = re.search('accuse="qContent">(.*)</pre>', content)
-    n = re.search('accuse="qSupply">(.*)</pre>', content)
+    m = re.search('accuse="qContent">(.*?)(</pre>|</div>)', content)
+    n = re.search('accuse="qSupply">(.*?)(</pre>|</div>)', content)
+    s1=''
+    s2=''
     if m:
         q_content = m.group(1)
         q_content = re.sub("<.*?>", "\n", q_content)
-        q_content = q_content.strip()
-        if n:
-            supply = n.group(1)
-            q_content = q_content + supply
+        s1 = q_content.strip()
+    if n:
+        supply = n.group(1)
+        s2 =  supply
+    q_content=s1+s2
+    if (q_content):
         return q_content
     return
 
