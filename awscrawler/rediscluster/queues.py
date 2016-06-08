@@ -166,6 +166,11 @@ class HashQueue(object):
         HashQueue has count on every task of get, failed after 3 times
     """
     def __init__(self, key, priority=1, timeout=90, failure_times=3):
+        """
+        :param timeout: 如果timeout后，background_cleansing 把任务又加入队列.
+                        task_done 来的超时，
+                        Record success就会一直增加，甚至超过 Recordtotal
+        """
         self.key = key
         self.timehash = '{key}-timehash'.format(key=key)
         self.priority = priority
@@ -295,6 +300,7 @@ class HashQueue(object):
 
 
     def background_cleaning(self):
+        # TODO 一个workerexe background_cleansing ，这时关机，其他worker 进程发现background_cleansing 1，就没有worker做background_cleansing
         ret = conn.hsetnx(self.timehash, 'background_cleaning', 1)
         if ret == '0':
             return

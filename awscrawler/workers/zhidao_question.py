@@ -111,7 +111,7 @@ def process(url, parameter, *args, **kwargs):
     m = Cache(BATCH_ID['json'])
     flag = m.post(url, question_content)
     if not flag:
-        flag = m.post(url, ans_content)
+        flag = m.post(url, question_content)
     if not flag:
         return flag
 

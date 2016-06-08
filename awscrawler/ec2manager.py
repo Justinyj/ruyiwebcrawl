@@ -15,7 +15,7 @@ from settings import REGION_NAME
 if REGION_NAME == 'us-west-1':
     KEYPAIR = 'crawler-california'
     SECURITYGROUPID = 'sg-cdd863a9' # ssh
-    AMI_ID = 'ami-928ef4f2'
+    AMI_ID = 'ami-0980fa69'
 elif REGION_NAME == 'ap-northeast-1':
     KEYPAIR = 'crawl-tokyo'
     SECURITYGROUPID = 'sg-fcbf0998'
@@ -66,7 +66,9 @@ class Ec2Manager(object):
         self.ec2.instances.filter(InstanceIds=ids).terminate()
 
     def get_ipaddr(self, one_id):
-        return self.id_instance[one_id].private_ip_address
+        i = self.id_instance[one_id]
+        i.load()
+        return i.private_ip_address
 
     def get_idx_by_id(self, one_id):
         return self.id_idx[one_id]
