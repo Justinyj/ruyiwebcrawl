@@ -91,22 +91,26 @@ def process(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
     batch_id = BATCH_ID['question']
-    content = get_zhidao_content(
-        url, method, gap, HEADER, batch_id)
-    if content is u'':
+
+    for _ in range(2):
+        content = get_zhidao_content(url, method, gap, HEADER, batch_id)
+        if content != u'':
+            break
         time.sleep(gap)
-        content = get_zhidao_content(
-            url, method, gap, HEADER, batch_id)
-    if content is u'':
+    else:
         return False
-    answer_ids=[]
-    question_content = generate_question_json(content,answer_ids)
+
+    answer_ids = []
+    question_content = generate_question_json(content, answer_ids)
     if question_contentis is None:
         return False
+
     m = Cache(BATCH_ID['json'])
     flag = m.post(url, question_content)
     if not flag:
         flag = m.post(url, ans_content)
+    if not flag:
+        return flag
 
     distributed = get_distributed_queue(BATCH_ID['answer'])
     qid = re.search('http://zhidao.baidu.com/question/(\d+).html',url).group(1)
@@ -115,3 +119,6 @@ def process(url, parameter, *args, **kwargs):
         put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
 
     return flag
+
+if __name__ == '__main__':
+    process('http://zhidao.baidu.com/question/616384071196966452.html', 'get:3:0:')
