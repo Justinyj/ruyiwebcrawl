@@ -107,7 +107,7 @@ class Ec2Manager(object):
 
         self.stop(ids)
         count = [0] * len(ids)
-        time.sleep(0.5)
+        time.sleep(10)
 
         start = time.time()
         while 1:
@@ -118,13 +118,13 @@ class Ec2Manager(object):
                         count[idx] = 1
             if sum(count) == len(ids):
                 break
-            time.sleep(0.5)
+            time.sleep(1)
             [group_instances[idx].load() for idx, val in enumerate(count) if val == 0]
-        print('stop need: ', start - time.time())
+        print('stop {} need: {}'.format(group_num, time.time() - start)) # 20.59s / 9
 
         self.start(ids)
         count = [0] * len(ids)
-        time.sleep(0.5)
+        time.sleep(10)
 
         start = time.time()
         while 1:
@@ -135,9 +135,9 @@ class Ec2Manager(object):
                         count[idx] = 1
             if sum(count) == len(ids):
                 break
-            time.sleep(0.5)
+            time.sleep(1)
             [group_instances[idx].load() for idx, val in enumerate(count) if val == 0]
-        print('start need: ', start - time.time())
+        print('start {} need: {}'.format(group_num, time.time() - start)) # 20.59s / 9
 
         self.queue.extend(group_instances)
         return ids
