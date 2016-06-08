@@ -16,7 +16,7 @@ import subprocess
 import time
 
 gcounter = collections.Counter()
-THE_WORKER_NUM=18
+THE_WORKER_NUM=10
 
 class InstanceMgr:
     def __init__(self):
@@ -31,7 +31,7 @@ class InstanceMgr:
 
     def create(self, crawler_num):
         instances = self.conn.create_instances(DryRun=False,
-            ImageId='ami-7bbe501a',
+            ImageId='ami-c6ec05a7',
             MinCount=crawler_num,
             MaxCount=crawler_num,
             KeyName='crawl-tokyo',
@@ -133,7 +133,10 @@ class InstanceMgr:
                     "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch_cache_only medical > out.fetch_cache_only{} &".format(datetime.datetime.now().isoformat())
                 ],
                 "run_presearch":[
-                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_ext_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} > out.presearch_core.{} &".format(idx, datetime.datetime.now().isoformat())
+                ],
+                "run_presearch_ext":[
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_ext_reg {} > out.presearch_ext.{} &".format(idx, datetime.datetime.now().isoformat())
 #                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
                 ],
                 "run_init":[
@@ -155,13 +158,16 @@ class InstanceMgr:
         for i in instances:
             cmds = [
                 "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
+                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/server  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(self.FILENAME_PEM, i.public_ip_address),
                 "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(self.FILENAME_PEM, i.public_ip_address),
                 "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(self.FILENAME_PEM, i.public_ip_address),
                 #"ping {}".format( i.public_ip_address)
             ]
+            print "\n==================\n"
             for cmd in cmds:
                 print "{}".format(cmd)
                 ret = subprocess.call(cmd, shell=True)
+                print "\n"
                 print ret
 
 
@@ -197,6 +203,12 @@ def main():
             work_num = THE_WORKER_NUM
         mgr.run(work_num,option)
     elif "run_presearch" == option:
+        if len(sys.argv)>2:
+            work_num = int(sys.argv[2])
+        else:
+            work_num = THE_WORKER_NUM
+        mgr.run(work_num,option)
+    elif "run_presearch_ext" == option:
         if len(sys.argv)>2:
             work_num = int(sys.argv[2])
         else:

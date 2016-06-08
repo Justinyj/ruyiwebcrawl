@@ -27,6 +27,8 @@ if [ "$1" = "aws-init" ]; then
   # sudo chown ubuntu /data
   # mkdir -p /data/ruyi/ruyiwebcrawl/projects/qichacha
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business/server /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business
+
+
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/server admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business
 

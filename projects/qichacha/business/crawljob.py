@@ -39,9 +39,231 @@ COOKIE_INDEX_SEARCH = "search"
 COOKIE_INDEX_FETCH = "fetch"
 COOKIE_INDEX_TEST = "test"
 COOKIE_INDEX_PREFETCH = "prefetch"
-FILE_CONFIG = getTheFile("../config/conf.fs.json")
 BATCH_ID_SEARCH ='qichacha_search_20160603'
 BATCH_ID_FETCH ='qichacha_fetch_20160603'
+BATCH_ID_JSON ='qichacha_json_20160603'
+BATCH_ID_JSON_SEARCH ='qichacha20160607jsonsearch'
+FILE_CONFIG = getTheFile("../config/conf.fs.json")
+
+
+######################### init
+def init_dir(batch):
+    filenames = [
+        getLocalFile("input"), #on my machine, up to client and server
+        getLocalFile("work"), #on my machine, up to client and server
+        getLocalFile("client"), #down from web client
+        getLocalFile("server"), #down from web server
+        getLocalFile("output"), #on my machine, share by other project
+        getLocalFile("temp"),   #everyone, no sync
+    ]
+    for filename in filenames:
+        try:
+            print os.makedirs(filename)
+        except:
+            pass
+
+def get_filename_search_index(batch):
+    return getLocalFile("server/search_index.{}.json.txt".format(batch))
+
+def stat(batch):
+    #load list
+    map_step = {
+        u"莆田系关键人": {"filename":getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch))},
+        u"莆田系相关人": {"filename":getTheFile("{}/seed_person_ext_reg.putian.human.txt".format(batch))},
+        u"医疗类公司关键词": {"filename":getTheFile("{}/seed_org_keywords_vip.putian.human.txt".format(batch))},
+    }
+    for step in map_step:
+        temp = libfile.file2set(map_step[step]["filename"])
+        gcounter[step+u"_cnt_keywords"] = len(temp)
+        map_step[step]["keyword_list"] = sorted(list(temp))
+
+    #load search result file
+    filename_search_index =get_filename_search_index(batch)
+
+    #load prev state if refresh
+    search_index = _get_search_index(filename_search_index)
+    gcounter[u"total_keywords"] = len(search_index)
+
+    # step actual
+    for step in map_step:
+        print u"=========keywords {}".format(step)
+        temp_company = collections.defaultdict(set)
+        for keyword in map_step[step]["keyword_list"]:
+            if not keyword in search_index:
+                print "missing", keyword, step
+                continue
+
+            print "{}\t{}\t{}".format(keyword, search_index[keyword]["metadata"]["expect"], search_index[keyword]["metadata"]["actual"])
+
+            #stype = search_index[keyword]["stype"]
+            #uri = _get_search_keyword_uri(stype, keyword)
+            #map_company = _get_json(cralwer.config, batch, uri)
+
+        #     for company_name in map_company.keys():
+        #         temp_company[step+u"_公司"].add(company_name)
+        #         label = libnlp.classify_company_name(company_name)
+        #         temp_company[step+u"_公司_"+label].add(company_name)
+        #
+        # for key in temp_company:
+        #     gcounter[key] = len(temp_company[key])
+        # map_step[step]["company_list"] = sorted(list(temp_company[step+u"_公司"]))
+
+
+
+
+######################### search
+def _get_search_index(filename_search_index):
+    #init searched
+    search_index = {}
+    if os.path.exists(filename_search_index):
+        for line in libfile.file2list(filename_search_index):
+            item = json.loads(line)
+            keyword = item["keyword"]
+            search_index[keyword]=item
+    gcounter["searched_keywords"]= len(search_index)
+    return search_index
+
+def _get_search_keyword_uri(stype, keyword):
+    return u"uri:search:{}:keyword:{}".format(stype, keyword)
+
+def _get_json(config, batch_id, uri):
+    cache_json = Cache(config, batch_id=batch_id)
+    content = cache_json.get(uri)
+    if content:
+        return json.loads(content)
+
+def _put_json(config, batch_id, uri, data):
+    if data:
+        cache_json = Cache(config, batch_id=batch_id)
+        cache_json.post(uri, json.dumps(data))
+
+def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, cookie_index=COOKIE_INDEX_SEARCH):
+    help = """
+        #prefetch
+        python business/crawljob.py search medical  seed_person_core_reg 0
+        python business/crawljob.py search medical  seed_person_ext_reg 0
+
+        # merge
+        python business/crawljob.py search medical  seed_person_core_reg
+        python business/crawljob.py search medical  seed_person_ext_reg
+        python business/crawljob.py search medical  seed_org*_vip
+    """
+    filename_search_index =get_filename_search_index(batch)
+
+    #load prev state if refresh
+    search_index = _get_search_index(filename_search_index) if not refresh else {}
+    searched = search_index.keys()
+
+    #print ("search on path_expr={}".format(path_expr) +help)
+    dir_name = getTheFile( path_expr )
+    filenames = glob.glob(dir_name)
+    for filename in filenames:
+        print "crawl_search", filename
+        seeds = libfile.file2set(filename)
+        #add new
+        crawl_search_pass( seeds, os.path.basename(filename), searched, filename_search_index=filename_search_index, limit=limit, refresh=refresh, worker_id=worker_id, cookie_index=cookie_index)
+
+def crawl_search_pass( seeds, search_option, searched, filename_search_index=None, limit=None, refresh=None, skip_index_max=None, worker_id=None, cookie_index=None):
+
+    #init crawler
+    if "_vip" in search_option:
+        crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_VIP, worker_id=worker_id)
+        stype = "vip"
+    else:
+        crawler = get_crawler(BATCH_ID_SEARCH, cookie_index, worker_id=worker_id)
+        stype ="reg"
+
+    if "org" in search_option:
+        list_index = crawler.INDEX_LIST_ORG
+    elif "person" in search_option:
+        list_index = crawler.INDEX_LIST_PERSON
+        #!!!!
+        skip_index_max=2000
+    else:
+        print ("skip unsupported search option ", search_option)
+        return
+
+    counter = collections.Counter()
+    counter["total"] = len(seeds)
+    counter["searched"] = len(seeds.intersection(searched))
+    company_set = set()
+    worker_num = crawler.config.get("WORKER_NUM",1)
+
+    #print len(seeds),list(seeds)[0:3]
+
+    for seed in sorted(list(seeds)):
+        if counter["visited"] % 10 ==0:
+            print search_option, datetime.datetime.now().isoformat(), counter
+
+        counter["visited"]+=1
+        if not refresh and seed in searched:
+            counter["skipped_cache"]+=1
+            continue
+        searched.add(seed)
+
+        if worker_id is not None and worker_num>1:
+            if (counter["visited"] % worker_num) != worker_id:
+                counter["skipped_peer"]+=1
+                continue
+
+        #print seed, limit
+        try:
+            data = crawler.list_keyword_search( [seed], list_index, limit=limit, refresh=refresh, skip_index_max=skip_index_max)
+
+            if not data :
+                counter["empty"] +=1
+            else:
+                counter["ok"] +=1
+
+                #cache search result
+                uri = _get_search_keyword_uri(stype, seed)
+                _put_json(crawler.config, BATCH_ID_JSON_SEARCH, uri, data[seed])
+
+                #
+                if filename_search_index:
+                    with codecs.open(filename_search_index,"a") as findex:
+                        for name in data:
+                            item = {
+                                "keyword": name,
+                                "metadata": data[name]["metadata"],
+                                "stype":stype,
+                                "ts": datetime.datetime.now().isoformat()
+                            }
+
+                            findex.write(u"{}\n".format(json.dumps(item, ensure_ascii=False)))
+
+        except SystemExit as e:
+            print "crawl_search_pass", datetime.datetime.now().isoformat()
+            sys.exit(e)
+        except:
+            import traceback
+            traceback.print_exc(file=sys.stdout)
+            counter["failed"] +=1
+            pass
+
+    counter["company"] = len(company_set)
+
+    print "final", search_option, counter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def search_count(batch, refresh=False):
@@ -84,107 +306,6 @@ def search_count(batch, refresh=False):
 
 
 
-
-def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, cookie_index=COOKIE_INDEX_SEARCH):
-    help = """
-        python business/crawljob.py search medical  seed_person_core_reg 0
-        python business/crawljob.py search medical  seed_person_ext_reg 0
-        python business/crawljob.py search medical  seed_org_names_reg
-        python business/crawljob.py search medical  _reg
-        python business/crawljob.py search medical  _vip
-    """
-    filename_metadata_search = getLocalFile("work/crawl_search.{}.json.txt".format(batch))
-
-    dir_name = getTheFile( path_expr )
-    #print ("search on path_expr={}".format(path_expr) +help)
-
-    filenames = glob.glob(dir_name)
-    for filename in filenames:
-        print filename
-
-        seeds = libfile.file2set(filename)
-
-        searched = set()
-        #load prev state if refresh
-        if not refresh:
-            if os.path.exists(filename_metadata_search):
-                for line in libfile.file2list(filename_metadata_search):
-                    item = json.loads(line)
-                    searched.update(item["data"].keys())
-
-        #add new
-        with codecs.open(filename_metadata_search,"a") as flog:
-            crawl_search_pass( seeds, os.path.basename(filename), searched, flog=flog, limit=limit, refresh=refresh, worker_id=worker_id, cookie_index=cookie_index)
-
-def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, refresh=None, skip_index_max=None, worker_id=None, cookie_index=None):
-
-    #init crawler
-    if "_vip" in search_option:
-        crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_VIP, worker_id=worker_id)
-    else:
-        crawler = get_crawler(BATCH_ID_SEARCH, cookie_index, worker_id=worker_id)
-
-    if "org" in search_option:
-        list_index = crawler.INDEX_LIST_ORG
-    elif "person" in search_option:
-        list_index = crawler.INDEX_LIST_PERSON
-        #!!!!
-        skip_index_max=2000
-    else:
-        print ("skip unsupported search option ", search_option)
-        return
-
-    counter = collections.Counter()
-    counter["total"] = len(seeds)
-    counter["searched"] = len(seeds.intersection(searched))
-    company_set = set()
-    worker_num = crawler.config.get("WORKER_NUM",1)
-
-    #print len(seeds),list(seeds)[0:3]
-
-    for seed in sorted(list(seeds)):
-        if counter["visited"] % 10 ==0:
-            print search_option, datetime.datetime.now().isoformat(), counter
-
-        counter["visited"]+=1
-        if not refresh and seed in searched:
-            continue
-        searched.add(seed)
-
-        if worker_id is not None and worker_num>1:
-            if (counter["visited"] % worker_num) != worker_id:
-                counter["skipped"]+=1
-                continue
-
-        #print seed, limit
-        try:
-            data = crawler.list_keyword_search( [seed], list_index, limit=limit, refresh=refresh, skip_index_max=skip_index_max)
-
-            if data:
-                item = {
-                    "data": data,
-                    "ts": datetime.datetime.now().isoformat()
-                }
-
-                if flog:
-                    flog.write(json.dumps(item, ensure_ascii=False))
-                    flog.write("\n")
-            else:
-                counter["empty"] +=1
-
-        except SystemExit as e:
-            print datetime.datetime.now().isoformat()
-            sys.exit(e)
-        except:
-            import traceback
-            traceback.print_exc(file=sys.stdout)
-            counter["failed"] +=1
-            pass
-
-    counter["company"] = len(company_set)
-
-    print "final", search_option, counter
-
     """
     {
 "data": {
@@ -212,47 +333,6 @@ def crawl_search_pass( seeds, search_option, searched, flog=None, limit=None, re
 "ts": "2016-05-22T17:33:47.248311"
 }
     """
-def stat(batch):
-    #load list
-    map_step = {
-        u"莆田系关键人": {"filename":getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch))},
-#        u"莆田系相关人": {"filename":getTheFile("{}/seed_person_ext_reg.putian.auto.txt".format(batch))},
-        u"医疗类公司关键词": {"filename":getTheFile("{}/seed_org_keywords_vip.putian.human.txt".format(batch))},
-    }
-    for step in map_step:
-        temp = libfile.file2set(map_step[step]["filename"])
-        gcounter[step+u"_cnt_keywords"] = len(temp)
-        map_step[step]["keyword_list"] = sorted(list(temp))
-
-    #load search result file
-    map_keyword_companies = {}
-    for filename in glob.glob(getLocalFile("work/crawl_search.{}.json.txt".format(batch))):
-        for line in libfile.file2list(filename):
-            gcounter["line"] +=1
-            item = json.loads(line)
-            for keyword, keyword_entry in item["data"].items():
-                #print keyword, len(keyword_entry["data"]), json.dumps(keyword_entry["metadata"])
-                map_keyword_companies[keyword] = keyword_entry
-    gcounter[u"total_keywords"] = len(map_keyword_companies)
-
-    # step actual
-    for step in map_step:
-        print u"=========keywords {}".format(step)
-        temp_company = collections.defaultdict(set)
-        for keyword in map_step[step]["keyword_list"]:
-            if not keyword in map_keyword_companies:
-                print "missing", keyword, step
-                continue
-
-            print "{}\t{}\t{}".format(keyword, map_keyword_companies[keyword]["metadata"]["expect"], map_keyword_companies[keyword]["metadata"]["actual"])
-            for company_name in map_keyword_companies[keyword]["data"].keys():
-                temp_company[step+u"_公司"].add(company_name)
-                label = libnlp.classify_company_name(company_name)
-                temp_company[step+u"_公司_"+label].add(company_name)
-
-        for key in temp_company:
-            gcounter[key] = len(temp_company[key])
-        map_step[step]["company_list"] = sorted(list(temp_company[step+u"_公司"]))
 
 
 def load_all_company():
@@ -353,7 +433,7 @@ def fetch_company_raw(batch, expand=True):
     filenames = [
          getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch)),
          getTheFile("{}/seed_person_ext_reg.putian.human.txt".format(batch)),
-         getTheFile("{}/seed_company_names_ext.putian.human.txt".format(batch)),
+         getTheFile("{}/candidates.putian.human.txt".format(batch)),
     ]
     for filename in filenames:
         temp = libfile.file2set(filename)
@@ -959,7 +1039,7 @@ def test_cookie(limit=None):
         config = json.load(f)[option]
         config["debug"] = True
         config["WORKER_NUM"] =1
-        config["CACHE_SERVER"] ="http://localhost:8000"
+        config["CACHE_SERVER"] ="http://52.69.161.139:8000"
         #config["CRAWL_GAP"] =5 *len(config["COOKIES"])
     crawler = Qichacha(config)
 
@@ -1107,7 +1187,16 @@ def main():
     option= sys.argv[1]
     batch = sys.argv[2]
     #filename = sys.argv[3]
-    if "search" == option:
+    if "stat" == option:
+        print option
+        stat(batch)
+    elif "init_dir" == option:
+        print option
+        init_dir(batch)
+
+
+
+    elif "search" == option:
         if len(sys.argv)>3:
             path_expr = batch+ "/*{}*".format( sys.argv[3])
         else:
@@ -1121,13 +1210,17 @@ def main():
             print "search mono"
             crawl_search(batch, path_expr, refresh=False, cookie_index=COOKIE_INDEX_SEARCH)
 
+
+
+
+
+
+
     elif "search_count" == option:
         search_count(batch, refresh=False)
 
 
 
-    elif "stat" == option:
-        stat(batch)
 
 
     elif "fetch" == option:
