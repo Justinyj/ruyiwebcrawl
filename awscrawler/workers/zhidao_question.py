@@ -14,6 +14,7 @@ import requests
 from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content, get_answer_url
 from awscrawler import get_distributed_queue, put_url_enqueue
+from downloader.cache import Cache
 
 
 def parse_q_id(content):
@@ -67,7 +68,7 @@ def parse_answer_ids(content):
     return result
 
 
-def generate_question_json(content,rids):
+def generate_question_json(content, answer_ids):
     q_title = parse_title(content)
     if q_title is None:
         # print('未找到title或者页面不存在')
@@ -75,14 +76,15 @@ def generate_question_json(content,rids):
     q_id = parse_q_id(content)
     q_content = parse_q_content(content)
     q_time = parse_q_time(content)
-    answer_ids = parse_answer_ids(content)
+    rids = parse_answer_ids(content)
     item = {
         'question_id': q_id,
         'question_title': q_title,
         'question_detail': q_content,
         'question_time': q_time,
-        'answers': answer_ids,
+        'answers': rids,
     }
+    answer_ids.extend(rids)
     return json.dumps(item)
 
 

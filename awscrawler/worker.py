@@ -128,11 +128,11 @@ class GetWorker(Worker):
             for url_id, count in results:
                 url = queue_dict['thinhash'].hget(url_id)
 
-                ret_status = module.process(url,
-                                            self._batch_param[batch_id],
-                                            *args,
-                                            **kwargs)
-                if ret_status:
+                process_status = module.process(url,
+                                                self._batch_param[batch_id],
+                                                *args,
+                                                **kwargs)
+                if process_status:
                     queue_dict['queue'].task_done(url_id)
                 else:
                     Record.instance().increase_failed(batch_id)

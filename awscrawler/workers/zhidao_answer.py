@@ -14,6 +14,7 @@ import requests
 import time
 from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content, get_answer_url
+from downloader.cache import Cache
 
 
 def generate_answer_json(ans_content):
