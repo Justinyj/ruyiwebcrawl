@@ -7,7 +7,8 @@
 import time
 
 from redispool import RedisPool
-conn = RedisPool.instance().queue.get_connection(None)
+from record import Record
+conn = RedisPool.instance().queue
 
 class Queue(object):
     """ an unordered queue wrapper for redis, provides Queue.Queue like methods
@@ -79,7 +80,7 @@ class Queue(object):
         >>> # before poping one key, block forever or 5 secnods.
 
         """
-        # TODO: 1.queue empty, 2.queue connect time out.
+        # 1.queue empty, 2.queue connect time out.
         if block:
             t = 0
             while timeout is None or t < timeout:
@@ -165,6 +166,11 @@ class HashQueue(object):
         HashQueue has count on every task of get, failed after 3 times
     """
     def __init__(self, key, priority=1, timeout=90, failure_times=3):
+        """
+        :param timeout: 如果timeout后，background_cleansing 把任务又加入队列.
+                        task_done 来的超时，
+                        Record success就会一直增加，甚至超过 Recordtotal
+        """
         self.key = key
         self.timehash = '{key}-timehash'.format(key=key)
         self.priority = priority
@@ -173,11 +179,6 @@ class HashQueue(object):
 
         self.batch_size = 5000
 
-    def disconnect(self):
-        """ Do not need release in every instance of HashQueue.
-            Releas only once in one process.
-        """
-        RedisPool.instance().queue.release(conn)
 
     def clear(self):
         """ timehash maybe still have items
@@ -237,13 +238,13 @@ class HashQueue(object):
 
         # SCAN does not provide guarantees about the
         # number of elements returned at every iteration.
-        result = []
+        results = []
         if items:
             for field, count in items.iteritems():
                 self.task_start(field, count)
-                result.append((field, count))
+                results.append((field, count))
                 conn.hdel(self.key, field)
-        return result
+        return results
 
 
     def task_start(self, result, count):
@@ -276,6 +277,8 @@ class HashQueue(object):
         items = []
         time_now = time.time()
         for field, value in conn.hgetall(self.timehash).iteritems():
+            if field == 'background_cleaning': continue
+
             start_time, count = value.rsplit(':', 1)
             start_time = float(start_time)
             if time_now - start_time > timeout:
@@ -297,6 +300,7 @@ class HashQueue(object):
 
 
     def background_cleaning(self):
+        # TODO 一个workerexe background_cleansing ，这时关机，其他worker 进程发现background_cleansing 1，就没有worker做background_cleansing
         ret = conn.hsetnx(self.timehash, 'background_cleaning', 1)
         if ret == '0':
             return
