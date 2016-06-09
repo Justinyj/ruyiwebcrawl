@@ -3,9 +3,12 @@
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 
 from __future__ import print_function, division
+
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
+
+import hashlib
 
 class RedisManager(object):
 
@@ -74,7 +77,7 @@ class RedisManager(object):
             if isinstance(url, unicode):
                 url = url.encode('utf-8')
             field = int(hashlib.sha1(url).hexdigest(), 16)
-            thinhash_mset.append(filed)
+            thinhash_mset.append(field)
             thinhash_mset.append(url)
             queue_mset.append((field, 0))
 
