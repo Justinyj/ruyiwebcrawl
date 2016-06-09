@@ -52,17 +52,35 @@ class RedisManager(object):
 
 
     def put_url_enqueue(self, batch_id, url):
+        if batch_id not in self.cache:
+            return False
+
         if isinstance(url, unicode):
             url = url.encode('utf-8')
         field = int(hashlib.sha1(url).hexdigest(), 16)
-
-        if batch_id not in self.cache:
-            return False
         # keep the order
         self.cache[batch_id]['thinhash'].hset(field, url)
         self.cache[batch_id]['queue'].put_init(field)
         return True
 
+
+    def put_urls_enqueue(self, batch_id, urls):
+        if batch_id not in self.cache:
+            return False
+
+        thinhash_mset = []
+        queue_mset = []
+        for url in urls:
+            if isinstance(url, unicode):
+                url = url.encode('utf-8')
+            field = int(hashlib.sha1(url).hexdigest(), 16)
+            thinhash_mset.append(filed)
+            thinhash_mset.append(url)
+            queue_mset.append((field, 0))
+
+        self.cache[batch_id]['thinhash'].hmset(*thinhash_mset)
+        self.cache[batch_id]['queue'].put(*queue_mset)
+        return True
 
     def get_status(self, batch_id):
         """
