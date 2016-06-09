@@ -12,7 +12,6 @@ from rediscluster.record import Record
 from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
 from rediscluster.redismanager import RedisManager
-from awscrawler import init_distribute_queue
 
 class Worker(object):
     """ General worker

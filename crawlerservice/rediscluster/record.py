@@ -35,20 +35,20 @@ class Record(object):
         self.conn.hsetnx(batch_id, 'start', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         self.conn.hsetnx(batch_id, 'total', total)
 
-        self.conn.hsetnx(batch_id, 'end', 0)
         self.conn.hsetnx(batch_id, 'failed', 0)
         self.conn.hsetnx(batch_id, 'success', 0)
 
-    def from_end_rollback(self, batch_id):
-        self.conn.hset(batch_id, 'end', 0)
-
-    def end(self, batch_id):
-        self.conn.hset(batch_id, 'end', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
-
     def is_finished(self, batch_id):
         ret = self.conn.hget(batch_id, 'end')
-        return False if ret == '0' else True
+        return False if ret is None else True
+
+    def if_not_finish_set(self, batch_id):
+        """ Returns 1 if HSETNX created a field, otherwise 0.
+            atomic operation.
+        """
+        return self.conn.hsetnx(batch_id,
+                                'end',
+                                datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     def increase_success(self, batch_id, count=1):
         self.conn.hincrby(batch_id, 'success', count)
@@ -71,4 +71,3 @@ class Record(object):
             except ResponseError:
                 continue
         return keys
-

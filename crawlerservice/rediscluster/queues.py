@@ -300,16 +300,16 @@ class HashQueue(object):
 
 
     def background_cleaning(self):
-        # TODO 一个workerexe background_cleansing ，这时关机，其他worker 进程发现background_cleansing 1，就没有worker做background_cleansing
+        """ If this thread start, without item enqueue in three self.timeout,
+            background_cleaning will end.
+        """
         ret = conn.hsetnx(self.timehash, 'background_cleaning', 1)
         if ret == '0':
             return
 
-        background = []
-        while len(background) < 3 or sum(background[-self.failure_times:]) != 0:
+        while conn.hlen(self.key) != 0 or conn.hlen(self.timehash) != 0:
             self.clean_task()
-            background.append( conn.hlen(self.timehash) )
-            time.sleep(60)
+            time.sleep(self.timeout)
 
         conn.hset(self.timehash, 'background_cleaning', 0)
 
