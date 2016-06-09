@@ -13,7 +13,6 @@ import traceback
 import requests
 from invoker.zhidao import BATCH_ID, HEADER
 from zhidao_tools import get_zhidao_content, get_answer_url
-from awscrawler import get_distributed_queue, put_url_enqueue
 from downloader.cache import Cache
 
 
@@ -90,7 +89,7 @@ def generate_question_json(content, answer_ids):
     return json.dumps(item)
 
 
-def process(url, parameter, *args, **kwargs):
+def process(url, parameter, manager, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
     batch_id = BATCH_ID['question']
@@ -115,11 +114,11 @@ def process(url, parameter, *args, **kwargs):
     if not flag:
         return flag
 
-    distributed = get_distributed_queue(BATCH_ID['answer'])
+    answer_urls = []
     qid = re.search(
         'http://zhidao.baidu.com/question/(\d+).html', url).group(1)
     for answer_id in answer_ids[:3]:
-        answer_url = get_answer_url(qid, answer_id)
-        put_url_enqueue(BATCH_ID['answer'], answer_url, distributed)
+        answer_urls.append( get_answer_url(qid, answer_id) )
+    manager.put_urls_enqueue(BATCH_ID['answer'], answer_urls)
 
     return flag

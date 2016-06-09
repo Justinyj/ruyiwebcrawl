@@ -18,7 +18,7 @@ class Downloader(object):
         """
         self.request = request
         self.TIMEOUT = 10
-        self.RETRY = 3
+        self.RETRY = 2
 
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
         self.cache = Cache(batch_id)

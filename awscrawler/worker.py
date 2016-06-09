@@ -73,11 +73,12 @@ class GetWorker(Worker):
                 continue
 
             tasks = []
+            background = queue.get_background_cleaning_status()
             if background is None:
                 tasks.append( gevent.spawn(queue.background_cleaning) )
                 tasks.append( gevent.spawn(self.work, batch_id, queue_dict, *args, **kwargs) )
             elif background == '1':
-                tasks.append( gevent.spawn(self.work, batch_id queue_dict, *args, **kwargs) )
+                tasks.append( gevent.spawn(self.work, batch_id, queue_dict, *args, **kwargs) )
 
             elif background == '0':
                 self.manager.delete_queue(batch_id)
@@ -97,6 +98,7 @@ class GetWorker(Worker):
 
                 process_status = module.process(url,
                                                 self._batch_param[batch_id],
+                                                self.manager,
                                                 *args,
                                                 **kwargs)
                 if process_status:
