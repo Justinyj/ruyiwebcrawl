@@ -7,6 +7,7 @@ from __future__ import print_function, division
 
 from gevent import monkey; monkey.patch_all()
 import gevent
+import time
 
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
@@ -38,6 +39,17 @@ class GetWorker(Worker):
             self.manager.init_distributed_queue(batch_id, parameter, int(total_count))
             self._batch_param[batch_id] = parameter
 
+    def schedule(self, *args, **kwargs):
+        """ I believe the third time sleep 4 minutes,
+            all the queues will be fill enough data.
+            We can change the parameter whenever needed.
+        """
+        time_to_sleep = 60
+
+        for _ in range(3):
+            self.run(*args, **kwargs)
+            time.sleep(time_to_sleep)
+            time_to_sleep *= 2
 
     def run(self, *args, **kwargs):
         """ end, background_cleansing, status:
@@ -102,9 +114,9 @@ def main():
     if option.index:
         obj = GetWorker(option.index)
         if option.cookie:
-            obj.run(cookie=option.cookie)
+            obj.schedule(cookie=option.cookie)
         else:
-            obj.run()
+            obj.schedule()
 
 if __name__ == '__main__':
     main()
