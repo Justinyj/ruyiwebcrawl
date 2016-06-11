@@ -5,8 +5,6 @@
 
 from __future__ import print_function, division
 
-from gevent import monkey; monkey.patch_all()
-import gevent
 import time
 
 from rediscluster.record import Record
@@ -72,18 +70,14 @@ class GetWorker(Worker):
                 # If another worker delete queue, I don't need to do anything.
                 continue
 
-            tasks = []
             background = queue.get_background_cleaning_status()
             if background is None:
-                tasks.append( gevent.spawn(queue.background_cleaning) )
-                tasks.append( gevent.spawn(self.work, batch_id, queue_dict, *args, **kwargs) )
+                self.work(batch_id, queue_dict, *args, **kwargs)
             elif background == '1':
-                tasks.append( gevent.spawn(self.work, batch_id, queue_dict, *args, **kwargs) )
+                self.work(batch_id, queue_dict, *args, **kwargs)
 
             elif background == '0':
-                self.manager.delete_queue(batch_id)
-
-            gevent.joinall(tasks)
+                pass
 
 
     def work(self, batch_id, queue_dict, *args, **kwargs):

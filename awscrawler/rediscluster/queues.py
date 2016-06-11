@@ -312,6 +312,7 @@ class HashQueue(object):
             time.sleep(self.timeout)
 
         conn.hset(self.timehash, 'background_cleaning', 0)
+        return self.key
 
 
     def get_background_cleaning_status(self):

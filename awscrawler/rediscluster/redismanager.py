@@ -70,6 +70,8 @@ class RedisManager(object):
     def put_urls_enqueue(self, batch_id, urls):
         if batch_id not in self.cache:
             return False
+        if not urls:
+            return False
 
         thinhash_mset = []
         queue_mset = []

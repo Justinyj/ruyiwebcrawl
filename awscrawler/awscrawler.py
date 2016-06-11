@@ -3,16 +3,16 @@
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 
 from __future__ import print_function, division
+from gevent import monkey; monkey.patch_all()
 
 import hashlib
 import json
+import gevent
 
-from rediscluster.redismanager import RedisManager
 from schedule import Schedule
 
-manager = RedisManager()
 
-def post_job(batch_id, method, gap, js, urls, total_count=None):
+def post_job(batch_id, manager, method, gap, js, urls, total_count=None, cleaning_delay=0):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
@@ -24,13 +24,11 @@ def post_job(batch_id, method, gap, js, urls, total_count=None):
             gap=gap,
             js=1 if js else 0)
 
-    manager.init_distributed_queue(batch_id, parameter, total_count)
+    queue_dict = manager.init_distributed_queue(batch_id, parameter, total_count)
     manager.put_urls_enqueue(batch_id, urls)
 
+    return gevent.spawn_later(delay, queue_dict['queue'].background_cleaning)
 
-def start_up_ec2(machine_num, batch_tag):
-    schedule = Schedule(machine_num, tag=batch_tag)
-    schedule.run()
 
 def main():
     pass

@@ -43,7 +43,7 @@ class Schedule(object):
         return id_cookie_dict
 
 
-    def run(self, *args, **kwargs):
+    def run_forever(self, *args, **kwargs):
         time.sleep(30)
 
         before = time.time()
@@ -76,3 +76,5 @@ class Schedule(object):
         finally:
             self.ssh.close()
 
+    def stop_all_instances(self):
+        self.ec2manager.terminate(self.ids)
