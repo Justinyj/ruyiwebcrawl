@@ -16,7 +16,7 @@ import subprocess
 import time
 
 gcounter = collections.Counter()
-THE_WORKER_NUM=10
+THE_WORKER_NUM = 20
 
 class InstanceMgr:
     def __init__(self):
@@ -31,7 +31,7 @@ class InstanceMgr:
 
     def create(self, crawler_num):
         instances = self.conn.create_instances(DryRun=False,
-            ImageId='ami-c6ec05a7',
+            ImageId='ami-d65fb7b7',
             MinCount=crawler_num,
             MaxCount=crawler_num,
             KeyName='crawl-tokyo',
@@ -92,6 +92,8 @@ class InstanceMgr:
         print "list", len(list(instances))
         for i in instances:
             print i.id, i.instance_type, i.public_ip_address, i.state['Name']
+            print "ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM)
+            print ""
 
     def clear(self):
         instances = self.select()
@@ -107,8 +109,8 @@ class InstanceMgr:
         for command in cmds:
             print "Executing {}".format(command)
             stdin , stdout, stderr = ssh.exec_command(command)
-            #print stdout.read()
-            #print stderr.read()
+            print stdout.read()
+            print stderr.read()
         ssh.close()
         print 'closed'
 
@@ -122,9 +124,11 @@ class InstanceMgr:
 
         print "run",i_num, cmd_option
         for idx, i in enumerate(instances):
+            print "========="
             cmds = {
                 "run_prefetch":[
-                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical {} > out.prefetch.{} &".format(idx, datetime.datetime.now().isoformat())
+                    "rm *",
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical {} {} > out.prefetch.{} &".format(idx, worker_num, datetime.datetime.now().isoformat())
                 ],
                 "run_fetch":[
                     "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical > out.fetch{} &".format(datetime.datetime.now().isoformat())
@@ -133,10 +137,10 @@ class InstanceMgr:
                     "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch_cache_only medical > out.fetch_cache_only{} &".format(datetime.datetime.now().isoformat())
                 ],
                 "run_presearch":[
-                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} > out.presearch_core.{} &".format(idx, datetime.datetime.now().isoformat())
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} {} > out.presearch_core.{} &".format(idx, worker_num, datetime.datetime.now().isoformat())
                 ],
                 "run_presearch_ext":[
-                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_ext_reg {} > out.presearch_ext.{} &".format(idx, datetime.datetime.now().isoformat())
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_ext_reg {} {} > out.presearch_ext.{} &".format(idx, worker_num, datetime.datetime.now().isoformat())
 #                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} > out.presearch.{} &".format(idx, datetime.datetime.now().isoformat())
                 ],
                 "run_init":[
@@ -145,7 +149,9 @@ class InstanceMgr:
                 ]
             }
             self._execute_cmd(i.public_ip_address,'ubuntu', cmds[cmd_option])
-            print "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
+            print "ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM)
+            print ""
+
 
     def upload(self, worker_num):
         instances = self.select('running')
@@ -157,9 +163,8 @@ class InstanceMgr:
         print "upload", i_num
         for i in instances:
             cmds = [
-                "# ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM),
-                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/server  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(self.FILENAME_PEM, i.public_ip_address),
-                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(self.FILENAME_PEM, i.public_ip_address),
+        #        "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/server  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(self.FILENAME_PEM, i.public_ip_address),
+        #        "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(self.FILENAME_PEM, i.public_ip_address),
                 "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no -i {}' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(self.FILENAME_PEM, i.public_ip_address),
                 #"ping {}".format( i.public_ip_address)
             ]
@@ -167,8 +172,10 @@ class InstanceMgr:
             for cmd in cmds:
                 print "{}".format(cmd)
                 ret = subprocess.call(cmd, shell=True)
-                print "\n"
                 print ret
+                print ""
+                print "ssh ubuntu@{} -i {}".format(i.public_ip_address, self.FILENAME_PEM)
+                print ""
 
 
 

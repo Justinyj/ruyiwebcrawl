@@ -43,7 +43,7 @@ def classify_default(name):
             return True
 
     #服务业
-    if re.search(ur'(\-|洗涤|服务|食堂|餐饮|专业合作社|农机|客运|招待所|浴室|小卖部|报刊|停车|物业|招待|回收|维修|园林|物流|矿产|种植|足浴|冷饮|经营|代理|餐厅|舞厅|医院路|合作社|旅社|商行)',name):
+    if re.search(ur'(\-|洗涤|服务|食堂|餐饮|专业合作社|农机|客运|招待所|加油站|浴室|小卖部|报刊|停车|物业|招待|回收|维修|园林|物流|矿产|种植|足浴|冷饮|经营|代理|餐厅|舞厅|医院路|合作社|旅社|商行)',name):
         return True
 
 
@@ -156,7 +156,8 @@ def is_rawitem_putian_canidate(rawitem, putian_list):
     if label:
         return True
 
-    related = list_item_agent_name(rawitem,False, None ,None)
+
+    related = rawitem.get("related", list_item_agent_name(rawitem,False, None ,None) )
     temp = related.intersection(putian_list)
     if temp:
         return True

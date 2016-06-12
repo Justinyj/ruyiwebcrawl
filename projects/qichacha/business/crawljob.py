@@ -41,8 +41,9 @@ COOKIE_INDEX_TEST = "test"
 COOKIE_INDEX_PREFETCH = "prefetch"
 BATCH_ID_SEARCH ='qichacha_search_20160603'
 BATCH_ID_FETCH ='qichacha_fetch_20160603'
-BATCH_ID_JSON ='qichacha_json_20160603'
+BATCH_ID_JSON_FETCH ='qichacha20160607jsonfetch'
 BATCH_ID_JSON_SEARCH ='qichacha20160607jsonsearch'
+BATCH_ID_JSON_RAWITEM = 'qichacha20160607rawitem'
 FILE_CONFIG = getTheFile("../config/conf.fs.json")
 
 
@@ -53,6 +54,7 @@ def init_dir(batch):
         getLocalFile("work"), #on my machine, up to client and server
         getLocalFile("client"), #down from web client
         getLocalFile("server"), #down from web server
+        getLocalFile("server_output"), #down from web server
         getLocalFile("output"), #on my machine, share by other project
         getLocalFile("temp"),   #everyone, no sync
     ]
@@ -62,8 +64,67 @@ def init_dir(batch):
         except:
             pass
 
+def _get_json(config, batch_id, uri):
+    cache_json = Cache(config, batch_id=batch_id)
+    content = cache_json.get(uri)
+    if content:
+        return json.loads(content)
+
+def _put_json(config, batch_id, uri, data):
+    if data:
+        cache_json = Cache(config, batch_id=batch_id)
+        cache_json.post(uri, json.dumps(data))
+
+
 def get_filename_search_index(batch):
     return getLocalFile("server/search_index.{}.json.txt".format(batch))
+
+def _get_search_index(filename_search_index):
+    #init searched
+    search_index = {}
+    if os.path.exists(filename_search_index):
+        for line in libfile.file2list(filename_search_index):
+            item = json.loads(line)
+            keyword = item["keyword"]
+            search_index[keyword]=item
+    gcounter["searched_keywords"]= len(search_index)
+    return search_index
+
+def _get_search_keyword_uri(stype, keyword):
+    return u"uri:search:{}:keyword:{}".format(stype, keyword)
+
+
+
+def get_filename_fetch_index(batch, tag):
+    return getLocalFile("server/fetch_index_{}.{}.json.txt".format(tag, batch))
+
+
+def _get_fetch_index(filename_fetch_index):
+    #init fetched
+    fetch_index = {}
+    if os.path.exists(filename_fetch_index):
+        with codecs.open(filename_fetch_index, encoding="utf-8") as f:
+            cnt =0
+            for line in f:
+                if cnt %1000 ==0:
+                    print cnt
+                cnt += 1
+
+                item = json.loads(line)
+                key_num = item["key_num"]
+                fetch_index[key_num]=item
+    gcounter["fetched_key_num"]= len(fetch_index)
+    return fetch_index
+
+def _get_fetch_company_uri(fetch_tag, key_num):
+    return u"uri:fetch:{}:key_num:{}".format(fetch_tag, key_num)
+    #cache_json_uri = "uri:qcc:{}:{}".format(fetch_tag, key_num)
+
+def _get_rawitem_uri(key_num):
+    return u"uri:rawitem:{}".format(key_num)
+
+
+######################### init
 
 def stat(batch):
     #load list
@@ -93,7 +154,9 @@ def stat(batch):
                 print "missing", keyword, step
                 continue
 
-            print "{}\t{}\t{}".format(keyword, search_index[keyword]["metadata"]["expect"], search_index[keyword]["metadata"]["actual"])
+            gcounter[u"total_actual_dup"] += search_index[keyword]["metadata"]["actual"]
+            if search_index[keyword]["metadata"]["actual"]>1000:
+                print "{}\t{}\t{}".format(keyword, search_index[keyword]["metadata"]["expect"], search_index[keyword]["metadata"]["actual"])
 
             #stype = search_index[keyword]["stype"]
             #uri = _get_search_keyword_uri(stype, keyword)
@@ -112,32 +175,9 @@ def stat(batch):
 
 
 ######################### search
-def _get_search_index(filename_search_index):
-    #init searched
-    search_index = {}
-    if os.path.exists(filename_search_index):
-        for line in libfile.file2list(filename_search_index):
-            item = json.loads(line)
-            keyword = item["keyword"]
-            search_index[keyword]=item
-    gcounter["searched_keywords"]= len(search_index)
-    return search_index
 
-def _get_search_keyword_uri(stype, keyword):
-    return u"uri:search:{}:keyword:{}".format(stype, keyword)
 
-def _get_json(config, batch_id, uri):
-    cache_json = Cache(config, batch_id=batch_id)
-    content = cache_json.get(uri)
-    if content:
-        return json.loads(content)
-
-def _put_json(config, batch_id, uri, data):
-    if data:
-        cache_json = Cache(config, batch_id=batch_id)
-        cache_json.post(uri, json.dumps(data))
-
-def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, cookie_index=COOKIE_INDEX_SEARCH):
+def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, worker_num=1, cookie_index=COOKIE_INDEX_SEARCH):
     help = """
         #prefetch
         python business/crawljob.py search medical  seed_person_core_reg 0
@@ -148,11 +188,11 @@ def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, co
         python business/crawljob.py search medical  seed_person_ext_reg
         python business/crawljob.py search medical  seed_org*_vip
     """
-    filename_search_index =get_filename_search_index(batch)
 
     #load prev state if refresh
+    filename_search_index =get_filename_search_index(batch)
     search_index = _get_search_index(filename_search_index) if not refresh else {}
-    searched = search_index.keys()
+    searched = set(search_index.keys())
 
     #print ("search on path_expr={}".format(path_expr) +help)
     dir_name = getTheFile( path_expr )
@@ -161,16 +201,17 @@ def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, co
         print "crawl_search", filename
         seeds = libfile.file2set(filename)
         #add new
-        crawl_search_pass( seeds, os.path.basename(filename), searched, filename_search_index=filename_search_index, limit=limit, refresh=refresh, worker_id=worker_id, cookie_index=cookie_index)
+        crawl_search_pass( seeds, os.path.basename(filename), searched, filename_search_index=filename_search_index, limit=limit, refresh=refresh, worker_id=worker_id, worker_num=worker_num, cookie_index=cookie_index)
 
-def crawl_search_pass( seeds, search_option, searched, filename_search_index=None, limit=None, refresh=None, skip_index_max=None, worker_id=None, cookie_index=None):
+def crawl_search_pass( seeds, search_option, searched, filename_search_index=None, limit=None, refresh=None, skip_index_max=None, worker_id=None, worker_num=1, cookie_index=None):
+    flag_mono == (workid_id is None)
 
     #init crawler
     if "_vip" in search_option:
-        crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_VIP, worker_id=worker_id)
+        crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_VIP, worker_id=worker_id, worker_num=worker_num)
         stype = "vip"
     else:
-        crawler = get_crawler(BATCH_ID_SEARCH, cookie_index, worker_id=worker_id)
+        crawler = get_crawler(BATCH_ID_SEARCH, cookie_index, worker_id=worker_id, worker_num=worker_num)
         stype ="reg"
 
     if "org" in search_option:
@@ -187,7 +228,7 @@ def crawl_search_pass( seeds, search_option, searched, filename_search_index=Non
     counter["total"] = len(seeds)
     counter["searched"] = len(seeds.intersection(searched))
     company_set = set()
-    worker_num = crawler.config.get("WORKER_NUM",1)
+    #worker_num = crawler.config.get("WORKER_NUM",1)
 
     #print len(seeds),list(seeds)[0:3]
 
@@ -220,7 +261,7 @@ def crawl_search_pass( seeds, search_option, searched, filename_search_index=Non
                 _put_json(crawler.config, BATCH_ID_JSON_SEARCH, uri, data[seed])
 
                 #
-                if filename_search_index:
+                if flag_mono and filename_search_index :
                     with codecs.open(filename_search_index,"a") as findex:
                         for name in data:
                             item = {
@@ -250,6 +291,316 @@ def crawl_search_pass( seeds, search_option, searched, filename_search_index=Non
 
 
 
+
+#################
+def fetch_prepare_all(batch):
+    #load search history
+    filename_search_index =get_filename_search_index(batch)
+    search_index = _get_search_index(filename_search_index)
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[COOKIE_INDEX_FETCH]
+
+    ##############
+    #load company from search
+    map_company = {}
+    cnt = 0
+    for keyword, keyword_entry in search_index.items():
+        if cnt % 100 == 0:
+            print cnt, json.dumps(gcounter)
+        cnt += 1
+        #print type(keyword_entry)
+        stype = keyword_entry["stype"]
+        uri = _get_search_keyword_uri(stype, keyword)
+        data = _get_json(config, BATCH_ID_JSON_SEARCH, uri)
+        gcounter["all_company_dup"] += len(data)
+
+
+        for name in data["data"]:
+            name = name.strip()
+            if name:
+                company = data["data"][name]
+                key_num = company['key_num']
+                map_company[name] = key_num
+    gcounter["company_from_search"] += len(map_company)
+
+
+    ##############
+    #load prev company 0531
+    map_key_num_name_0531 = {}
+    filename = getLocalFile("input/company_all.0531.raw.tsv".format(batch))
+    for line in libfile.file2set(filename):
+        key_num, name = line.split('\t',1)
+        name = name.strip()
+        if name:
+            map_key_num_name_0531[name] = key_num
+
+    gcounter["company_from_0531"] += len(map_key_num_name_0531)
+    #merge data
+    map_company.update(map_key_num_name_0531)
+
+    ##############
+    #output
+    lines = [ u"{}\t{}".format(map_company[x], x) for x in sorted(list(map_company.keys())) ]
+    gcounter["company_all"] += len(lines)
+    filename = getLocalFile("server/company_all.{}.tsv".format(batch))
+    libfile.lines2file(lines, filename)
+
+
+
+
+
+
+
+
+
+#################
+def fetch_detail(batch, worker_id=None, worker_num=1, expand=True, cookie_index =COOKIE_INDEX_PREFETCH, refresh=False):
+    fetch_tag = "expand" if expand else "regular"
+    flag_mono = (worker_id is None)
+    crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id, worker_num=worker_num)
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[COOKIE_INDEX_FETCH]
+    #filename_cache_fetch_result = getLocalFile("server/cache_fetch_result.expand_{}.json.txt".format(expand).lower())
+
+    #cache_fetch_result = {}
+    filename_fetch_index = get_filename_fetch_index(batch, fetch_tag)
+    fetch_index = _get_fetch_index(filename_fetch_index)
+    cached_key_num = set(fetch_index.keys())
+
+    #putian_list
+    putian_list = set()
+    filenames = [
+         getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch)),
+         getTheFile("{}/seed_person_ext_reg.putian.human.txt".format(batch)),
+         getTheFile("{}/candidates.putian.human.txt".format(batch)),
+    ]
+    for filename in filenames:
+        temp = libfile.file2set(filename)
+        gcounter["from_{}".format(os.path.basename(filename))] = len(temp)
+        putian_list.update(temp)
+    gcounter["putian_list"] = len(putian_list)
+    print json.dumps(gcounter, indent=4)
+
+    #load
+    #worker_num = crawler.config.get("WORKER_NUM",1)
+    counter = collections.Counter()
+    filename = getLocalFile("server/company_all.{}.tsv".format(batch))
+    filename_log = getLocalFile("server_output/company_all_log.{}.tsv".format(batch))
+    if flag_mono:
+        with open(filename_log,'w') as flog:
+            flog.write("")
+
+    cached_key_num = set()
+
+    with codecs.open(filename, encoding="utf-8") as f:
+        for line in f:
+            if counter["visited"] % 1000 ==0:
+                print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True), json.dumps(crawler.downloader.counter, sort_keys=True)
+            counter["visited"]+=1
+
+            if worker_id is not None and worker_num>1:
+                if (counter["visited"] % worker_num) != worker_id:
+                    counter["skip_peer"]+=1
+                    continue
+
+            key_num, name = line.split('\t',1)
+            name = name.strip()
+
+            if not name:
+                counter["skip_empty_name"]+=1
+                continue
+
+            #if not refresh and key_num in cached_key_num:
+            #    counter["skip_cached_key_num"]+=1
+            #    continue
+
+            # if name in putian_list:
+            #     print "putian_list",name
+            #     pass
+            # elif libnlp.classify_company_name_medical(name, False):
+            #     print "classify_name",name
+            #     pass
+            # else:
+            #     counter["skip_non_putian"]+=1
+            #     continue
+
+
+            uri = _get_fetch_company_uri(fetch_tag, key_num)
+            #data = _get_json(config, BATCH_ID_JSON_FETCH, uri)
+
+            #if data:
+            #    counter["skip_cached_fs"]+=1
+            #    continue
+
+            try:
+                company_raw_one = {}
+
+                if expand:
+                    temp = crawler.crawl_descendant_company(name, key_num)
+                    if temp:
+                        company_raw_one.update(temp)
+
+                    temp = crawler.crawl_ancestors_company(name, key_num)
+                    if temp:
+                        company_raw_one.update(temp)
+                else:
+                    temp = crawler.crawl_company_detail(name, key_num)
+                    if temp:
+                        company_raw_one.update(temp)
+
+                #cache the company_raw_one
+                if company_raw_one:
+                    counter["ok"]+=1
+                    for rawitem in company_raw_one.values():
+                        key_num = rawitem["key_num"]
+                        if key_num in cached_key_num:
+                            continue
+                        else:
+                            cached_key_num.add(key_num)
+                            counter["company"]+=1
+
+                        #cache data per company
+                        _cache_rawitem(crawler.config, rawitem)
+
+                        #write log for reference
+                        if flag_mono:
+                            with codecs.open(filename_log,'a', encoding="utf-8") as flog:
+                                line = u"{}\t{}\n".format(key_num, name)
+                                flog.write(line)
+
+                    tags = ""
+                    rawitem = company_raw_one.get(name)
+                    if  rawitem:
+                        if libnlp.is_rawitem_putian_canidate(rawitem, putian_list):
+                            tags += "putian"
+
+                    counter["download"]+=1
+                    fetch_result = {
+                        "key_num":key_num,
+                        "name": name,
+                        "tags": tags,
+                        "ts": datetime.datetime.now().isoformat(),
+                        "data": company_raw_one,
+                    }
+                    #print json.dumps(fetch_result, indent=4, ensure_ascii=False)
+                    _put_json(crawler.config, BATCH_ID_JSON_FETCH, uri, fetch_result)
+                else:
+                    counter["missing"]+=1
+                    continue
+
+            except:
+                import traceback
+                traceback.print_exc(file=sys.stdout)
+                #print "fail",
+                counter["failed"] +=1
+                pass
+
+def _cache_rawitem(config, rawitem):
+
+    name = rawitem["name"]
+    key_num = rawitem["key_num"]
+    uri = _get_rawitem_uri(key_num)
+    ret = _get_json(config, BATCH_ID_JSON_RAWITEM, uri)
+    if not ret:
+        related = libnlp.list_item_agent_name(rawitem,False, None ,None)
+        related.remove(name)
+        rawitem["related"] = sorted(list(related))
+        rawitem["label"] = libnlp.classify_company_name(name)
+
+        _put_json(config, BATCH_ID_JSON_RAWITEM, uri, rawitem)
+
+
+
+def fetch_output(batch, selection, filename_input, expand=True):
+    fetch_tag = "expand" if expand else "regular"
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[COOKIE_INDEX_FETCH]
+
+    ############
+    #init putian_list
+    putian_list = set()
+
+    filenames = [
+         getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch)),
+         getTheFile("{}/seed_person_ext_reg.putian.human.txt".format(batch)),
+         getTheFile("{}/candidates.putian.human.txt".format(batch)),
+    ]
+    for filename in filenames:
+        temp = libfile.file2set(filename)
+        gcounter["from_{}".format(os.path.basename(filename))] = len(temp)
+        putian_list.update(temp)
+
+    gcounter["putian_list"] = len(putian_list)
+    print json.dumps(gcounter, indent=4)
+
+
+    #load data
+    counter = collections.Counter()
+
+    company_raw ={}
+
+    #filename_log = getLocalFile("temp/company_all.{}.json.txt".format(batch))
+    #with open(filename_log,"w") as f:
+    #    f.write("")
+
+    with codecs.open(filename_input, encoding="utf-8") as f:
+        for line in f:
+            if counter["visited"] % 1000 ==0:
+                counter["company_raw"] =len(company_raw)
+                print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True), json.dumps(gcounter, sort_keys=True)
+            counter["visited"]+=1
+
+            key_num, name = line.split('\t',1)
+            name = name.strip()
+
+            if not name:
+                counter["skip_empty_name"]+=1
+                continue
+
+            #load data
+            uri = _get_fetch_company_uri(fetch_tag, key_num)
+            fetch_result = _get_json(config, BATCH_ID_JSON_FETCH, uri)
+            if not fetch_result:
+                counter["skip_miss"]+=1
+                continue
+
+            #with codecs.open(filename_log,"a", encoding="utf-8") as f:
+            #    for rawitem in fetch_result["data"].values():
+            #        f.write(u"{}\n", json.dumps(rawitem, ensure_ascii=False) )
+
+            if selection == "putian":
+                is_putian = False
+
+                tags = fetch_result.get("tags")
+                if tags is not None:
+                    if "putian" in tags:
+                        is_putian = True
+                        gcounter["candidate_by_pre_putian"] +=1
+                    else:
+                        gcounter["skip_pre_not_putian"] +=1
+                elif name in putian_list:
+                    is_putian = True
+                    gcounter["candidate_by_name"] +=1
+                    company_raw.update(fetch_result["data"])
+                else:
+                    rawitem = fetch_result["data"].get(name)
+                    if not rawitem:
+                        gcounter["skip_not_cached"] +=1
+                    elif libnlp.is_rawitem_putian_canidate(rawitem, putian_list):
+                        is_putian = True
+                        gcounter["candidate_by_other"] +=1
+
+                if is_putian:
+                    company_raw.update(fetch_result["data"])
+            else:
+                gcounter["candidate_all"] +=1
+                company_raw.update(fetch_result["data"])
+
+        #print len(cache_fetch_result)
+        filename_output = "server_output/company_raw.{}.{}.json".format(selection, batch)
+        gcounter[filename_output] = len(company_raw)
+        filename = getLocalFile(filename_output)
+        libfile.json2file(company_raw, filename)
 
 
 
@@ -439,7 +790,6 @@ def fetch_company_raw(batch, expand=True):
         temp = libfile.file2set(filename)
         gcounter["from_{}".format(os.path.basename(filename))] = len(temp)
         putian_list.update(temp)
-
     gcounter["putian_list"] = len(putian_list)
     print json.dumps(gcounter, indent=4)
 
@@ -452,7 +802,7 @@ def fetch_company_raw(batch, expand=True):
         cnt = 0
         with codecs.open(filename_cache_fetch_result,  encoding="utf-8") as f:
             for line in f:
-                if cnt %1000 == 0:
+                if cnt % 1000 == 0:
                     print datetime.datetime.now().isoformat(), cnt, len(company_raw), len(cached_key_num)
                 cnt += 1
 
@@ -485,194 +835,6 @@ def fetch_company_raw(batch, expand=True):
     lines = [ u"{}\t{}".format(cached_key_num[x], x) for x in sorted(list(cached_key_num.keys())) ]
     filename = getLocalFile("server/company_raw_all.{}.txt".format(batch))
     libfile.lines2file(lines, filename)
-
-#################
-
-def fetch_detail(batch, worker_id=None, expand=True, cookie_index =COOKIE_INDEX_PREFETCH, cache_only=False, refresh=False):
-    flag_mono = (worker_id is None)
-    filename_cache_fetch_result = getLocalFile("server/cache_fetch_result.expand_{}.json.txt".format(expand).lower())
-
-    #load cache_fetch_result
-    if flag_mono:
-        #cache_fetch_result = {}
-        cached_key_num = set()
-        if os.path.exists(filename_cache_fetch_result):
-            #may have duplicated, the earlier one will be overwrite by the newer one
-            cnt = 0
-            with codecs.open(filename_cache_fetch_result,  encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    #skip comment line
-                    if line.startswith('#'):
-                        continue
-
-                    if cnt %1000 == 0:
-                        print cnt, datetime.datetime.now().isoformat()
-
-                    cnt += 1
-                    fetch_result = json.loads(line)
-                    key_num = fetch_result["key_num"]
-                    #cache_fetch_result[key_num] = fetch_result["data"]
-                    cached_key_num.add(key_num)
-            #print len(cache_fetch_result)
-
-    #load search history
-    map_key_num_name_crawl = {}
-    all_keyword = {}
-    filename_metadata_search = getLocalFile("work/crawl_search.{}.json.txt".format(batch))
-    if os.path.exists(filename_metadata_search):
-
-        for line in libfile.file2list(filename_metadata_search):
-            gcounter["line"] +=1
-            item = json.loads(line)
-            for keyword, keyword_entry in item["data"].items():
-                #print type(keyword_entry)
-                for name in keyword_entry["data"]:
-                    company = keyword_entry["data"][name]
-                    key_num = company['key_num']
-                    map_key_num_name_crawl[key_num] = name
-
-                gcounter["all_company_dup"] += len(keyword_entry["data"])
-                all_keyword[keyword] = keyword_entry["metadata"]
-
-    #load names
-    gcounter["company_crawl"] += len(map_key_num_name_crawl)
-
-    #load prev company 0531
-    map_key_num_name_0531 = {}
-    filename = getLocalFile("work/prefetch.0531.raw.tsv".format(batch))
-    for line in libfile.file2set(filename):
-        key_num,name = line.split('\t',1)
-        if name:
-            map_key_num_name_0531[key_num] = name
-
-    gcounter["company_0531"] += len(map_key_num_name_0531)
-    #merge data
-    map_key_num_name_crawl.update(map_key_num_name_0531)
-
-    #map names to id
-    crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id, cache_only=cache_only)
-    cache_json = Cache(crawler.config, batch_id="qichacha_json_20160603")
-
-    counter = collections.Counter()
-    company_name_batch = sorted(list(map_key_num_name_crawl.keys()))
-    #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
-    counter["company_total"] = len(company_name_batch)
-    worker_num = crawler.config.get("WORKER_NUM",1)
-    company_raw = {}
-    company_raw_simple = list()
-    for key_num in company_name_batch:
-        name = map_key_num_name_crawl[key_num]
-        if not name:
-            continue
-
-        if counter["visited"] % 1000 ==0:
-            counter["company_raw"] =len(company_raw)
-            print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True), json.dumps(crawler.downloader.counter, sort_keys=True)
-        counter["visited"]+=1
-
-        if worker_id is not None and worker_num>1:
-            if (counter["visited"] % worker_num) != worker_id:
-                counter["skipped"]+=1
-                continue
-
-        #if crawler.config.get("debug"):
-        #    print "name",name, "key",key_num
-
-        try:
-            company_raw_one = {}
-            cache_type = ""
-
-            #三级缓存
-            #load cached company_raw_one
-            tag = "expand" if expand else "regular"
-            cache_json_uri = "uri:qcc:{}:{}".format(tag,key_num)
-
-            if not refresh:
-                if flag_mono:
-                    if key_num in cached_key_num:
-                        gcounter["cached_key_num"]+=1
-                        continue
-    #                company_raw_one = cache_fetch_result.get(key_num,{})
-    #                if company_raw_one:
-    #                    cache_type = "local"
-
-                if not company_raw_one:
-                    cache_json_content = cache_json.get(cache_json_uri)
-                    if cache_json_content:
-                        company_raw_one = json.loads(cache_json_content)["data"]
-                        cache_type = "json"
-
-            if company_raw_one:
-                counter["cached_"+cache_type]+=1
-            else:
-                if expand:
-                    temp = crawler.crawl_descendant_company(name, key_num)
-                    if temp:
-                        company_raw_one.update(temp)
-
-                    temp = crawler.crawl_ancestors_company(name, key_num)
-                    if temp:
-                        company_raw_one.update(temp)
-                else:
-                    temp = crawler.crawl_company_detail(name, key_num)
-                    if temp:
-                        company_raw_one.update(temp)
-
-                #cache the company_raw_one
-                if company_raw_one:
-                    fetch_result = {
-                        "key_num":key_num,
-                        "name": name,
-                        "ts": datetime.datetime.now().isoformat(),
-                        "data": company_raw_one
-                    }
-                    cache_json_content = cache_json.post(cache_json_uri, json.dumps(fetch_result))
-                    cache_type = ""
-
-            if not company_raw_one:
-                gcounter["missing"]+=1
-                continue
-
-            #post local cache
-            if company_raw_one:
-                if flag_mono and cache_type != "local":
-                    fetch_result = {
-                        "key_num":key_num,
-                        "name": name,
-                        "ts": datetime.datetime.now().isoformat(),
-                        "data": company_raw_one
-                    }
-                    with codecs.open(filename_cache_fetch_result, 'a',encoding="utf8") as f:
-                        f.write(u"{}\n".format(json.dumps(fetch_result)))
-
-
-            #only create company_raw when it is single threaded OP
-            if flag_mono:
-                #company_raw.update(company_raw_one)
-                #line  = u"{}\t{}".format( company_raw[name]["key_num"], name)
-                #company_raw_simple.append(line)
-                pass
-
-            #counter["company_raw_one"] =len(company_raw_one)
-            counter["ok"] +=1
-        except:
-            import traceback
-            traceback.print_exc(file=sys.stdout)
-            #print "fail",
-            counter["failed"] +=1
-            pass
-
-    #only create company_raw when it is single threaded OP
-    #if flag_mono:
-        #gcounter["company_raw.{}.json".format(batch)] = len(company_raw)
-        # filename = getLocalFile("output/company_raw.{}.json".format(batch))
-        # with codecs.open(filename,"w", encoding="utf-8") as f:
-        #     json.dump(company_raw, f, ensure_ascii=False, indent=4, sort_keys=True )
-
-
-        #filename = getLocalFile("output/company_raw.{}.txt".format(batch))
-        #libfile.lines2file(company_raw_simple, filename)
 
 
 #
@@ -1016,11 +1178,12 @@ def expand_putian_pass(front, company_raw, map_agent_related, depth):
 
 
 
-def get_crawler(batch_id, option, worker_id=None, cache_only=False):
+def get_crawler(batch_id, option, worker_id=None, worker_num=None, cache_only=False):
     with open(FILE_CONFIG) as f:
         config = json.load(f)[option]
         if worker_id is not None:
             config['WORKER_ID'] = worker_id
+            config["WORKER_NUM"] = worker_num
     return Qichacha(config, batch_id, cache_only=cache_only)
 
 
@@ -1204,8 +1367,9 @@ def main():
 
         if len(sys.argv)>4:
             worker_id = int(sys.argv[4])
+            worker_num = int(sys.argv[5])
             print "search with prefetch"
-            crawl_search(batch, path_expr, refresh=False, worker_id=worker_id, cookie_index=COOKIE_INDEX_PREFETCH)
+            crawl_search(batch, path_expr, refresh=False, worker_id=worker_id, worker_num=worker_num, cookie_index=COOKIE_INDEX_PREFETCH)
         else:
             print "search mono"
             crawl_search(batch, path_expr, refresh=False, cookie_index=COOKIE_INDEX_SEARCH)
@@ -1221,29 +1385,32 @@ def main():
 
 
 
-
+    elif "fetch_prepare" == option:
+        print option
+        fetch_prepare_all(batch)
 
     elif "fetch" == option:
         if len(sys.argv)>3:
             worker_id = int(sys.argv[3])
+            worker_num = int(sys.argv[4])
             print "fetch with prefetch"
-            fetch_detail(batch, worker_id, cookie_index=COOKIE_INDEX_PREFETCH, expand=True)
+            fetch_detail(batch, worker_id, worker_num=worker_num, cookie_index=COOKIE_INDEX_PREFETCH, expand=True)
         else:
             print "fetch mono"
             fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH, expand=True)
-    elif "fetch_cache_only" == option:
-            print "fetch mono cache_only"
-            fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH, expand=True, cache_only=True)
-    elif "fetch_company_raw" == option:
-            print "fetch company_raw"
-            fetch_company_raw(batch, expand=True)
+    elif "fetch_output" == option:
+        print option
+        selection = "putian"
+        if len(sys.argv)>3:
+            selection = sys.argv[3]
+        filename_input = getLocalFile("server/company_all.{}.tsv".format(batch))
+        fetch_output(batch, selection, filename_input, expand=True)
+        #fetch_output(batch, "medical", expand=True)
 
-    elif "prefetch" == option:
-        prefetch(batch)
+
 
     elif "expand_person" == option:
         expand_person(batch)
-
     elif "expand_putian" == option:
         expand_putian(batch)
 
