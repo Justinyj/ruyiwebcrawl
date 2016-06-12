@@ -58,7 +58,7 @@ def run_zhidao():
     t1 = post_job(BATCH_ID['question'], manager, 'get', 3, False, urls)
     t1.rawlink(delete_distributed_queue)
     tasks.append(t1)
-    t2 = post_job(BATCH_ID['answer'], manager, 'get', 3, False, [], len(urls) * 3, cleaning_delay=60)
+    t2 = post_job(BATCH_ID['answer'], manager, 'get', 3, False, [], len(urls) * 3, delay=60)
     t2.rawlink(delete_distributed_queue)
     tasks.append(t1)
 

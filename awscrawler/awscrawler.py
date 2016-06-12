@@ -12,7 +12,7 @@ import gevent
 from schedule import Schedule
 
 
-def post_job(batch_id, manager, method, gap, js, urls, total_count=None, cleaning_delay=0):
+def post_job(batch_id, manager, method, gap, js, urls, total_count=None, delay=0):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
