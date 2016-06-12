@@ -7,7 +7,7 @@ from __future__ import print_function, division
 from fabric.api import *
 
 env.hosts = ['54.153.17.69']
-env.hosts = ['54.183.135.70']
+env.hosts = ['54.67.13.96']
 env.user = 'admin'
 
 DEPLOY_ENV = 'TEST'

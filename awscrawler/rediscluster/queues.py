@@ -154,7 +154,7 @@ class Queue(object):
         if ret == '0':
             return
 
-        while self.qsize() != 0 or conn.hlen(self.timehash) != 0:
+        while self.qsize() > 0 or conn.hlen(self.timehash) > 1:
             self.clean_task()
             time.sleep(self.timeout)
 
@@ -345,7 +345,7 @@ class HashQueue(object):
         if ret == '0':
             return
 
-        while self.qsize() != 0 or conn.hlen(self.timehash) != 0:
+        while self.qsize() > 0 or conn.hlen(self.timehash) > 1:
             self.clean_task()
             time.sleep(self.timeout)
 
