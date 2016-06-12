@@ -76,9 +76,8 @@ def generate_question_json(content, answer_ids):
     q_id = parse_q_id(content)
     q_content = parse_q_content(content)
     if 'word-replace' in q_content:
-        if not hasattr(generate_question_json, '_imgcontent_counter'):
-            setattr(generate_question_json, '_imgcontent_counter', 0)
-        generate_question_json._imgcontent_counter += 1
+        #   setattr(generate_question_json, '_imgcontent_counter', 0)
+        #generate_question_json._imgcontent_counter += 1
         return
     q_time = parse_q_time(content)
     rids = parse_answer_ids(content)
