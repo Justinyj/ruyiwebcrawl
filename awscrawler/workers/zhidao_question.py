@@ -51,7 +51,6 @@ def parse_q_content(content):
     q_content = ''
     m = re.search('accuse="qContent">(.*?)(</pre>|</div>)', content)
     n = re.search('accuse="qSupply">(.*?)(</pre>|</div>)', content)
-
     if m:
         q_content = m.group(1)
         q_content = re.sub('<.*?>', '\n', q_content)
@@ -76,6 +75,11 @@ def generate_question_json(content, answer_ids):
         return
     q_id = parse_q_id(content)
     q_content = parse_q_content(content)
+    if 'word-replace' in q_content:
+        if not hasattr(generate_question_json, '_imgcontent_counter'):
+            setattr(generate_question_json, '_imgcontent_counter', 0)
+        generate_question_json._imgcontent_counter += 1
+        return
     q_time = parse_q_time(content)
     rids = parse_answer_ids(content)
     item = {
@@ -118,7 +122,7 @@ def process(url, parameter, manager, *args, **kwargs):
     qid = re.search(
         'http://zhidao.baidu.com/question/(\d+).html', url).group(1)
     for answer_id in answer_ids[:3]:
-        answer_urls.append( get_answer_url(qid, answer_id) )
+        answer_urls.append(get_answer_url(qid, answer_id))
     manager.put_urls_enqueue(BATCH_ID['answer'], answer_urls)
 
     return flag
