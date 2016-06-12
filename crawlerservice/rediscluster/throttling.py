@@ -10,7 +10,7 @@ from collections import deque
 import time
 
 def call_with_throttling(func, args=(), kwargs={}, expected_processing_gap=0.1):
-    """ calling a func with throttling
+    """ calling a func with throttling(token bucket algorithm)
 
     Throttling the function call with ``threshold_per_minute`` calls per minute.
     This is useful in case where the func calls a remote service having their throttling policy.
@@ -47,7 +47,8 @@ def call_with_throttling(func, args=(), kwargs={}, expected_processing_gap=0.1):
 
 
     def smoothen_calling_interval():
-        average_processing_gap = (time.time() - started_at) / count
+        average_processing_gap = (time.time() - logs[0]) / len(logs)
+#        average_processing_gap = (time.time() - started_at) / count
         if expected_processing_gap > average_processing_gap:
             time.sleep( (len(logs)+0.8)*expected_processing_gap - len(logs)*average_processing_gap )
 

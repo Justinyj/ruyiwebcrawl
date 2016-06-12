@@ -24,6 +24,7 @@ class Schedule(object):
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.pkey = paramiko.RSAKey.from_private_key_file('/home/admin/.ssh/crawler-california.pem')
 
     def _assign_cookies(self, cookies):
         id_cookie_dict = {}
@@ -42,19 +43,19 @@ class Schedule(object):
         return id_cookie_dict
 
 
-    def run(self, *args, **kwargs):
+    def run_forever(self, *args, **kwargs):
         time.sleep(30)
 
         before = time.time()
         while 1:
-            ids = self.ec2manager.stop_and_restart(self.group_num)
+            ids = self.ec2manager.stop_and_start(self.group_num)
             for i in ids:
                 idx = self.ec2manager.get_idx_by_id(i)
-                base_cmd = ('/home/admin/.virtualenvs/crawlerservice/bin/python'
-                            ' /opt/service/awscrawler/worker.py -i {}'
+                base_cmd = ('cd /opt/service/awscrawler; source env.sh TEST; '
+                            'dtach -n /tmp/worker.sock python worker.py -i {}'
                             ' '.format(idx))
                 if i in self.id_cookie_dict:
-                    command = base_cmd + "-c '{}'".format(self.id_cookie_dict[i])
+                    command = base_cmd + '-c "{}"'.format(self.id_cookie_dict[i])
                 else:
                     command = base_cmd
                 ipaddr = self.ec2manager.get_ipaddr(i)
@@ -70,8 +71,10 @@ class Schedule(object):
 
     def remote_command(self, ipaddr, command):
         try:
-            self.ssh.connect(ipaddr, username='admin')
+            self.ssh.connect(ipaddr, username='admin', pkey=self.pkey)
             ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)
         finally:
             self.ssh.close()
 
+    def stop_all_instances(self):
+        self.ec2manager.terminate(self.ids)

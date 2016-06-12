@@ -5,6 +5,7 @@
 from __future__ import print_function, division
 
 import boto3
+import time
 from collections import deque
 
 from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
@@ -12,11 +13,11 @@ from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 from settings import REGION_NAME
 
 if REGION_NAME == 'us-west-1':
-    KEYPAIR = 'crawler-california.pem'
+    KEYPAIR = 'crawler-california'
     SECURITYGROUPID = 'sg-cdd863a9' # ssh
-    AMI_ID = 'ami-928ef4f2'
+    AMI_ID = 'ami-0980fa69'
 elif REGION_NAME == 'ap-northeast-1':
-    KEYPAIR = 'crawl-tokyo.pem'
+    KEYPAIR = 'crawl-tokyo'
     SECURITYGROUPID = 'sg-fcbf0998'
     AMI_ID = ''
 
@@ -65,7 +66,9 @@ class Ec2Manager(object):
         self.ec2.instances.filter(InstanceIds=ids).terminate()
 
     def get_ipaddr(self, one_id):
-        return self.id_instance[one_id].private_ip_address
+        i = self.id_instance[one_id]
+        i.load()
+        return i.private_ip_address
 
     def get_idx_by_id(self, one_id):
         return self.id_idx[one_id]
@@ -106,27 +109,37 @@ class Ec2Manager(object):
 
         self.stop(ids)
         count = [0] * len(ids)
+        time.sleep(10)
+
+        start = time.time()
         while 1:
             for idx, val in enumerate(count):
                 if val == 0:
                     i = group_instances[idx]
-                    i.load()
-                    if i.meta.data[u'State'][u'Name'] == 'stoped':
+                    if i.meta.data[u'State'][u'Name'] == 'stopped':
                         count[idx] = 1
             if sum(count) == len(ids):
                 break
+            time.sleep(1)
+            [group_instances[idx].load() for idx, val in enumerate(count) if val == 0]
+        print('stop {} need: {}'.format(group_num, time.time() - start)) # 20.59s / 9
 
         self.start(ids)
         count = [0] * len(ids)
+        time.sleep(10)
+
+        start = time.time()
         while 1:
             for idx, val in enumerate(count):
                 if val == 0:
                     i = group_instances[idx]
-                    i.load()
                     if i.meta.data[u'State'][u'Name'] == 'running':
                         count[idx] = 1
             if sum(count) == len(ids):
                 break
+            time.sleep(1)
+            [group_instances[idx].load() for idx, val in enumerate(count) if val == 0]
+        print('start {} need: {}'.format(group_num, time.time() - start)) # 20.59s / 9
 
         self.queue.extend(group_instances)
         return ids

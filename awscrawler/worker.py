@@ -5,13 +5,12 @@
 
 from __future__ import print_function, division
 
-from gevent import monkey; monkey.patch_all()
-import gevent
+import time
 
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
-from awscrawler import init_distribute_queue
+from rediscluster.redismanager import RedisManager
 
 class Worker(object):
     """ General worker
@@ -27,59 +26,43 @@ class GetWorker(Worker):
     def __init__(self, index):
         super(GetWorker, self).__init__()
         self.index = index
+        self._batch_param = {}
+        self.manager = RedisManager()
 
-        self.queues = [i for i in self._get_task_queue()]
-        self.distributed_queues = [] # distributed init at scheduler end,
-                                     # not worker end
-
-        for q in self.queues:
-            parameter = Record.instance().get_parameter(q.key)
-            total_count = Record.instance().get_total_number(q.key)
+        for batch_id in Record.instance().get_unfinished_batch():
+            parameter = Record.instance().get_parameter(batch_id)
+            total_count = Record.instance().get_total_number(batch_id)
             if total_count is None:
-                self.distributed_queues.append(None)
                 continue
-            obj = init_distribute_queue(q.key, parameter, int(total_count))
-            self.distributed_queues.append(obj)
+            self.manager.init_distributed_queue(batch_id, parameter, int(total_count))
+            self._batch_param[batch_id] = parameter
 
-
-    def _get_task_queue(self):
-        keys = Record.instance().get_unfinished_batch()
-        for key in keys:
-            yield HashQueue(key, priority=2, timeout=90, failure_times=3)
-
-    def _check_empty_queue(self, queue):
-        """ after 3 times of get, result is empty
+    def schedule(self, *args, **kwargs):
+        """ I believe the third time sleep 4 minutes,
+            all the queues will be fill enough data.
+            We can change the parameter whenever needed.
         """
-        for i in range(3):
-            results = queue.get(block=True, timeout=3, interval=1)
-            if results != []:
-                return False
-        return True
+        time_to_sleep = 60
 
-    def delete_queue_check(self, queue):
-        ret = self._check_empty_queue(queue)
-        if ret is False:
-            return False
-        ret = Record.instance().is_finished(queue.key)
-        if ret is True:
-            return False
-        status = queue.get_background_cleaning_status()
-        if status != '0':
-            return False
-        return True
+        for _ in range(3):
+            self.run(*args, **kwargs)
+            time.sleep(time_to_sleep)
+            time_to_sleep *= 2
 
     def run(self, *args, **kwargs):
         """ end, background_cleansing, status:
-            0,   None,                 begin
-            0,   1,                    begin cleansing
-            0,   0,                    finish cleansing
+         None,   None,                 begin
+         None,   1,                    begin cleaning
+         None,   0,                    finish cleaning
+
          time,   0,                    begin delete
          time,   None,                 finish delete
-            0,   0,                    finish cleansing with exception
+
+         None,   0,                    finish cleaning then exception
         """
-        for idx, queue in enumerate(self.queues):
-            background = queue.get_background_cleaning_status()
-            if Record.instance().is_finished(queue.key) is True:
+        for batch_id, queue_dict in self.manager.cache.iteritems():
+            queue = queue_dict['queue']
+            if Record.instance().is_finished(batch_id) is True:
                 # this queue and queue object in distributed_queues can be
                 # delete, but not needed. When run finish and
                 # background_cleansing finsh, this process end.
@@ -87,38 +70,17 @@ class GetWorker(Worker):
                 # If another worker delete queue, I don't need to do anything.
                 continue
 
-            tasks = []
-            queue_dict = self.distributed_queues[idx]
+            background = queue.get_background_cleaning_status()
             if background is None:
-                tasks.append( gevent.spawn(queue.background_cleaning) )
-                tasks.append( gevent.spawn(self.work, queue_dict, *args, **kwargs) )
+                self.work(batch_id, queue_dict, *args, **kwargs)
             elif background == '1':
-                tasks.append( gevent.spawn(self.work, queue_dict, *args, **kwargs) )
+                self.work(batch_id, queue_dict, *args, **kwargs)
 
             elif background == '0':
-                ret = self.delete_queue_check(queue)
-                if ret is True:
-                    # caution! atom operation
-                    try:
-                        Record.instance().end(queue.key)
-                        queue_dict['thinhash'].delete()
-                        queue.flush()
-                    except:
-                        Record.instance().from_end_rollback(queue.key)
-
-            gevent.joinall(tasks)
+                pass
 
 
-    def work(self, queue_dict, *args, **kwargs):
-        if not hasattr(self, '_batch_param'):
-            setattr(self, '_batch_param', {})
-
-        batch_id = queue_dict['queue'].key
-        param = self._batch_param.get(batch_id)
-        if param is None:
-            parameter = Record.instance().get_parameter(batch_id)
-            self._batch_param[batch_id] = parameter
-
+    def work(self, batch_id, queue_dict, *args, **kwargs):
         batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
         module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
 
@@ -130,6 +92,7 @@ class GetWorker(Worker):
 
                 process_status = module.process(url,
                                                 self._batch_param[batch_id],
+                                                self.manager,
                                                 *args,
                                                 **kwargs)
                 if process_status:
@@ -147,9 +110,9 @@ def main():
     if option.index:
         obj = GetWorker(option.index)
         if option.cookie:
-            obj.run(cookie=option.cookie)
+            obj.schedule(cookie=option.cookie)
         else:
-            obj.run()
+            obj.schedule()
 
 if __name__ == '__main__':
     main()
