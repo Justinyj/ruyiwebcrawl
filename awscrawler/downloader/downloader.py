@@ -77,7 +77,7 @@ class Downloader(object):
                     return response.text # text is unicode
             except Exception as e: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
                                    # requests.exceptions.MissingSchema
-                print('requests failed: ', sys.exc_info()[0])
+                print('requests failed: {}, detail: {}'.format(sys.exc_info()[0], e))
             finally:
                 time.sleep(self._get_sleep_period())
         else:
@@ -116,7 +116,7 @@ class Downloader(object):
                 return False
             return ret
 
-        if refresh is True:
+        if refresh is True: # TODO need redownload, save_cache
             content = self.cache.get(url)
             if content != u'':
                 return content

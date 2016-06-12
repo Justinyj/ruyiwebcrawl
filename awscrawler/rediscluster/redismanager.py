@@ -109,10 +109,11 @@ class RedisManager(object):
             return True
 
 
-    def _check_empty_queue(self, queue):
-        """ after 3 times of get, result is empty
+    def __check_empty_queue(self, queue):
+        """ after 5 times of get, result is empty
+            for HashQueue need more times check cause it may return 0 element
         """
-        results = queue.get(block=True, timeout=3, interval=1)
+        results = queue.get(block=True, timeout=5, interval=1)
         return False if results != [] else True
 
 

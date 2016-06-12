@@ -62,7 +62,7 @@ def run_zhidao():
     t2.rawlink(delete_distributed_queue)
     tasks.append(t1)
 
-    schedule = Schedule(9, tag=BATCH_ID['question'].split('-', 1)[0])
+    schedule = Schedule(3, tag=BATCH_ID['question'].split('-', 1)[0])
     t3 = gevent.spawn(schedule.run_forever)
 
     gevent.joinall(tasks)

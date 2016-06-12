@@ -13,7 +13,7 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['54.153.34.170']
+    env.hosts = ['54.153.17.69']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
@@ -69,7 +69,7 @@ def kill():
 
 def runapp():
     with cd('/opt/service/crawlerservice'):
-        run('psql -U postgres < cache/crawlercache.sql')
+#        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')

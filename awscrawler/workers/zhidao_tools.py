@@ -24,7 +24,7 @@ def get_answer_url(q_id, r_id):
     return ANSWER_URL.format(q_id, r_id)
 
 
-def get_zhidao_content(url, method, gap, header, batch_id):
+def get_zhidao_content(url, method, gap, header, batch_id, error_check=True):
     if not hasattr(get_zhidao_content, '_batches'):
         setattr(get_zhidao_content, '_batches', {})
 
@@ -42,6 +42,6 @@ def get_zhidao_content(url, method, gap, header, batch_id):
                 'get',
                 encode='gb18030',
                 redirect_check=True,
-                error_check=True,
+                error_check=error_check,
                 refresh=False)
 

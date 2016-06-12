@@ -3,10 +3,12 @@
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 
 from __future__ import print_function, division
-from math import ceil
 
 import time
 import paramiko
+
+from math import ceil
+from paramiko.ssh_exception import NoValidConnectionsError
 
 from ec2manager import Ec2Manager
 
@@ -70,11 +72,14 @@ class Schedule(object):
 
 
     def remote_command(self, ipaddr, command):
-        try:
-            self.ssh.connect(ipaddr, username='admin', pkey=self.pkey)
-            ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)
-        finally:
-            self.ssh.close()
+        for _ in range(6):
+            try:
+                self.ssh.connect(ipaddr, username='admin', pkey=self.pkey)
+                ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)
+                break
+            except NoValidConnectionsError:
+                time.sleep(10)
+        self.ssh.close()
 
     def stop_all_instances(self):
         self.ec2manager.terminate(self.ids)
