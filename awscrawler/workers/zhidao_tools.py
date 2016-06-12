@@ -30,7 +30,7 @@ def get_zhidao_content(url, method, gap, header, batch_id, error_check=True):
 
     ret = get_zhidao_content._batches.get(batch_id)
     if ret is None:
-        downloader = Downloader(request=True, gap=gap, batch_id=batch_id)
+        downloader = Downloader(request=True, gap=gap, batch_id=batch_id, timeout=10)
         downloader.login()
         get_zhidao_content._batches[batch_id] = downloader
 

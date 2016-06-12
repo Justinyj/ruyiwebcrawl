@@ -21,7 +21,7 @@ class RedisManager(object):
                                parameter,
                                total_count,
                                priority=2,
-                               timeout=90,
+                               timeout=180,
                                failure_times=3):
         """ total_count can be a predetermined number larger than real total_count
         """

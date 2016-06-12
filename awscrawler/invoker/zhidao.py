@@ -55,14 +55,14 @@ def run_zhidao():
     urls = load_urls(filename)
 
     tasks = []
-    t1 = post_job(BATCH_ID['question'], manager, 'get', 3, False, urls)
+    t1 = post_job(BATCH_ID['question'], manager, 'get', 3, False, urls, queue_timeout=100*10)
     t1.rawlink(delete_distributed_queue)
     tasks.append(t1)
-    t2 = post_job(BATCH_ID['answer'], manager, 'get', 3, False, [], len(urls) * 3, delay=60)
+    t2 = post_job(BATCH_ID['answer'], manager, 'get', 3, False, [], len(urls) * 3, queue_timeout=100*10, delay=60)
     t2.rawlink(delete_distributed_queue)
     tasks.append(t1)
 
-    schedule = Schedule(3, tag=BATCH_ID['question'].split('-', 1)[0])
+    schedule = Schedule(3, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
     t3 = gevent.spawn(schedule.run_forever)
 
     gevent.joinall(tasks)

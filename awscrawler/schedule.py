@@ -14,11 +14,13 @@ from ec2manager import Ec2Manager
 
 class Schedule(object):
 
-    def __init__(self, machine_num, tag, cycle=600, *args, **kwargs):
+    def __init__(self, machine_num, tag, cycle=600, backoff_timeout=180, *args, **kwargs):
         self.machine_num = machine_num
         self.cycle = cycle
         self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
         self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num 
+
+        self.backoff_timeout = backoff_timeout
 
         self.ec2manager = Ec2Manager(tag)
         self.ids = self.ec2manager.create_instances(self.machine_num)
@@ -55,7 +57,7 @@ class Schedule(object):
                 idx = self.ec2manager.get_idx_by_id(i)
                 base_cmd = ('cd /opt/service/awscrawler; source env.sh TEST; '
                             'dtach -n /tmp/worker.sock python worker.py -i {}'
-                            ' '.format(idx))
+                            ' -t {}'.format(idx, self.backoff_timeout))
                 if i in self.id_cookie_dict:
                     command = base_cmd + '-c "{}"'.format(self.id_cookie_dict[i])
                 else:

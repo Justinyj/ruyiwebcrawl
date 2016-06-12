@@ -13,11 +13,11 @@ from .cache import Cache
 
 class Downloader(object):
 
-    def __init__(self, request=False, batch_id='', gap=0, groups=None, refresh=False):
+    def __init__(self, request=False, batch_id='', gap=0, timeout=10, groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
-        self.TIMEOUT = 10
+        self.TIMEOUT = timeout
         self.RETRY = 2
 
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')

@@ -193,7 +193,7 @@ class HashQueue(object):
 
         HashQueue has count on every task of get, failed after 3 times
     """
-    def __init__(self, key, priority=1, timeout=1000, failure_times=3):
+    def __init__(self, key, priority=1, timeout=180, failure_times=3):
         """
         :param timeout: 如果timeout后，background_cleansing 把任务又加入队列.
                         task_done 来的超时，
