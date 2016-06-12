@@ -112,7 +112,7 @@ class Downloader(object):
             groups = self.groups if groups is None else groups
             ret = self.cache.post(url, source, groups, refresh)
             if ret not in [True, False]:
-                print(ret)
+                print('request with cache save_cach return: ', ret)
                 return False
             return ret
 

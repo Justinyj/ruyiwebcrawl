@@ -56,7 +56,7 @@ class Record(object):
     def increase_failed(self, batch_id, count=1):
         self.conn.hincrby(batch_id, 'failed', count)
 
-    def add_exception(batch_id, url, error):
+    def add_exception(self, batch_id, url, error):
         self.conn.hset(batch_id, url, error)
 
     def get_total_number(self, batch_id):

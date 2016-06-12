@@ -73,7 +73,7 @@ def runapp():
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
-            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4 -program=cache'))
+            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=2 -program=cache'))
 #            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))
 #            run('dtach -n /tmp/{}.sock {}'.format('crawlerfetch', 'python main.py -port=8002 -process=4 -program=fetch'))
 

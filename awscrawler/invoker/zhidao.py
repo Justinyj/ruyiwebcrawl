@@ -68,6 +68,7 @@ def run_zhidao():
     gevent.joinall(tasks)
     gevent.kill(t3, block=True)
 
+    print('kill schedule')
     schedule.stop_all_instances()
 
 if __name__ == '__main__':
