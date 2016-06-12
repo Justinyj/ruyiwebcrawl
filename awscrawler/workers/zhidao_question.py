@@ -122,7 +122,7 @@ def process(url, parameter, manager, *args, **kwargs):
     qid = re.search(
         'http://zhidao.baidu.com/question/(\d+).html', url).group(1)
     for answer_id in answer_ids[:3]:
-        answer_urls.append(get_answer_url(qid, answer_id))
+        answer_urls.append( get_answer_url(qid, answer_id) )
     manager.put_urls_enqueue(BATCH_ID['answer'], answer_urls)
 
     return flag
