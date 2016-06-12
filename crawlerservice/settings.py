@@ -42,6 +42,7 @@ envs = {
         'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
+        'REGION_NAME': 'ap-northeast-1',
 
         'RECORD_REDIS': 'redis://localhost:6379/1',
         'QUEUE_REDIS': 'redis://localhost:6379/2',
@@ -62,6 +63,7 @@ envs = {
         'CACHEPAGE': 'fs', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
+        'REGION_NAME': 'ap-northeast-1',
 
         'RECORD_REDIS': 'redis://localhost:6379/1',
         'QUEUE_REDIS': 'redis://localhost:6379/2',

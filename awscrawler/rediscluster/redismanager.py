@@ -99,8 +99,9 @@ class RedisManager(object):
         distributed = self.get_distributed_queue(batch_id)
         if distributed is None:
             return
-        if distributed['queue'].get_background_cleaning_status() != 0:
+        if distributed['queue'].get_background_cleaning_status() != '0':
             return
+
 
         if Record.instance().if_not_finish_set(batch_id) == 1:
             distributed['thinhash'].delete()

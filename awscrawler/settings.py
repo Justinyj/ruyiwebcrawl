@@ -18,7 +18,7 @@ envs = {
             'redis://localhost:6379/0',
         ],
 
-        'CACHE_SERVER': 'http://127.0.0.1:8000',
+        'CACHE_SERVER': 'http://192.168.1.179:8000',
         'REGION_NAME': 'us-west-1',
     },
     'PRODUCTION': {

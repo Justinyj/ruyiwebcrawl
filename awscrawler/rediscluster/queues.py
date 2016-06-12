@@ -113,7 +113,6 @@ class Queue(object):
         """ clear start time in redis hash, indicating the task done
             increase successful count in record hash
         """
-        Record.instance().increase_success(self.key)
         return conn.hdel(self.timehash, result)
 
     def clean_task(self):
@@ -293,7 +292,6 @@ class HashQueue(object):
         """ clear start time in redis hash, indicating the task done
             increase successful count in record hash
         """
-        Record.instance().increase_success(self.key)
         return conn.hdel(self.timehash, result)
 
     def clean_task(self):

@@ -98,10 +98,12 @@ class GetWorker(Worker):
                                                     **kwargs)
                 except Exception as e:
                     Record.instance().add_exception(batch_id, url, repr(e))
+                    queue_dict['queue'].task_done(url_id)
                     continue
 
                 if process_status:
                     queue_dict['queue'].task_done(url_id)
+                    Record.instance().increase_success(batch_id)
                 else:
                     Record.instance().increase_failed(batch_id)
 

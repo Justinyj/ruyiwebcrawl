@@ -10,35 +10,26 @@ import gevent
 from rediscluster.redismanager import RedisManager
 from awscrawler import post_job
 from schedule import Schedule
+from invoker.zhidao_constent import BATCH_ID, HEADER
 
-
-BATCH_ID = {
-    'question': 'zhidao-question-20160606',
-    'answer': 'zhidao-answer-20160606',
-    'json': 'zhidao-json-20160606',
-    'result': 'zhidao-result-20160606'
-}
-
-HEADER = {
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Encoding': 'gzip, deflate, sdch',
-    'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
-    'Host': 'zhidao.baidu.com',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.63 Safari/537.36',
-    'Connection': 'keep-alive',
-    'Cache-Control': 'max-age=0',
-    'Upgrade-Insecure-Requests': '1'
-}
 
 manager = RedisManager()
 gcounter = 0
+
+def patch_greenlet(func):
+    def inner(*args, **kwargs):
+        return gevent.spawn(func, *args, **kwargs)
+    return inner
 
 def load_urls(fname):
     with open(fname) as fd:
         return [i.strip() for i in fd if i.strip() != '']
 
+
+@patch_greenlet
 def delete_distributed_queue(greenlet):
-    """ In this callback, the return value is batch_id
+    """ In this callback, the greenlet.value is batch_id
+        this will be called after run_zhidao.gevent.joinall
     """
     global manager
     global gcounter
@@ -54,21 +45,24 @@ def run_zhidao():
     filename = 'useful_zhidao_urls.txt'
     urls = load_urls(filename)
 
-    tasks = []
+    gtasks = []
     t1 = post_job(BATCH_ID['question'], manager, 'get', 3, False, urls, queue_timeout=100*10)
     t1.rawlink(delete_distributed_queue)
-    tasks.append(t1)
+    gtasks.append(t1)
     t2 = post_job(BATCH_ID['answer'], manager, 'get', 3, False, [], len(urls) * 3, queue_timeout=100*10, delay=60)
     t2.rawlink(delete_distributed_queue)
-    tasks.append(t1)
+    gtasks.append(t1)
 
     schedule = Schedule(3, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
     t3 = gevent.spawn(schedule.run_forever)
 
-    gevent.joinall(tasks)
+    gevent.joinall(gtasks)
     gevent.kill(t3, block=True)
 
-    print('kill schedule')
+
+    print('wait queue finish monitoring')
+    import time
+    time.sleep(240)
     schedule.stop_all_instances()
 
 if __name__ == '__main__':

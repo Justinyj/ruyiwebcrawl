@@ -9,7 +9,7 @@ import json
 import requests
 
 from downloader.downloader import Downloader
-from invoker.zhidao import BATCH_ID
+from invoker.zhidao_constent import BATCH_ID
 
 
 DATA_PATH = os.path.abspath(os.path.dirname(
