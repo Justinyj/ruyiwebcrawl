@@ -25,7 +25,7 @@ class Record(object):
         return cls._instance
 
 
-    def begin(self, batch_id, parameter, total):
+    def begin(self, batch_id, parameter, total, priority):
         """ before task finish, it is a reentrant function
 
         :param batch_id: str
@@ -34,6 +34,7 @@ class Record(object):
         self.conn.hsetnx(batch_id, 'parameter', parameter)
         self.conn.hsetnx(batch_id, 'start', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         self.conn.hsetnx(batch_id, 'total', total)
+        self.conn.hsetnx(batch_id, 'priority', priority)
 
         self.conn.hsetnx(batch_id, 'failed', 0)
         self.conn.hsetnx(batch_id, 'success', 0)
@@ -58,6 +59,9 @@ class Record(object):
 
     def add_exception(self, batch_id, url, error):
         self.conn.hset(batch_id, url, error)
+
+    def get_priority(self, batch_id):
+        return self.conn.hget(batch_id, 'priority')
 
     def get_total_number(self, batch_id):
         return self.conn.hget(batch_id, 'total')

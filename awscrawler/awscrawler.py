@@ -14,7 +14,7 @@ from rediscluster.redismanager import RedisManager
 
 MANAGER = RedisManager()
 
-def post_job(batch_id, method, gap, js, urls, total_count=None, queue_timeout=90, delay=0):
+def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queue_timeout=180, failure_times=3, start_delay=0):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
@@ -26,10 +26,15 @@ def post_job(batch_id, method, gap, js, urls, total_count=None, queue_timeout=90
             gap=gap,
             js=1 if js else 0)
 
-    queue_dict = MANAGER.init_distributed_queue(batch_id, parameter, total_count, timeout=queue_timeout)
+    queue_dict = MANAGER.init_distributed_queue(batch_id,
+                                                parameter,
+                                                total_count,
+                                                priority,
+                                                timeout=queue_timeout,
+                                                failure_times=failure_times)
     MANAGER.put_urls_enqueue(batch_id, urls)
 
-    return gevent.spawn_later(delay, queue_dict['queue'].background_cleaning)
+    return gevent.spawn_later(start_delay, queue_dict['queue'].background_cleaning)
 
 
 def patch_greenlet(func):
