@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for minglu project
+# Scrapy settings for mingluji project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -19,7 +19,7 @@ ITEM_PIPELINES = {
 COOKIES_ENABLED = False
 DOWNLOAD_DELAY = 0.01
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'minglu (+http://www.yourdomain.com)'
+#USER_AGENT = 'mingluji (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
