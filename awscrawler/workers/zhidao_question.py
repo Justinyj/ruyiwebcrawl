@@ -62,7 +62,7 @@ def parse_answer_ids(content):
     return result
 
 
-def generate_question_json(qid, content, answer_ids):
+def generate_question_json(q_id, content, answer_ids):
     q_title = parse_title(content)
     if q_title is None:
         # print('未找到title或者页面不存在')
@@ -90,7 +90,7 @@ def process(url, parameter, manager, *args, **kwargs):
     if not m:
         return False
 
-    qid = m.group(1)
+    q_id = m.group(1)
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
     batch_id = BATCH_ID['question']
@@ -104,7 +104,7 @@ def process(url, parameter, manager, *args, **kwargs):
         return False
 
     answer_ids = []
-    question_content = generate_question_json(qid, content, answer_ids)
+    question_content = generate_question_json(q_id, content, answer_ids)
     if question_content is None:
         return False
 
@@ -115,7 +115,7 @@ def process(url, parameter, manager, *args, **kwargs):
 
     answer_urls = []
     for answer_id in answer_ids[:3]:
-        answer_urls.append( get_answer_url(qid, answer_id) )
+        answer_urls.append( get_answer_url(q_id, answer_id) )
     manager.put_urls_enqueue(BATCH_ID['answer'], answer_urls)
 
     return True
