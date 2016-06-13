@@ -34,20 +34,20 @@ class GetWorker(Worker):
             total_count = Record.instance().get_total_number(batch_id)
             if total_count is None:
                 continue
-            self.manager.init_distributed_queue(batch_id, parameter, int(total_count))
+            self.manager.worker_init_distributed_queue(batch_id, int(total_count))
             self._batch_param[batch_id] = parameter
 
     def schedule(self, *args, **kwargs):
-        """ I believe the third time sleep 4 minutes,
-            all the queues will be fill enough data.
+        """ I believe the third time sleep 4 minutes, all the queues will be fill enough data.
+            And all timehash in queue will be back to queue.
             We can change the parameter whenever needed.
         """
-        time_to_sleep = 60
+        timeout = time_to_sleep = kwargs.get('timeout', 60)
 
-        for _ in range(3):
+        for i in range(4):
             self.run(*args, **kwargs)
             time.sleep(time_to_sleep)
-            time_to_sleep *= 2
+            time_to_sleep = timeout * 2 ** i
 
     def run(self, *args, **kwargs):
         """ end, background_cleansing, status:
@@ -60,7 +60,7 @@ class GetWorker(Worker):
 
          None,   0,                    finish cleaning then exception
         """
-        for batch_id, queue_dict in self.manager.cache.iteritems():
+        for batch_id, queue_dict in self.manager.get_queue_with_priority()
             queue = queue_dict['queue']
             if Record.instance().is_finished(batch_id) is True:
                 # this queue and queue object in distributed_queues can be
@@ -90,13 +90,20 @@ class GetWorker(Worker):
             for url_id, count in results:
                 url = queue_dict['thinhash'].hget(url_id)
 
-                process_status = module.process(url,
-                                                self._batch_param[batch_id],
-                                                self.manager,
-                                                *args,
-                                                **kwargs)
+                try:
+                    process_status = module.process(url,
+                                                    self._batch_param[batch_id],
+                                                    self.manager,
+                                                    *args,
+                                                    **kwargs)
+                except Exception as e:
+                    Record.instance().add_exception(batch_id, url, repr(e))
+                    queue_dict['queue'].task_done(url_id)
+                    continue
+
                 if process_status:
                     queue_dict['queue'].task_done(url_id)
+                    Record.instance().increase_success(batch_id)
                 else:
                     Record.instance().increase_failed(batch_id)
 
@@ -106,13 +113,14 @@ def main():
     parser = argparse.ArgumentParser(description='Call Worker with arguments')
     parser.add_argument('--index', '-i', type=int, help='index of this machine in all this batch machines')
     parser.add_argument('--cookie', '-c', type=str, help='cookie for this machine')
+    parser.add_argument('--timeout', '-t', type=float, default=60, help='timeout for timehash to enqueue')
     option = parser.parse_args()
     if option.index:
         obj = GetWorker(option.index)
         if option.cookie:
-            obj.schedule(cookie=option.cookie)
+            obj.schedule(cookie=option.cookie, timeout=option.timeout)
         else:
-            obj.schedule()
+            obj.schedule(timeout=option.timeout)
 
 if __name__ == '__main__':
     main()

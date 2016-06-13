@@ -13,11 +13,11 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['54.153.34.170']
+    env.hosts = ['52.196.166.54']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
-DEPLOY_ENV = 'ZHIDAO'
+DEPLOY_ENV = 'PRODUCTION'
 
 def _aws():
     sudo('mkfs -t ext4 /dev/xvdb')
@@ -62,6 +62,9 @@ def upload():
         run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
 
+    with cd('/opt/service/crawlerservice'):
+        run('psql -U postgres < cache/crawlercache.sql')
+
 
 def kill():
     run("ps aux | grep python | grep -v grep | awk '{print $2}' | xargs -n 1 --no-run-if-empty kill")
@@ -69,11 +72,10 @@ def kill():
 
 def runapp():
     with cd('/opt/service/crawlerservice'):
-        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
-            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4 -program=cache'))
+            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=2 -program=cache'))
 #            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))
 #            run('dtach -n /tmp/{}.sock {}'.format('crawlerfetch', 'python main.py -port=8002 -process=4 -program=fetch'))
 

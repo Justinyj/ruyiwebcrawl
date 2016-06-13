@@ -39,18 +39,17 @@ def generate_answer_json(ans_content):
 def process(url, parameter, *args, **kwargs):
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
-    content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'])
-    if content is u'':
+
+    for _ in range(2):
+        content = get_zhidao_content(url, method, gap, HEADER, BATCH_ID['answer'], error_check=False)
+        if content != u'':
+            break
         time.sleep(gap)
-        content = get_zhidao_content(
-            url, method, gap, HEADER, BATCH_ID['answer'])
-    if content is u'':
+    else:
         return False
+
     ans_content = generate_answer_json(content)
     if ans_content is None:
         return False
     m = Cache(BATCH_ID['json'])
-    flag = m.post(url, ans_content)
-    if not flag:
-        flag = m.post(url, ans_content)
-    return flag
+    return m.post(url, ans_content)

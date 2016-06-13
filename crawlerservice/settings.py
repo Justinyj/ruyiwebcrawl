@@ -39,7 +39,8 @@ envs = {
         'DBHOST': '127.0.0.1',
         'DBPORT': 5432,
 
-        'CACHEPAGE': 'ufile', # ufile, fs, pg, qiniu
+        'CACHEPAGE': 's3', # ufile, fs, pg, qiniu
+        'REGION_NAME': 'ap-northeast-1',
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
 
@@ -62,6 +63,7 @@ envs = {
         'CACHEPAGE': 'fs', # ufile, fs, pg, qiniu
         'FSCACHEDIR': '/data/crawler_file_cache/',
         'CONCURRENT_NUM': 200,
+        'REGION_NAME': 'ap-northeast-1',
 
         'RECORD_REDIS': 'redis://localhost:6379/1',
         'QUEUE_REDIS': 'redis://localhost:6379/2',
