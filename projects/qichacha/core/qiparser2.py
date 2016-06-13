@@ -175,7 +175,32 @@ class QiParser(object):
 
     def parse_search_result(self, tree):
         ret = []
-        if tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
+        if tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
+            #new version after 2016-06-13
+            items = tree.cssselect('.list-group-item')
+            #print ("v3",len(items) )
+            for i in items:
+                #from lxml import etree as ET
+                #print ("v3",  ET.tostring(i, pretty_print=True))
+                if not i.cssselect('.name'):
+                    continue
+
+                href = i.attrib['href']
+                name = i.cssselect('.name')[0].text_content().strip()
+                status = i.cssselect('.label')[0].text_content().strip()
+                province, key_num = href.rstrip('.shtml').lstrip('/firm_').split('_', 1)
+                if not name:
+                    name = "NONAME-"+key_num
+                item = {
+                    'name': name,
+                    'status': status,
+                    'key_num': key_num,
+                    'href': href,
+                    'province': province,
+                }
+                ret.append(item)
+                #print (name)
+        elif tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
             #new version after 2016-05-31
             items = tree.cssselect('.list-group-item')
             #print ("v2",len(items) )
@@ -214,17 +239,27 @@ class QiParser(object):
 
         return ret
 
-    def parse_search_result_count(self, tree):
-        ret = tree.cssselect('.panel-default .pull-left .text-danger')
-        if ret:
-            return int(ret[0].text_content().strip().replace("+",""))
+    def parse_search_result_info(self, tree):
 
-        ret = tree.cssselect('.container .panel-default .pull-right span.text-danger')
-        #print (ret,ret[0].text_content().strip())
-        if ret:
-            return int(ret[0].text_content().strip().replace("+",""))
+        result_info = {"version": "v1.0", "date":"2016-05-01", "num_per_page": 10, "total": 0 }
+        if tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
+            result_info = {"version": "v1.3", "date":"2016-06-13", "num_per_page": 10 }
+        elif tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
+            result_info = {"version": "v1.2", "date":"2016-05-31", "num_per_page": 20 }
+        elif tree.cssselect('#searchlist'):
+            result_info = {"version": "v1.1", "date":"2016-05-15", "num_per_page": 10 }
 
-        return 0
+        r = tree.cssselect('.panel-default .pull-left .text-danger')
+        if r:
+            result_info["total"] = int(r[0].text_content().strip().replace("+",""))
+            return result_info
+        else:
+            r = tree.cssselect('.container .panel-default .pull-right span.text-danger')
+            #print (ret,ret[0].text_content().strip())
+            if r:
+                result_info["total"] = int(r[0].text_content().strip().replace("+",""))
+
+        return result_info
 
     def parse_company_investment(self, tree):
         invest_dict = {}
