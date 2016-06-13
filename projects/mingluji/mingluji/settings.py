@@ -58,7 +58,7 @@ SPIDER_MIDDLEWARES = {
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
- #   'minglu.middlewares.MyMiddleWare': 100,
+ #   'mingluji.middlewares.MyMiddleWare': 100,
  #   'scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware': None,
 #}
 
