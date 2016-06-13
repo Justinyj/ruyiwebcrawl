@@ -11,6 +11,7 @@ from math import ceil
 from paramiko.ssh_exception import NoValidConnectionsError
 
 from ec2manager import Ec2Manager, KEYPAIR
+from settings import ENV
 
 class Schedule(object):
 
@@ -58,9 +59,9 @@ class Schedule(object):
 
 
     def run_forever(self, *args, **kwargs):
-        base_cmd = ('cd /opt/service/awscrawler; source env.sh TEST; '
+        base_cmd = ('cd /opt/service/awscrawler; source env.sh {env}; '
                     'dtach -n /tmp/worker.sock python worker.py -i {{}}'
-                    ' -t {timeout}'.format(timeout=self.backoff_timeout))
+                    ' -t {timeout}'.format(env=ENV, timeout=self.backoff_timeout))
 
         for i in self.ids:
             self.run_command(i, base_cmd)

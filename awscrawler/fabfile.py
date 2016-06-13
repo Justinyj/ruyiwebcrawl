@@ -7,6 +7,7 @@ from __future__ import print_function, division
 from fabric.api import *
 
 env.hosts = ['52.196.166.54']
+env.hosts = ['52.193.140.89']
 env.user = 'admin'
 
 DEPLOY_ENV = 'PRODUCTION'
@@ -58,7 +59,7 @@ def runapp():
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
-            run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/zhidao.py'))
+#            run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/zhidao.py'))
 
 def deploy():
     upload()

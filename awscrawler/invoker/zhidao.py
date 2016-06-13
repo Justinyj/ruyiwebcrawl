@@ -10,7 +10,7 @@ import time
 
 from awscrawler import post_job, delete_distributed_queue
 from schedule import Schedule
-from invoker.zhidao_constent import BATCH_ID, HEADER
+from invoker.zhidao_constant import BATCH_ID, HEADER
 
 
 
