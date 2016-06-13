@@ -9,10 +9,12 @@ import hashlib
 import json
 import gevent
 
-from schedule import Schedule
+from rediscluster.redismanager import RedisManager
 
 
-def post_job(batch_id, manager, method, gap, js, urls, total_count=None, cleaning_delay=0):
+MANAGER = RedisManager()
+
+def post_job(batch_id, method, gap, js, urls, total_count=None, queue_timeout=90, delay=0):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
@@ -24,11 +26,26 @@ def post_job(batch_id, manager, method, gap, js, urls, total_count=None, cleanin
             gap=gap,
             js=1 if js else 0)
 
-    queue_dict = manager.init_distributed_queue(batch_id, parameter, total_count)
-    manager.put_urls_enqueue(batch_id, urls)
+    queue_dict = MANAGER.init_distributed_queue(batch_id, parameter, total_count, timeout=queue_timeout)
+    MANAGER.put_urls_enqueue(batch_id, urls)
 
     return gevent.spawn_later(delay, queue_dict['queue'].background_cleaning)
 
+
+def patch_greenlet(func):
+    def inner(*args, **kwargs):
+        return gevent.spawn(func, *args, **kwargs)
+    return inner
+
+
+@patch_greenlet
+def delete_distributed_queue(greenlet):
+    """ In this callback, the greenlet.value is batch_id
+        this will be called after gevent.joinall
+    """
+    ret = MANAGER.delete_queue(greenlet.value)
+    if ret is True:
+        pass
 
 def main():
     pass

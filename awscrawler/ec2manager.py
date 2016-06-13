@@ -15,7 +15,7 @@ from settings import REGION_NAME
 if REGION_NAME == 'us-west-1':
     KEYPAIR = 'crawler-california'
     SECURITYGROUPID = 'sg-cdd863a9' # ssh
-    AMI_ID = 'ami-0980fa69'
+    AMI_ID = 'ami-6a3c790a'
 elif REGION_NAME == 'ap-northeast-1':
     KEYPAIR = 'crawl-tokyo'
     SECURITYGROUPID = 'sg-fcbf0998'
@@ -46,6 +46,8 @@ class Ec2Manager(object):
                                         KeyName=KeyName,
                                         InstanceType=InstanceType,
                                         SecurityGroupIds=SecurityGroupIds)
+        time.sleep(60)
+
         for idx, i in enumerate(ins):
             self.ec2.create_tags(Resources=[i.id],
                     Tags=[{'Key': 'crawler', 'Value': self.tag}])
@@ -109,7 +111,7 @@ class Ec2Manager(object):
 
         self.stop(ids)
         count = [0] * len(ids)
-        time.sleep(10)
+        time.sleep(20)
 
         start = time.time()
         while 1:
@@ -126,7 +128,7 @@ class Ec2Manager(object):
 
         self.start(ids)
         count = [0] * len(ids)
-        time.sleep(10)
+        time.sleep(20)
 
         start = time.time()
         while 1:

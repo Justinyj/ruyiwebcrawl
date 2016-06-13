@@ -13,7 +13,7 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['54.153.34.170']
+    env.hosts = ['54.153.17.69']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
@@ -39,6 +39,9 @@ def _build_pg():
     sudo('mv /var/lib/postgresql/9.5/main /data/pg/')
     sudo('service postgresql restart')
     sudo("""sudo -u postgres psql -c "ALTER USER postgres PASSWORD '{}';" """.format(DBPASS))
+
+    with cd('/opt/service/crawlerservice'):
+        run('psql -U postgres < cache/crawlercache.sql')
 
 
 def build_env():
@@ -69,11 +72,10 @@ def kill():
 
 def runapp():
     with cd('/opt/service/crawlerservice'):
-        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
-            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=4 -program=cache'))
+            run('dtach -n /tmp/{}.sock {}'.format('crawlercache', 'python main.py -port=8000 -process=2 -program=cache'))
 #            run('dtach -n /tmp/{}.sock {}'.format('crawlerproxy', 'python main.py -port=8001 -process=1 -program=proxy'))
 #            run('dtach -n /tmp/{}.sock {}'.format('crawlerfetch', 'python main.py -port=8002 -process=4 -program=fetch'))
 

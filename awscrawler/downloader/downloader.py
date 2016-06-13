@@ -13,11 +13,11 @@ from .cache import Cache
 
 class Downloader(object):
 
-    def __init__(self, request=False, batch_id='', gap=0, groups=None, refresh=False):
+    def __init__(self, request=False, batch_id='', gap=0, timeout=10, groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
-        self.TIMEOUT = 10
+        self.TIMEOUT = timeout
         self.RETRY = 2
 
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
@@ -77,7 +77,7 @@ class Downloader(object):
                     return response.text # text is unicode
             except Exception as e: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
                                    # requests.exceptions.MissingSchema
-                print('requests failed: ', sys.exc_info()[0])
+                print('requests failed: {}, detail: {}'.format(sys.exc_info()[0], e))
             finally:
                 time.sleep(self._get_sleep_period())
         else:
@@ -112,11 +112,11 @@ class Downloader(object):
             groups = self.groups if groups is None else groups
             ret = self.cache.post(url, source, groups, refresh)
             if ret not in [True, False]:
-                print(ret)
+                print('request with cache save_cach return: ', ret)
                 return False
             return ret
 
-        if refresh is True:
+        if refresh is True: # TODO need redownload, save_cache
             content = self.cache.get(url)
             if content != u'':
                 return content

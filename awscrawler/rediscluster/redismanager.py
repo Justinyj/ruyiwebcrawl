@@ -21,7 +21,7 @@ class RedisManager(object):
                                parameter,
                                total_count,
                                priority=2,
-                               timeout=90,
+                               timeout=180,
                                failure_times=3):
         """ total_count can be a predetermined number larger than real total_count
         """
@@ -99,8 +99,9 @@ class RedisManager(object):
         distributed = self.get_distributed_queue(batch_id)
         if distributed is None:
             return
-        if distributed['queue'].get_background_cleaning_status() != 0:
+        if distributed['queue'].get_background_cleaning_status() != '0':
             return
+
 
         if Record.instance().if_not_finish_set(batch_id) == 1:
             distributed['thinhash'].delete()
@@ -109,10 +110,11 @@ class RedisManager(object):
             return True
 
 
-    def _check_empty_queue(self, queue):
-        """ after 3 times of get, result is empty
+    def __check_empty_queue(self, queue):
+        """ after 5 times of get, result is empty
+            for HashQueue need more times check cause it may return 0 element
         """
-        results = queue.get(block=True, timeout=3, interval=1)
+        results = queue.get(block=True, timeout=5, interval=1)
         return False if results != [] else True
 
 
