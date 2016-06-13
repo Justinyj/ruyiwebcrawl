@@ -58,7 +58,7 @@ def runapp():
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
-#            run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/zhidao.py'))
+            run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/zhidao.py'))
 
 def deploy():
     upload()

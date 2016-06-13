@@ -345,7 +345,7 @@ class HashQueue(object):
 
         while self.qsize() > 0 or conn.hlen(self.timehash) > 1:
             self.clean_task()
-            time.sleep(self.timeout)
+            time.sleep(120) # no need self.timeout long
 
         conn.hset(self.timehash, 'background_cleaning', 0)
         return self.key

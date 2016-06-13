@@ -15,7 +15,7 @@ from settings import REGION_NAME
 if REGION_NAME == 'us-west-1':
     KEYPAIR = 'crawler-california'
     SECURITYGROUPID = 'sg-cdd863a9' # ssh
-    AMI_ID = 'ami-c73c79a7'
+    AMI_ID = 'ami-6a3c790a'
 elif REGION_NAME == 'ap-northeast-1':
     KEYPAIR = 'crawl-tokyo'
     SECURITYGROUPID = 'sg-fcbf0998'

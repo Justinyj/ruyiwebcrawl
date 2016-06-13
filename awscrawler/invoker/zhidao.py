@@ -36,14 +36,13 @@ def run_zhidao():
     schedule = Schedule(3, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
     print('finish start instances initially')
 
-    import pdb; pdb.set_trace()
     t3 = gevent.spawn(schedule.run_forever)
 
     gevent.joinall(tasks)
-    gevent.kill(t3, block=True)
+    gevent.killall([t3], block=True)
 
     print('wait queue finish monitoring')
-    time.sleep(100*10)
+    time.sleep(120)
     schedule.stop_all_instances()
 
 
