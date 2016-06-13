@@ -13,11 +13,11 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['54.153.17.69']
+    env.hosts = ['52.196.166.54']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
-DEPLOY_ENV = 'ZHIDAO'
+DEPLOY_ENV = 'PRODUCTION'
 
 def _aws():
     sudo('mkfs -t ext4 /dev/xvdb')
@@ -40,9 +40,6 @@ def _build_pg():
     sudo('service postgresql restart')
     sudo("""sudo -u postgres psql -c "ALTER USER postgres PASSWORD '{}';" """.format(DBPASS))
 
-    with cd('/opt/service/crawlerservice'):
-        run('psql -U postgres < cache/crawlercache.sql')
-
 
 def build_env():
     _build_pg()
@@ -64,6 +61,9 @@ def upload():
     with cd('/opt/service/'):
         run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
+
+    with cd('/opt/service/crawlerservice'):
+        run('psql -U postgres < cache/crawlercache.sql')
 
 
 def kill():

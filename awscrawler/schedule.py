@@ -10,15 +10,15 @@ import paramiko
 from math import ceil
 from paramiko.ssh_exception import NoValidConnectionsError
 
-from ec2manager import Ec2Manager
+from ec2manager import Ec2Manager, KEYPAIR
 
 class Schedule(object):
 
-    def __init__(self, machine_num, tag, cycle=600, backoff_timeout=180, *args, **kwargs):
+    def __init__(self, machine_num, tag, cycle=1200, backoff_timeout=180, *args, **kwargs):
         self.machine_num = machine_num
         self.cycle = cycle
         self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
-        self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num 
+        self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num
 
         self.backoff_timeout = backoff_timeout
 
@@ -28,7 +28,7 @@ class Schedule(object):
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.pkey = paramiko.RSAKey.from_private_key_file('/home/admin/.ssh/crawler-california.pem')
+        self.pkey = paramiko.RSAKey.from_private_key_file('/home/admin/.ssh/{}.pem'.format(KEYPAIR))
 
     def _assign_cookies(self, cookies):
         id_cookie_dict = {}
@@ -65,9 +65,8 @@ class Schedule(object):
         for i in self.ids:
             self.run_command(i, base_cmd)
 
-
-        before = time.time()
         while 1:
+            before = time.time()
             ids = self.ec2manager.stop_and_start(self.group_num)
             for i in ids:
                 self.run_command(i, base_cmd)
