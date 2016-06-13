@@ -7,7 +7,6 @@ from __future__ import print_function, division
 from fabric.api import *
 
 env.hosts = ['54.153.17.69']
-env.hosts = ['54.67.13.96']
 env.user = 'admin'
 
 DEPLOY_ENV = 'TEST'
@@ -47,6 +46,8 @@ def upload():
     with cd('/opt/service/'):
         run('[ -L awscrawler ] && unlink awscrawler || echo ""')
         run('ln -s /opt/service/awsframe/`ls /opt/service/awsframe/ | sort | tail -n 1` /opt/service/awscrawler')
+        with cd('awsframe'):
+            run('ls -tp | grep -v "/$" | tail -n +6 | xargs -I {} rm -- {}')
 
 def kill():
     run("ps aux | grep python | grep -v grep | grep awscrawler | awk '{print $2}' | xargs -n 1 --no-run-if-empty kill")

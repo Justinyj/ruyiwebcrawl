@@ -47,23 +47,30 @@ class Schedule(object):
         return id_cookie_dict
 
 
+    def run_command(self, one_id, base_cmd):
+        idx = self.ec2manager.get_idx_by_id(one_id)
+        if one_id in self.id_cookie_dict:
+            command = base_cmd.format(idx) + '-c "{}"'.format(self.id_cookie_dict[one_id])
+        else:
+            command = base_cmd.format(idx)
+        ipaddr = self.ec2manager.get_ipaddr(one_id)
+        self.remote_command(ipaddr, command)
+
+
     def run_forever(self, *args, **kwargs):
-        time.sleep(30)
+        base_cmd = ('cd /opt/service/awscrawler; source env.sh TEST; '
+                    'dtach -n /tmp/worker.sock python worker.py -i {{}}'
+                    ' -t {timeout}'.format(timeout=self.backoff_timeout))
+
+        for i in self.ids:
+            self.run_command(i, base_cmd)
+
 
         before = time.time()
         while 1:
             ids = self.ec2manager.stop_and_start(self.group_num)
             for i in ids:
-                idx = self.ec2manager.get_idx_by_id(i)
-                base_cmd = ('cd /opt/service/awscrawler; source env.sh TEST; '
-                            'dtach -n /tmp/worker.sock python worker.py -i {}'
-                            ' -t {}'.format(idx, self.backoff_timeout))
-                if i in self.id_cookie_dict:
-                    command = base_cmd + '-c "{}"'.format(self.id_cookie_dict[i])
-                else:
-                    command = base_cmd
-                ipaddr = self.ec2manager.get_ipaddr(i)
-                self.remote_command(ipaddr, command)
+                self.run_command(i, base_cmd)
 
             if self.restart_interval != 0:
                 now = time.time()
@@ -82,6 +89,7 @@ class Schedule(object):
             except NoValidConnectionsError:
                 time.sleep(10)
         self.ssh.close()
+
 
     def stop_all_instances(self):
         self.ec2manager.terminate(self.ids)

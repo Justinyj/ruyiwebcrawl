@@ -40,6 +40,9 @@ def _build_pg():
     sudo('service postgresql restart')
     sudo("""sudo -u postgres psql -c "ALTER USER postgres PASSWORD '{}';" """.format(DBPASS))
 
+    with cd('/opt/service/crawlerservice'):
+        run('psql -U postgres < cache/crawlercache.sql')
+
 
 def build_env():
     _build_pg()
@@ -69,7 +72,6 @@ def kill():
 
 def runapp():
     with cd('/opt/service/crawlerservice'):
-#        run('psql -U postgres < cache/crawlercache.sql')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv crawlerservice')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
