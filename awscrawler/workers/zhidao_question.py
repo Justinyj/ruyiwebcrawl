@@ -64,8 +64,12 @@ def parse_q_content(content):
 
 
 def parse_answer_ids(content):
+    res=[]
+    pro = re.search('id="answer-(/d+)" class="answer quality-info line">')
+    if pro :
+        res.append(pro.group(1))
     answers=re.findall('class="bd answer.*" id="answer-(\d+)"',content)
-    res=map(int,answers)
+    res.extend(map(int,answers))
     return res
 
 
