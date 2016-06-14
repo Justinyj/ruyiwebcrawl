@@ -9,8 +9,9 @@ import traceback
 import logging
 import requests
 import time
-from invoker.zhidao import BATCH_ID, HEADER
-from zhidao_tools import get_zhidao_content
+
+from invoker.zhidao import BATCH_ID
+
 OUTPUT_FILE = 'OUTPUT'
 
 def check_question(question_raw):
