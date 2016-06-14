@@ -9,7 +9,8 @@ import traceback
 import logging
 import requests
 import time
-from invoker.zhidao import BATCH_ID, HEADER
+
+from invoker.zhidao import BATCH_ID
 from zhidao_tools import get_zhidao_content
 OUTPUT_FILE = 'OUTPUT'
 

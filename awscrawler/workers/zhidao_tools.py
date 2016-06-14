@@ -12,11 +12,22 @@ from downloader.downloader import Downloader
 from invoker.zhidao_constant import BATCH_ID
 
 
+HEADERS = {
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, sdch',
+    'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
+    'Host': 'zhidao.baidu.com',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.63 Safari/537.36',
+    'Connection': 'keep-alive',
+    'Cache-Control': 'max-age=0',
+    'Upgrade-Insecure-Requests': '1'
+}
+
 def get_answer_url(q_id, r_id):
     return ('http://zhidao.baidu.com/question/api/mini?qid={}'
             '&rid={}&tag=timeliness'.format(q_id, r_id))
 
-def get_zhidao_content(url, method, gap, header, batch_id, error_check=True):
+def get_zhidao_content(url, method, gap, batch_id, error_check=True):
     if not hasattr(get_zhidao_content, '_batches'):
         setattr(get_zhidao_content, '_batches', {})
 
@@ -24,10 +35,9 @@ def get_zhidao_content(url, method, gap, header, batch_id, error_check=True):
     if ret is None:
         downloader = Downloader(request=True, gap=gap, batch_id=batch_id, timeout=10)
         downloader.login()
+        downloader.update_header(HEADERS)
         get_zhidao_content._batches[batch_id] = downloader
 
-    if header:
-        get_zhidao_content._batches[batch_id].update_header(header)
 
     return get_zhidao_content._batches[batch_id].requests_with_cache(
                 url,
