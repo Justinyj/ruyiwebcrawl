@@ -8,7 +8,7 @@ import base64
 import urlparse
 import requests
 
-from settings import CACHE_SERVER
+CACHE_SERVER = 'http://192.168.1.179:8000'
 
 class Cache(object):
     def __init__(self, batch_id, server=None):

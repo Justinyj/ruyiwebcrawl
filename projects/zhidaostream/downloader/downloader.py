@@ -71,7 +71,7 @@ class Downloader(object):
                     if redirect_check and response.url != url:
                         continue
                     if error_check:
-                        if __import__('downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
+                        if __import__('zhidaostream.downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
                             continue
                     response.encoding = encode
                     return response.text # text is unicode
@@ -116,10 +116,10 @@ class Downloader(object):
                 return False
             return ret
 
-        if refresh is True: # TODO need redownload, save_cache
-            content = self.cache.get(url)
-            if content != u'':
-                return content
+#        if refresh is True:
+#            content = self.cache.get(url)
+#            if content != u'':
+#                return content
 
         if self.request is True:
             source = self.request_download(url, method, encode, redirect_check, error_check, data)

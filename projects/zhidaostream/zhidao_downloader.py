@@ -4,7 +4,8 @@
 
 from __future__ import print_function, division
 
-from .downloader import Downloader
+import time
+from downloader.downloader import Downloader
 
 HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -17,7 +18,7 @@ HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36',
 }
 
-def zhidao_downloader(url, batch_id, gap, method='get', timeout=10, error_check=True):
+def zhidao_downloader(url, batch_id, gap, method='get', timeout=10, encode='gb18030', error_check=True, refresh=False):
     if not hasattr(zhidao_downloader, '_batches'):
         setattr(zhidao_downloader, '_batches', {})
 
@@ -30,8 +31,17 @@ def zhidao_downloader(url, batch_id, gap, method='get', timeout=10, error_check=
     return zhidao_downloader._batches[batch_id].requests_with_cache(
                                                      url,
                                                      method,
-                                                     encode='gb18030',
+                                                     encode=encode,
                                                      redirect_check=True,
                                                      error_check=error_check,
-                                                     refresh=False)
+                                                     refresh=refresh)
 
+
+def zhidao_download(url, batch_id, gap, method='get', timeout=10, encode='gb18030', error_check=True):
+    for _ in range(2):
+        content = zhidao_downloader(url, batch_id, gap, method, timeout, encode, error_check)
+        if content != u'':
+            return content
+        time.sleep(gap)
+    else:
+        return False
