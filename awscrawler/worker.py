@@ -60,7 +60,7 @@ class GetWorker(Worker):
 
          None,   0,                    finish cleaning then exception
         """
-        for batch_id, queue_dict in self.manager.get_queue_with_priority()
+        for batch_id, queue_dict in self.manager.get_queue_with_priority():
             queue = queue_dict['queue']
             if Record.instance().is_finished(batch_id) is True:
                 # this queue and queue object in distributed_queues can be
