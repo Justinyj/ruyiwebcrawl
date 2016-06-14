@@ -7,39 +7,20 @@ import time
 import os
 import sys
 import re
-import json
 import base64
 import traceback
 import requests
+
 from invoker.zhidao import BATCH_ID, HEADER
-from zhidao_tools import get_zhidao_content, get_answer_url
 from downloader.cache import Cache
+from .zhidao_tools import get_zhidao_content, get_answer_url
+from .zhidao_parser import parse_title, parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
 
 
-def parse_q_id(content):
-    q_id = re.search(
-        'rel="canonical" href="http://zhidao.baidu.com/question/(\d+).html"', content)
-    if q_id:
-        q_id = q_id.group(1)
-        return q_id
-    return
 
-
-def parse_title(content):
-    m = re.search('<title>(.*)</title>', content)
-    if m:
-        title = m.group(1)
-        if u'_百度知道' not in title:
-            if u'百度知道-信息提示' == title:
-                return
-            return
-        title = re.sub(u'_百度知道', u'', title)
-        return title
-    return
-
-
-def parse_q_time(content):
+def process(url, parameter, manager, *args, **kwargs):
     m = re.search(
+<<<<<<< HEAD
         '<em class="accuse-enter">.*\n*</ins>\n*(.*)\n*</span>', content)
     if m is None:
         return
@@ -96,8 +77,13 @@ def generate_question_json(content, answer_ids):
     answer_ids.extend(rids)
     return json.dumps(item)
 
+=======
+        'http://zhidao.baidu.com/question/(\d+).html', url)
+    if not m:
+        return False
+>>>>>>> 54994b8312ecc11bba8342e40aaa15f5a87dc4c7
 
-def process(url, parameter, manager, *args, **kwargs):
+    q_id = m.group(1)
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
     batch_id = BATCH_ID['question']
@@ -111,22 +97,18 @@ def process(url, parameter, manager, *args, **kwargs):
         return False
 
     answer_ids = []
-    question_content = generate_question_json(content, answer_ids)
+    question_content = generate_question_json(q_id, content, answer_ids)
     if question_content is None:
         return False
 
     m = Cache(BATCH_ID['json'])
-    flag = m.post(url, question_content)
-    if not flag:
-        flag = m.post(url, question_content)
-    if not flag:
-        return flag
+    success = m.post(url, question_content)
+    if success is False:
+        return False
 
     answer_urls = []
-    qid = re.search(
-        'http://zhidao.baidu.com/question/(\d+).html', url).group(1)
     for answer_id in answer_ids[:3]:
-        answer_urls.append( get_answer_url(qid, answer_id) )
+        answer_urls.append( get_answer_url(q_id, answer_id) )
     manager.put_urls_enqueue(BATCH_ID['answer'], answer_urls)
 
-    return flag
+    return True

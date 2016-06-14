@@ -15,4 +15,6 @@ class Company(scrapy.Item):
     name=scrapy.Field()
     province=scrapy.Field()
     id=scrapy.Field()
+    url=scrapy.Field()
+    num=scrapy.Field()
     pass

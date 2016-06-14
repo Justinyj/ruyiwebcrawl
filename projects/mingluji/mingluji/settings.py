@@ -49,18 +49,18 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
-SPIDER_MIDDLEWARES = {
-
-    'mingluji.middlewares.MyMiddleWare': 543,
-    'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': None,
-}
+#SPIDER_MIDDLEWARES = {
+#
+#    'mingluji.middlewares.MyMiddleWare': 543,
+#    'scrapy.spidermiddlewares.offsite.OffsiteMiddleware': None,
+#}
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
- #   'minglu.middlewares.MyMiddleWare': 100,
- #   'scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware': None,
-#}
+DOWNLOADER_MIDDLEWARES = {
+    'mingluji.middlewares.MyMiddleWare': 543,
+
+}
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html

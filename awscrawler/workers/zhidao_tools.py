@@ -9,20 +9,12 @@ import json
 import requests
 
 from downloader.downloader import Downloader
-from invoker.zhidao_constent import BATCH_ID
-
-
-DATA_PATH = os.path.abspath(os.path.dirname(
-    __file__))
-VERSION = "201606"
-
-question_template = 'http://zhidao.baidu.com/question/{}.html'
-ANSWER_URL = 'http://zhidao.baidu.com/question/api/mini?qid={}&rid={}&tag=timeliness'
+from invoker.zhidao_constant import BATCH_ID
 
 
 def get_answer_url(q_id, r_id):
-    return ANSWER_URL.format(q_id, r_id)
-
+    return ('http://zhidao.baidu.com/question/api/mini?qid={}'
+            '&rid={}&tag=timeliness'.format(q_id, r_id))
 
 def get_zhidao_content(url, method, gap, header, batch_id, error_check=True):
     if not hasattr(get_zhidao_content, '_batches'):

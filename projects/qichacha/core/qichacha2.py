@@ -44,7 +44,7 @@ class Qichacha(object):
 
         #self.VIP_MAX_PAGE_NUM = 500
         #self.MAX_PAGE_NUM = 10
-        self.NUM_PER_PAGE = config.get('NUM_PER_PAGE',20 )  #10
+        #self.NUM_PER_PAGE = config.get('NUM_PER_PAGE',20 )  #10
         self.INDEX_LIST_PERSON = [4,6,14]
         self.INDEX_LIST_ORG = [2]
         self.PROVINCE_LIST = {
@@ -118,10 +118,9 @@ class Qichacha(object):
             keyword_list = [keyword_list]
 
         if limit is None:
-            max_page = self.config["MAX_PAGE_NUM"]
+            limit  =  self.config["MAX_LIMIT"]
         else:
-            max_page = (limit - 1) // self.NUM_PER_PAGE + 1
-            max_page = min(self.config["MAX_PAGE_NUM"], max_page)
+            limit = min(limit, self.config["MAX_LIMIT"])
 
         result = {}
         for idx, keyword in enumerate(keyword_list):
@@ -130,24 +129,27 @@ class Qichacha(object):
             sum_e = 0
             sum_a = 0
             for index in index_list:
+                result_info = self.get_keyword_search_result_info(keyword, index, refresh)
+                index_expect = result_info["total"]
 
-                index_expect = self.get_keyword_search_count(keyword, index, refresh)
+                #max_page = (limit - 1) // result_info["max_page_num"] + 1  #self.NUM_PER_PAGE + 1
+
                 metadata_dict["expect"] += index_expect
                 metadata_dict["i{}_e".format(index)] = index_expect
                 #metadata_dict["total_[index:{}]_expect".format(index)]=cnt
 
                 province_list = []
                 summary_dict_by_index = {}
-                if skip_index_max and index_expect>=skip_index_max:
+                if skip_index_max and index_expect >= skip_index_max:
                     print (" ---- undersample [{}][index:{}] 5000+ results".format(keyword, index))
-                    self.list_keyword_search_onepass(keyword, index, "", max_page, metadata_dict, summary_dict_by_index, refresh)
+                    self.list_keyword_search_onepass(keyword, index, "",  limit, metadata_dict, summary_dict_by_index, refresh)
                     pass
-                elif limit is None and index_expect>= self.config["MAX_PAGE_NUM"] * self.NUM_PER_PAGE:
+                elif limit is None and index_expect >= self.config["MAX_LIMIT"]:
                     print (" ---- expand [{}][index:{}] auto expand by province , expect {} ".format(keyword, index, index_expect) )
                     for province in self.PROVINCE_LIST:
-                        self.list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_by_index, refresh)
-                elif index_expect>0:
-                    self.list_keyword_search_onepass(keyword, index, "", max_page, metadata_dict, summary_dict_by_index, refresh)
+                        self.list_keyword_search_onepass(keyword, index, province, limit, metadata_dict, summary_dict_by_index, refresh)
+                elif index_expect > 0:
+                    self.list_keyword_search_onepass(keyword, index, "",  limit, metadata_dict, summary_dict_by_index, refresh)
                 else:
                     print (" ---- skip [{}][index:{}] no expected result".format(keyword, index))
                 summary_dict.update(summary_dict_by_index)
@@ -172,19 +174,23 @@ class Qichacha(object):
         #print(json.dumps(result, ensure_ascii=False))
         return result
 
-    def list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh):
+    def list_keyword_search_onepass(self, keyword, index, province, limit, metadata_dict, summary_dict_onepass, refresh):
         summary_dict_local ={}
         cnt_expect = 0
         cnt_items = 0
 
-        for page in range(1, max_page + 1):
+        for page in range(1, 1000):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
 
             source = self.downloader.access_page_with_cache(url, groups="v0531,search,index{}".format(index), refresh=refresh)
+
             if not source:
                 # no more results, cannot get data
                 break
+
+            #if self.config.get("debug"):
+            #    print (source)
 
             if "nodata.png" in source:
                 # no more results, cannot get data
@@ -193,11 +199,14 @@ class Qichacha(object):
             tree = lxml.html.fromstring(source)
 
             if page ==1:
-                cnt_expect = self.parser.parse_search_result_count(tree)
-                metadata_dict["i{}_sum_e".format(index)]+=cnt_expect
+                result_info = self.parser.parse_search_result_info(tree)
+                cnt_expect = result_info["total"]
+                metadata_dict["i{}_sum_e".format(index)] += cnt_expect
+                metadata_dict["num_per_page"] = result_info["num_per_page"]
+
                 #metadata_dict["total_[index:{}]_expect2".format(index)]+=cnt
                 #metadata_dict["total_[index:{}][省:{}]_expect2".format(index, province)]=cnt
-                if cnt_expect >= self.config["MAX_PAGE_NUM"] * self.NUM_PER_PAGE:
+                if cnt_expect >= self.config["MAX_LIMIT"]:
                     msg = " ---- todo [{}][index:{}][省:{}] TO BE EXPAND , expect {}, ".format( keyword,index, province, cnt_expect)
                     print (msg)
                     metadata_dict["todo_expand"]+=1
@@ -216,7 +225,10 @@ class Qichacha(object):
                 name = item['name']
                 summary_dict_local[name]= item
 
-            if cnt_items == cnt_expect:
+            if cnt_items >= cnt_expect:
+                break
+
+            if cnt_items >= limit:
                 break
 
             #if self.config.get("debug"):
@@ -225,7 +237,7 @@ class Qichacha(object):
             #    break
 
         #if province:
-        metadata_dict["i{}_sum_a".format(index)]+= cnt_items
+        metadata_dict["i{}_sum_a".format(index)] += cnt_items
         cnt_actual = len(summary_dict_local)
         summary_dict_onepass.update( summary_dict_local )
         if cnt_expect==0 or cnt_actual==0 or abs(cnt_expect - cnt_actual)>0:
@@ -234,11 +246,11 @@ class Qichacha(object):
             print (msg)
             #print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
 
-    def get_keyword_search_count(self, keyword, index, refresh=False):
+    def get_keyword_search_result_info(self, keyword, index, refresh=False):
         """.. :py:method::
 
         :param keyword: search keyword
-        :rtype: count
+        :rtype: json
         """
         url = self.list_url.format(key=keyword, index=index, page=1, province="")
 
@@ -249,7 +261,10 @@ class Qichacha(object):
         #print (url, source)
         tree = lxml.html.fromstring(source)
 
-        return  self.parser.parse_search_result_count(tree)
+        result_info = self.parser.parse_search_result_info(tree)
+        result_info["keyword"] = keyword
+        result_info["index"] = index
+        return result_info
 
 
     def input_name_output_id(self, name):
@@ -408,6 +423,22 @@ class Qichacha(object):
                     if i["name"] not in already_crawled_names]
             )
         all_name_info_dict.update(name_info_dict)
+
+    def crawl_company_expand(self, name, key_num=None, limit=None):
+        if key_num is None:
+            key_num = self.input_name_output_id(name)
+            if key_num is None:
+                return
+
+        company_raw_one = {}
+        temp = self.crawl_descendant_company(name, key_num, limit=limit)
+        if temp:
+            company_raw_one.update(temp)
+
+        temp = self.crawl_ancestors_company(name, key_num, limit=limit)
+        if temp:
+            company_raw_one.update(temp)
+        return company_raw_one
 
 
     def crawl_descendant_company(self, name, key_num=None, limit=None):

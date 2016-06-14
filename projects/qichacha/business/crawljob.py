@@ -41,8 +41,9 @@ COOKIE_INDEX_TEST = "test"
 COOKIE_INDEX_PREFETCH = "prefetch"
 BATCH_ID_SEARCH ='qichacha_search_20160603'
 BATCH_ID_FETCH ='qichacha_fetch_20160603'
-BATCH_ID_JSON ='qichacha_json_20160603'
+BATCH_ID_JSON_FETCH ='qichacha20160607jsonfetch'
 BATCH_ID_JSON_SEARCH ='qichacha20160607jsonsearch'
+BATCH_ID_JSON_RAWITEM = 'qichacha20160607rawitem'
 FILE_CONFIG = getTheFile("../config/conf.fs.json")
 
 
@@ -53,6 +54,7 @@ def init_dir(batch):
         getLocalFile("work"), #on my machine, up to client and server
         getLocalFile("client"), #down from web client
         getLocalFile("server"), #down from web server
+        getLocalFile("server_output"), #down from web server
         getLocalFile("output"), #on my machine, share by other project
         getLocalFile("temp"),   #everyone, no sync
     ]
@@ -62,8 +64,74 @@ def init_dir(batch):
         except:
             pass
 
+def _get_json(config, batch_id, uri):
+    cache_json = Cache(config, batch_id=batch_id)
+    content = cache_json.get(uri)
+    if content:
+        return json.loads(content)
+
+def _put_json(config, batch_id, uri, data):
+    if data:
+        cache_json = Cache(config, batch_id=batch_id)
+        cache_json.post(uri, json.dumps(data))
+
+
 def get_filename_search_index(batch):
     return getLocalFile("server/search_index.{}.json.txt".format(batch))
+
+def _get_search_index(filename_search_index):
+    #init searched
+    search_index = {}
+    if os.path.exists(filename_search_index):
+        for line in libfile.file2list(filename_search_index):
+            item = json.loads(line)
+            keyword = item["keyword"]
+            search_index[keyword]=item
+    gcounter["searched_keywords"]= len(search_index)
+    return search_index
+
+def _get_search_keyword_uri(stype, keyword):
+    return u"uri:search:{}:keyword:{}".format(stype, keyword)
+
+
+
+def get_company_putian_index(batch, tag):
+    return getLocalFile("server/fetch_index_{}.{}.json.txt".format(tag, batch))
+
+
+def _get_fetch_index(filename_fetch_index):
+    #init fetched
+    fetch_index = {}
+    if os.path.exists(filename_fetch_index):
+        with codecs.open(filename_fetch_index, encoding="utf-8") as f:
+            cnt =0
+            for line in f:
+                if cnt % 1000 ==0:
+                    print cnt
+                cnt += 1
+
+                item = json.loads(line)
+                key_num = item["key_num"]
+                fetch_index[key_num]=item
+    gcounter["fetched_key_num"]= len(fetch_index)
+    return fetch_index
+
+def _get_fetch_company_uri(fetch_tag, key_num):
+    return u"uri:fetch:{}:key_num:{}".format(fetch_tag, key_num)
+    #cache_json_uri = "uri:qcc:{}:{}".format(fetch_tag, key_num)
+
+def _get_rawitem_uri(key_num):
+    return u"uri:rawitem:{}".format(key_num)
+
+def get_crawler(batch_id, option, worker_id=None, worker_num=None, cache_only=False):
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[option]
+        if worker_id is not None:
+            config['WORKER_ID'] = worker_id
+            config["WORKER_NUM"] = worker_num
+    return Qichacha(config, batch_id, cache_only=cache_only)
+
+######################### init
 
 def stat(batch):
     #load list
@@ -78,7 +146,7 @@ def stat(batch):
         map_step[step]["keyword_list"] = sorted(list(temp))
 
     #load search result file
-    filename_search_index =get_filename_search_index(batch)
+    filename_search_index = get_filename_search_index(batch)
 
     #load prev state if refresh
     search_index = _get_search_index(filename_search_index)
@@ -86,14 +154,16 @@ def stat(batch):
 
     # step actual
     for step in map_step:
-        print u"=========keywords {}".format(step)
+        print u"#=========keywords {}".format(step)
         temp_company = collections.defaultdict(set)
         for keyword in map_step[step]["keyword_list"]:
             if not keyword in search_index:
                 print "missing", keyword, step
                 continue
 
-            print "{}\t{}\t{}".format(keyword, search_index[keyword]["metadata"]["expect"], search_index[keyword]["metadata"]["actual"])
+            gcounter[u"total_actual_dup"] += search_index[keyword]["metadata"]["actual"]
+            if search_index[keyword]["metadata"]["actual"]>2000:
+                print "{}\t{}\t{}".format(keyword, search_index[keyword]["metadata"]["expect"], search_index[keyword]["metadata"]["actual"])
 
             #stype = search_index[keyword]["stype"]
             #uri = _get_search_keyword_uri(stype, keyword)
@@ -112,32 +182,9 @@ def stat(batch):
 
 
 ######################### search
-def _get_search_index(filename_search_index):
-    #init searched
-    search_index = {}
-    if os.path.exists(filename_search_index):
-        for line in libfile.file2list(filename_search_index):
-            item = json.loads(line)
-            keyword = item["keyword"]
-            search_index[keyword]=item
-    gcounter["searched_keywords"]= len(search_index)
-    return search_index
 
-def _get_search_keyword_uri(stype, keyword):
-    return u"uri:search:{}:keyword:{}".format(stype, keyword)
 
-def _get_json(config, batch_id, uri):
-    cache_json = Cache(config, batch_id=batch_id)
-    content = cache_json.get(uri)
-    if content:
-        return json.loads(content)
-
-def _put_json(config, batch_id, uri, data):
-    if data:
-        cache_json = Cache(config, batch_id=batch_id)
-        cache_json.post(uri, json.dumps(data))
-
-def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, cookie_index=COOKIE_INDEX_SEARCH):
+def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, worker_num=1, cookie_index=COOKIE_INDEX_SEARCH):
     help = """
         #prefetch
         python business/crawljob.py search medical  seed_person_core_reg 0
@@ -148,11 +195,11 @@ def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, co
         python business/crawljob.py search medical  seed_person_ext_reg
         python business/crawljob.py search medical  seed_org*_vip
     """
-    filename_search_index =get_filename_search_index(batch)
 
     #load prev state if refresh
+    filename_search_index =get_filename_search_index(batch)
     search_index = _get_search_index(filename_search_index) if not refresh else {}
-    searched = search_index.keys()
+    searched = set(search_index.keys())
 
     #print ("search on path_expr={}".format(path_expr) +help)
     dir_name = getTheFile( path_expr )
@@ -161,17 +208,20 @@ def crawl_search(batch, path_expr, limit=None, refresh=False, worker_id=None, co
         print "crawl_search", filename
         seeds = libfile.file2set(filename)
         #add new
-        crawl_search_pass( seeds, os.path.basename(filename), searched, filename_search_index=filename_search_index, limit=limit, refresh=refresh, worker_id=worker_id, cookie_index=cookie_index)
+        crawl_search_pass( seeds, os.path.basename(filename), searched, filename_search_index=filename_search_index, limit=limit, refresh=refresh, worker_id=worker_id, worker_num=worker_num, cookie_index=cookie_index)
 
-def crawl_search_pass( seeds, search_option, searched, filename_search_index=None, limit=None, refresh=None, skip_index_max=None, worker_id=None, cookie_index=None):
+def crawl_search_pass( seeds, search_option, searched, filename_search_index=None, limit=None, refresh=None, skip_index_max=None, worker_id=None, worker_num=1, cookie_index=None):
+    flag_mono == (workid_id is None)
 
     #init crawler
     if "_vip" in search_option:
-        crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_VIP, worker_id=worker_id)
+        crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_VIP, worker_id=worker_id, worker_num=worker_num)
         stype = "vip"
+        limit = limit if limit is not None else 500
     else:
-        crawler = get_crawler(BATCH_ID_SEARCH, cookie_index, worker_id=worker_id)
+        crawler = get_crawler(BATCH_ID_SEARCH, cookie_index, worker_id=worker_id, worker_num=worker_num)
         stype ="reg"
+        limit = limit if limit is not None else 100
 
     if "org" in search_option:
         list_index = crawler.INDEX_LIST_ORG
@@ -187,7 +237,7 @@ def crawl_search_pass( seeds, search_option, searched, filename_search_index=Non
     counter["total"] = len(seeds)
     counter["searched"] = len(seeds.intersection(searched))
     company_set = set()
-    worker_num = crawler.config.get("WORKER_NUM",1)
+    #worker_num = crawler.config.get("WORKER_NUM",1)
 
     #print len(seeds),list(seeds)[0:3]
 
@@ -220,7 +270,7 @@ def crawl_search_pass( seeds, search_option, searched, filename_search_index=Non
                 _put_json(crawler.config, BATCH_ID_JSON_SEARCH, uri, data[seed])
 
                 #
-                if filename_search_index:
+                if flag_mono and filename_search_index :
                     with codecs.open(filename_search_index,"a") as findex:
                         for name in data:
                             item = {
@@ -251,58 +301,488 @@ def crawl_search_pass( seeds, search_option, searched, filename_search_index=Non
 
 
 
+#################
+def fetch_prepare_all(batch):
+    #load search history
+    filename_search_index = get_filename_search_index(batch)
+    tag = os.path.basename(filename_search_index)
+    search_index = _get_search_index(filename_search_index)
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[COOKIE_INDEX_FETCH]
+
+    ##############
+    #load company from search
+    map_company = {}
+    cnt = 0
+    for keyword, keyword_entry in search_index.items():
+        if cnt % 100 == 0:
+            print cnt, json.dumps(gcounter)
+        cnt += 1
+        #print type(keyword_entry)
+        stype = keyword_entry["stype"]
+        uri = _get_search_keyword_uri(stype, keyword)
+        data = _get_json(config, BATCH_ID_JSON_SEARCH, uri)
+        gcounter["all_company_dup"] += len(data)
 
 
+        for name in data["data"]:
+            name = name.strip()
+            if name:
+                company = data["data"][name]
+                key_num = company['key_num']
+                map_company[name] = key_num
+    gcounter["from_item_{}".format(tag)] = len(map_company)
 
 
-
-
-
-
-
-
-
-
-
-
-
-def search_count(batch, refresh=False):
-    help =""" also try
-        python business/crawljob.py search_count medical seed_org_names_reg
-        python business/crawljob.py search_count medical seed_person_core_reg
-    """
-
-    if len(sys.argv)>3:
-        path_expr = batch+ "/*{}*".format( sys.argv[3])
-    else:
-        path_expr = batch +"/*"
-    dir_name = getTheFile( path_expr )
-    print ("search_count on path_expr={}".format(path_expr) +help)
-
-    crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_SEARCH)
-
-    ret = collections.defaultdict(dict)
-    filenames = glob.glob(dir_name)
+    #########################
+    #load all company
+    filenames = [
+        getLocalFile("input/company_index_all.0531.raw.tsv".format(batch)),
+        getLocalFile("server/company_index_putian.{}.tsv".format(batch)),
+        getLocalFile("server/company_index_all.{}.tsv".format(batch)),
+    ]
     for filename in filenames:
-        print filename
-        seeds = libfile.file2set(filename)
-        for seed in seeds:
-            ret[seed]["name"] = seed
-            if "seed_org" in filename:
-                indexes = crawler.INDEX_LIST_ORG
-                ret[seed]["type"] = "org"
-            elif "seed_person" in filename:
-                indexes = crawler.INDEX_LIST_PERSON
-                ret[seed]["type"] = "person"
+        tag = os.path.basename(filename)
+        if not os.path.exists(filename):
+            print "missing", filename
+            continue
+
+        with codecs.open(filename, encoding="utf-8") as f:
+            counter = collections.Counter()
+            for line in f:
+                line = line.strip()
+                counter["lines"]+=1
+                if line.startswith("#"):
+                    continue
+
+                key_num, name = line.split('\t', 1)
+                name = name.strip()
+
+                if not name:
+                    continue
+
+                counter["items"] += 1
+                gcounter["from_item_{}".format(tag)] += 1
+
+                if name not in map_company:
+                    map_company[name] = key_num
+                    counter["effective"] += 1
+                    gcounter["from_inuse_{}".format(tag)] += 1
+
+            print "loaded", filename, counter
+
+
+    ##############
+    #output
+    lines = [ u"{}\t{}".format(map_company[x], x) for x in sorted(list(map_company.keys())) ]
+    gcounter["company_index_all"] += len(lines)
+    filename = getLocalFile("server/company_index_all.{}.tsv".format(batch))
+    libfile.lines2file(lines, filename)
+
+
+
+
+
+
+
+
+
+#################
+def fetch_detail(batch, worker_id=None, worker_num=1, expand=True, cookie_index =COOKIE_INDEX_PREFETCH, refresh=False):
+    fetch_tag = "expand" if expand else "regular"
+    crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id, worker_num=worker_num)
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[COOKIE_INDEX_FETCH]
+
+
+    filename_index = getLocalFile("server/company_index_all.{}.tsv".format(batch))
+
+    cached_key_num = set()
+    counter = collections.Counter()
+    with codecs.open(filename_index, encoding="utf-8") as f:
+        for line in f:
+            if counter["visited"] % 1000 ==0:
+                print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True), json.dumps(crawler.downloader.counter, sort_keys=True)
+            counter["visited"]+=1
+
+            if worker_id is not None and worker_num>1:
+                if (counter["visited"] % worker_num) != worker_id:
+                    counter["skip_peer"]+=1
+                    continue
+
+            key_num, name = line.split('\t',1)
+            name = name.strip()
+            _fetch_with_cache(key_num, name, crawler, fetch_tag, counter, cache_only=False )
+
+
+
+def _fetch_with_cache(key_num, name, crawler, fetch_tag, counter, cache_only=False):
+    try:
+        company_raw_one = {}
+        #cache hit
+        uri = _get_fetch_company_uri(fetch_tag, key_num)
+        cached_data = _get_json(crawler.config, BATCH_ID_JSON_FETCH, uri)
+        if "data" in cached_data:
+            cached_data = cached_data["data"]
+            
+        if cached_data and name in cached_data:
+            counter["cached"]+=1
+            company_raw_one = cached_data
+        elif not cache_only:
+            if fetch_tag == 'expand':
+                company_raw_one = crawler.crawl_company_expand(name, key_num)
             else:
+                company_raw_one = crawler.crawl_company_detail(name, key_num)
+
+            #cache the company_raw_one
+            if company_raw_one:
+                counter["ok"]+=1
+
+                #cache each company
+                for rawitem in company_raw_one.values():
+                    key_num = rawitem["key_num"]
+
+                    #cache data per company
+                    _cache_rawitem(crawler.config, rawitem)
+
+                #cache expanded company
+                _put_json(crawler.config, BATCH_ID_JSON_FETCH, uri, company_raw_one)
+            else:
+                counter["missing"]+=1
+
+        return company_raw_one
+
+    except:
+        import traceback
+        traceback.print_exc(file=sys.stdout)
+        counter["failed"] +=1
+        pass
+
+        return {}
+
+def _cache_rawitem(config, rawitem):
+    fetch_tag = "regular"
+    name = rawitem["name"]
+    key_num = rawitem["key_num"]
+    uri = _get_fetch_company_uri(fetch_tag, key_num)
+    #ret = _get_json(config, BATCH_ID_JSON_FETCH, uri)
+    #if not ret:
+    related = libnlp.list_item_agent_name(rawitem, False, None ,None)
+    related.remove(name)
+    rawitem["related"] = sorted(list(related))
+    rawitem["label"] = libnlp.classify_company_name( name )
+
+    _put_json(config, BATCH_ID_JSON_FETCH, uri, rawitem)
+
+def load_candidates_skip(batch):
+    filename =  getTheFile("{}/candidates.skip.human.tsv".format(batch))
+    ret = set()
+    for line in libfile.file2list(filename):
+        temp = line.split("\t")
+        ret.add(temp[0])
+    return ret
+
+def fetch_output_putian(batch):
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[COOKIE_INDEX_FETCH]
+
+    #########################
+    #load putian
+    putian_list = set()
+    filenames = [
+         getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch)),
+         getTheFile("{}/seed_person_ext_reg.putian.human.txt".format(batch)),
+    #     getTheFile("{}/candidates.putian.human.txt".format(batch)),
+    ]
+    for filename in filenames:
+        temp = libfile.file2set(filename)
+        gcounter["from_{}".format(os.path.basename(filename))] = len(temp)
+        putian_list.update(temp)
+
+    skip_list = load_candidates_skip(batch)
+    putian_list.difference_update(skip_list)
+    gcounter["putian_list"] = len(putian_list)
+    print json.dumps(gcounter, indent=4)
+
+
+
+    #########################
+    #filter
+    crawler = get_crawler(BATCH_ID_FETCH, COOKIE_INDEX_FETCH)
+    company_raw = {}
+    cached_lines = set()
+    counter = collections.Counter()
+    filename_index = getLocalFile("server/company_index_all.{}.tsv".format(batch))
+    with codecs.open(filename_index, encoding="utf-8") as f:
+        for line in f:
+            key_num, name = line.split('\t', 1)
+            name = name.strip()
+
+            if counter["visited"] % 1000 == 0:
+                counter["company_raw"] = len(company_raw)
+                print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True, ensure_ascii=False)#, json.dumps(gcounter, sort_keys=True)
+            counter["visited"] += 1
+
+            company_raw_one = _fetch_with_cache(key_num, name, crawler, "expand", counter )
+
+            if not company_raw_one:
+                counter["miss1"] += 1
                 continue
-            total = 0
-            for index in indexes:
-                cnt = crawler.get_keyword_search_count( seed, index)
-                ret[seed]["idx{}".format(index)] = cnt
-                total+=cnt
-            ret[seed]["total"] = total
-            print json.dumps(ret[seed], ensure_ascii=False, sort_keys=True)
+            else:
+                if "data" in company_raw_one:
+                    company_raw_one  = company_raw_one["data"]
+                rawitem = company_raw_one.get(name)
+                if not rawitem:
+                    #print len(company_raw_one.keys())
+                    counter["miss2"] += 1
+                    continue
+                else:
+                    counter["ok"] += 1
+
+            # evaluate relation
+            label = rawitem.get("label", libnlp.classify_company_name_medical(name, False) )
+            rawitem['label'] = label
+            if label:
+                counter[ u"output_{}".format(label) ] += 1
+                company_raw.update(company_raw_one)
+            else:
+                related = set( rawitem.get("related", libnlp.list_item_agent_name(rawitem,False, None ,None) ) )
+                temp = related.intersection(putian_list)
+                if len(temp) >= 3 and len(related)<500 and len(temp) > len(related) * 0.1:
+                    print "is_rawitem_putian_canidate", name, json.dumps(list(temp), ensure_ascii=False)
+                    counter[ "output_{}".format("related") ] += 1
+                    company_raw.update(company_raw_one)
+
+    gcounter["company_index_putian"] = len(company_raw)
+    filename = getLocalFile("server_output/company_raw_putian.{}.json".format(batch))
+    libfile.json2file(company_raw, filename)
+
+    lines = [ u"{}\t{}".format(company_raw[x]["key_num"], x) for x in sorted(list(company_raw.keys())) ]
+    filename = getLocalFile("server/company_index_putian.{}.tsv".format(batch))
+    libfile.lines2file(lines, filename)
+
+
+
+
+def expand_agent(batch, limit=5):
+    #################
+    #load raw putian
+    filename = getLocalFile("server_output/company_raw_putian.{}.json".format(batch))
+    with codecs.open(filename, encoding="utf-8") as f:
+        company_raw = json.load(f)
+    print "company_raw", len(company_raw)
+    gcounter["company_raw"] = len(company_raw)
+
+    #####################
+    #filter medical only
+    company_raw_medical = {}
+    for rawitem in company_raw.values():
+        name = rawitem["name"]
+
+        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
+        label = rawitem.get("label", libnlp.classify_company_name(name))
+        rawitem["info"]["label"] = label
+        if not label:
+            gcounter["company_raw_skip_label"] += 1
+            #print label, name
+            continue
+
+        controllers = libnlp.list_item_agent_name(rawitem, False, ["invests"],None)
+        if len(controllers) > 500:
+            gcounter["company_raw_skip_500"] += 1
+            print (json.dumps(["skip too many controllers", name , len(controllers)],ensure_ascii=False))
+            continue
+
+        company_raw_medical[name] = rawitem
+        gcounter["company_raw_"+label] += 1
+
+    print "company_raw_medical", len(company_raw_medical)
+    gcounter["company_raw_medical"] = len(company_raw_medical)
+    temp = [company_raw_medical[x]["info"] for x in sorted(list(company_raw_medical.keys())) ]
+    filename = getLocalFile("output/company.medical.xls".format(batch))
+    libfile.writeExcel(temp, [u"name", u"label", u"address"],filename)
+
+    ################
+    # load seed person
+    filename = getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch))
+    root_persons = libfile.file2set(filename)
+    gcounter["root_persons".format(batch)] = len(root_persons)
+    front_agents = {}
+    for name in root_persons:
+        front_agents[name]={"depth": 0 }
+
+    ################
+    # expand
+    for depth in range(1, limit + 1):
+        new_front_agents = expand_agent_pass(front_agents, company_raw_medical, depth)
+        if not new_front_agents:
+            break
+        print len(new_front_agents)
+        front_agents.update(new_front_agents)
+
+    #save list of persons
+    seed_agent_ext = [x for x in front_agents if x not in root_persons and front_agents[x]["rtype"] == "person" ]
+    filename = getLocalFile( "output/seed_agent_ext_reg.putian.auto.txt".format(batch) )
+    libfile.lines2file(sorted(list(seed_agent_ext)), filename )
+
+    seed_agent_ext_item = [front_agents[x] for x in sorted(list(front_agents.keys())) if x not in root_persons]
+    filename = getLocalFile("output/seed_agent_ext_reg.putian.auto.xls".format(batch))
+    libfile.writeExcel(seed_agent_ext_item, [u"name", u"rtype", u"company_cnt", u"company_list"],filename)
+
+def expand_agent_pass(front_agents, company_raw, depth):
+    print json.dumps(gcounter,ensure_ascii=False,indent=4, sort_keys=True)
+
+    map_copimpact = collections.defaultdict(set)
+    for rawitem in company_raw.values():
+        name = rawitem["name"]
+        related = set( rawitem.get("related", libnlp.list_item_agent_name(rawitem, False, None, None) ) )
+        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
+        overlapped = related.intersection(front_agents)
+        if len(overlapped) < 1:
+            continue
+        elif len(overlapped) < len(related) * 0.01:
+            continue
+
+        for agent in related:
+            map_copimpact[agent].add(name)
+
+    gcounter["map_copimpact_depth_{}".format(depth)] = len(map_copimpact)
+
+    related_agents = {}
+    for name in map_copimpact:
+
+        company_inuse = map_copimpact[name]
+        if len(company_inuse) < 2:
+            #one hospital invest or two medical
+            gcounter["skip-depth{}".format(depth)]+=1
+            continue
+
+        rtype = libnlp.classify_agent_type(name)
+
+        if not name in front_agents:
+            related_agents[name]={"depth":depth}
+            msg =[name, len(company_inuse), list(company_inuse)]
+            print (json.dumps(msg,ensure_ascii=False))
+
+            gcounter["related_depth_{}_{}".format(depth, rtype)] +=1
+            related_agents[name]["rtype"] = rtype
+            related_agents[name]["company"] = company_inuse
+            related_agents[name]["company_list"] = ",".join(company_inuse)
+            related_agents[name]["company_cnt"] = len(company_inuse)
+            related_agents[name]["name"] = name
+        else:
+            front_agents[name]["rtype"] = rtype
+            front_agents[name]["company"] = company_inuse
+            front_agents[name]["company_list"] = ",".join(company_inuse)
+            front_agents[name]["company_cnt"] = len(company_inuse)
+            front_agents[name]["name"] = name
+
+    return related_agents
+
+# def expand_agent_pass(front_agents, company_raw, depth):
+#     print json.dumps(gcounter,ensure_ascii=False,indent=4, sort_keys=True)
+#
+#     map_copimpact = collections.defaultdict(set)
+#     for rawitem in company_raw.values():
+#         name = rawitem["name"]
+#         #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
+#         controllers = libnlp.list_item_agent_name(rawitem, False, ["invests"], None)
+#         controller_inroot = controllers.intersection(front_agents)
+#         if len(controller_inroot) < depth:
+#             continue
+#         elif len(controller_inroot) < len(controllers) * 0.01:
+#             continue
+#
+#         for controller in controllers:
+#             map_copimpact[controller].add(name)
+#
+#     gcounter["map_copimpact_depth_{}".format(depth)] = len(map_copimpact)
+#
+#     related_agents = {}
+#     for name in map_copimpact:
+#
+#         company_inuse = map_copimpact[name]
+#         if len(company_inuse) < 2:
+#             #one hospital invest or two medical
+#             gcounter["skip-depth{}".format(depth)]+=1
+#             continue
+#
+#         if len(name) > 4:
+#             #skip non person /,
+#             gcounter["skip-depth{}-non-person".format(depth)]+=1
+#             continue
+#
+#         if not name in front_agents:
+#             related_agents[name]={"depth":depth}
+#             msg =[name, len(company_inuse), list(company_inuse)]
+#             print (json.dumps(msg,ensure_ascii=False))
+#
+#             related_agents[name]["company"] = company_inuse
+#             related_agents[name]["company_list"] = ",".join(company_inuse)
+#             related_agents[name]["company_cnt"] = len(company_inuse)
+#             related_agents[name]["name"] = name
+#         else:
+#             front_agents[name]["company"] = company_inuse
+#             front_agents[name]["company_list"] = ",".join(company_inuse)
+#             front_agents[name]["company_cnt"] = len(company_inuse)
+#             front_agents[name]["name"] = name
+#
+#
+#     gcounter["related_agents_depth_{}".format(depth)] = len(related_agents)
+#
+#     return related_agents
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# def search_count(batch, refresh=False):
+#     help =""" also try
+#         python business/crawljob.py search_count medical seed_org_names_reg
+#         python business/crawljob.py search_count medical seed_person_core_reg
+#     """
+#
+#     if len(sys.argv)>3:
+#         path_expr = batch+ "/*{}*".format( sys.argv[3])
+#     else:
+#         path_expr = batch +"/*"
+#     dir_name = getTheFile( path_expr )
+#     print ("search_count on path_expr={}".format(path_expr) +help)
+#
+#     crawler = get_crawler(BATCH_ID_SEARCH, COOKIE_INDEX_SEARCH)
+#
+#     ret = collections.defaultdict(dict)
+#     filenames = glob.glob(dir_name)
+#     for filename in filenames:
+#         print filename
+#         seeds = libfile.file2set(filename)
+#         for seed in seeds:
+#             ret[seed]["name"] = seed
+#             if "seed_org" in filename:
+#                 indexes = crawler.INDEX_LIST_ORG
+#                 ret[seed]["type"] = "org"
+#             elif "seed_person" in filename:
+#                 indexes = crawler.INDEX_LIST_PERSON
+#                 ret[seed]["type"] = "person"
+#             else:
+#                 continue
+#             total = 0
+#             for index in indexes:
+#                 cnt = crawler.get_keyword_search_count( seed, index)
+#                 ret[seed]["idx{}".format(index)] = cnt
+#                 total+=cnt
+#             ret[seed]["total"] = total
+#             print json.dumps(ret[seed], ensure_ascii=False, sort_keys=True)
 
 
 
@@ -334,345 +814,156 @@ def search_count(batch, refresh=False):
 }
     """
 
-
-def load_all_company():
-    all_company = {}
-    all_keyword = {}
-    #all_batch_keyword = collections.defaultdict(dict)
-
-    #load from search metadata
-    all_company_temp = set()
-    for filename in glob.glob(getLocalFile("work/crawl_search*.json.txt")):
-        batch = os.path.basename(filename).replace("crawl_search.","").replace(".json.txt","")
-        for line in libfile.file2list(filename):
-            gcounter["line"] +=1
-            item = json.loads(line)
-
-            for keyword, keyword_entry in item["data"].items():
-                if "data" in keyword_entry:
-                    company_dict = keyword_entry["data"]
-                else:
-                    company_dict = keyword_entry
-
-                all_keyword[keyword] = len(keyword_entry)
-                all_company.update(company_dict)
-                gcounter["company_name_dup_search"] += len(company_dict)
-
-                if keyword in [u"医院"]:
-                    #print len(company_dict)
-                    all_company_temp.update(company_dict.keys())
-
-    filename_company_temp = getLocalFile("temp/company_temp.txt")
-    with codecs.open(filename_company_temp,"w") as f:
-        f.write(u"\n".join(all_company_temp))
-        f.write(u"\n")
-
-
-    gcounter["all_company_from_search"] = len(all_company)
-    gcounter["all_keyword"] = len(all_keyword)
-
-    #load prev result
-    for filename in glob.glob(getLocalFile("work/company_prev*.txt")):
-        names = libfile.file2set(filename)
-        gcounter["company_name_dup_prev"] += len(names)
-        names.difference_update(all_company)
-        for name in names:
-            if name not in all_company:
-                if libnlp.classify_company_name_medical(name, True):
-                    print name
-                all_company[name]= {"name":name, "key_num":None}
-
-    gcounter["all_company"] = len(all_company)
-
-    #write to text file
-    company_name_all = all_company.keys()
-    filename = getLocalFile("temp/company_name.all.txt")
-    libfile.lines2file(sorted(list(company_name_all)), filename)
-
-    #medical company
-    company_name_batch = set()
-    for x in company_name_all:
-        label = libnlp.classify_company_name(x)
-        all_company[x]["label"] = label
-        gcounter["company_name_{}_label_{}".format(batch, label)] +=1
-        if libnlp.classify_company_name_medical(x, True):
-            company_name_batch.add(x)
-
-    gcounter["company_name_{}".format(batch)] = len(company_name_batch)
-    filename = getLocalFile("temp/company_name.{}.txt".format(batch))
-    libfile.lines2file(sorted(list(company_name_batch)), filename)
-
-    return (all_company, all_keyword)
-
-def merge_company(batch):
-
-    all_company, all_batch_keyword = load_all_company()
-
-    #medical new keywords
-    map_name_freq = libnlp.get_keywords(company_name_batch, None,  100)
-
-    new_keywords = set()
-    for name in map_name_freq:
-        if not re.match(ur"(医院|公司)$", name):
-            name += u"医院"
-        new_keywords.update(map_name_freq.keys())
-
-    gcounter["new_keywords_1"] = len(new_keywords)
-    new_keywords.difference_update(all_keyword.keys())
-    gcounter["new_keywords"] = len(new_keywords)
-    filename = getLocalFile("temp/keywords_new.{}.txt".format(batch))
-    libfile.lines2file(sorted(list(new_keywords)), filename)
-
-    #medical company
-
-
-def fetch_company_raw(batch, expand=True):
-    filename_cache_fetch_result = getLocalFile("server/cache_fetch_result.expand_{}.json.txt".format(expand).lower())
-    putian_list = set()
-
-    filenames = [
-         getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch)),
-         getTheFile("{}/seed_person_ext_reg.putian.human.txt".format(batch)),
-         getTheFile("{}/candidates.putian.human.txt".format(batch)),
-    ]
-    for filename in filenames:
-        temp = libfile.file2set(filename)
-        gcounter["from_{}".format(os.path.basename(filename))] = len(temp)
-        putian_list.update(temp)
-
-    gcounter["putian_list"] = len(putian_list)
-    print json.dumps(gcounter, indent=4)
-
-    #load cache_fetch_result
-    #cache_fetch_result = {}
-    cached_key_num = {}
-    company_raw = {}
-    if os.path.exists(filename_cache_fetch_result):
-        #may have duplicated, the earlier one will be overwrite by the newer one
-        cnt = 0
-        with codecs.open(filename_cache_fetch_result,  encoding="utf-8") as f:
-            for line in f:
-                if cnt %1000 == 0:
-                    print datetime.datetime.now().isoformat(), cnt, len(company_raw), len(cached_key_num)
-                cnt += 1
-
-                fetch_result = json.loads(line)
-                key_num = fetch_result["key_num"]
-                name = fetch_result["name"]
-
-                #all data
-                for n in fetch_result["data"]:
-                    cached_key_num[n]=fetch_result["data"][n]["key_num"]
-
-                #putian candidates
-                if name in putian_list:
-                    gcounter["candidate_by_name"] +=1
-                    company_raw.update(fetch_result["data"])
-                else:
-                    rawitem = fetch_result["data"][name]
-                    if libnlp.is_rawitem_putian_canidate(rawitem, putian_list):
-                        gcounter["candidate_by_other"] +=1
-                        company_raw.update(fetch_result["data"])
-
-
-    #print len(cache_fetch_result)
-    gcounter["company_raw.candidate.{}.json".format(batch)] = len(company_raw)
-    filename = getLocalFile("server/company_raw.candidate.{}.json".format(batch))
-    with codecs.open(filename,"w", encoding="utf-8") as f:
-        json.dump(company_raw, f, ensure_ascii=False, indent=4, sort_keys=True )
-
-    gcounter["company_all"] =len(cached_key_num)
-    lines = [ u"{}\t{}".format(cached_key_num[x], x) for x in sorted(list(cached_key_num.keys())) ]
-    filename = getLocalFile("server/company_raw_all.{}.txt".format(batch))
-    libfile.lines2file(lines, filename)
-
-#################
-
-def fetch_detail(batch, worker_id=None, expand=True, cookie_index =COOKIE_INDEX_PREFETCH, cache_only=False, refresh=False):
-    flag_mono = (worker_id is None)
-    filename_cache_fetch_result = getLocalFile("server/cache_fetch_result.expand_{}.json.txt".format(expand).lower())
-
-    #load cache_fetch_result
-    if flag_mono:
-        #cache_fetch_result = {}
-        cached_key_num = set()
-        if os.path.exists(filename_cache_fetch_result):
-            #may have duplicated, the earlier one will be overwrite by the newer one
-            cnt = 0
-            with codecs.open(filename_cache_fetch_result,  encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    #skip comment line
-                    if line.startswith('#'):
-                        continue
-
-                    if cnt %1000 == 0:
-                        print cnt, datetime.datetime.now().isoformat()
-
-                    cnt += 1
-                    fetch_result = json.loads(line)
-                    key_num = fetch_result["key_num"]
-                    #cache_fetch_result[key_num] = fetch_result["data"]
-                    cached_key_num.add(key_num)
-            #print len(cache_fetch_result)
-
-    #load search history
-    map_key_num_name_crawl = {}
-    all_keyword = {}
-    filename_metadata_search = getLocalFile("work/crawl_search.{}.json.txt".format(batch))
-    if os.path.exists(filename_metadata_search):
-
-        for line in libfile.file2list(filename_metadata_search):
-            gcounter["line"] +=1
-            item = json.loads(line)
-            for keyword, keyword_entry in item["data"].items():
-                #print type(keyword_entry)
-                for name in keyword_entry["data"]:
-                    company = keyword_entry["data"][name]
-                    key_num = company['key_num']
-                    map_key_num_name_crawl[key_num] = name
-
-                gcounter["all_company_dup"] += len(keyword_entry["data"])
-                all_keyword[keyword] = keyword_entry["metadata"]
-
-    #load names
-    gcounter["company_crawl"] += len(map_key_num_name_crawl)
-
-    #load prev company 0531
-    map_key_num_name_0531 = {}
-    filename = getLocalFile("work/prefetch.0531.raw.tsv".format(batch))
-    for line in libfile.file2set(filename):
-        key_num,name = line.split('\t',1)
-        if name:
-            map_key_num_name_0531[key_num] = name
-
-    gcounter["company_0531"] += len(map_key_num_name_0531)
-    #merge data
-    map_key_num_name_crawl.update(map_key_num_name_0531)
-
-    #map names to id
-    crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id, cache_only=cache_only)
-    cache_json = Cache(crawler.config, batch_id="qichacha_json_20160603")
-
-    counter = collections.Counter()
-    company_name_batch = sorted(list(map_key_num_name_crawl.keys()))
-    #company_name_batch = [x for x in all_company.keys() if libnlp.classify_company_name_medical(x, False)]
-    counter["company_total"] = len(company_name_batch)
-    worker_num = crawler.config.get("WORKER_NUM",1)
-    company_raw = {}
-    company_raw_simple = list()
-    for key_num in company_name_batch:
-        name = map_key_num_name_crawl[key_num]
-        if not name:
-            continue
-
-        if counter["visited"] % 1000 ==0:
-            counter["company_raw"] =len(company_raw)
-            print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True), json.dumps(crawler.downloader.counter, sort_keys=True)
-        counter["visited"]+=1
-
-        if worker_id is not None and worker_num>1:
-            if (counter["visited"] % worker_num) != worker_id:
-                counter["skipped"]+=1
-                continue
-
-        #if crawler.config.get("debug"):
-        #    print "name",name, "key",key_num
-
-        try:
-            company_raw_one = {}
-            cache_type = ""
-
-            #三级缓存
-            #load cached company_raw_one
-            tag = "expand" if expand else "regular"
-            cache_json_uri = "uri:qcc:{}:{}".format(tag,key_num)
-
-            if not refresh:
-                if flag_mono:
-                    if key_num in cached_key_num:
-                        gcounter["cached_key_num"]+=1
-                        continue
-    #                company_raw_one = cache_fetch_result.get(key_num,{})
-    #                if company_raw_one:
-    #                    cache_type = "local"
-
-                if not company_raw_one:
-                    cache_json_content = cache_json.get(cache_json_uri)
-                    if cache_json_content:
-                        company_raw_one = json.loads(cache_json_content)["data"]
-                        cache_type = "json"
-
-            if company_raw_one:
-                counter["cached_"+cache_type]+=1
-            else:
-                if expand:
-                    temp = crawler.crawl_descendant_company(name, key_num)
-                    if temp:
-                        company_raw_one.update(temp)
-
-                    temp = crawler.crawl_ancestors_company(name, key_num)
-                    if temp:
-                        company_raw_one.update(temp)
-                else:
-                    temp = crawler.crawl_company_detail(name, key_num)
-                    if temp:
-                        company_raw_one.update(temp)
-
-                #cache the company_raw_one
-                if company_raw_one:
-                    fetch_result = {
-                        "key_num":key_num,
-                        "name": name,
-                        "ts": datetime.datetime.now().isoformat(),
-                        "data": company_raw_one
-                    }
-                    cache_json_content = cache_json.post(cache_json_uri, json.dumps(fetch_result))
-                    cache_type = ""
-
-            if not company_raw_one:
-                gcounter["missing"]+=1
-                continue
-
-            #post local cache
-            if company_raw_one:
-                if flag_mono and cache_type != "local":
-                    fetch_result = {
-                        "key_num":key_num,
-                        "name": name,
-                        "ts": datetime.datetime.now().isoformat(),
-                        "data": company_raw_one
-                    }
-                    with codecs.open(filename_cache_fetch_result, 'a',encoding="utf8") as f:
-                        f.write(u"{}\n".format(json.dumps(fetch_result)))
-
-
-            #only create company_raw when it is single threaded OP
-            if flag_mono:
-                #company_raw.update(company_raw_one)
-                #line  = u"{}\t{}".format( company_raw[name]["key_num"], name)
-                #company_raw_simple.append(line)
-                pass
-
-            #counter["company_raw_one"] =len(company_raw_one)
-            counter["ok"] +=1
-        except:
-            import traceback
-            traceback.print_exc(file=sys.stdout)
-            #print "fail",
-            counter["failed"] +=1
-            pass
-
-    #only create company_raw when it is single threaded OP
-    #if flag_mono:
-        #gcounter["company_raw.{}.json".format(batch)] = len(company_raw)
-        # filename = getLocalFile("output/company_raw.{}.json".format(batch))
-        # with codecs.open(filename,"w", encoding="utf-8") as f:
-        #     json.dump(company_raw, f, ensure_ascii=False, indent=4, sort_keys=True )
-
-
-        #filename = getLocalFile("output/company_raw.{}.txt".format(batch))
-        #libfile.lines2file(company_raw_simple, filename)
+#
+# def load_all_company():
+#     all_company = {}
+#     all_keyword = {}
+#     #all_batch_keyword = collections.defaultdict(dict)
+#
+#     #load from search metadata
+#     all_company_temp = set()
+#     for filename in glob.glob(getLocalFile("work/crawl_search*.json.txt")):
+#         batch = os.path.basename(filename).replace("crawl_search.","").replace(".json.txt","")
+#         for line in libfile.file2list(filename):
+#             gcounter["line"] +=1
+#             item = json.loads(line)
+#
+#             for keyword, keyword_entry in item["data"].items():
+#                 if "data" in keyword_entry:
+#                     company_dict = keyword_entry["data"]
+#                 else:
+#                     company_dict = keyword_entry
+#
+#                 all_keyword[keyword] = len(keyword_entry)
+#                 all_company.update(company_dict)
+#                 gcounter["company_name_dup_search"] += len(company_dict)
+#
+#                 if keyword in [u"医院"]:
+#                     #print len(company_dict)
+#                     all_company_temp.update(company_dict.keys())
+#
+#     filename_company_temp = getLocalFile("temp/company_temp.txt")
+#     with codecs.open(filename_company_temp,"w") as f:
+#         f.write(u"\n".join(all_company_temp))
+#         f.write(u"\n")
+#
+#
+#     gcounter["all_company_from_search"] = len(all_company)
+#     gcounter["all_keyword"] = len(all_keyword)
+#
+#     #load prev result
+#     for filename in glob.glob(getLocalFile("work/company_prev*.txt")):
+#         names = libfile.file2set(filename)
+#         gcounter["company_name_dup_prev"] += len(names)
+#         names.difference_update(all_company)
+#         for name in names:
+#             if name not in all_company:
+#                 if libnlp.classify_company_name_medical(name, True):
+#                     print name
+#                 all_company[name]= {"name":name, "key_num":None}
+#
+#     gcounter["all_company"] = len(all_company)
+#
+#     #write to text file
+#     company_name_all = all_company.keys()
+#     filename = getLocalFile("temp/company_name.all.txt")
+#     libfile.lines2file(sorted(list(company_name_all)), filename)
+#
+#     #medical company
+#     company_name_batch = set()
+#     for x in company_name_all:
+#         label = libnlp.classify_company_name(x)
+#         all_company[x]["label"] = label
+#         gcounter["company_name_{}_label_{}".format(batch, label)] +=1
+#         if libnlp.classify_company_name_medical(x, True):
+#             company_name_batch.add(x)
+#
+#     gcounter["company_name_{}".format(batch)] = len(company_name_batch)
+#     filename = getLocalFile("temp/company_name.{}.txt".format(batch))
+#     libfile.lines2file(sorted(list(company_name_batch)), filename)
+#
+#     return (all_company, all_keyword)
+#
+# def merge_company(batch):
+#
+#     all_company, all_batch_keyword = load_all_company()
+#
+#     #medical new keywords
+#     map_name_freq = libnlp.get_keywords(company_name_batch, None,  100)
+#
+#     new_keywords = set()
+#     for name in map_name_freq:
+#         if not re.match(ur"(医院|公司)$", name):
+#             name += u"医院"
+#         new_keywords.update(map_name_freq.keys())
+#
+#     gcounter["new_keywords_1"] = len(new_keywords)
+#     new_keywords.difference_update(all_keyword.keys())
+#     gcounter["new_keywords"] = len(new_keywords)
+#     filename = getLocalFile("temp/keywords_new.{}.txt".format(batch))
+#     libfile.lines2file(sorted(list(new_keywords)), filename)
+#
+#     #medical company
+#
+#
+# def fetch_company_raw(batch, expand=True):
+#     filename_cache_fetch_result = getLocalFile("server/cache_fetch_result.expand_{}.json.txt".format(expand).lower())
+#     putian_list = set()
+#
+#     filenames = [
+#          getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch)),
+#          getTheFile("{}/seed_person_ext_reg.putian.human.txt".format(batch)),
+#          getTheFile("{}/candidates.putian.human.txt".format(batch)),
+#     ]
+#     for filename in filenames:
+#         temp = libfile.file2set(filename)
+#         gcounter["from_{}".format(os.path.basename(filename))] = len(temp)
+#         putian_list.update(temp)
+#     gcounter["putian_list"] = len(putian_list)
+#     print json.dumps(gcounter, indent=4)
+#
+#     #load cache_fetch_result
+#     #cache_fetch_result = {}
+#     cached_key_num = {}
+#     company_raw = {}
+#     if os.path.exists(filename_cache_fetch_result):
+#         #may have duplicated, the earlier one will be overwrite by the newer one
+#         cnt = 0
+#         with codecs.open(filename_cache_fetch_result,  encoding="utf-8") as f:
+#             for line in f:
+#                 if cnt % 1000 == 0:
+#                     print datetime.datetime.now().isoformat(), cnt, len(company_raw), len(cached_key_num)
+#                 cnt += 1
+#
+#                 fetch_result = json.loads(line)
+#                 key_num = fetch_result["key_num"]
+#                 name = fetch_result["name"]
+#
+#                 #all data
+#                 for n in fetch_result["data"]:
+#                     cached_key_num[n]=fetch_result["data"][n]["key_num"]
+#
+#                 #putian candidates
+#                 if name in putian_list:
+#                     gcounter["candidate_by_name"] +=1
+#                     company_raw.update(fetch_result["data"])
+#                 else:
+#                     rawitem = fetch_result["data"][name]
+#                     if libnlp.is_rawitem_putian_canidate(rawitem, putian_list):
+#                         gcounter["candidate_by_other"] +=1
+#                         company_raw.update(fetch_result["data"])
+#
+#
+#     #print len(cache_fetch_result)
+#     gcounter["company_raw.candidate.{}.json".format(batch)] = len(company_raw)
+#     filename = getLocalFile("server/company_raw.candidate.{}.json".format(batch))
+#     with codecs.open(filename,"w", encoding="utf-8") as f:
+#         json.dump(company_raw, f, ensure_ascii=False, indent=4, sort_keys=True )
+#
+#     gcounter["company_all"] =len(cached_key_num)
+#     lines = [ u"{}\t{}".format(cached_key_num[x], x) for x in sorted(list(cached_key_num.keys())) ]
+#     filename = getLocalFile("server/company_raw_all.{}.txt".format(batch))
+#     libfile.lines2file(lines, filename)
 
 
 #
@@ -761,122 +1052,10 @@ def fetch_detail(batch, worker_id=None, expand=True, cookie_index =COOKIE_INDEX_
 #     filename = getLocalFile("prefetch.{}.txt".format(batch))
 #     libfile.lines2file(sorted(list(urls)), filename)
 
-def expand_person(batch, limit=1):
-    #load
-    filename = getLocalFile("output/company_raw.{}.json".format(batch))
-    with codecs.open(filename, encoding="utf-8") as f:
-        company_raw = json.load(f)
-        gcounter["company_raw".format(batch)] = len(company_raw)
-
-    #filter medical only
-    company_raw_medical = {}
-    for rawitem in company_raw.values():
-        name = rawitem["name"]
-
-        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
-        label = libnlp.classify_company_name(name)
-        rawitem["info"]["label"] = label
-        if not label:
-            gcounter["company_raw_skip_label"] += 1
-            continue
-
-        controllers = libnlp.list_item_agent_name(rawitem, False, ["invests"],None)
-        if len(controllers)>500:
-            gcounter["company_raw_skip_500"] += 1
-            print (json.dumps(["skip too many controllers", name , len(controllers)],ensure_ascii=False))
-            continue
-
-        company_raw_medical[name] = rawitem
-        gcounter["company_raw_"+label] += 1
-
-    temp = [company_raw_medical[x]["info"] for x in sorted(list(company_raw_medical)) ]
-    filename = getLocalFile("output/company.medical.xls".format(batch))
-    libfile.writeExcel(temp, [u"name",u"label",u"address"],filename)
-
-
-    filename = getTheFile("{}/seed_person_core_reg.putian.human.txt".format(batch))
-    root_persons = libfile.file2set(filename)
-    gcounter["root_persons".format(batch)] = len(root_persons)
-    front_persons = {}
-    for name in root_persons:
-        front_persons[name]={"depth":0}
-
-    for depth in range(1,limit+1):
-        new_front_persons = expand_person_pass(front_persons, company_raw_medical, depth)
-        if not new_front_persons:
-            break
-        print len(new_front_persons)
-        front_persons.update(new_front_persons)
-
-    #save list of persons
-    seed_person_ext = [x for x in front_persons if x not in root_persons]
-    filename = getLocalFile("output/seed_person_ext_reg.putian.auto.txt".format(batch))
-    libfile.lines2file(sorted(list(seed_person_ext)), filename )
-
-    seed_person_ext_item = [front_persons[x] for x in sorted(list(front_persons.keys())) if x not in root_persons]
-    filename = getLocalFile("output/seed_person_ext_reg.putian.auto.xls".format(batch))
-    libfile.writeExcel(seed_person_ext_item, [u"name",u"company_cnt",u"company_list"],filename)
-
-def expand_person_pass(front_persons, company_raw, depth):
-    print json.dumps(gcounter,ensure_ascii=False,indent=4, sort_keys=True)
-
-    map_person_coimpact = collections.defaultdict(set)
-    for rawitem in company_raw.values():
-        name = rawitem["name"]
-        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
-        controllers = libnlp.list_item_agent_name(rawitem, False, ["invests"],None)
-        controller_inroot = controllers.intersection(front_persons)
-        if len(controller_inroot)<depth:
-            continue
-        elif len(controller_inroot)<len(controllers)*0.01:
-            continue
-
-        for controller in controllers:
-            map_person_coimpact[controller].add(name)
-
-    gcounter["map_person_coimpact_depth_{}".format(depth)] = len(map_person_coimpact)
-
-    related_persons = {}
-    for name in map_person_coimpact:
-
-
-        company_inuse = map_person_coimpact[name]
-        if len(company_inuse)<2:
-            #one hospital invest or two medical
-            gcounter["skip-depth{}".format(depth)]+=1
-            continue
-
-        if len(name)>4:
-            #skip non person
-            gcounter["skip-depth{}-non-person".format(depth)]+=1
-            continue
-
-        if not name in front_persons:
-            related_persons[name]={"depth":depth}
-            msg =[name, len(company_inuse), list(company_inuse)]
-            print (json.dumps(msg,ensure_ascii=False))
-
-            related_persons[name]["company"] = company_inuse
-            related_persons[name]["company_list"] = ",".join(company_inuse)
-            related_persons[name]["company_cnt"] = len(company_inuse)
-            related_persons[name]["name"] = name
-        else:
-            front_persons[name]["company"] = company_inuse
-            front_persons[name]["company_list"] = ",".join(company_inuse)
-            front_persons[name]["company_cnt"] = len(company_inuse)
-            front_persons[name]["name"] = name
-
-
-    gcounter["related_person_depth_{}".format(depth)] = len(related_persons)
-
-    return related_persons
-
-
-
 
 def expand_putian(batch, limit=10):
     #load
-    filename = getLocalFile("output/company_raw.{}.json".format(batch))
+    filename = getLocalFile("output/company_raw_putian.{}.json".format(batch))
     with codecs.open(filename, encoding="utf-8") as f:
         company_raw = json.load(f)
         gcounter["company_raw".format(batch)] = len(company_raw)
@@ -895,7 +1074,7 @@ def expand_putian(batch, limit=10):
             continue
 
         controllers = libnlp.list_item_agent_name(rawitem, False, ["invests"],None)
-        if len(controllers)>500:
+        if len(controllers) > 500:
             gcounter["company_raw_skip_500"] += 1
             print (json.dumps(["skip too many controllers", name , len(controllers)],ensure_ascii=False))
             continue
@@ -1016,14 +1195,6 @@ def expand_putian_pass(front, company_raw, map_agent_related, depth):
 
 
 
-def get_crawler(batch_id, option, worker_id=None, cache_only=False):
-    with open(FILE_CONFIG) as f:
-        config = json.load(f)[option]
-        if worker_id is not None:
-            config['WORKER_ID'] = worker_id
-    return Qichacha(config, batch_id, cache_only=cache_only)
-
-
 def test_cookie(limit=None):
 
     option = sys.argv[2]
@@ -1051,13 +1222,13 @@ def test_cookie(limit=None):
     for i in range(0, limit):
         metadata_dict = collections.Counter()
         summary_dict_onepass = {}
-        crawler.list_keyword_search_onepass( seed, index, "", 1, metadata_dict, summary_dict_onepass, True)
+        crawler.list_keyword_search_onepass( seed, index, "", 10, metadata_dict, summary_dict_onepass, True)
         gcounter["list_keyword_search_onepass"] += 1
         cookie = crawler.downloader.get_cur_cookie()
 
         print json.dumps(metadata_dict, sort_keys=True)
-        if not len(summary_dict_onepass) == crawler.NUM_PER_PAGE:
-            print "ERROR, BAD COOKIE. max", crawler.NUM_PER_PAGE, "actual", len(summary_dict_onepass)
+        if not len(summary_dict_onepass) == metadata_dict["num_per_page"]:
+            print "ERROR, BAD COOKIE. max", metadata_dict["num_per_page"], "actual", len(summary_dict_onepass)
             group = "bad"
         else:
             group = "good"
@@ -1101,8 +1272,8 @@ def test_count_x(keyword, index, page, province):
     source = crawler.downloader.access_page_with_cache(url, groups="test", refresh=False)
     print source
     tree = lxml.html.fromstring(source)
-    cnt = crawler.parser.parse_search_result_count(tree)
-    print cnt
+    result_info = crawler.parser.parse_search_result_info(tree)
+    print result_info
     assert (int(cnt)>0)
 
 def test_cache_get(keyword, index, page, province):
@@ -1151,7 +1322,7 @@ def test_search():
 
     metadata_dict = collections.Counter()
     summary_dict_by_index ={}
-    crawler.list_keyword_search_onepass(keyword, index, province, 20, metadata_dict, summary_dict_by_index, refresh=True)
+    crawler.list_keyword_search_onepass(keyword, index, province, 100, metadata_dict, summary_dict_by_index, refresh=True)
     print len(summary_dict_by_index)
     print json.dumps(metadata_dict)
 
@@ -1204,8 +1375,9 @@ def main():
 
         if len(sys.argv)>4:
             worker_id = int(sys.argv[4])
+            worker_num = int(sys.argv[5])
             print "search with prefetch"
-            crawl_search(batch, path_expr, refresh=False, worker_id=worker_id, cookie_index=COOKIE_INDEX_PREFETCH)
+            crawl_search(batch, path_expr, refresh=False, worker_id=worker_id, worker_num=worker_num, cookie_index=COOKIE_INDEX_PREFETCH)
         else:
             print "search mono"
             crawl_search(batch, path_expr, refresh=False, cookie_index=COOKIE_INDEX_SEARCH)
@@ -1216,34 +1388,33 @@ def main():
 
 
 
-    elif "search_count" == option:
-        search_count(batch, refresh=False)
+    # elif "search_count" == option:
+    #     search_count(batch, refresh=False)
 
 
 
-
+    elif "fetch_prepare" == option:
+        print option
+        fetch_prepare_all(batch)
 
     elif "fetch" == option:
         if len(sys.argv)>3:
             worker_id = int(sys.argv[3])
+            worker_num = int(sys.argv[4])
             print "fetch with prefetch"
-            fetch_detail(batch, worker_id, cookie_index=COOKIE_INDEX_PREFETCH, expand=True)
+            fetch_detail(batch, worker_id, worker_num=worker_num, cookie_index=COOKIE_INDEX_PREFETCH, expand=True)
         else:
             print "fetch mono"
             fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH, expand=True)
-    elif "fetch_cache_only" == option:
-            print "fetch mono cache_only"
-            fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH, expand=True, cache_only=True)
-    elif "fetch_company_raw" == option:
-            print "fetch company_raw"
-            fetch_company_raw(batch, expand=True)
+    elif "fetch_output_putian" == option:
 
-    elif "prefetch" == option:
-        prefetch(batch)
+        fetch_output_putian(batch)
+        #fetch_output(batch, "medical", expand=True)
 
-    elif "expand_person" == option:
-        expand_person(batch)
 
+
+    elif "expand_agent" == option:
+        expand_agent(batch)
     elif "expand_putian" == option:
         expand_putian(batch)
 

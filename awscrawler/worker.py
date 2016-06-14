@@ -34,7 +34,7 @@ class GetWorker(Worker):
             total_count = Record.instance().get_total_number(batch_id)
             if total_count is None:
                 continue
-            self.manager.init_distributed_queue(batch_id, parameter, int(total_count))
+            self.manager.worker_init_distributed_queue(batch_id, int(total_count))
             self._batch_param[batch_id] = parameter
 
     def schedule(self, *args, **kwargs):
@@ -60,7 +60,7 @@ class GetWorker(Worker):
 
          None,   0,                    finish cleaning then exception
         """
-        for batch_id, queue_dict in self.manager.cache.iteritems():
+        for batch_id, queue_dict in self.manager.get_queue_with_priority():
             queue = queue_dict['queue']
             if Record.instance().is_finished(batch_id) is True:
                 # this queue and queue object in distributed_queues can be

@@ -26,13 +26,13 @@ if [ "$1" = "aws-init" ]; then
   # sudo  mkdir /data
   # sudo chown ubuntu /data
   # mkdir -p /data/ruyi/ruyiwebcrawl/projects/qichacha
-  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business/server /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business
+
+
 
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/server admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business
 
-  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/
 
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_fetch_20160603 /data/crawler_file_cache
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/crawler_file_cache/qichacha_search_20160603 /data/crawler_file_cache
@@ -44,6 +44,15 @@ if [ "$1" = "aws-init" ]; then
   echo "ssh -p50001 data@52.196.223.131"
 fi
 
+if [ "$1" = "aws-server-up" ]; then
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/input admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business
+fi
+
+if [ "$1" = "aws-server-down" ]; then
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business/server /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business
+  rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business/server_output /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business
+fi
 
 
 if [ "$1" = "upload" ]; then

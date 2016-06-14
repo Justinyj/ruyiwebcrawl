@@ -33,7 +33,7 @@ def classify_default(name):
             return True
 
     #其他医院
-    if re.search(ur'(动物|宠物|植物|庄稼|果蔬|兽医|蔬菜|轮胎)',name):
+    if re.search(ur'(动物|宠物|植物|庄稼|果蔬|兽医|蔬菜|兽药|压稼|禽|良种|农业)',name):
         return True
 
     #行业
@@ -43,7 +43,7 @@ def classify_default(name):
             return True
 
     #服务业
-    if re.search(ur'(\-|洗涤|服务|食堂|餐饮|专业合作社|农机|客运|招待所|浴室|小卖部|报刊|停车|物业|招待|回收|维修|园林|物流|矿产|种植|足浴|冷饮|经营|代理|餐厅|舞厅|医院路|合作社|旅社|商行)',name):
+    if re.search(ur'(\-|洗涤|服务|食堂|杂志|灯饰|发艺|内衣|塑料|燃料|服装|电缆|桥架|再生|石材|母婴|水产|轮胎|钢材|铺位|男装|装配|编辑部|餐饮|专业合作社|农机|客运|招待所|加油站|浴室|小卖部|报刊|停车|物业|招待|回收|维修|园林|物流|矿产|种植|足浴|冷饮|经营|代理|餐厅|舞厅|医院路|合作社|旅社|商行)',name):
         return True
 
 
@@ -67,7 +67,7 @@ def classify_medical_invests(name):
     if re.search(ur'(医院|医疗|健康).*(投资|控股)', name):
         return True
 
-    if re.search(ur'(医院|医疗|生物).*(管理|科技)', name):
+    if re.search(ur'(医院|医疗|生物).*(管理)', name):
         return True
 
     if re.search(ur'(医院|医疗|健康).*(集团|集团.*公司)$', name):
@@ -115,7 +115,7 @@ def classify_company_name(name):
     if classify_hospital(name):
         return u'医院公司'
 
-    if re.search(ur'([诊孕男女母婴药医疗]|健康|肿瘤|生物|体检|康复|养老|美容|整形|护理|推拿)', name):
+    if re.search(ur'([诊孕男女母婴药医疗泌尿]|健康|肿瘤|生物|体检|康复|养老|美容|整形|护理|推拿)', name):
         return u'门诊医疗'
 
     return LABEL_DEFAULT
@@ -149,20 +149,26 @@ def list_item_agent_name(item, includeme=False, skip=None, exclusive=None):
             names.update( list_item_agent_name(v, True) )
     return names
 
-def is_rawitem_putian_canidate(rawitem, putian_list):
+def is_rawitem_putian_canidate(rawitem, putian_list, min_intersection=1):
     name = rawitem['name']
-    label = classify_company_name_medical(name, False)
+    label = rawitem.get("related", classify_company_name_medical(name, False) )
     rawitem['label'] = label
     if label:
         return True
 
-    related = list_item_agent_name(rawitem,False, None ,None)
+
+    related = set( rawitem.get("related", list_item_agent_name(rawitem,False, None ,None) ) )
     temp = related.intersection(putian_list)
-    if temp:
+    if len(temp) >= min_intersection:
+        print "is_rawitem_putian_canidate", name, json.dumps(list(temp), ensure_ascii=False)
         return True
 
     return False
 
+def classify_agent_type(name):
+    if len(name)<=4:
+        return "person"
+    return "company"
 
 def get_keywords(sentences, regex_skip_word,  limit=100 ):
     import jieba
