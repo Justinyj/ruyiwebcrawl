@@ -13,7 +13,7 @@ import requests
 
 from invoker.zhidao import BATCH_ID
 from downloader.cache import Cache
-from .zhidao_tools import get_zhidao_content, get_answer_url
+from .zhidao_tools import zhidao_downloader, get_answer_url
 from .zhidao_parser import parse_title, parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
 
 
@@ -30,7 +30,7 @@ def process(url, parameter, manager, *args, **kwargs):
     batch_id = BATCH_ID['question']
 
     for _ in range(2):
-        content = get_zhidao_content(url, method, gap, batch_id)
+        content = zhidao_downloader(url, batch_id, gap, method)
         if content != u'':
             break
         time.sleep(gap)
