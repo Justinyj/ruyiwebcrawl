@@ -38,7 +38,7 @@ class Scheduler(object):
             q_json, answer_ids = ret
             q_json['answers'] = []
 
-            for rid in answer_ids:
+            for rid in answer_ids[:3]:
                 a_json = self.zhidao_answer(qid, rid, gap, timeout)
                 if a_json is False:
                     continue
@@ -77,7 +77,7 @@ class Scheduler(object):
         return a_json
 
 
-    def run(self, word, gap, timeout=10):
+    def run(self, word, gap=3, timeout=10):
         qids = zhidao_search(word, BATCH_ID['search'], gap, timeout)
         return self.zhidao_results(qids, gap, timeout)
 
