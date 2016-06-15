@@ -100,3 +100,51 @@ def zhidao_search_parse_qids(content):
         return ret[:1]
     return []
 
+def zhidao_pick_questions(content):
+    """
+    :param content: content is unicode html string
+    :return : a list consists of 1-2 question
+    """
+    dom = soupparser.fromstring(content)
+
+    recommend = dom.xpath('//div[@id="wgt-autoask"]')
+    result = []
+    if recommend:
+        url = recommend[0].xpath('.//a/@href')[0]
+        q_id = re.findall('zhidao.baidu.com/question/(\d+).html', url)
+        if q_id:
+            HasRecommend = 1
+            value_text = recommend[0].xpath('.//i[@class="i-agree"]/../text()')[1]
+            recommend_approve = int(re.findall('(\d+)', value_text)[0])
+            recommend_id = q_id[0]
+            result.append(recommend_id)
+
+    question_list = []
+    first_q_id = None
+    normal = dom.xpath('//dl[contains(@class,"dl")]')
+
+    for node in normal:
+        url = node.xpath('./dt/a/@href')
+        q_id = re.findall('zhidao.baidu.com/question/(\d+).html', url[0])
+        if not q_id:
+            continue
+        q_id = q_id[0]
+        if not first_q_id:
+            first_q_id = q_id
+        node_text = node.xpath('.//i[@class="i-agree"]/../text()')
+        if node_text:
+            q_approve = int(node_text[1].strip())
+            question_list.append((q_id, q_approve))
+
+    max_approve = -1
+    if question_list:
+        question_list=sorted(question_list, key=lambda question: question[1])
+        max_id,max_approve=question_list[-1]
+
+    if result:
+        #which means the recommend exists
+        if max_approve>recommend_approve:
+            result.append(max_id)
+        return result
+    else:
+        return [first_q_id]
