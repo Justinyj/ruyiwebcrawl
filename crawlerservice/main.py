@@ -13,12 +13,12 @@ from tornado.options import define, options
 import tornado.ioloop
 import tornado.httpserver
 
-from urls import urls
+from router import urls
 
 from settings import CONCURRENT_NUM
 
 
-define('port', default=8888, type=int, help='process port')
+define('port', default=8000, type=int, help='process port')
 define('process', default=1, type=int, help='process number')
 define('program', default='proxy', help='RESTFul program name')
 

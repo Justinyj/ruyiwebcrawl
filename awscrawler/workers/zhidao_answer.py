@@ -15,15 +15,24 @@ import time
 
 from invoker.zhidao import BATCH_ID
 from downloader.cache import Cache
-from .zhidao_tools import zhidao_download, get_answer_url
-from .zhidao_parser import generate_answer_json
+from downloader.downloader_wrapper import DownloadWrapper
+from parser.zhidao_parser import generate_answer_json
+
+from settings import CACHE_SERVER
+
 
 
 def process(url, parameter, *args, **kwargs):
+    if not hasattr(process, '_downloader'):
+        setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'})
+    if not hasattr(process, '_cache'):
+        setattr(process, '_cache', Cache(BATCH_ID['json'], cacheserver))
+
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
 
-    content = zhidao_download(url, BATCH_ID['answer'], gap, error_check=False)
+    timeout = 10
+    content = process._downloader.downloader_wrapper(url, BATCH_ID['answer'], gap, timeout=timeout, encoding='gb18030')
     if content is False:
         return False
 
@@ -32,5 +41,4 @@ def process(url, parameter, *args, **kwargs):
         ans_content = json.dumps(a_json)
     except:
         return False
-    m = Cache(BATCH_ID['json'])
-    return m.post(url, ans_content)
+    return process._cache.post(url, ans_content)
