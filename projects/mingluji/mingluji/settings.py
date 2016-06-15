@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Scrapy settings for minglu project
+# Scrapy settings for mingluji project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -19,7 +19,7 @@ ITEM_PIPELINES = {
 COOKIES_ENABLED = False
 DOWNLOAD_DELAY = 0.01
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'minglu (+http://www.yourdomain.com)'
+#USER_AGENT = 'mingluji (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -57,10 +57,17 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
+<<<<<<< HEAD
 DOWNLOADER_MIDDLEWARES = {
     'mingluji.middlewares.MyMiddleWare': 543,
 
 }
+=======
+#DOWNLOADER_MIDDLEWARES = {
+ #   'mingluji.middlewares.MyMiddleWare': 100,
+ #   'scrapy.contrib.downloadermiddleware.useragent.UserAgentMiddleware': None,
+#}
+>>>>>>> cd538e985eb75f32fcaa47a7dff9d6fdf52fc818
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
@@ -71,7 +78,7 @@ DOWNLOADER_MIDDLEWARES = {
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 # ITEM_PIPELINES = {
-#    'minglu.pipelines.SomePipeline': 300,
+#    'mingluji.pipelines.SomePipeline': 300,
 #}
 
 # Enable and configure the AutoThrottle extension (disabled by default)

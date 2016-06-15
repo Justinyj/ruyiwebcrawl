@@ -8,7 +8,9 @@ class ViolenceSpider(scrapy.Spider):
     start_urls = (
         'http://mingluji.com/',
     )
-    
-
+    def __init__(self):
+    	self.file=open('out.txt','r')
+    	
+    	pass
     def parse(self, response):
         pass

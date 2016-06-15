@@ -1,4 +1,4 @@
-import requests
+# import requests
 from cache import Cache
 import scrapy
 import sys
