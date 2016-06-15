@@ -338,10 +338,11 @@ def test_upload_local():
 
 
 def test():
-    #run_esbulk('index', 'python/admin/esconfig.test.json', 'test', 'faq', 'data/longquan/longquan_luntan/xuecheng_qa_by20151228.v20160106.esdata')
     test_echo("hello world!")
-    test_upload_local()
 
+    print "run example:  \n python es_api.py"
+
+    test_upload_local()
 
     #run_es_delete_query('python/admin/esconfig.test.json', 'test', 'faq')
 
