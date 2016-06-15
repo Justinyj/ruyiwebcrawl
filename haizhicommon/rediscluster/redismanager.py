@@ -7,13 +7,18 @@ from __future__ import print_function, division
 from rediscluster.record import Record
 from rediscluster.queues import HashQueue
 from rediscluster.thinredis import ThinHash
+from rediscluster.redispool import RedisPool
 
 from operator import itemgetter
 import hashlib
 
 class RedisManager(object):
 
-    def __init__(self):
+    def __init__(self, record_redis, queue_redis, cache_redis, poolsize=5):
+        """ need init RedisPool here, ThinHash, HashQueue, Record can call
+            this RedisPool single instance later.
+        """
+        RedisPool.instance(record_redis, queue_redis, cache_redis, poolsize)
         self.cache = {}
 
 

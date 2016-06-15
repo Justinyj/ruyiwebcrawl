@@ -8,9 +8,8 @@ from __future__ import print_function, division
 import time
 
 from rediscluster.record import Record
-from rediscluster.queues import HashQueue
-from rediscluster.thinredis import ThinHash
 from rediscluster.redismanager import RedisManager
+from settings import RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS
 
 class Worker(object):
     """ General worker
@@ -27,7 +26,7 @@ class GetWorker(Worker):
         super(GetWorker, self).__init__()
         self.index = index
         self._batch_param = {}
-        self.manager = RedisManager()
+        self.manager = RedisManager(RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS)
 
         for batch_id in Record.instance().get_unfinished_batch():
             parameter = Record.instance().get_parameter(batch_id)
