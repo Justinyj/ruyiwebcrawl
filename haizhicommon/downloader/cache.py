@@ -8,27 +8,38 @@ import base64
 import urlparse
 import requests
 
-CACHE_SERVER = 'http://192.168.1.179:8000'
 
 class Cache(object):
-    def __init__(self, batch_id, server=None):
-        self.server = server if server else CACHE_SERVER
+    def __init__(self, batch_id, server):
+        self.server = server
         self.batch_id = batch_id
 
-    def get(self, url, exists=False):
+
+    def exists(self, url):
+        b64url = base64.urlsafe_b64encode(url)
+        api_url = 'v1/cache/{}/{}'.format(b64url, self.batch_id)
+        get_api_url = urlparse.urljoin(self.server, api_url)
+        response = requests.get(get_api_url, data={'exists': True})
+
+        js = response.json()
+        if js[u'success'] is False:
+            return u''
+        return js[u'exists']
+
+
+    def get(self, url):
         b64url = base64.urlsafe_b64encode(url)
         api_url = 'v1/cache/{}/{}'.format(b64url, self.batch_id)
         get_api_url = urlparse.urljoin(self.server, api_url)
 
-        response = requests.get(get_api_url, data={'exists': False})
+        response = requests.get(get_api_url)
 
         js = response.json()
         if js[u'success'] is False:
             return u''
 
-        if exists:
-            return js[u'exists']
         return js[u'content']
+
 
     def post(self, url, content, groups=None, refresh=False):
         b64url = base64.urlsafe_b64encode(url)

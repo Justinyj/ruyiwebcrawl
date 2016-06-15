@@ -13,7 +13,7 @@ from .cache import Cache
 
 class Downloader(object):
 
-    def __init__(self, request=False, batch_id='', gap=0, timeout=10, groups=None, refresh=False):
+    def __init__(self, batch_id, cacheserver, request=False, gap=0, timeout=10, groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
@@ -21,19 +21,24 @@ class Downloader(object):
         self.RETRY = 2
 
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
-        self.cache = Cache(batch_id)
+        self.cache = Cache(batch_id, cacheserver)
         self.gap = gap
         self.groups = groups
         self.refresh = refresh
 
+        self.login()
 
     def login(self):
         common_header = {
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Encoding': 'gzip, deflate, sdch',
             'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.63 Safari/537.36',
+            'Cache-Control': 'max-age=0',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': 1,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36',
         }
+
         if self.request is True:
             session = requests.Session()
             session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30, max_retries=self.RETRY))
@@ -58,7 +63,7 @@ class Downloader(object):
         """
         return self.gap
 
-    def request_download(self, url, method='get', encode='utf-8', redirect_check=False, error_check=False, data=None):
+    def request_download(self, url, method='get', encoding='utf-8', redirect_check=False, error_check=False, data=None):
         for i in range(self.RETRY):
 
             try:
@@ -71,9 +76,9 @@ class Downloader(object):
                     if redirect_check and response.url != url:
                         continue
                     if error_check:
-                        if __import__('zhidaostream.downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
+                        if __import__('downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
                             continue
-                    response.encoding = encode
+                    response.encoding = encoding
                     return response.text # text is unicode
             except Exception as e: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
                                    # requests.exceptions.MissingSchema
@@ -100,12 +105,12 @@ class Downloader(object):
     def requests_with_cache(self,
                             url,
                             method='get',
-                            encode='utf-8',
+                            encoding='utf-8',
                             redirect_check=False,
                             error_check=False,
                             data=None,
                             groups=None,
-                            refresh=None):
+                            refresh=False):
 
         def save_cache(url, source, groups, refresh):
             refresh = self.refresh if refresh is None else refresh
@@ -116,13 +121,13 @@ class Downloader(object):
                 return False
             return ret
 
-#        if refresh is True:
-#            content = self.cache.get(url)
-#            if content != u'':
-#                return content
+        if refresh is False:
+            content = self.cache.get(url)
+            if content != u'':
+                return content
 
         if self.request is True:
-            source = self.request_download(url, method, encode, redirect_check, error_check, data)
+            source = self.request_download(url, method, encoding, redirect_check, error_check, data)
         else:
             source = self.selenium_download(url)
 

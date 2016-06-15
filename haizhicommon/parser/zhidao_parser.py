@@ -53,10 +53,7 @@ def parse_answer_ids(content):
     return result
 
 
-def generate_question_json(qid, content, answer_ids):
-    """
-    :param answer_ids: should an empty list, can get answer ids after this function
-    """
+def generate_question_json(qid, content):
     q_title = parse_title(content)
     if q_title is None:
         # print('未找到title或者页面不存在')
@@ -74,7 +71,6 @@ def generate_question_json(qid, content, answer_ids):
         'question_time': q_time,
         'answers': rids,
     }
-    answer_ids.extend(rids)
     return item
 
 
@@ -93,4 +89,14 @@ def generate_answer_json(ans_content):
         'valueNum': content[u'valueNum'],
         'valueBadNum': content[u'valueBadNum'],
     }
+
+
+def zhidao_search_parse_qids(content):
+    """
+    :param content: content is unicode html string
+    """
+    ret = re.findall('href=\"(?:http://zhidao.baidu.com)?/question/(\d+).html', content)
+    if ret:
+        return ret[:1]
+    return []
 
