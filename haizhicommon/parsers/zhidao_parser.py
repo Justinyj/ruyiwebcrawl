@@ -86,7 +86,7 @@ def generate_question_json(qid, content):
 def generate_answer_json(ans_content):
     content = json.loads(ans_content)
     return {
-        'question_id': content[u'qid'],
+        'question_id': content[u'encode_qid'],
         'answer_id': content[u'id'],
         'isBest': content[u'isBest'],
         'isHighQuality': content[u'isHighQuality'],
