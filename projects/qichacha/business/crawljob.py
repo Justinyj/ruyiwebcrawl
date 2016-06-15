@@ -424,7 +424,7 @@ def _fetch_with_cache(key_num, name, crawler, fetch_tag, counter, cache_only=Fal
         cached_data = _get_json(crawler.config, BATCH_ID_JSON_FETCH, uri)
         if "data" in cached_data:
             cached_data = cached_data["data"]
-            
+
         if cached_data and name in cached_data:
             counter["cached"]+=1
             company_raw_one = cached_data
@@ -473,6 +473,9 @@ def _cache_rawitem(config, rawitem):
     rawitem["label"] = libnlp.classify_company_name( name )
 
     _put_json(config, BATCH_ID_JSON_FETCH, uri, rawitem)
+
+
+
 
 def load_candidates_skip(batch):
     filename =  getTheFile("{}/candidates.skip.human.tsv".format(batch))
@@ -564,6 +567,7 @@ def fetch_output_putian(batch):
 
 
 
+
 def expand_agent(batch, limit=5):
     #################
     #load raw putian
@@ -575,17 +579,24 @@ def expand_agent(batch, limit=5):
 
     #####################
     #filter medical only
-    company_raw_medical = {}
+    company_name_medical = set()
+    company_name_hospital = set()
+    company_name_best = set()
     for rawitem in company_raw.values():
         name = rawitem["name"]
 
         #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
-        label = rawitem.get("label", libnlp.classify_company_name(name))
+        label = libnlp.classify_company_name(name)
+        rawitem["label"] = label
         rawitem["info"]["label"] = label
         if not label:
+
             gcounter["company_raw_skip_label"] += 1
             #print label, name
             continue
+
+        if libnlp.is_label_medical(label, True):
+            company_name_best.add(name)
 
         controllers = libnlp.list_item_agent_name(rawitem, False, ["invests"],None)
         if len(controllers) > 500:
@@ -593,12 +604,15 @@ def expand_agent(batch, limit=5):
             print (json.dumps(["skip too many controllers", name , len(controllers)],ensure_ascii=False))
             continue
 
-        company_raw_medical[name] = rawitem
+        if label in [u"医院公司"]:
+            company_name_hospital.add(name)
+
+        company_name_medical.add(name)
         gcounter["company_raw_"+label] += 1
 
-    print "company_raw_medical", len(company_raw_medical)
-    gcounter["company_raw_medical"] = len(company_raw_medical)
-    temp = [company_raw_medical[x]["info"] for x in sorted(list(company_raw_medical.keys())) ]
+    print "company_raw_medical", len(company_name_medical)
+    gcounter["company_raw_medical"] = len(company_name_medical)
+    temp = [company_raw[x]["info"] for x in sorted(list(company_name_medical)) ]
     filename = getLocalFile("output/company.medical.xls".format(batch))
     libfile.writeExcel(temp, [u"name", u"label", u"address"],filename)
 
@@ -609,46 +623,185 @@ def expand_agent(batch, limit=5):
     gcounter["root_persons".format(batch)] = len(root_persons)
     front_agents = {}
     for name in root_persons:
-        front_agents[name]={"depth": 0 }
+        front_agents[name]={"depth": 0, "rtype":"person" }
 
     ################
     # expand
     for depth in range(1, limit + 1):
-        new_front_agents = expand_agent_pass(front_agents, company_raw_medical, depth)
+        new_front_agents = expand_agent_pass1(front_agents, company_raw, company_name_medical, depth)
         if not new_front_agents:
             break
         print len(new_front_agents)
         front_agents.update(new_front_agents)
+    #expand_stat(front_agents, company_raw, limit+1)
+    gcounter["front_agents_final"] = len(front_agents)
 
+
+    ################
+    for rawitem in company_raw.values():
+        name = rawitem["name"]
+        label = rawitem.get("label")
+        if label and label in [u"医院公司"]:
+            related = set( rawitem.get("related", libnlp.list_item_agent_name(rawitem, False, None, None) ) )
+            #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
+            overlapped = related.intersection(front_agents)
+            if len(overlapped)>=1:
+                gcounter["hospital_1"]+=1
+            if len(overlapped)>=2:
+                gcounter["hospital_2"]+=1
+
+    ################
     #save list of persons
     seed_agent_ext = [x for x in front_agents if x not in root_persons and front_agents[x]["rtype"] == "person" ]
     filename = getLocalFile( "output/seed_agent_ext_reg.putian.auto.txt".format(batch) )
     libfile.lines2file(sorted(list(seed_agent_ext)), filename )
 
-    seed_agent_ext_item = [front_agents[x] for x in sorted(list(front_agents.keys())) if x not in root_persons]
-    filename = getLocalFile("output/seed_agent_ext_reg.putian.auto.xls".format(batch))
-    libfile.writeExcel(seed_agent_ext_item, [u"name", u"rtype", u"company_cnt", u"company_list"],filename)
+    seed_agent = []
+    for name in sorted(list(front_agents.keys())):
+        item = {"name":name}
+        for p in [ "rtype","company_cnt", "company_list"]:
+            if p in front_agents[name]:
+                item[p] = front_agents[name][p]
+        seed_agent.append(item)
+    filename = getLocalFile("output/seed_agent.auto.xls".format(batch))
+    libfile.writeExcel(seed_agent, [u"name", u"rtype", u"company_cnt", u"company_list"],filename)
 
-def expand_agent_pass(front_agents, company_raw, depth):
-    print json.dumps(gcounter,ensure_ascii=False,indent=4, sort_keys=True)
+    seed_agent = []
+    for name in sorted(list(front_agents.keys())):
+        item = {"name":name}
+        for p in [ "rtype","company", "depth"]:
+            if p in front_agents[name]:
+                item[p] = front_agents[name][p]
+                if p == 'company':
+                    item["company"] = sorted(list(item["company"]))
+        seed_agent.append(item)
+    filename = getLocalFile("output/seed_agent.auto.json".format(batch))
+    libfile.json2file(seed_agent, filename)
 
-    map_copimpact = collections.defaultdict(set)
+def expand_stat(front_agents, company_raw, depth):
+    selected = set()
     for rawitem in company_raw.values():
         name = rawitem["name"]
         related = set( rawitem.get("related", libnlp.list_item_agent_name(rawitem, False, None, None) ) )
-        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
         overlapped = related.intersection(front_agents)
-        if len(overlapped) < 1:
-            continue
-        elif len(overlapped) < len(related) * 0.01:
+        if len(overlapped)>=1:
+            selected.add(name)
+
+    gcounter[u"stat_depth_{}_selected".format(depth)] = len(selected)
+    expanded = expand_get_tree(selected, company_raw)
+    gcounter[u"stat_depth_{}_expand".format(depth)] = len(expanded)
+
+
+    for name in expanded:
+        label = company_raw[name].get("label")
+        if label:
+            gcounter[u"stat_depth_{}_label_{}".format(depth, label)] +=1
+
+
+def expand_get_tree(selected, company_raw):
+    ret = set()
+    expanded = set()
+    front = set(selected)
+    while front:
+        #expand
+        front_new = set()
+        for name in front:
+            expanded.add(name)
+            rawitem = company_raw.get(name)
+            if rawitem:
+                ret.add(name)
+                front_new.update(libnlp.list_item_agent_name(rawitem, False, None, ["invests"]) )
+        front.update(front_new)
+        front.difference_update(expanded)
+
+    return ret
+
+
+
+def expand_agent_pass2(front_agents, company_raw, company_name_selected, depth):
+    print json.dumps(gcounter,ensure_ascii=False,indent=4, sort_keys=True)
+    related_agents = {}
+
+    cnt  = 0
+    for name in company_name_selected:
+
+        if cnt % 10000 == 0:
+            print cnt
+        cnt += 1
+
+        if name in front_agents:
             continue
 
-        for agent in related:
-            map_copimpact[agent].add(name)
+        rawitem = company_raw[name]
+        related = set( rawitem.get("related", libnlp.list_item_agent_name(rawitem, True, None, None) ) )
+        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
+        #print name, len(related)
+
+        overlapped = related.intersection(front_agents)
+        if len(overlapped) < len(related) * 0.01:
+            continue
+
+        if len(overlapped) > 0:
+            related.difference_update(front_agents)
+
+            label = company_raw[name].get("label")
+            if label:
+                gcounter[u"stat_depth_{}_label_{}".format(depth, label)] +=1
+
+            for r in related:
+
+                rtype = "xagent"
+                company_inuse = set(name)
+                gcounter["related_depth_{}_{}".format(depth, rtype)] +=1
+                related_agents[r]={"depth":depth}
+                related_agents[r]["rtype"] = rtype
+                related_agents[r]["company"] = company_inuse
+                related_agents[r]["company_list"] = ",".join(company_inuse)
+                related_agents[r]["company_cnt"] = len(company_inuse)
+                related_agents[r]["name"] = r
+
+    print len(related_agents)
+
+    return related_agents
+
+
+def expand_agent_pass1(front_agents, company_raw, company_name_selected, depth):
+    print json.dumps(gcounter,ensure_ascii=False,indent=4, sort_keys=True)
+    expand_stat(front_agents, company_raw, depth)
+
+    related_agents = {}
+    front_all = set()
+
+    company_controlled = set()
+    map_copimpact = collections.defaultdict(set)
+    for name in company_name_selected:
+        rawitem = company_raw[name]
+        related = set( rawitem.get("related", libnlp.list_item_agent_name(rawitem, False, None, None) ) )
+        #print json.dumps(rawitem,ensure_ascii=False,indent=4, sort_keys=True)
+
+        overlapped = related.intersection(front_agents)
+        if len(overlapped) < len(related) * 0.01:
+            continue
+
+        if len(overlapped) >= 1:
+            front_all.add(name)
+            company_controlled.add(name)
+            rtype = "xcompany"
+            company_inuse = set(name)
+            gcounter["related_depth_{}_{}".format(depth, rtype)] +=1
+            related_agents[name]={"depth":depth}
+            related_agents[name]["rtype"] = rtype
+            related_agents[name]["company"] = company_inuse
+            related_agents[name]["company_list"] = ",".join(company_inuse)
+            related_agents[name]["company_cnt"] = len(company_inuse)
+            related_agents[name]["name"] = name
+
+        if len(overlapped) >= 1:
+            for agent in related:
+                map_copimpact[agent].add(name)
 
     gcounter["map_copimpact_depth_{}".format(depth)] = len(map_copimpact)
 
-    related_agents = {}
     for name in map_copimpact:
 
         company_inuse = map_copimpact[name]
@@ -658,6 +811,7 @@ def expand_agent_pass(front_agents, company_raw, depth):
             continue
 
         rtype = libnlp.classify_agent_type(name)
+        front_all.add(name)
 
         if not name in front_agents:
             related_agents[name]={"depth":depth}
@@ -676,6 +830,7 @@ def expand_agent_pass(front_agents, company_raw, depth):
             front_agents[name]["company_list"] = ",".join(company_inuse)
             front_agents[name]["company_cnt"] = len(company_inuse)
             front_agents[name]["name"] = name
+
 
     return related_agents
 

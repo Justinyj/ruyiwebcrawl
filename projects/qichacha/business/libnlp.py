@@ -39,13 +39,13 @@ def classify_default(name):
     #行业
 
     if not re.search(ur'(医院|医院.*公司|医院.*分院)$', name):
-        if re.search(ur'(通信|电力|银行|邮政|邮电|建设|水利|旅游|国有|建筑|百货|服饰|门市|商场|轴承|石油|钢铁|电器|火车|购物|制盐|矿物|报业|后勤|机电|公路|建材|林业|纺织|金属|建材|农用车|电气|设计院|重工|燃气|航空|航天|能源|农产品|盐业|工程|工业|食品|烟草|电子|工贸|电业|供销|粮食|保险|交通|煤|水泥|铁通|电信|机械|汽车|葛洲坝|中信|代表处)',name):
+        if re.search(ur'(通信|电力|银行|邮政|邮电|建设|水利|旅游|国有|铸造|建筑|百货|服饰|门市|商场|轴承|石油|钢铁|电器|火车|购物|制盐|矿物|报业|后勤|机电|公路|建材|林业|纺织|金属|建材|农用车|电气|设计院|重工|燃气|航空|航天|能源|农产品|盐业|工程|工业|食品|烟草|电子|工贸|电业|供销|粮食|保险|交通|煤|水泥|铁通|电信|机械|汽车|葛洲坝|中信|代表处)',name):
             return True
 
     #服务业
+
     if re.search(ur'(\-|洗涤|服务|食堂|杂志|灯饰|发艺|内衣|塑料|燃料|服装|电缆|桥架|再生|石材|母婴|水产|轮胎|钢材|铺位|男装|装配|编辑部|餐饮|专业合作社|农机|客运|招待所|加油站|浴室|小卖部|报刊|停车|物业|招待|回收|维修|园林|物流|矿产|种植|足浴|冷饮|经营|代理|餐厅|舞厅|医院路|合作社|旅社|商行)',name):
         return True
-
 
     return False
 
@@ -115,7 +115,7 @@ def classify_company_name(name):
     if classify_hospital(name):
         return u'医院公司'
 
-    if re.search(ur'([诊孕男女母婴药医疗泌尿]|健康|肿瘤|生物|体检|康复|养老|美容|整形|护理|推拿)', name):
+    if re.search(ur'([诊孕男女母婴药医疗泌尿]|健康|眼科|肿瘤|体检|康复|养老|美容|整形|护理|推拿)', name):
         return u'门诊医疗'
 
     return LABEL_DEFAULT
@@ -169,6 +169,19 @@ def classify_agent_type(name):
     if len(name)<=4:
         return "person"
     return "company"
+
+def classify_agent_type2(name):
+    pattern = u'公司|投资|管理|协会|商会|商行|企业|商场|研究|经营|中心|基金|服务|银行|株式会社|咨询|经纪|商店|铁路|总厂|'
+    pattern += u'车行|贸易部|办公室|委员会|街道|粮食局|交易|药品|集团|塑料|模具|出版|'
+    pattern += u'机械|纺织|车辆|水泥|拖拉机|化工|客车|柴油|钢厂|汽车|棉纺|乳品|'
+    pattern += u'电机|轴承|仪器|齿轮|造船|加工|电器|清算|军械|军械|轴承|教具|工厂|金店|'
+    pattern += u'Limited|Co.|公众股|集体股'
+    if len(name)<=4:
+        return "person"
+    elif re.search(pattern, name):
+        return 'company'
+    else:
+        return 'person'
 
 def get_keywords(sentences, regex_skip_word,  limit=100 ):
     import jieba
