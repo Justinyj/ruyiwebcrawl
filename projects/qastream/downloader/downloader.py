@@ -13,7 +13,7 @@ from .cache import Cache
 
 class Downloader(object):
 
-    def __init__(self, request=False, batch_id='', gap=0, timeout=10, groups=None, refresh=False):
+    def __init__(self, request=False, batch_id, cacheserver, gap=0, timeout=10, groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
@@ -21,11 +21,12 @@ class Downloader(object):
         self.RETRY = 2
 
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
-        self.cache = Cache(batch_id)
+        self.cache = Cache(batch_id, cacheserver)
         self.gap = gap
         self.groups = groups
         self.refresh = refresh
 
+        self.login()
 
     def login(self):
         common_header = {
@@ -58,7 +59,7 @@ class Downloader(object):
         """
         return self.gap
 
-    def request_download(self, url, method='get', encode='utf-8', redirect_check=False, error_check=False, data=None):
+    def request_download(self, url, method='get', encoding='utf-8', redirect_check=False, error_check=False, data=None):
         for i in range(self.RETRY):
 
             try:
@@ -73,7 +74,7 @@ class Downloader(object):
                     if error_check:
                         if __import__('zhidaostream.downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
                             continue
-                    response.encoding = encode
+                    response.encoding = encoding
                     return response.text # text is unicode
             except Exception as e: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
                                    # requests.exceptions.MissingSchema
@@ -100,12 +101,12 @@ class Downloader(object):
     def requests_with_cache(self,
                             url,
                             method='get',
-                            encode='utf-8',
+                            encoding='utf-8',
                             redirect_check=False,
                             error_check=False,
                             data=None,
                             groups=None,
-                            refresh=None):
+                            refresh=False):
 
         def save_cache(url, source, groups, refresh):
             refresh = self.refresh if refresh is None else refresh
@@ -116,13 +117,13 @@ class Downloader(object):
                 return False
             return ret
 
-#        if refresh is True:
-#            content = self.cache.get(url)
-#            if content != u'':
-#                return content
+        if refresh is False:
+            content = self.cache.get(url)
+            if content != u'':
+                return content
 
         if self.request is True:
-            source = self.request_download(url, method, encode, redirect_check, error_check, data)
+            source = self.request_download(url, method, encoding, redirect_check, error_check, data)
         else:
             source = self.selenium_download(url)
 

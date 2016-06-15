@@ -94,3 +94,13 @@ def generate_answer_json(ans_content):
         'valueBadNum': content[u'valueBadNum'],
     }
 
+
+def zhidao_search_parse_qids(content):
+    """
+    :param content: content is unicode html string
+    """
+    ret = re.findall('href=\"(?:http://zhidao.baidu.com)?/question/(\d+).html', content)
+    if ret:
+        return ret[:1]
+    return []
+

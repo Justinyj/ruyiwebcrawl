@@ -4,8 +4,9 @@
 
 from __future__ import print_function, division
 
-from .zhidao_downloader import zhidao_download, HEADERS
-from .zhidao_search import zhidao_search
+import urllib
+
+from .zhidao_downloader import zhidao_download
 from .zhidao_parser import *
 from downloader.cache import Cache
 
@@ -77,7 +78,20 @@ class Scheduler(object):
         return a_json
 
 
-    def run(self, word, gap=3, timeout=10):
-        qids = zhidao_search(word, BATCH_ID['search'], gap, timeout)
+    def zhidao_search(qword, batch_id, gap=3, timeout=10):
+        quote_word = urllib.quote(qword.encode('utf-8')) if isinstance(qword, unicode) else urllib.quote(qword)
+        query_url = 'http://zhidao.baidu.com/index/?word={}'.format(quote_word)
+#    query_url = 'http://zhidao.baidu.com/search?word={}'.format(quote_word)
+
+        ret = zhidao_download(query_url, batch_id, gap, timeout=timeout, encode='utf-8', error_check=False)
+        # resp.headers: 'content-type': 'text/html;charset=UTF-8',
+        # resp.content: <meta content="application/xhtml+xml; charset=utf-8" http-equiv="content-type"/>
+        if ret is False:
+            return False
+        return zhidao_search_parse_qids(ret)
+
+
+    def run(self, qword, gap=3, timeout=10):
+        qids = zhidao_search(qword, BATCH_ID['search'], gap, timeout)
         return self.zhidao_results(qids, gap, timeout)
 
