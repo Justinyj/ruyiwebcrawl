@@ -87,16 +87,16 @@ def generate_answer_json(ans_content):
     content = json.loads(ans_content)
     return {
         'question_id': content[u'encode_qid'],
-        'answer_id': content[u'id'],
-        'isBest': content[u'isBest'],
-        'isHighQuality': content[u'isHighQuality'],
-#        'isExcellent': content[u'isExcellent'],
-        'isRecommend': content[u'isRecommend'],
-#        'isSpecial': content[u'isSpecial'],
-        'createTime': content[u'createTime'],
+        'answer_id': str(content[u'id']),
+        'is_best': content[u'isBest'],
+        'is_highquality': content[u'isHighQuality'],
+#        'is_excellent': content[u'isExcellent'],
+        'is_recommend': content[u'isRecommend'],
+#        'is_special': content[u'isSpecial'],
+        'answer_time': content[u'createTime'],
         'content': content[u'content'].encode('utf-8'),
-        'valueNum': content[u'valueNum'],
-        'valueBadNum': content[u'valueBadNum'],
+        'agreement': content[u'valueNum'],
+        'disagreement': content[u'valueBadNum'],
     }
 
 
