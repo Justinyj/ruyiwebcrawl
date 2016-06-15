@@ -137,18 +137,14 @@ def zhidao_pick_questions(content):
             question_list.append((q_id, q_approve))
 
     max_approve = -1
-    max_id = None
-    for question in question_list:
-        if question[1] > max_approve:
-            max_id = question[0]
-            max_approve = question[1]
+    if question_list:
+        question_list=sorted(question_list, key=lambda question: question[1])
+        max_id,max_approve=question_list[-1]
+
     if result:
         #which means the recommend exists
         if max_approve>recommend_approve:
             result.append(max_id)
         return result
     else:
-        if max_id:
-            return [max_id]
-        else:
-            return [first_q_id]
+        return [first_q_id]

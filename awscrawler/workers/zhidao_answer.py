@@ -34,20 +34,3 @@ def process(url, parameter, *args, **kwargs):
         return False
     m = Cache(BATCH_ID['json'])
     return m.post(url, ans_content)
-def generate_answer_json(ans_content):
-    content = json.loads(ans_content)
-    answer = {
-
-        'answer_id': content[u'id'],
-        'isBest': content[u'isBest'],
-        'isHighQuality': content[u'isHighQuality'],
-        'isExcellent': content[u'isExcellent'],
-        'isRecommend': content[u'isRecommend'],
-        'isSpecial': content[u'isSpecial'],
-        'createTime': content[u'createTime'],
-        'recommendCanceled': content[u'recommendCanceled'],
-        'content': content[u'content'].encode('utf-8'),
-        'valueNum': content[u'valueNum'],
-        'valueBadNum': content[u'valueBadNum'],
-    }
-    return json.dumps(answer)
