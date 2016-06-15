@@ -15,7 +15,6 @@ from stream_process import QUEUE
 class ZhidaoSearchHandler(tornado.web.RequestHandler):
 
     def get(self, qword):
-        print('[{}]'.format(qword))
         if qword:
             QUEUE.put(qword)
 
