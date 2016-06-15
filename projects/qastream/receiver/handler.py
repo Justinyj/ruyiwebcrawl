@@ -4,6 +4,9 @@
 
 from __future__ import print_function, division
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 import tornado.web
 
 from stream_process import QUEUE
@@ -12,6 +15,7 @@ from stream_process import QUEUE
 class ZhidaoSearchHandler(tornado.web.RequestHandler):
 
     def get(self, qword):
+        print('[{}]'.format(qword))
         if qword:
             QUEUE.put(qword)
 

@@ -27,6 +27,8 @@ ES_DATASET_CONFIG = {
 
 QUEUE = gevent.queue.Queue()
 
+batch_init(get_esconfig(ENV), [ES_DATASET_CONFIG])
+
 def search_questions(qword):
     s = Scheduler.instance(CONFIG[ENV]['CACHESERVER'])
     questions = s.run(qword, gap=3)
@@ -40,7 +42,6 @@ def search_questions(qword):
 
 def sendto_es(questions):
     esconfig = get_esconfig(ENV)
-    batch_init(esconfig, [ES_DATASET_CONFIG])
     run_esbulk_rows(questions, "index", esconfig, ES_DATASET_CONFIG)
 
 
