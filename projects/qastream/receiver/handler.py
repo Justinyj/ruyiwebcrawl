@@ -4,6 +4,9 @@
 
 from __future__ import print_function, division
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 import tornado.web
 
 from stream_process import QUEUE

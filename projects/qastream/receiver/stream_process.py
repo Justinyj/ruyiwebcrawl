@@ -12,7 +12,12 @@ import os
 from zhidao.zhidao_scheduler import Scheduler
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows
 
-CACHESERVER = 'http://192.168.1.179:8000'
+ENV = 'local'
+CONFIG = {
+    'local': {'CACHESERVER': 'http://192.168.1.179:8000'},
+    'prod': {'CACHESERVER': 'http://127.0.0.1:8000'},
+}
+
 ES_DATASET_CONFIG = {
         "description": "百度知道002",
         "es_index": "zhidao",
@@ -22,8 +27,10 @@ ES_DATASET_CONFIG = {
 
 QUEUE = gevent.queue.Queue()
 
+batch_init(get_esconfig(ENV), [ES_DATASET_CONFIG])
+
 def search_questions(qword):
-    s = Scheduler.instance(CACHESERVER)
+    s = Scheduler.instance(CONFIG[ENV]['CACHESERVER'])
     questions = s.run(qword, gap=3)
 
     for q in questions:
@@ -34,8 +41,7 @@ def search_questions(qword):
     sendto_es(questions)
 
 def sendto_es(questions):
-    esconfig = get_esconfig('local')
-    batch_init(esconfig, [ES_DATASET_CONFIG])
+    esconfig = get_esconfig(ENV)
     run_esbulk_rows(questions, "index", esconfig, ES_DATASET_CONFIG)
 
 
