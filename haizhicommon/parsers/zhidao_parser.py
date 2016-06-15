@@ -113,17 +113,27 @@ def zhidao_search_questions(content):
     """
     :param content: content is unicode html string
     :return : a list consists of 1-2 question
+
+    说明：
+    1.先检查推荐问题，如存在且合法则直接加入结果列表。 （合法指的是来源为百度知道网页，下同）
+    2.再检查一般问题，将存在赞数的合法问题放入问题列表。
+    3.对问题列表按照赞数进行排序，取得最高赞回答。
+    4.最后处理结果：
+    i.如果结果中有推荐问题，当最高赞问题赞数高于推荐问题则加入，反之丢弃。
+    ii.如果结果中没有推荐问题，直接加入最高赞问题。
+    iii.如果第二步中不存在最高赞问题，即所有合法问题都无赞，则加入原始页面中第一个合法问题。
+    
     """
     import lxml.html
     dom = lxml.html.fromstring(content)
 
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
     result = []
+    recommend_approve = 0
     if recommend:
         url = recommend[0].xpath('.//a/@href')[0]
         q_id = re.findall('zhidao.baidu.com/question/(\d+).html', url)
         if q_id:
-            HasRecommend = 1
             value_text = recommend[0].xpath('.//i[@class="i-agree"]/../text()')[1]
             recommend_approve = int(re.findall('(\d+)', value_text)[0])
             recommend_id = q_id[0]
@@ -151,10 +161,8 @@ def zhidao_search_questions(content):
         question_list=sorted(question_list, key=lambda question: question[1])
         max_id,max_approve=question_list[-1]
 
-    if result:
-        #which means the recommend exists
-        if max_approve>recommend_approve:
-            result.append(max_id)
+    if max_approve>recommend_approve:
+        result.append(max_id)
         return result
     else:
         return [first_q_id]
