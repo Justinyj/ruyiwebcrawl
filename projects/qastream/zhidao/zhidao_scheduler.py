@@ -6,7 +6,7 @@ from __future__ import print_function, division
 
 import urllib
 
-from .zhidao_parser import *
+from parser.zhidao_parser import *
 from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
 
