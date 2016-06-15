@@ -158,3 +158,89 @@ def zhidao_search_questions(content):
         return result
     else:
         return [first_q_id]
+
+
+def parse_search_json_v0615(content):
+    """
+    :param content: content is unicode html string
+    :return : a list consists of 1-2 question
+    """
+    import lxml.html
+    ret = {}
+
+    #print (1)
+    #if isinstance(content, unicode):
+    #    return ret
+        #content = content.encode("utf-8")
+    dom = lxml.html.fromstring(content)
+    #print (content)
+    recommend = dom.xpath('//div[@id="wgt-autoask"]')
+    for idx, node in enumerate(recommend):
+        url = node.xpath('.//a/@href')[0]
+        print(url)
+        qids = re.findall('zhidao.baidu.com/question/(\d+).html', url)
+        print(qids)
+        if qids:
+            qid = qids[0]
+            value_text = node.xpath('.//i[@class="i-agree"]/../text()')[1]
+            cnt_recommend = int(re.findall('(\d+)', value_text)[0])
+            ret[qid] = {
+                "qid": qid,
+                "rtype": "recommend",
+                "rank": idx,
+                "cnt_recommend": cnt_recommend,
+                "q": node.xpath('.//a/text()')[0],
+                "a": node.xpath('.//dd/text()')[0].replace(u"推荐答案",""),
+            }
+
+#    normal = dom.xpath('//dl[contains(@class,"dl")]')
+    normal = dom.xpath('//dl[contains(@class,"dl")]')
+    for idx, node in enumerate(normal):
+        #print (idx)
+        url = node.xpath('./dt/a/@href')[0]
+        qids = re.findall('zhidao.baidu.com/question/(\d+).html', url)
+        if qids:
+            qid = qids[0]
+            ret[qid] = {
+                "qid": qid,
+                "rtype": "recommend",
+                "rank": idx,
+                "question": u"".join(node.xpath('.//a//text()')[:-2]),
+#                "q_details": node.xpath('.//dd[@class="summary"]/text()')[0].replace(u"问：","").replace(u"...",""),
+#                "q_answer": node.xpath('.//dd[@class="answer"]/text()')[0].replace(u"答：","").replace(u"...",""),
+            }
+
+            value_text = node.xpath('.//i[@class="i-agree"]/../text()')
+            if value_text:
+                ret[qid]["cnt_recommend"]  = int(re.findall('(\d+)', value_text[1])[0])
+            else:
+                ret[qid]["cnt_recommend"] = 0
+
+            value_text = node.xpath('.//dd[contains(@class,"explain")]//a/text()')
+            if value_text:
+                #print (json.dumps(value_text, ensure_ascii=False))
+                ret[qid]["cnt_answer"]  = int(re.findall('(\d+)', value_text[-1])[0])
+            else:
+                ret[qid]["cnt_answer"] = 0
+
+            value_text = node.xpath('.//dd[contains(@class,"summary")]//text()')
+            #print ("---", len(value_text))
+            if value_text:
+                temp = u"".join(value_text[1:])
+                temp = temp.replace(u"...","")
+                ret[qid]["q_details_full"] = temp
+                temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
+                ret[qid]["q_details"] = temp
+                ret[qid]["q_details_good"] =  (re.search(ur"^[^？。！]+[。！]?$", temp) is not None)
+
+
+            value_text = node.xpath('.//dd[contains(@class,"answer")]//text()')
+            if value_text:
+                temp = u"".join(value_text[1:])
+                temp = temp.replace(u"...","")
+                ret[qid]["a_summary_full"] = temp
+                temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
+                ret[qid]["a_summary"] = temp
+                ret[qid]["a_summary_good"] =  (re.search(ur"^[^？。！]+[。！]?$", temp) is not None)
+
+    return ret

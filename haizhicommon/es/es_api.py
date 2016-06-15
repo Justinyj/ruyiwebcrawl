@@ -76,9 +76,9 @@ def batch_init(esconfig, datasets):
     for dataset in datasets:
         with open(dataset["filepath_mapping"],'r') as f:
             mappings = json.load(f)
-        ret = run_es_search(esconfig,  dataset["es_index"], dataset["es_type"] , {})
+        ret = run_es_get_mapping(esconfig,  dataset["es_index"], dataset["es_type"] )
         print ret
-        if ret is None:
+        if not ret:
             run_es_create_mapping(esconfig, dataset["es_index"], dataset["es_type"], mappings)
 
 def batch_upload(esconfig, datasets, suffix_esdata, esbulk_size=1000):
@@ -121,6 +121,18 @@ def batch_stat(datasets):
     print "OK all files processed"
     print json.dumps(cnt, indent=4, sort_keys=True, ensure_ascii=False)
 
+
+def run_es_get_mapping(esconfig, es_index, es_type):
+    es_search_url  = '{}/{}/{}/_mapping'.format(esconfig["es_url"], es_index, es_type)
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': esconfig["es_auth"]
+    }
+
+    r = requests.get(es_search_url, headers=headers)
+    if r:
+        data = json.loads(r.content)
+        return data
 
 def run_es_search(esconfig, es_index, es_type, params):
 
@@ -309,7 +321,7 @@ def test_upload_local():
     ES_DATASET_CONFIG ={
         "local":[
             {   "description":"缺省答案",
-                "es_index":"test_esapi1",
+                "es_index":"test_esapi3",
                 "es_type":"default",
                 "filepath_mapping": getTheFile("default.mapping.json"),
 #                "filepath": getWorkFile("default_answers.esdata")
@@ -333,8 +345,8 @@ def test_upload_local():
     datasets = ES_DATASET_CONFIG[config_option]
 
     batch_init(esconfig, datasets)
-    for dataset in datasets:
-        run_esbulk_rows(items, "index", esconfig, dataset )
+    #for dataset in datasets:
+    #    run_esbulk_rows(items, "index", esconfig, dataset )
 
 
 def test():
