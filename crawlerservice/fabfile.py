@@ -21,12 +21,13 @@ DEPLOY_ENV = 'PRODUCTION'
 
 def _aws():
     sudo('mkfs -t ext4 /dev/xvdb')
-    sudo('mkdir /data')
+    sudo('mkdir -p /data')
     sudo('mount /dev/xvdb /data')
     sudo('cp /etc/fstab /etc/fstab.orig')
     sudo("""sh -c "echo '/dev/xvdb /data ext4 defaults,nofail 0 2' > /etc/fstab" """)
 
 def _build_pg():
+    _aws()
     sudo('touch /etc/apt/sources.list.d/pg.list')
     sudo("""sh -c "echo 'deb http://apt.postgresql.org/pub/repos/apt/ {} main' > /etc/apt/sources.list.d/pg.list" """.format(PG_VERSION))
     sudo('wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -')
