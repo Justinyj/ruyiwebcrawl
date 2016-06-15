@@ -10,7 +10,7 @@ import time
 
 from awscrawler import post_job, delete_distributed_queue
 from schedule import Schedule
-from invoker.zhidao_constant import BATCH_ID, HEADER
+from invoker.zhidao_constant import BATCH_ID
 
 
 
@@ -34,7 +34,7 @@ def run_zhidao():
     t2.rawlink(delete_distributed_queue)
     tasks.append(t1)
 
-    schedule = Schedule(100, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
+    schedule = Schedule(30, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
     print('finish start instances initially')
 
     t3 = gevent.spawn(schedule.run_forever)

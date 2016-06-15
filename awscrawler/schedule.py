@@ -88,6 +88,8 @@ class Schedule(object):
                 break
             except NoValidConnectionsError:
                 time.sleep(10)
+            except:
+                time.sleep(10)
         self.ssh.close()
 
 
