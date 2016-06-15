@@ -65,9 +65,9 @@ def generate_question_json(qid, content):
     q_time = parse_q_time(content)
     rids = parse_answer_ids(content)
     item = {
-        'question_id': qid,
-        'question_title': q_title,
-        'question_detail': q_content,
+        'id': qid,
+        'question': q_title,
+        'question_content': q_content,
         'question_time': q_time,
         'answers': rids,
     }
