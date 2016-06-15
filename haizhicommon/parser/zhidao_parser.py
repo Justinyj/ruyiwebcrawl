@@ -53,6 +53,13 @@ def parse_answer_ids(content):
     return result
 
 
+def parse_asker_username(content):
+    m = re.search('a class="user-name" alog-action="qb-ask-uname" rel="nofollow" href="http://www.baidu.com/p/(.*?)\?from=zhidao" target="_blank">', content)
+    if m:
+        username = m.group(1)
+        return username
+    return
+
 def generate_question_json(qid, content):
     q_title = parse_page_title(content)
     if q_title is None:
@@ -62,6 +69,7 @@ def generate_question_json(qid, content):
     if q_content is None:
         return
 
+    asker_username = parse_asker_username(content)
     q_time = parse_q_time(content)
     rids = parse_answer_ids(content)
     item = {
@@ -69,6 +77,7 @@ def generate_question_json(qid, content):
         'question': q_title,
         'question_content': q_content,
         'question_time': q_time,
+        'asker_username': asker_username,
         'answers': rids,
     }
     return item
@@ -100,7 +109,7 @@ def zhidao_search_parse_qids(content):
         return ret[:1]
     return []
 
-def zhidao_pick_questions(content):
+def zhidao_search_questions(content):
     """
     :param content: content is unicode html string
     :return : a list consists of 1-2 question
