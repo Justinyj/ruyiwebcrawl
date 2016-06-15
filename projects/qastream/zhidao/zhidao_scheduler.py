@@ -33,17 +33,15 @@ class Scheduler(object):
     def zhidao_results(self, qids, gap, timeout=10):
         q_jsons = []
         for qid in qids:
-            ret = self.zhidao_question(qid, gap, timeout)
-            if ret is False:
+            q_json = self.zhidao_question(qid, gap, timeout)
+            if q_json is False:
                 continue
-            q_json, answer_ids = ret
-            q_json['answers'] = []
 
-            for rid in answer_ids[:3]:
+            for rid in q_json['answers'][:3]:
                 a_json = self.zhidao_answer(qid, rid, gap, timeout)
                 if a_json is False:
                     continue
-                q_json['answers'].append(a_json)
+                q_json['list_answers'].append(a_json)
 
             q_jsons.append(q_json)
         return q_jsons
@@ -54,12 +52,11 @@ class Scheduler(object):
         ret = zhidao_download(question_url, BATCH_ID['question'], gap, timeout=timeout)
         if ret is False:
             return False
-        answer_ids = []
-        q_json = generate_question_json(qid, ret, answer_ids)
+        q_json = generate_question_json(qid, ret)
         if q_json is None:
             return False
         success = self.cache.post(question_url, q_json)
-        return (q_json, answer_ids)
+        return q_json
 
 
     def zhidao_answer(self, qid, rid, gap, timeout):
