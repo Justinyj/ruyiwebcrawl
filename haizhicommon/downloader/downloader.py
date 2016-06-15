@@ -13,7 +13,7 @@ from .cache import Cache
 
 class Downloader(object):
 
-    def __init__(self, request=False, batch_id, cacheserver, gap=0, timeout=10, groups=None, refresh=False):
+    def __init__(self, batch_id, cacheserver, request=False, gap=0, timeout=10, groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
@@ -33,8 +33,12 @@ class Downloader(object):
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Encoding': 'gzip, deflate, sdch',
             'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.63 Safari/537.36',
+            'Cache-Control': 'max-age=0',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': 1,
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36',
         }
+
         if self.request is True:
             session = requests.Session()
             session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30, max_retries=self.RETRY))
@@ -72,7 +76,7 @@ class Downloader(object):
                     if redirect_check and response.url != url:
                         continue
                     if error_check:
-                        if __import__('zhidaostream.downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
+                        if __import__('downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
                             continue
                     response.encoding = encoding
                     return response.text # text is unicode
