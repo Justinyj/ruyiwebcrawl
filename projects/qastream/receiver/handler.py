@@ -6,9 +6,17 @@ from __future__ import print_function, division
 
 import tornado.web
 
+from stream_process import QUEUE
+
+
 class ZhidaoSearchHandler(tornado.web.RequestHandler):
 
     def get(self, qword):
-        self.write(response)
+        if qword:
+            QUEUE.put(qword)
+
+            self.write({'success': True})
+        else:
+            self.write({'success': False})
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
 
