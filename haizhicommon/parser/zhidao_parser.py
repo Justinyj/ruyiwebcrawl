@@ -7,7 +7,7 @@ from __future__ import print_function, division
 import re
 import json
 
-def parse_title(content):
+def parse_page_title(content):
     m = re.search('<title>(.*)</title>', content)
     if m:
         title = m.group(1)
@@ -54,7 +54,7 @@ def parse_answer_ids(content):
 
 
 def generate_question_json(qid, content):
-    q_title = parse_title(content)
+    q_title = parse_page_title(content)
     if q_title is None:
         # print('未找到title或者页面不存在')
         return

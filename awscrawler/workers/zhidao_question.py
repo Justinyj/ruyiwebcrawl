@@ -9,12 +9,25 @@ import json
 
 from invoker.zhidao import BATCH_ID
 from downloader.cache import Cache
-from .zhidao_tools import zhidao_download, get_answer_url
-from .zhidao_parser import parse_title, parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
+from downloader.downloader_wrapper import DownloadWrapper
+from parser.zhidao_parser import parse_title, parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
 
+from settings import CACHE_SERVER
+
+
+
+def get_answer_url(q_id, r_id):
+    return ('http://zhidao.baidu.com/question/api/mini?qid={}'
+            '&rid={}&tag=timeliness'.format(q_id, r_id))
 
 
 def process(url, parameter, manager, *args, **kwargs):
+    if not hasattr(process, '_downloader'):
+        setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'})
+    if not hasattr(process, '_cache'):
+        setattr(process, '_cache', Cache(BATCH_ID['json'], cacheserver))
+
+
     m = re.search(
         'http://zhidao.baidu.com/question/(\d+).html', url)
     if not m:
@@ -23,9 +36,9 @@ def process(url, parameter, manager, *args, **kwargs):
     q_id = m.group(1)
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
-    batch_id = BATCH_ID['question']
 
-    content = zhidao_download(url, batch_id, gap, method)
+    timeout = 10
+    content = process._downloader.downloader_wrapper(url, BATCH_ID['question'], gap, timeout=timeout, encoding='gb18030', error_check=True)
     if content is False:
         return False
 
@@ -36,8 +49,7 @@ def process(url, parameter, manager, *args, **kwargs):
 
     question_content = json.dumps(q_json)
 
-    m = Cache(BATCH_ID['json'])
-    success = m.post(url, question_content)
+    success = process._cache.post(url, question_content)
     if success is False:
         return False
 
