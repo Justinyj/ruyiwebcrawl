@@ -8,48 +8,26 @@ from zhidao.zhidao_scheduler import Scheduler
 
 
 CACHESERVER = 'http://192.168.1.179:8000'
-ES_INDEX = "zhidao"
 
 s = Scheduler.instance(CACHESERVER)
 ret = s.run('晚上吃什么有益健康', gap=3)
 print(ret)
 
-mappings = {
-    "es_url": "http://nlp.ruyi.ai:9200",
-    "es_user": "es_ruyi",
-    "es_pass": "ruyiruyies",
-    "es_auth": "Basic ZXNfcnV5aTpydXlpcnV5aWVz"
-}
 
-run_es_create_index(filename_esconfig, dataset["es_index"])
-run_es_create_mapping(filename_esconfig, dataset["es_index"], dataset["es_type"], mappings)
 
-ES_DATASETS = [
-    {
+
+from es.es_api import get_esconfig, batch_init, run_esbulk_rows
+
+ES_INDEX = "zhidao"
+ES_DATASET_CONFIG = {
         "description": "百度知道002",
         "es_index": ES_INDEX,
         "es_type": "zhidao_faq",
-        "filepath_mapping": "qa_es_schema.json",
-        "filepath": "baiduzhidao_79.esdata"
-    },
-]
+        "filepath_mapping": "qa_es_schema.json"
+}
 
-es_api.run_batch(ES_DATASETS, ES_INDEX, option, sys.argv)
+config_option = "local"
+esconfig = get_esconfig(config_option)
+batch_init(esconfig, [ES_DATASET_CONFIG])
+run_esbulk_rows(items, "index", esconfig, ES_DATASET_CONFIG)
 
-
-
-MSG_HELP = '''
-
-# delete index
-curl -XDELETE -u es_ruyi:ruyiruyies http://nlp.ruyi.ai:9200/{es_index}
-
-# init index
-python python/baiduzhidao/run_esdata.py init-prod esdata
-
-python python/baiduzhidao/run_esdata.py stat
-
-# upload prod
-python python/baiduzhidao/run_esdata.py upload-prod esdata
-
-
-'''.format(es_index=ES_INDEX)

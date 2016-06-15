@@ -16,7 +16,7 @@ import time
 from invoker.zhidao import BATCH_ID
 from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
-from parser.zhidao_parser import generate_answer_json
+from parsers.zhidao_parser import generate_answer_json
 
 from settings import CACHE_SERVER
 

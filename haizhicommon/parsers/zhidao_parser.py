@@ -49,7 +49,7 @@ def parse_q_content(content):
 
 
 def parse_answer_ids(content):
-    result = map(int, re.findall('id="answer-(\d+)', content))
+    result = re.findall('id="answer-(\d+)', content)
     return result
 
 
@@ -78,7 +78,7 @@ def generate_question_json(qid, content):
         'question_content': q_content,
         'question_time': q_time,
         'asker_username': asker_username,
-        'answers': rids,
+        'answer_ids': rids,
     }
     return item
 
@@ -114,7 +114,8 @@ def zhidao_search_questions(content):
     :param content: content is unicode html string
     :return : a list consists of 1-2 question
     """
-    dom = soupparser.fromstring(content)
+    import lxml.html
+    dom = lxml.html.fromstring(content)
 
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
     result = []

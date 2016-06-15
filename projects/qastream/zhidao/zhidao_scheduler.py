@@ -6,7 +6,7 @@ from __future__ import print_function, division
 
 import urllib
 
-from parser.zhidao_parser import *
+from parsers.zhidao_parser import *
 from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
 
@@ -38,7 +38,7 @@ class Scheduler(object):
                 continue
             q_json['list_answers'] = []
 
-            for rid in q_json['answers'][:3]:
+            for rid in q_json['answer_ids'][:3]:
                 a_json = self.zhidao_answer(qid, rid, gap, timeout)
                 if a_json is False:
                     continue
@@ -78,15 +78,15 @@ class Scheduler(object):
 
     def zhidao_search(self, qword, batch_id, gap=3, timeout=10):
         quote_word = urllib.quote(qword.encode('utf-8')) if isinstance(qword, unicode) else urllib.quote(qword)
-        query_url = 'http://zhidao.baidu.com/index/?word={}'.format(quote_word)
-        # query_url = 'http://zhidao.baidu.com/search?word={}'.format(quote_word)
+        # query_url = 'http://zhidao.baidu.com/index/?word={}'.format(quote_word) # utf-8
+        query_url = 'http://zhidao.baidu.com/search?word={}'.format(quote_word)
 
-        ret = self.downloader.downloader_wrapper(query_url, batch_id, gap, timeout=timeout, encoding='utf-8')
+        ret = self.downloader.downloader_wrapper(query_url, batch_id, gap, timeout=timeout, encoding='gb18030', refresh=True)
         # resp.headers: 'content-type': 'text/html;charset=UTF-8',
         # resp.content: <meta content="application/xhtml+xml; charset=utf-8" http-equiv="content-type"/>
         if ret is False:
             return False
-        return zhidao_search_parse_qids(ret)
+        return zhidao_search_questions(ret)
 
 
     def run(self, qword, gap=3, timeout=10):
