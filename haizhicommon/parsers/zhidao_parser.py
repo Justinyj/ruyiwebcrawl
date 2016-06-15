@@ -119,11 +119,11 @@ def zhidao_search_questions(content):
 
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
     result = []
+    recommend_approve = 0
     if recommend:
         url = recommend[0].xpath('.//a/@href')[0]
         q_id = re.findall('zhidao.baidu.com/question/(\d+).html', url)
         if q_id:
-            HasRecommend = 1
             value_text = recommend[0].xpath('.//i[@class="i-agree"]/../text()')[1]
             recommend_approve = int(re.findall('(\d+)', value_text)[0])
             recommend_id = q_id[0]
@@ -151,10 +151,8 @@ def zhidao_search_questions(content):
         question_list=sorted(question_list, key=lambda question: question[1])
         max_id,max_approve=question_list[-1]
 
-    if result:
-        #which means the recommend exists
-        if max_approve>recommend_approve:
-            result.append(max_id)
+    if max_approve>recommend_approve:
+        result.append(max_id)
         return result
     else:
         return [first_q_id]
