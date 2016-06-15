@@ -1,0 +1,37 @@
+{
+    "properties": {
+        "question": {
+            "type": "string"
+        },
+        "id": {
+            "type": "string",
+            "index": "no"
+        },
+        "answers": {
+            "type": "string",
+            "index": "no"
+        },
+        "question_content": {
+            "type": "string"
+        },
+        "question_time": {
+            "type": "string",
+            "index": "no"
+        },
+        "asker_username": {
+            "type": "string",
+            "index": "no"
+        },
+        "parse_time": {
+            "type": "string",
+            "index": "no"
+        },
+        "list_answers": {
+            "index": "no"
+        },
+        "ways": {
+            "type": "string",
+            "index": "no"
+        }
+    }
+}

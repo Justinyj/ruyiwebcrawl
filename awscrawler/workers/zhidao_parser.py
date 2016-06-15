@@ -75,24 +75,22 @@ def generate_question_json(qid, content, answer_ids):
         'answers': rids,
     }
     answer_ids.extend(rids)
-    return json.dumps(item)
+    return item
 
 
 def generate_answer_json(ans_content):
     content = json.loads(ans_content)
-    answer = {
+    return {
         'question_id': content[u'qid'],
         'answer_id': content[u'id'],
         'isBest': content[u'isBest'],
         'isHighQuality': content[u'isHighQuality'],
-        'isExcellent': content[u'isExcellent'],
+#        'isExcellent': content[u'isExcellent'],
         'isRecommend': content[u'isRecommend'],
-        'isSpecial': content[u'isSpecial'],
+#        'isSpecial': content[u'isSpecial'],
         'createTime': content[u'createTime'],
-        'recommendCanceled': content[u'recommendCanceled'],
         'content': content[u'content'].encode('utf-8'),
         'valueNum': content[u'valueNum'],
         'valueBadNum': content[u'valueBadNum'],
     }
-    return json.dumps(answer)
 

@@ -3,11 +3,7 @@
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 from __future__ import print_function, division
 
-import os
-import sys
-import json
-import requests
-
+import time
 from downloader.downloader import Downloader
 
 
@@ -27,7 +23,7 @@ def get_answer_url(q_id, r_id):
             '&rid={}&tag=timeliness'.format(q_id, r_id))
 
 
-def zhidao_downloader(url, batch_id, gap, method='get', timeout=10, error_check=True):
+def zhidao_downloader(url, batch_id, gap, method='get', timeout=10, encode='gb18030', error_check=True, refresh=False):
     if not hasattr(zhidao_downloader, '_batches'):
         setattr(zhidao_downloader, '_batches', {})
 
@@ -40,7 +36,17 @@ def zhidao_downloader(url, batch_id, gap, method='get', timeout=10, error_check=
     return zhidao_downloader._batches[batch_id].requests_with_cache(
                                                      url,
                                                      method,
-                                                     encode='gb18030',
+                                                     encode=encode,
                                                      redirect_check=True,
                                                      error_check=error_check,
-                                                     refresh=False)
+                                                     refresh=refresh)
+
+
+def zhidao_download(url, batch_id, gap, method='get', timeout=10, encode='gb18030', error_check=True):
+    for _ in range(2):
+        content = zhidao_downloader(url, batch_id, gap, method, timeout, encode, error_check)
+        if content != u'':
+            return content
+        time.sleep(gap)
+    else:
+        return False
