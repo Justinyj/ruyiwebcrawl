@@ -229,6 +229,7 @@ URL_PATTERNS = [
 def parse_search_result_item(node):
     url = node.xpath('.//a/@href')[0]
     qid = None
+    item = None
     for srcitem in URL_PATTERNS:
         src = srcitem["source"]
         qids = re.findall(srcitem["url_pattern"], url)
@@ -247,7 +248,7 @@ def parse_search_result_item(node):
 
     if not qid:
         print ("!!!!!!!!UNKNOWN URL", url)
-        return item
+        return None
 
     item["question"] = u"".join(node.xpath('.//dt/a//text()')).strip()
     #item["question_good"] =  (re.search(ur"^[^？。！]+[。！？]?$", item["question"]) is not None)

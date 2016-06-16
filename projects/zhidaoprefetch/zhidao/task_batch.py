@@ -60,10 +60,10 @@ def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
 def getLocalFile(filename):
-    return os.path.abspath(os.path.dirname(__file__)).replace("/python/","/local/") +"/"+filename
+    return os.path.abspath(os.path.dirname(__file__)).replace("/projects/","/local/") +"/"+filename
 
 def getWorkFile(filename):
-    return os.path.abspath(os.path.dirname(__file__)).replace("/python/","/local/") +"/"+VERSION+"/"+filename
+    return os.path.abspath(os.path.dirname(__file__)).replace("/projects/","/local/") +"/"+VERSION+"/"+filename
 
 class ZhidaoPrefetch(object):
 
@@ -232,7 +232,7 @@ class ZhidaoPrefetch(object):
                 ret = self.run_query(line, limit)
                 counter["query"] +=1
                 for item in ret:
-                    print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
+                    #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
                     results.append(item)
                     for p in ["source","result_index"]:
                         counter["{}_{}".format(p, item[p])] +=1
@@ -240,9 +240,8 @@ class ZhidaoPrefetch(object):
                         if p in item:
                             if not isinstance(item[p],unicode):
                                 item[p] = item[p].decode("gb18030")
-                break
 
-        filename_output = filename.replace("human.txt", "xls")
+        filename_output = getLocalFile(os.path.basename(filename.replace("human.txt", "xls")))
         libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
         #libfile.writeExcel(results, ["query", "source", "cnt_like",  "cnt_answer", "question", "answers"], filename_output)
         print counter
@@ -255,7 +254,7 @@ def main():
     #agt.run_query_batch( getTheFile("seed_entity.human.txt"), 20)
     #agt.run_query_batch( getTheFile("seed_sentence.human.txt"), 1)
     #agt.run_query_batch( getTheFile("seed_class.human.txt"), 40)
-    agt.run_test_search_realtime( getTheFile("seed_test0616.human.txt"), 2)
+    agt.run_test_search_realtime( getTheFile("seed_test0616.human.txt"), 1)
 
 if __name__ == "__main__":
     main()
