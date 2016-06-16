@@ -15,7 +15,7 @@ from parsers.zhidao_parser import parse_search_json_v0615
 
 class ZhidaoSearchHandler(tornado.web.RequestHandler):
 
-    def __init__(self):
+    def init(self):
         self.config = {
              "batch_ids": {
                  "search": "zhidao-search-20160614",
@@ -40,9 +40,9 @@ class ZhidaoSearchHandler(tornado.web.RequestHandler):
             QUEUE.put(qword)
             ret = {'success': True}
 
-            qapair = self.zhidao_search(qword)
-            if qapair:
-                ret["best_qapair"] = qapair
+#            qapair = self.zhidao_search(qword)
+#            if qapair:
+#                ret["best_qapair"] = qapair
 
             self.write(ret)
         else:
