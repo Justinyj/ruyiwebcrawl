@@ -27,15 +27,14 @@ def test():
         return
 
     cacheserver = "http://192.168.1.179:8000"
-    handler = Scheduler(cacheserver=cacheserver)
-    ret = handler.zhidao_search_select_best(qword)
-    print json.dumps(ret, ensure_ascii=False, indent=4)
+    api = Scheduler(cacheserver=cacheserver)
+    ret = api.zhidao_search_select_best(qword)
+    print json.dumps(ret, ensure_ascii=False, indent=4, sort_keys=True)
 
 def main():
     #print sys.argv
 
     if len(sys.argv)<2:
-        show_help()
         return
 
     option= sys.argv[1]
