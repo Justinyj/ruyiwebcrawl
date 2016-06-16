@@ -35,9 +35,9 @@ def process(url, parameter, *args, **kwargs):
     if content is False:
         return False
 
-    try:
-        a_json = generate_answer_json(content)
-        ans_content = json.dumps(a_json)
-    except:
-        return False
+    if content == u'""':
+        raise Exception('question with other relatated answer')
+
+    a_json = generate_answer_json(content)
+    ans_content = json.dumps(a_json)
     return process._cache.post(url, ans_content)
