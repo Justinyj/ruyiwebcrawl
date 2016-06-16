@@ -220,6 +220,10 @@ def parse_search_json_v0615(content):
         "zybang": {
             #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
         "url_pattern":"zybang.com/question/(.+).html"
+        },
+        "other": {
+            #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
+            "url_pattern":"http://.+/question/(.+).html"
         }
     }
     normal = dom.xpath('//dl[contains(@class,"dl")]')
