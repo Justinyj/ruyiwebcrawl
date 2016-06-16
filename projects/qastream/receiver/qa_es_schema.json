@@ -27,8 +27,45 @@
             "index": "no"
         },
         "list_answers": {
-            "type": "string",
-            "index": "no"
+            "type": "object",
+            "properties": {
+                "question_id": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "answer_id": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "is_best": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "is_recommend": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "is_highquality": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "answer_time": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "content": {
+                    "type": "string",
+                    "index": "no"
+                },
+                "agreement": {
+                    "type": "integer",
+                    "index": "no"
+                },
+                "disagreement": {
+                    "type": "integer",
+                    "index": "no"
+                }
+            }
         },
         "ways": {
             "type": "string",
