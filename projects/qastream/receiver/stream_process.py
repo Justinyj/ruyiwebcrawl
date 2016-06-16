@@ -51,3 +51,7 @@ def stream_process():
         search_questions(qword)
         gevent.sleep(0.1)
 
+def return_best_answer(qword):
+    s = Scheduler.instance(CONFIG[ENV]['CACHESERVER'])
+    return s.zhidao_search_select_best(qword)
+

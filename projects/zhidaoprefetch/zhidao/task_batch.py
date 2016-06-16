@@ -60,10 +60,10 @@ def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
 def getLocalFile(filename):
-    return os.path.abspath(os.path.dirname(__file__)).replace("/python/","/local/") +"/"+filename
+    return os.path.abspath(os.path.dirname(__file__)).replace("/projects/","/local/") +"/"+filename
 
 def getWorkFile(filename):
-    return os.path.abspath(os.path.dirname(__file__)).replace("/python/","/local/") +"/"+VERSION+"/"+filename
+    return os.path.abspath(os.path.dirname(__file__)).replace("/projects/","/local/") +"/"+VERSION+"/"+filename
 
 class ZhidaoPrefetch(object):
 
@@ -137,7 +137,7 @@ class ZhidaoPrefetch(object):
         return a_json
 
 
-    def zhidao_search(self, query, page_number=None):
+    def zhidao_search(self, query, page_number=None, start_result_index=0):
         if isinstance(query, unicode):
             query = query.encode("utf-8")
 
@@ -163,32 +163,35 @@ class ZhidaoPrefetch(object):
         if ret is False:
             return False
         else:
-            return parse_search_json_v0615(ret)
+            return parse_search_json_v0615(ret, start_result_index=start_result_index)
 
 
     def run_query(self, query, max_page):
         self.counter["query"] +=1
         qids_select = set()
-        map_search_result_all = {}
+        result_all = []
         for page_number in range(max_page):
             print "==== page ", page_number, query
             self.counter["page"] +=1
 
-            map_search_result_local = self.zhidao_search(query, page_number)
-            #print json.dumps( map_search_result_local, ensure_ascii=False, indent=4, sort_keys=True)
-            map_search_result_all.update(map_search_result_local)
-            self.counter["q_total"] += len(map_search_result_local)
+            result_local = self.zhidao_search(query, page_number, len(result_all) )
+            #print json.dumps( result_local, ensure_ascii=False, indent=4, sort_keys=True)
+            result_all.extend(result_local)
+            self.counter["q_total"] += len(result_local)
 
-            for item in map_search_result_local.values():
+            for item in result_local:
+                item["query"] = query
+                if type(query) != unicode:
+                    item["query"] = query.decode("utf-8")
                 #print item
-                if item["rtype"] == "recommend" or (item["cnt_like"] >= 3 and item["question_good"]):
+                if item["source"] == "recommend" or (item["cnt_like"] >= 3):
                     self.counter["q_good"] +=1
-                    qids_select.add(item["qid"])
-                    print item["rtype"], item["cnt_like"], item["cnt_answer"] , item['question'], "<----", item['a_summary']
+                    qids_select.add(item["question_id"])
+                    print item["source"], item["cnt_like"], item["cnt_answer"] , item['question'], "<----", item['answers']
                 else:
-                    print item["rtype"], item["cnt_like"], item["cnt_answer"] , item['question']
+                    print item["source"], item["cnt_like"], item["cnt_answer"] , item['question']
             print datetime.datetime.now().isoformat(), self.counter
-        return map_search_result_all
+        return result_all
             #qajson = self.zhidao_results(qids_select)
         #print json.dumps(qajson, ensure_ascii=False, indent=4)
 
@@ -228,21 +231,19 @@ class ZhidaoPrefetch(object):
                     continue
                 ret = self.run_query(line, limit)
                 counter["query"] +=1
-                for item in sorted(ret.values(), key= lambda x:x["rank"]):
-                    print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
+                for item in ret:
+                    #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
                     results.append(item)
-                    item["query"] = line.decode("utf-8")
-                    item["id"] = counter["query"]
-                    for p in ["rtype","rank"]:
+                    for p in ["source","result_index"]:
                         counter["{}_{}".format(p, item[p])] +=1
-                    for p in [  "question", "a_summary"]:
+                    for p in [  "question", "answers"]:
                         if p in item:
                             if not isinstance(item[p],unicode):
                                 item[p] = item[p].decode("gb18030")
 
-        filename_output = filename.replace("human.txt", "xls")
-        libfile.writeExcel(results, [ "id","rtype", "rank", "cnt_like",  "cnt_answer", "query", "qid", "question", "a_summary"], filename_output)
-        #libfile.writeExcel(results, ["query", "rtype", "cnt_like",  "cnt_answer", "question", "a_summary"], filename_output)
+        filename_output = getLocalFile(os.path.basename(filename.replace("human.txt", "xls")))
+        libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
+        #libfile.writeExcel(results, ["query", "source", "cnt_like",  "cnt_answer", "question", "answers"], filename_output)
         print counter
 
 def main():

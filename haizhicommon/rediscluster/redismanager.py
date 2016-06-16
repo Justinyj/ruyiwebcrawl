@@ -125,18 +125,23 @@ class RedisManager(object):
         pass
 
     def delete_queue(self, batch_id):
+        """
+        :return: False error,
+                 None  not finish yet,
+                 True  delete queue, or already deleted.
+        """
         distributed = self.get_distributed_queue(batch_id)
         if distributed is None:
-            return
+            return False
         if distributed['queue'].get_background_cleaning_status() != '0':
             return
-
 
         if Record.instance().if_not_finish_set(batch_id) == 1:
             distributed['thinhash'].delete()
             distributed['queue'].flush()
             self.cache.pop(batch_id)
             return True
+        return True
 
 
     def __check_empty_queue(self, queue):

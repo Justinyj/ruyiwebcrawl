@@ -38,20 +38,12 @@ def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queu
     return gevent.spawn_later(start_delay, queue_dict['queue'].background_cleaning)
 
 
-def patch_greenlet(func):
-    def inner(*args, **kwargs):
-        return gevent.spawn(func, *args, **kwargs)
-    return inner
-
-
-@patch_greenlet
 def delete_distributed_queue(greenlet):
     """ In this callback, the greenlet.value is batch_id
         this will be called after gevent.joinall
     """
-    ret = MANAGER.delete_queue(greenlet.value)
-    if ret is True:
-        pass
+    return MANAGER.delete_queue(greenlet.value)
+
 
 def main():
     pass

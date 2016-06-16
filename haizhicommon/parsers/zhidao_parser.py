@@ -89,9 +89,9 @@ def generate_answer_json(ans_content):
         'question_id': content[u'encode_qid'],
         'answer_id': str(content[u'id']),
         'is_best': content[u'isBest'],
+        'is_recommend': content[u'isRecommend'],
         'is_highquality': content[u'isHighQuality'],
 #        'is_excellent': content[u'isExcellent'],
-        'is_recommend': content[u'isRecommend'],
 #        'is_special': content[u'isSpecial'],
         'answer_time': content[u'createTime'],
         'content': content[u'content'].encode('utf-8'),
@@ -168,129 +168,136 @@ def zhidao_search_questions(content):
         return [first_q_id]
 
 
-def parse_search_json_v0615(content):
+def parse_search_json_v0615(content, start_result_index=0):
     """
     :param content: content is unicode html string
     :return : a list consists of 1-2 question
     """
     import lxml.html
-    ret = {}
+    ret = []
 
-    #print (1)
-    #if isinstance(content, unicode):
-    #    return ret
-        #content = content.encode("utf-8")
     dom = lxml.html.fromstring(content)
     #print (content)
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
-    for idx, node in enumerate(recommend):
-        url = node.xpath('.//a/@href')[0]
-        print(url)
-        qids = re.findall('zhidao.baidu.com/question/(\d+).html', url)
-        print(qids)
-        if qids:
-            qid = qids[0]
-            #cnt_recommend = int(re.findall('(\d+)', value_text)[0])
-            ret[qid] = {
-                "qid": qid,
-                "rtype": "recommend",
-                "rank": idx,
-                "cnt_answer": 0,
-                "cnt_like": 0,
-                "question": u"".join(node.xpath('.//dt//a//text()')).strip(),
-                "a_summary": u"".join(node.xpath('.//dd[contains(@class,"answer")]//text()')[:-1]).replace(u"推荐答案","").replace(u"[详细]","").strip(),
-            }
-            ret[qid]["question_good"] =  (re.search(ur"^[^？。！（）《》]+[。！？]?$", ret[qid]["question"]) is not None)
-
-            value_text = node.xpath('.//i[@class="i-agree"]/../text()')
-            if value_text:
-                ret[qid]["cnt_like"]  = int(re.findall('(\d+)', value_text[1])[0])
-            else:
-                ret[qid]["cnt_like"] = 0
-
-
-#    normal = dom.xpath('//dl[contains(@class,"dl")]')
-    sources =[
-        {
-            "rtype":"zhidao",
-            "url_pattern":"zhidao.baidu.com/question/(\d+).html"
-        },
-        {
-            "rtype":"zybang",
-            #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
-            "url_pattern":"zybang.com/question/(.+).html"
-        },
-        {
-            "rtype":"muzhi",
-            #http://muzhi.baidu.com/question/1240767390499604219.html?fr=iks&word=%CE%AA%CA%B2%C3%B4%C8%CB%BB%E1%B3%F6%BA%B9%3F&ie=gbk
-            "url_pattern":"muzhi.baidu.com/question/(\d+).html"
-        },
-        {
-            "rtype":"baobao",
-            #http://muzhi.baidu.com/question/1240767390499604219.html?fr=iks&word=%CE%AA%CA%B2%C3%B4%C8%CB%BB%E1%B3%F6%BA%B9%3F&ie=gbk
-            "url_pattern":"baobao.baidu.com/question/(.+).html"
-        },
-        {
-            "rtype":"other",
-            #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
-            "url_pattern":"http://.+/question/(.+).html"
-        }
-    ]
+    for node in recommend:
+        item = parse_search_result_item(node)
+        if item:
+            ret.append(item)
+            item["result_index"] = start_result_index + len(ret)
+            item["is_recommend"] = 1
 
     normal = dom.xpath('//dl[contains(@class,"dl")]')
     #print (len(normal))
-    for idx, node in enumerate(normal):
+    for node in normal:
         #print (idx)
-        url = node.xpath('./dt/a/@href')[0]
-        qid = None
-        for srcitem in sources:
-            src = srcitem["rtype"]
-            qids = re.findall(srcitem["url_pattern"], url)
-            if qids:
-                #print (qids)
-                qid = "{}:{}".format(src, qids[0])
-                ret[qid] = {
-                    "qid": qids[0],
-                    "rtype": src,
-                    "rank": idx+1,
-                    "cnt_answer": 0,
-                    "cnt_like": 0
-                }
-                break
-
-        if not qid:
-            print ("!!!!!!!!UNKNOWN URL", url)
-        else:
-            ret[qid]["question"] =  u"".join(node.xpath('./dt/a//text()'))
-            ret[qid]["question_good"] =  (re.search(ur"^[^？。！（）《》]+[。！？]?$", ret[qid]["question"]) is not None)
-
-            value_text = node.xpath('.//i[@class="i-agree"]/../text()')
-            if value_text:
-                ret[qid]["cnt_like"]  = int(re.findall('(\d+)', value_text[1])[0])
-
-            value_text = node.xpath('.//dd[contains(@class,"explain")]//a/text()')
-            if value_text:
-                #print (json.dumps(value_text, ensure_ascii=False))
-                ret[qid]["cnt_answer"]  = int(re.findall('(\d+)', value_text[-1])[0])
-
-            value_text = node.xpath('.//dd[contains(@class,"summary")]//text()')
-            #print ("---", len(value_text))
-            if value_text:
-                temp = u"".join(value_text[1:])
-                #temp = temp.replace(u"...","")
-                ret[qid]["q_details"] = temp
-                #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
-                #ret[qid]["q_details"] = temp
-                ret[qid]["q_details_good"] =  (re.search(ur"^[^？。！]+[。！]?$", temp) is not None)
-
-
-            value_text = node.xpath('.//dd[contains(@class,"answer")]//text()')
-            if value_text:
-                temp = u"".join(value_text[1:])
-                #temp = temp.replace(u"...","")
-                ret[qid]["a_summary"] = temp
-                #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
-                #ret[qid]["a_summary_"] = temp
-                ret[qid]["a_summary_good"] =  (re.search(ur"^[^？。！]+[。！]?$", temp) is not None)
+        item = parse_search_result_item(node)
+        if item:
+            ret.append(item)
+            item["is_recommend"] = 0
+            item["result_index"] = start_result_index + len(ret)
 
     return ret
+
+URL_PATTERNS = [
+    {
+        "source":"zhidao",
+        "url_pattern":"zhidao.baidu.com/question/(\d+).html"
+    },
+    {
+        "source":"zybang",
+        #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
+        "url_pattern":"zybang.com/question/(.+).html"
+    },
+    {
+        "source":"muzhi",
+        #http://muzhi.baidu.com/question/1240767390499604219.html?fr=iks&word=%CE%AA%CA%B2%C3%B4%C8%CB%BB%E1%B3%F6%BA%B9%3F&ie=gbk
+        "url_pattern":"muzhi.baidu.com/question/(\d+).html"
+    },
+    {
+        "source":"baobao",
+        #http://muzhi.baidu.com/question/1240767390499604219.html?fr=iks&word=%CE%AA%CA%B2%C3%B4%C8%CB%BB%E1%B3%F6%BA%B9%3F&ie=gbk
+        "url_pattern":"baobao.baidu.com/question/(.+).html"
+    },
+    {
+        "source":"other",
+        #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
+        "url_pattern":"http://.+/question/(.+).html"
+    }
+]
+
+
+def parse_search_result_item(node):
+    url = node.xpath('.//a/@href')[0]
+    qid = None
+    item = None
+    for srcitem in URL_PATTERNS:
+        src = srcitem["source"]
+        qids = re.findall(srcitem["url_pattern"], url)
+        if qids:
+            #print (qids)
+            qid = "{}:{}".format(src, qids[0])
+            #print (qids)
+            item = {
+                "id":qid,
+                "question_id": qids[0],
+                "source": src,
+                "cnt_answer": 0,
+                "cnt_like": 0
+            }
+            break
+
+    if not qid:
+        print ("!!!!!!!!UNKNOWN URL", url)
+        return None
+
+    item["question"] = u"".join(node.xpath('.//dt/a//text()')).strip()
+    #item["question_good"] =  (re.search(ur"^[^？。！]+[。！？]?$", item["question"]) is not None)
+
+    value_text = node.xpath('.//i[@class="i-agree"]/../text()')
+    if value_text:
+        digit_text = re.findall('(\d+)', value_text[1])
+        if digit_text:
+            item["cnt_like"]  = int(digit_text[0])
+
+    value_text = node.xpath('.//dd[contains(@class,"explain")]//a/text()')
+    if value_text:
+        #print (json.dumps(value_text, ensure_ascii=False))
+        digit_text = re.findall('(\d+)', value_text[-1])
+        if digit_text:
+            item["cnt_answer"]  = int(digit_text[0])
+
+    value_text = node.xpath('.//dd[contains(@class,"summary")]//text()')
+    #print ("---", len(value_text))
+    if value_text:
+        temp = u"".join(value_text[1:]).strip()
+        #temp = temp.replace(u"...","")
+        item["question_content"] = temp
+        #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
+        #item["question_content"] = temp
+        #item["question_content_good"] =  (re.search(ur"^[^？。！]+[。！]?$", temp) is not None)
+
+
+    value_text = node.xpath('.//dd[contains(@class,"answer")]//text()')
+    if value_text:
+        temp = u"".join(value_text[1:]).strip()
+        temp = temp.replace(u"推荐答案","").replace(u"[详细]","").strip()
+        #temp = temp.replace(u"...","")
+        item["answers"] = temp
+        #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
+        #item["answers_"] = temp
+        #item["answers_good"] =  (re.search(ur"^[^？。！]+[。！]?$", temp) is not None)
+
+    """
+    {
+        "answers": "《伊索寓言》原书名为《埃索波斯故事集成》，是古希腊民间流传的讽喻故事，经后人加工，成为现在流传的《伊索寓言》。《伊索寓言》是一部世界上最早的寓言故事集。伊索，弗里吉亚人，伊索是公元前6世纪古希腊著名的寓言家。他与克雷洛夫、拉·封丹和莱辛并称世界四大寓言家。他曾是萨摩斯岛雅德蒙家的奴隶，曾被转卖多次，但因知识渊博，聪颖过人，最后获得自由。公元前6世纪的希腊寓言家。一个丑陋无比,但是智慧无穷的寓言大师。据希罗...",
+        "cnt_answer": 0,
+        "cnt_like": 6,
+        "id": "zhidao:363990033",
+        "is_recommend": 1,
+        "question": "伊索寓言是一本什么书？",
+        "question_id": "363990033",
+        "result_index": 1,
+        "source": "zhidao"
+    }
+    """
+    return item
