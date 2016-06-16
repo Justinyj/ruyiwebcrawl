@@ -15,7 +15,7 @@ import hashlib
 class RedisManager(object):
 
     def __init__(self, record_redis, queue_redis, cache_redis, poolsize=5):
-        """ need init RedisPool here, ThinHash, HashQueue, Record can call
+        """ Caution!! need init RedisPool here, ThinHash, HashQueue, Record can call
             this RedisPool single instance later.
         """
         RedisPool.instance(record_redis, queue_redis, cache_redis, poolsize)

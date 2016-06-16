@@ -10,9 +10,10 @@ import json
 import gevent
 
 from rediscluster.redismanager import RedisManager
+from settings import RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS
 
 
-MANAGER = RedisManager()
+MANAGER = RedisManager(RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS)
 
 def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queue_timeout=180, failure_times=3, start_delay=0):
     """ transmit all urls once, because ThinHash depends on

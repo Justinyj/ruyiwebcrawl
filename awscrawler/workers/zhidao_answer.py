@@ -21,12 +21,11 @@ from parsers.zhidao_parser import generate_answer_json
 from settings import CACHE_SERVER
 
 
-
 def process(url, parameter, *args, **kwargs):
     if not hasattr(process, '_downloader'):
-        setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'})
+        setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'}))
     if not hasattr(process, '_cache'):
-        setattr(process, '_cache', Cache(BATCH_ID['json'], cacheserver))
+        setattr(process, '_cache', Cache(BATCH_ID['json'], CACHE_SERVER))
 
     method, gap, js, data = parameter.split(':')
     gap = int(gap)
