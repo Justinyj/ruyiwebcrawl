@@ -88,8 +88,28 @@ class Scheduler(object):
             return False
         return zhidao_search_questions(ret)
 
+    def zhidao_search_list_json(self, qword, batch_id, gap=3, timeout=10):
+        quote_word = urllib.quote(qword.encode('utf-8')) if isinstance(qword, unicode) else urllib.quote(qword)
+        # query_url = 'http://zhidao.baidu.com/index/?word={}'.format(quote_word) # utf-8
+        query_url = 'http://zhidao.baidu.com/search?word={}'.format(quote_word)
+
+        ret = self.downloader.downloader_wrapper(query_url, batch_id, gap, timeout=timeout, encoding='gb18030', refresh=True)
+        # resp.headers: 'content-type': 'text/html;charset=UTF-8',
+        # resp.content: <meta content="application/xhtml+xml; charset=utf-8" http-equiv="content-type"/>
+        if ret is False:
+            return False
+        return parse_search_json_v0615(ret)
+
+    def zhidao_search_select_best(self, qword, gap=3, timeout=2):
+        search_result_json = self.zhidao_search_list_json(qword, BATCH_ID['search'], gap, timeout)
+
+        # get the best answer
+        for item in search_result_json.values():
+            if item["rtype"] == "recommend":
+                return item
+
+        return False
 
     def run(self, qword, gap=3, timeout=10):
         qids = self.zhidao_search(qword, BATCH_ID['search'], gap, timeout)
         return self.zhidao_results(qids, gap, timeout)
-
