@@ -31,7 +31,7 @@ def process(url, parameter, *args, **kwargs):
     gap = int(gap)
 
     timeout = 10
-    content = process._downloader.downloader_wrapper(url, BATCH_ID['answer'], gap, timeout=timeout, encoding='gb18030')
+    content = process._downloader.downloader_wrapper(url, BATCH_ID['answer'], gap, timeout=timeout, encoding='gb18030', refresh=True)
     if content is False:
         return False
 
