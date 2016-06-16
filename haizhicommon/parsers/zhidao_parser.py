@@ -167,6 +167,17 @@ def zhidao_search_questions(content):
     else:
         return [first_q_id]
 
+def parse_search_get_best(content):
+    search_result_json = parse_search_json_v0615(content)
+
+    # get the best answer
+    if search_result_json:
+        for item in search_result_json:
+            if item["is_recommend"] == 1:
+                return item
+
+    return False
+
 
 def parse_search_json_v0615(content, start_result_index=0):
     """

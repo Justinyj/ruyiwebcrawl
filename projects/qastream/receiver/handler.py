@@ -10,7 +10,6 @@ sys.setdefaultencoding('utf-8')
 import tornado.web
 
 from stream_process import QUEUE, return_best_answer
-from parsers.zhidao_parser import parse_search_json_v0615
 from hzlib import libregex
 
 class ZhidaoSearchHandler(tornado.web.RequestHandler):
@@ -26,6 +25,33 @@ class ZhidaoSearchHandler(tornado.web.RequestHandler):
             if qapair:
                 ret["best_qapair"] = qapair
 
+            self.write(ret)
+        else:
+            self.write({'success': False})
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+
+
+
+class ZhidaoFetchHandler(tornado.web.RequestHandler):
+
+    def get(self,  qword):
+
+        if libregex.is_question_baike(qword):
+            QUEUE.put(qword)
+            ret = {'success': True}
+            self.write(ret)
+        else:
+            self.write({'success': False})
+        self.set_header('Content-Type', 'application/json; charset=UTF-8')
+
+
+class ZhidaoFetchForceHandler(tornado.web.RequestHandler):
+
+    def get(self,  qword):
+
+        if qword:
+            QUEUE.put(qword)
+            ret = {'success': True}
             self.write(ret)
         else:
             self.write({'success': False})
