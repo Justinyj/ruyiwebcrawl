@@ -189,7 +189,7 @@ def traverseDirByListdir(path):
     f.close()
 
 pa = os.path.abspath(os.path.dirname(__file__))
-traverseDirByListdir(pa)
-f=open('log','w')
-f.write(str(replace_count))
-f.close()
+#traverseDirByListdir(pa)
+#f=open('log','w')
+#f.write(str(replace_count))
+#f.close()
