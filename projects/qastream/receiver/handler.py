@@ -9,14 +9,12 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 import tornado.web
 
-from stream_process import QUEUE
+from stream_process import QUEUE, return_best_answer
 from parsers.zhidao_parser import parse_search_json_v0615
 from hzlib import libregex
 
 class ZhidaoSearchHandler(tornado.web.RequestHandler):
 
-    def init(self, cacheserver):
-        self.scheduler = Scheduler(cacheserver=cacheserver)
 
     def get(self, qword):
 
@@ -24,7 +22,7 @@ class ZhidaoSearchHandler(tornado.web.RequestHandler):
             QUEUE.put(qword)
             ret = {'success': True}
 
-            qapair = self.scheduler.zhidao_search_select_best(qword)
+            qapair = return_best_answer(qword)
             if qapair:
                 ret["best_qapair"] = qapair
 
