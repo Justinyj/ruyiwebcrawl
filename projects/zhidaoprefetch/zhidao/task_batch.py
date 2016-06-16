@@ -28,29 +28,42 @@ from hzlib import libfile
 
 #############
 # config
-CONFIG = {
- 	"batch_ids": {
- 		"search": "zhidao-search-20160614",
- 		"question": "zhidao-question-20160614",
- 		"answer": "zhidao-answer-20160614",
- 		"json": "zhidao-json-20160614"
- 	},
- 	"cache_server": "http://192.168.1.179:8000",
- 	"http_headers": {
- 		"Host": "zhidao.baidu.com"
- 	},
- 	"crawler": {
- 		"gap": 3,
- 		"timeout": 10,
- 		"encoding": "gb18030",
- 		"error_check": True
- 	}
+CONFIG_T = {
+     "batch_ids": {
+         "search": "zhidao-search-20160614",
+         "question": "zhidao-question-20160614",
+         "answer": "zhidao-answer-20160614",
+         "json": "zhidao-json-20160614"
+     },
+     "cache_server": "http://52.192.116.149:8000",
+     "http_headers": {
+         "Host": "zhidao.baidu.com"
+     },
+     "crawler": {
+         "gap": 3,
+         "timeout": 10,
+         "encoding": "gb18030",
+         "error_check": True
+     }
 }
-# 	"cache_server": "http://52.192.116.149:8000",
+
+CONFIG = {
+    "prod": CONFIG_T,
+    "local": CONFIG_T,
+}
+CONFIG["local"]["cache_server"] = "http://192.168.1.179:8000"
+#     "cache_server": "http://52.192.116.149:8000",
+
+VERSION ='v20160526'
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
+def getLocalFile(filename):
+    return os.path.abspath(os.path.dirname(__file__)).replace("/python/","/local/") +"/"+filename
+
+def getWorkFile(filename):
+    return os.path.abspath(os.path.dirname(__file__)).replace("/python/","/local/") +"/"+VERSION+"/"+filename
 
 class ZhidaoPrefetch(object):
 
@@ -204,6 +217,8 @@ class ZhidaoPrefetch(object):
 
     def run_test_search_realtime(self, filename, limit):
         results = []
+        counter = collections.Counter()
+
         with codecs.open(filename) as f:
             for line in f:
                 if line.startswith("#"):
@@ -212,21 +227,26 @@ class ZhidaoPrefetch(object):
                 if not line:
                     continue
                 ret = self.run_query(line, limit)
+                counter["query"] +=1
                 for item in sorted(ret.values(), key= lambda x:x["rank"]):
+                    print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
+                    results.append(item)
                     item["query"] = line.decode("utf-8")
+                    item["id"] = counter["query"]
+                    for p in ["rtype","rank"]:
+                        counter["{}_{}".format(p, item[p])] +=1
                     for p in [  "question", "a_summary"]:
                         if p in item:
                             if not isinstance(item[p],unicode):
                                 item[p] = item[p].decode("gb18030")
-                    results.append(item)
 
         filename_output = filename.replace("human.txt", "xls")
-        libfile.writeExcel(results, [ "rtype", "cnt_like",  "cnt_answer", "query", "question", "a_summary"], filename_output)
+        libfile.writeExcel(results, [ "id","rtype", "rank", "cnt_like",  "cnt_answer", "query", "qid", "question", "a_summary"], filename_output)
         #libfile.writeExcel(results, ["query", "rtype", "cnt_like",  "cnt_answer", "question", "a_summary"], filename_output)
-
+        print counter
 
 def main():
-    agt = ZhidaoPrefetch(CONFIG)
+    agt = ZhidaoPrefetch(CONFIG["local"])
     query = u"珠穆朗玛峰"
     query = u"天空为什么是黄的"
     #agt.run_query(query, 1)

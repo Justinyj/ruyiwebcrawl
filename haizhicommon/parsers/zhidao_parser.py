@@ -210,30 +210,42 @@ def parse_search_json_v0615(content):
 
 
 #    normal = dom.xpath('//dl[contains(@class,"dl")]')
-    sources ={ "zhidao": {
+    sources =[
+        {
+            "rtype":"zhidao",
             "url_pattern":"zhidao.baidu.com/question/(\d+).html"
         },
-        "muzhi":{
-        #http://muzhi.baidu.com/question/1240767390499604219.html?fr=iks&word=%CE%AA%CA%B2%C3%B4%C8%CB%BB%E1%B3%F6%BA%B9%3F&ie=gbk
-        "url_pattern":"muzhi.baidu.com/question/(\d+).html"
-        },
-        "zybang": {
+        {
+            "rtype":"zybang",
             #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
-        "url_pattern":"zybang.com/question/(.+).html"
+            "url_pattern":"zybang.com/question/(.+).html"
         },
-        "other": {
+        {
+            "rtype":"muzhi",
+            #http://muzhi.baidu.com/question/1240767390499604219.html?fr=iks&word=%CE%AA%CA%B2%C3%B4%C8%CB%BB%E1%B3%F6%BA%B9%3F&ie=gbk
+            "url_pattern":"muzhi.baidu.com/question/(\d+).html"
+        },
+        {
+            "rtype":"baobao",
+            #http://muzhi.baidu.com/question/1240767390499604219.html?fr=iks&word=%CE%AA%CA%B2%C3%B4%C8%CB%BB%E1%B3%F6%BA%B9%3F&ie=gbk
+            "url_pattern":"baobao.baidu.com/question/(.+).html"
+        },
+        {
+            "rtype":"other",
             #http://www.zybang.com/question/2c934b18be91da5fa4133d793c702900.html
             "url_pattern":"http://.+/question/(.+).html"
         }
-    }
+    ]
+
     normal = dom.xpath('//dl[contains(@class,"dl")]')
     #print (len(normal))
     for idx, node in enumerate(normal):
         #print (idx)
         url = node.xpath('./dt/a/@href')[0]
         qid = None
-        for src in sources:
-            qids = re.findall(sources[src]["url_pattern"], url)
+        for srcitem in sources:
+            src = srcitem["rtype"]
+            qids = re.findall(srcitem["url_pattern"], url)
             if qids:
                 #print (qids)
                 qid = "{}:{}".format(src, qids[0])
