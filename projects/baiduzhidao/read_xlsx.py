@@ -40,7 +40,10 @@ def statistics(result):
         one_id = re.compile('http://zhidao.baidu.com/question/(\d+).html').search(i[2]).group(1)
         if check_id(one_id) is True:
             zhidao_data_hit_count += 1
+            print(one_id)
+
     print(100 * zhidao_hit_count / count)
+    print(100 * zhidao_data_hit_count / count)
 
 
 def check_id(one_id):
