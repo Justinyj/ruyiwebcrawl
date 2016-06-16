@@ -10,10 +10,9 @@ import json
 from invoker.zhidao import BATCH_ID
 from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
-from parsers.zhidao_parser import parse_title, parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
+from parsers.zhidao_parser import parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
 
 from settings import CACHE_SERVER
-
 
 
 def get_answer_url(q_id, r_id):
@@ -23,9 +22,9 @@ def get_answer_url(q_id, r_id):
 
 def process(url, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
-        setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'})
+        setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'}))
     if not hasattr(process, '_cache'):
-        setattr(process, '_cache', Cache(BATCH_ID['json'], cacheserver))
+        setattr(process, '_cache', Cache(BATCH_ID['json'], CACHE_SERVER))
 
 
     m = re.search(
@@ -42,8 +41,7 @@ def process(url, parameter, manager, *args, **kwargs):
     if content is False:
         return False
 
-    answer_ids = []
-    q_json = generate_question_json(q_id, content, answer_ids)
+    q_json = generate_question_json(q_id, content)
     if q_json is None:
         return False
 
@@ -54,7 +52,7 @@ def process(url, parameter, manager, *args, **kwargs):
         return False
 
     answer_urls = []
-    for answer_id in answer_ids[:3]:
+    for answer_id in q_json['answer_ids'][:3]:
         answer_urls.append( get_answer_url(q_id, answer_id) )
     manager.put_urls_enqueue(BATCH_ID['answer'], answer_urls)
 

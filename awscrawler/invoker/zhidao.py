@@ -23,6 +23,7 @@ def load_urls(fname):
 def run_zhidao():
 
     filename = '/home/admin/split_zhidao_ak'
+    filename = 'useful_zhidao_urls.txt'
     urls = load_urls(filename)
 
     tasks = []
@@ -34,17 +35,17 @@ def run_zhidao():
     t2.rawlink(delete_distributed_queue)
     tasks.append(t1)
 
-    schedule = Schedule(30, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
+#    schedule = Schedule(30, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
     print('finish start instances initially')
 
-    t3 = gevent.spawn(schedule.run_forever)
+#    t3 = gevent.spawn(schedule.run_forever)
 
     gevent.joinall(tasks)
-    gevent.killall([t3], block=True)
+#    gevent.killall([t3], block=True)
 
     print('waiting for delete queue')
     time.sleep(120)
-    schedule.stop_all_instances()
+#    schedule.stop_all_instances()
 
 
 if __name__ == '__main__':
