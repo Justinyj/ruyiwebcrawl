@@ -48,6 +48,7 @@ def upload():
         run('ln -s /opt/service/awsframe/`ls /opt/service/awsframe/ | sort | tail -n 1` /opt/service/awscrawler')
         with cd('awsframe'):
             run('ls -tp | tail -n +6 | xargs -I {} rm -r -- {}')
+    put('../haizhicommon', '/opt/service/awsframe/')
 
 def kill():
     run("ps aux | grep python | grep -v grep | grep awscrawler | awk '{print $2}' | xargs -n 1 --no-run-if-empty kill")

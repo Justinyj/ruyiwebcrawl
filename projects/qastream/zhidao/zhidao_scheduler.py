@@ -117,6 +117,14 @@ class Scheduler(object):
 
         return False
 
+    def zhidao_search_select_best_qids(self, qword, gap=3, timeout=2):
+        ret = self.zhidao_search_select_best(qword, gap, timeout)
+        if ret:
+            return [ ret["question_id"] ]
+        return False
+
+
     def run(self, qword, gap=3, timeout=10):
-        qids = self.zhidao_search(qword, BATCH_ID['search'], gap, timeout)
+        # qids = self.zhidao_search(qword, BATCH_ID['search'], gap, timeout)
+        qids = self.zhidao_search_select_best_qids(qword, gap, timeout)
         return self.zhidao_results(qids, gap, timeout)

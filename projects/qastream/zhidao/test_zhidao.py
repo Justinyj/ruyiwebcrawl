@@ -29,6 +29,15 @@ def test():
     cacheserver = "http://192.168.1.179:8000"
     api = Scheduler(cacheserver=cacheserver)
     ret = api.zhidao_search_select_best(qword)
+    assert(ret)
+    print json.dumps(ret, ensure_ascii=False, indent=4, sort_keys=True)
+
+    ret = api.zhidao_search_select_best_qids(qword)
+    assert(ret)
+    print json.dumps(ret, ensure_ascii=False, indent=4, sort_keys=True)
+
+    ret = api.run(qword)
+    assert(ret)
     print json.dumps(ret, ensure_ascii=False, indent=4, sort_keys=True)
 
 def main():
