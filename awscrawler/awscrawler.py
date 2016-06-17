@@ -24,13 +24,14 @@ def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queu
                           because hscan get a few tens of items once.(99 max)
     """
     total_count = len(urls) if len(urls) > 0 else total_count
-    queue_timeout *= 100
 
-    parameter = '{method}:{gap}:{js}:'.format(
+    parameter = '{method}:{gap}:{js}:{timeout}:'.format(
             method=method,
             gap=gap,
-            js=1 if js else 0)
+            js=1 if js else 0,
+            timeout=queue_timeout)
 
+    queue_timeout *= 100
     queue_dict = MANAGER.init_distributed_queue(batch_id,
                                                 parameter,
                                                 total_count,

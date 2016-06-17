@@ -27,10 +27,10 @@ def process(url, parameter, *args, **kwargs):
     if not hasattr(process, '_cache'):
         setattr(process, '_cache', Cache(BATCH_ID['json'], CACHE_SERVER))
 
-    method, gap, js, data = parameter.split(':')
+    method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
+    timeout = int(timeout)
 
-    timeout = 10
     content = process._downloader.downloader_wrapper(url, BATCH_ID['answer'], gap, timeout=timeout, encoding='gb18030', refresh=True)
     if content is False:
         return False

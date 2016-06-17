@@ -43,6 +43,10 @@ class GetWorker(Worker):
         """
         timeout = time_to_sleep = kwargs.get('timeout', 60)
 
+        while 1:
+            self.run(*args, **kwargs)
+            time.sleep(10)
+
         for i in range(4):
             self.run(*args, **kwargs)
             time.sleep(time_to_sleep)
