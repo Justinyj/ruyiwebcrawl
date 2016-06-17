@@ -33,10 +33,10 @@ def process(url, parameter, manager, *args, **kwargs):
         return False
 
     q_id = m.group(1)
-    method, gap, js, data = parameter.split(':')
+    method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
+    timeout = int(timeout)
 
-    timeout = 10
     content = process._downloader.downloader_wrapper(url, BATCH_ID['question'], gap, timeout=timeout, encoding='gb18030', error_check=True, refresh=True)
     if content is False:
         return False
