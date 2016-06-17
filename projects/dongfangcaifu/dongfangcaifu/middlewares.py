@@ -42,23 +42,4 @@ class MyMiddleWare(object):
 m=Cache(BATCH_ID)
 print m.post('test','content3')
 print m.get('test')
-
-m=Cache(BATCH_ID)
-url='http://data.eastmoney.com/Notice/Noticelist.aspx?type=0&market=all&date=&page=34711'
-content=m.get(url)
-print content
-OK=0
-NO=0
-for index in range(20000,35172):
-    url='http://data.eastmoney.com/Notice/Noticelist.aspx?type=0&market=all&date=&page={}'.format(index)
-    m=Cache(BATCH_ID)
-    content=m.get(url)
-    if content:
-        if '没有相关数据' in content:
-            NO+=1
-            print url
-        else:
-            OK+=1
-print NO,OK
-import requests
 '''
