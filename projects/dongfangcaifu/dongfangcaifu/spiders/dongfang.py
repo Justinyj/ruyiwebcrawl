@@ -14,8 +14,6 @@ class DongfangSpider(Spider):
         return i
 
     def parse(self, response):
-        print response.url
-        print 'pppppppppppppppppppparse'
         template = 'http://data.eastmoney.com/Notice/Noticelist.aspx?type=0&market=all&date=&page={}'
         page_bottoms = response.xpath('//div[@class="Page"]//a')
         max_num = 1
@@ -28,8 +26,8 @@ class DongfangSpider(Spider):
                 max_num = max_url[max_url.index('page=') + len('page=')::]
                 max_num=int(max_num)
                 break
-        print 'maxxxxxxxxxxxxxxxxxxxxxxxx:'
-        print max_num
+        #print 'maxxxxxxxxxxxxxxxxxxxxxxxx:'
+        #print max_num
         for page in range(1, max_num):
             yield scrapy.Request(template.format(page), callback=self.parse_one_page)
         return
