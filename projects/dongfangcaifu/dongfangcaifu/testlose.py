@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from cache import Cache
+from downloader.cache import Cache
 import sys
 import re
 import requests
 reload(sys)
 sys.setdefaultencoding('utf-8')
 BATCH_ID = 'dongfang-201606'
-m = Cache(BATCH_ID)
+m = Cache(BATCH_ID,'http://192.168.1.179:8000/')
 url = 'http://data.eastmoney.com/Notice/Noticelist.aspx?type=0&market=all&date=&page=33333'
 content = m.get(url)
 #print requests.get(url).text

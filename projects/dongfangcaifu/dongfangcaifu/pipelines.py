@@ -10,11 +10,11 @@ import codecs
 
 class DongfangcaifuPipeline(object):
     def __init__(self):
-        self.file = codecs.open('dongfangcaifu.txt', 'w')
-        self.count=0
+        self.file = codecs.open('url_per_notice.txt', 'w')
     def process_item(self, item, spider):
+    	'''
         line=json.dumps(dict(item),ensure_ascii=False)+"\n"
-        self.file.write(line)
-        self.count+=item['num']
-        print self.count
+        '''
+        line=item['url']
+        self.file.write(line+'\n')
         return item

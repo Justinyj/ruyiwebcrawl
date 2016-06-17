@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from downloader.downloader import Downloader
+from downloader.downloader_wrapper import DownloadWrapper
 import lxml.html
 import json
 import sys
@@ -27,18 +28,24 @@ def download_url(url):
     batch_id = 'dongfangcaifu-201606'
     url = url
     #url = 'http://data.eastmoney.com/notice/20160617/2Wvl2aWuYwihKD.html'
-    m = Downloader(batch_id, cacheserver, request=True)
-    content = m.request_download(url, encoding='gb2312')
+    m = DownloadWrapper(cacheserver)
+    content = m.downloader_wrapper(url, batch_id, 0.5, encoding='gb2312')
     return content
-
 
 def run(filename):
     with open(filename, 'r') as source:
-        url = source.readline().strip()
-        if not url:
-            return
-        content = download_url(url)
-        ret = generate_json(url, content)
-        f = open('dongfang_outpu.json', 'a')
-        f.write(ret)
-        f.close()
+        while 1:
+            url = source.readline().strip()
+            if not url:
+                return
+            content = download_url(url)
+            if not content:
+                print 'error:{}'.format(url)
+                continue
+            ret = generate_json(url, content)
+            f = open('notice_output.json', 'a')
+            f.write(ret + '\n')
+            f.close()
+
+#run('url_per_notice.txt')
+#download_url('http://data.eastmoney.com/notice/20160616/2Wvl2aVspAUtZt.html')

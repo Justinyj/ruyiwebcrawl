@@ -8,7 +8,7 @@ from dongfangcaifu.items import Company  # url,title,content
 class DongfangSpider(Spider):
     name = 'dongfang'
     allowed_domains = []
-    start_urls = ['http://data.eastmoney.com/Notice']
+    start_urls = ['http://data.eastmoney.com/Notice/Noticelist.aspx?']
 
     def pass_item(self, i):
         return i
@@ -27,7 +27,7 @@ class DongfangSpider(Spider):
                 max_num = max_url[max_url.index('page=') + len('page=')::]
                 max_num=int(max_num)
                 break
-        for page in range(1, 10):
+        for page in range(1, max_num):
             yield scrapy.Request(template.format(page), callback=self.parse_one_page)
         return
 
@@ -36,17 +36,18 @@ class DongfangSpider(Spider):
         urls = response.xpath('//td[@class="title"]/a/@href')
         for url_tail in urls:
             url = 'http://data.eastmoney.com' + url_tail.extract()
-            print url
-            break
-            '''
+
+            
             item=Company()
             item['url']=url
             yield self.pass_item(item) #generate url for each notice without parsing it
-            continue
+            
             '''
+            print url
+            break
             yield scrapy.Request(url,
                                  callback=self.parse_notice)
-
+            '''
     def parse_notice(self, response):
         print response.url
         title = response.xpath('//div[@class="content"]/h4/text()').extract()
