@@ -36,6 +36,7 @@ class MingluSpider(object):
         name=dom.xpath('//span[@class="field-content"]//text()')
         return name
     def traversal(self):
+        self.GetPosition()
         while 1:
             url = self.url_file.readline().strip()
             if not url:

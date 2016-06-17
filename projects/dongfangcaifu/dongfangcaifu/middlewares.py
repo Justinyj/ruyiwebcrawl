@@ -38,8 +38,11 @@ class MyMiddleWare(object):
             m.post(url, new_content.decode('gb18030'))
             print 'I am pppppppppppppppposting to Cache'
         return response
-
 '''
+m=Cache(BATCH_ID)
+print m.post('test','content3')
+print m.get('test')
+
 m=Cache(BATCH_ID)
 url='http://data.eastmoney.com/Notice/Noticelist.aspx?type=0&market=all&date=&page=34711'
 content=m.get(url)
