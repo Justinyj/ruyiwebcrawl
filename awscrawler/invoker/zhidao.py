@@ -23,7 +23,7 @@ def run_zhidao():
         第二个queue开始后，第一个queue还没有跑worker，并把结果塞入第二个queue，第二个queue就end了。
     """
 
-   timeout = 10
+    timeout = 10
 
     filename = '/home/admin/split_zhidao_ak'
 #    filename = 'useful_zhidao_urls.txt'

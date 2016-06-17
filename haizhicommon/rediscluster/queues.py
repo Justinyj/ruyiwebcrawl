@@ -38,14 +38,24 @@ class Queue(object):
     them requeued in the queue
 
     see ``Queue.clean_tasks`` method for details
+
+    Queue has count on every task of get, failed after 3 times
     """
 
 
-    def __init__(self, key, priority=1, timeout=90):
+    def __init__(self, key, priority=1, timeout=180, failure_times=3):
+        """
+        :param timeout: timeout后，background_cleansing 把任务又加入队列.
+                        task_done 来的超过timeout，
+                        Record success就会一直增加，甚至超过 Recordtotal
+        """
         self.key = key
         self.timehash = '{key}-timehash'.format(key=key)
+        self.failhash = '{key}-failhash'.format(key=key) # keep fail queue
+
         self.priority = priority
         self.timeout = timeout
+        self.failure_times = failure_times
 
         self.batch_size = 5000
         self.conn = RedisPool.instance().queue
@@ -56,12 +66,15 @@ class Queue(object):
         """
         return self.conn.delete(self.key)
 
+
     def flush(self):
         self.conn.delete(self.timehash)
         self.conn.delete(self.key)
 
+
     def qsize(self):
         return self.conn.scard(self.key)
+
 
     def delete(self, *items):
         if items:
@@ -69,12 +82,16 @@ class Queue(object):
         else:
             return 0
 
+
     def put(self, *items):
         """ put item(s) into queue """
         if items:
             return self.conn.sadd(self.key, *items)
         else:
             return 0
+
+    put_init = put
+
 
     def get(self, block=True, timeout=None, interval=0.1):
         """ get item from queue, block if needed
@@ -86,7 +103,7 @@ class Queue(object):
         >>> # before poping one key, block forever or 3 secnods.
 
         """
-        # 1.queue empty, 2.queue connect time out.
+        # queue connect time out.
         if block:
             t = 0
             while timeout is None or t < timeout:
@@ -105,13 +122,22 @@ class Queue(object):
 
     def task_start(self, result):
         """ save start time in redis hash """
+        self.conn.hincrby(self.failhash, result, 1)
         self.conn.hsetnx(self.timehash, result, time.time())
+
 
     def task_done(self, result):
         """ clear start time in redis hash, indicating the task done
             increase successful count in record hash
         """
+        self.conn.hdel(self.failhash, result)
         return self.conn.hdel(self.timehash, result)
+
+
+    def get_failed_times(self, field):
+        times = self.conn.hget(self.failhash, field)
+        return int(times)
+
 
     def clean_task(self):
         """ check task hash for unfinished long running tasks, requeue them.
@@ -121,17 +147,25 @@ class Queue(object):
             or else `clean_task` add item back to queue, at the same time,
             job finished and removed from `self.timehash`.
         """
-        timeout = self.timeout
-        if timeout is None:
+        if self.timeout is None:
             self.conn.delete(self.timehash)
             return
 
         items = []
         time_now = time.time()
         for field, value in self.conn.hgetall(self.timehash).iteritems():
+            if field == 'background_cleaning':
+                continue
+
             start_time = float(value)
-            if time_now - start_time > timeout:
-                items.append(field)
+            if time_now - start_time > self.timeout:
+                failed_times = self.get_failed_times(field)
+                failed_times += 1
+                if failed_times > self.failed_times:
+                    Record.instance().increase_failed(self.key)
+                    self.conn.hdel(self.timehash, field)
+                else:
+                    items.append(field)
 
         items, items_tail = items[:self.batch_size], items[self.batch_size:]
         while items:
@@ -153,7 +187,7 @@ class Queue(object):
 
         while self.qsize() > 0 or self.conn.hlen(self.timehash) > 1:
             self.clean_task()
-            time.sleep(self.timeout)
+            time.sleep(60)
 
         self.conn.hset(self.timehash, 'background_cleaning', 0)
         return self.key

@@ -5,7 +5,7 @@
 from __future__ import print_function, division
 
 from rediscluster.record import Record
-from rediscluster.queues import HashQueue
+from rediscluster.queues import Queue
 from rediscluster.thinredis import ThinHash
 from rediscluster.redispool import RedisPool
 
@@ -15,7 +15,7 @@ import hashlib
 class RedisManager(object):
 
     def __init__(self, record_redis, queue_redis, cache_redis, poolsize=5):
-        """ Caution!! need init RedisPool here, ThinHash, HashQueue, Record can call
+        """ Caution!! need init RedisPool here, ThinHash, Queue, Record can call
             this RedisPool single instance later.
         """
         RedisPool.instance(record_redis, queue_redis, cache_redis, poolsize)
@@ -36,10 +36,10 @@ class RedisManager(object):
         # keep the step order
         Record.instance().begin(batch_id, parameter, total_count, priority)
         thinhash = ThinHash(batch_id, total_count)
-        queue = HashQueue(batch_id,
-                          priority=priority,
-                          timeout=timeout,
-                          failure_times=failure_times)
+        queue = Queue(batch_id,
+                      priority=priority,
+                      timeout=timeout,
+                      failure_times=failure_times)
 
         self.set_distributed_queue(batch_id, queue, thinhash, priority, True)
         return self.cache[batch_id]
@@ -50,7 +50,7 @@ class RedisManager(object):
         """
         priority = int( Record.instance().get_priority(batch_id) )
         thinhash = ThinHash(batch_id, total_count)
-        queue = HashQueue(batch_id, priority=priority)
+        queue = Queue(batch_id, priority=priority)
         self.set_distributed_queue(batch_id, queue, thinhash, priority, True)
         return self.cache[batch_id]
 
@@ -90,6 +90,7 @@ class RedisManager(object):
         if isinstance(url, unicode):
             url = url.encode('utf-8')
         field = int(hashlib.sha1(url).hexdigest(), 16)
+
         # keep the order
         self.cache[batch_id]['thinhash'].hset(field, url)
         self.cache[batch_id]['queue'].put_init(field)
@@ -108,9 +109,10 @@ class RedisManager(object):
             if isinstance(url, unicode):
                 url = url.encode('utf-8')
             field = int(hashlib.sha1(url).hexdigest(), 16)
+
             thinhash_mset.append(field)
             thinhash_mset.append(url)
-            queue_mset.append((field, 0))
+            queue_mset.append(field)
 
         self.cache[batch_id]['thinhash'].hmset(*thinhash_mset)
         self.cache[batch_id]['queue'].put(*queue_mset)
