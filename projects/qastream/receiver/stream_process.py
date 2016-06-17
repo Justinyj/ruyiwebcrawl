@@ -32,6 +32,8 @@ batch_init(get_esconfig(ENV), [ES_DATASET_CONFIG])
 def search_questions(qword):
     s = Scheduler.instance(CONFIG[ENV]['CACHESERVER'])
     questions = s.run(qword, gap=3)
+    if not questions:
+        return
 
     for q in questions:
         answers = q['list_answers']
