@@ -1,47 +1,27 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import sys
-from downloader.cache import Cache
+
+from downloader.downloader_wrapper import DownloadWrapper
 reload(sys)
 sys.setdefaultencoding('utf-8')
-BATCH_ID = 'dongfang-201606'
-
-m=Cache(BATCH_ID,'http://192.168.1.179:8000/')
+BATCH_ID = 'dongfang-201606test'
 url='http://data.eastmoney.com/Notice'
-print m.get(url)
+SERVER='http://192.168.1.179:8000/'
+m = DownloadWrapper(SERVER)
+#content = m.downloader_wrapper('http://data.eastmoney.com/Notice/Noticelist.aspx',BATCH_ID,0,encoding='gb2312',refresh=True)
+#print content
 class MyMiddleWare(object):
     def process_request(self, request,  spider):
         url = request.url
-        m = Cache(BATCH_ID,'http://192.168.1.179:8000/')
-        content = m.get(url)
+        m = DownloadWrapper(SERVER)
+        content = m.downloader_wrapper(url,BATCH_ID,3,encoding='gb2312')
         if content:
             response = scrapy.http.response.html.HtmlResponse(
                     url, encoding='utf-8', body=content)
             return response
         return
 
-    def process_response(self, request, response, spider):
-        url = response.url
-        if response.status not in [200, 301]:
-            f = open('log.txt', 'a')
-            f.write(response.url+'\n')
-            f.close()
-            return response
-        m = Cache(BATCH_ID,'http://192.168.1.179:8000/')
-        content = m.get(url)
-        if not content:
-            new_content = response.body 
-            '''
-            if '更多公告'  not  in new_content  :
-                print 'no dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-                f=open('log.txt','a')
-                f.write(url+'\n')
-                f.close()
-                return response
-            '''
-            m.post(url, new_content.decode('gb18030'))
-            print 'I am pppppppppppppppposting to Cache'
-        return response
 '''
 m=Cache(BATCH_ID)
 print m.post('test','content3')
