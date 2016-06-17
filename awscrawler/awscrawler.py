@@ -20,8 +20,7 @@ def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queu
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
 
-    :param queue_timeout: turn to 100 times large,
-                          because hscan get a few tens of items once.(99 max)
+    :param queue_timeout: turn to several times larger of download timeout.
     """
     total_count = len(urls) if len(urls) > 0 else total_count
 
@@ -31,7 +30,7 @@ def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queu
             js=1 if js else 0,
             timeout=queue_timeout)
 
-    queue_timeout *= 100
+    queue_timeout *= 6
     queue_dict = MANAGER.init_distributed_queue(batch_id,
                                                 parameter,
                                                 total_count,

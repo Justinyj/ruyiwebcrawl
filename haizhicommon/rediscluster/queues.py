@@ -68,7 +68,7 @@ class Queue(object):
 
 
     def flush(self):
-        self.conn.delete(self.timehash)
+#        self.conn.delete(self.timehash)
         self.conn.delete(self.key)
 
 
@@ -138,6 +138,9 @@ class Queue(object):
         times = self.conn.hget(self.failhash, field)
         return int(times)
 
+    def set_failed_times_to_url(self, field, url):
+        self.conn.hset(self.failhash, field, url)
+
 
     def clean_task(self):
         """ check task hash for unfinished long running tasks, requeue them.
@@ -161,7 +164,7 @@ class Queue(object):
             if time_now - start_time > self.timeout:
                 failed_times = self.get_failed_times(field)
                 failed_times += 1
-                if failed_times > self.failed_times:
+                if failed_times > self.failure_times:
                     Record.instance().increase_failed(self.key)
                     self.conn.hdel(self.timehash, field)
                 else:
