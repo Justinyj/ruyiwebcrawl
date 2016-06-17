@@ -18,7 +18,8 @@ class DownloadWrapper(object):
     def download_with_cache(self, url, batch_id, gap, method, timeout, encoding, redirect_check, error_check, refresh):
         if batch_id not in self._batches:
             downloader = Downloader(batch_id, self.cacheserver, True, gap, timeout)
-            downloader.update_header(self.headers)
+            if self.headers:
+                downloader.update_header(self.headers)
             self._batches[batch_id] = downloader
 
         return self._batches[batch_id].requests_with_cache(
