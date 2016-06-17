@@ -6,11 +6,13 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 BATCH_ID = 'dongfang-201606'
 
-
+m=Cache(BATCH_ID,'http://192.168.1.179:8000/')
+url='http://data.eastmoney.com/Notice'
+print m.get(url)
 class MyMiddleWare(object):
     def process_request(self, request,  spider):
         url = request.url
-        m = Cache(BATCH_ID)
+        m = Cache(BATCH_ID,'http://192.168.1.179:8000/')
         content = m.get(url)
         if content:
             response = scrapy.http.response.html.HtmlResponse(
@@ -25,7 +27,7 @@ class MyMiddleWare(object):
             f.write(response.url+'\n')
             f.close()
             return responsex
-        m = Cache(BATCH_ID)
+        m = Cache(BATCH_ID,'http://192.168.1.179:8000/')
         content = m.get(url)
         if not content:
             new_content = response.body 
