@@ -194,8 +194,8 @@ class HashQueue(object):
 
     def __init__(self, key, priority=1, timeout=180, failure_times=3):
         """
-        :param timeout: 如果timeout后，background_cleansing 把任务又加入队列.
-                        task_done 来的超时，
+        :param timeout: timeout后，background_cleansing 把任务又加入队列.
+                        task_done 来的超过timeout，
                         Record success就会一直增加，甚至超过 Recordtotal
         """
         self.key = key
@@ -255,8 +255,8 @@ class HashQueue(object):
         * elements that were not constantly present in the collection during
           a full itertaion, may be returned or not.
         * hscan may return 0 to a few tens of elements.
-        * hscan with count=1 may always return empty.
-          So need count set to 2 with next_seq iteration.
+        * hscan with count=1 may always return empty even if user return cursor 3 times.
+          only count=7 can give data, so need set count to defult(10) with next_seq iteration.
         * hashes or sorted set encoded as ziplists, all returned in first scan
           call regardless of the count value.
 
@@ -269,14 +269,14 @@ class HashQueue(object):
             t = 0
             while timeout is None or t < timeout:
                 # items is {} object
-                next_seq, items = self.conn.hscan(self.key, cursor=cursor, count=2)
+                next_seq, items = self.conn.hscan(self.key, cursor=cursor)
                 if not items:
                     t += interval
                     time.sleep(interval)
                     cursor = next_seq
                 else: break
         else:
-            next_seq, items = self.conn.hscan(self.key, cursor=cursor, count=2)
+            next_seq, items = self.conn.hscan(self.key, cursor=cursor)
 
         # SCAN does not provide guarantees about the
         # number of elements returned at every iteration.
@@ -348,6 +348,7 @@ class HashQueue(object):
         if ret == '0':
             return
 
+        time.sleep(self.timeout)
         print('begin clean : ', self.key)
         while self.qsize() > 0 or self.conn.hlen(self.timehash) > 1:
             self.clean_task()

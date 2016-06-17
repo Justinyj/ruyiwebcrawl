@@ -84,7 +84,7 @@ class GetWorker(Worker):
         module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
 
         while 1:
-            results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
+            results = queue_dict['queue'].get(block=True, timeout=5, interval=0.5)
             if results == []: break
             for url_id, count in results:
                 url = queue_dict['thinhash'].hget(url_id)
@@ -103,8 +103,8 @@ class GetWorker(Worker):
                 if process_status:
                     queue_dict['queue'].task_done(url_id)
                     Record.instance().increase_success(batch_id)
-                else:
-                    Record.instance().increase_failed(batch_id)
+#                else:
+#                    Record.instance().increase_failed(batch_id)
 
 
 def main():

@@ -8,16 +8,21 @@ import re
 import json
 
 def parse_page_title(content):
+    """
+    :return:   0 unknow webpage
+               1 question expire
+               string of title
+    """
     m = re.search('<title>(.*)</title>', content)
     if m:
         title = m.group(1)
         if u'_百度知道' not in title:
             if u'百度知道-信息提示' == title:
-                return
-            return
+                return 0
+            return -1
         title = re.sub(u'_百度知道', u'', title)
         return title
-    return
+    return -1
 
 
 def parse_q_time(content):
@@ -61,10 +66,15 @@ def parse_asker_username(content):
     return
 
 def generate_question_json(qid, content):
+    """
+    :return: None means error
+             {} means question expire
+    """
     q_title = parse_page_title(content)
-    if q_title is None:
-        # print('未找到title或者页面不存在')
+    if q_title == 0:
         return
+    elif q_title == 1:
+        return {}
     q_content = parse_q_content(content)
     if q_content is None:
         return

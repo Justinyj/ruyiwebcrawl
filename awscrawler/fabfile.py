@@ -34,21 +34,19 @@ def build_env():
 def upload():
     archive = 'awscrawler.tar.bz2'
     with lcd('..'):
-        local('tar jcf {} --exclude *.pyc awscrawler'.format(archive))
+        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir awscrawler$dirtime; cp -r awscrawler/* awscrawler$dirtime; cp -r haizhicommon/downloader haizhicommon/parsers haizhicommon/rediscluster awscrawler$dirtime; tar jcf {} --exclude='*.pyc' awscrawler$dirtime; rm -r awscrawler$dirtime".format(archive))
         put('{}'.format(archive), '/tmp/')
         put('~/.ssh/crawl-tokyo.pem', '/home/admin/.ssh/')
 
     with cd('/tmp'):
-        run('tar jxf /tmp/{}'.format(archive))
         sudo('mkdir -p /opt/service/awsframe; chown -R {user}:{user} /opt/service'.format(user=env.user))
-        run('mv /tmp/awscrawler /opt/service/awsframe/awscrawler`date +%Y%m%d%H%M%S`')
+        run('tar jxf /tmp/{} -C /opt/service/awsframe/'.format(archive))
 
     with cd('/opt/service/'):
         run('[ -L awscrawler ] && unlink awscrawler || echo ""')
         run('ln -s /opt/service/awsframe/`ls /opt/service/awsframe/ | sort | tail -n 1` /opt/service/awscrawler')
         with cd('awsframe'):
             run('ls -tp | tail -n +6 | xargs -I {} rm -r -- {}')
-    put('../haizhicommon', '/opt/service/awsframe/')
 
 def kill():
     run("ps aux | grep python | grep -v grep | grep awscrawler | awk '{print $2}' | xargs -n 1 --no-run-if-empty kill")

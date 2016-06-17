@@ -7,6 +7,7 @@ from __future__ import print_function, division
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
+
 import tornado.web
 
 from stream_process import QUEUE, return_best_answer
@@ -14,8 +15,9 @@ from hzlib import libregex
 
 class ZhidaoSearchHandler(tornado.web.RequestHandler):
 
-
     def get(self, qword):
+        """ async import to es and sync reply with classify of baike question
+        """
 
         if libregex.is_question_baike(qword):
             QUEUE.put(qword)
@@ -32,9 +34,11 @@ class ZhidaoSearchHandler(tornado.web.RequestHandler):
 
 
 
-class ZhidaoFetchHandler(tornado.web.RequestHandler):
+class ZhidaoBaikeAsyncESHandler(tornado.web.RequestHandler):
 
     def get(self,  qword):
+        """ async import to es with classify of baike question
+        """
 
         if libregex.is_question_baike(qword):
             QUEUE.put(qword)
@@ -45,9 +49,11 @@ class ZhidaoFetchHandler(tornado.web.RequestHandler):
         self.set_header('Content-Type', 'application/json; charset=UTF-8')
 
 
-class ZhidaoFetchForceHandler(tornado.web.RequestHandler):
+class ZhidaoAsyncESHandler(tornado.web.RequestHandler):
 
     def get(self,  qword):
+        """ async import to es
+        """
 
         if qword:
             QUEUE.put(qword)

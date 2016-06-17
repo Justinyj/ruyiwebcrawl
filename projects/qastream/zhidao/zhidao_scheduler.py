@@ -121,7 +121,7 @@ class Scheduler(object):
         ret = self.zhidao_search_select_best(qword, gap, timeout)
         if ret:
             return [ ret["question_id"] ]
-        return False
+        return []
 
 
     def run(self, qword, gap=3, timeout=10):

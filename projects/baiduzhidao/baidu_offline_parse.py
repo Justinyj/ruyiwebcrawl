@@ -8,39 +8,11 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 file_name = 'result/zhidao0614'
 import scrapy
-
+from parsers.zhidao_parser import *
 replace_count=0
-def parse_title(content):
-    m = re.search('<title>(.*)</title>', content)
-    if m:
-        title = m.group(1)
-        if ("_百度知道") not in title:
-            return ''
-        title = re.sub('_百度知道', '', title)
-        return title
-    return ''
 
 
-def parse_q_time(content):
-    m = re.search(
-        '<em class="accuse-enter">.*\n*</ins>\n*(.*)\n*</span>', content)
-    if m is None:
-        return
-    q_time = m.group(1)
-    return q_time
 
-
-def parse_q_content(content):
-    q_content = ''
-    m = re.search('accuse="qContent">(.*?)(</pre>|</div>)', content)
-    n = re.search('accuse="qSupply">(.*?)(</pre>|</div>)', content)
-    q_content=''
-    if m:
-        q_content=re.sub('<.*?>', "\n", m.group(1))
-    if n:
-        q_content+=n.group(1)
-    q_content = re.sub('<(.*?)>|&([\s\S]*);|&#[0-9a-zA-Z+]', '', q_content)
-    return q_content
 
 def parse_q_id(content):
     q_id = re.search(
@@ -51,19 +23,6 @@ def parse_q_id(content):
     return
 
 
-def parse_username(content):
-    m = re.search('a class="user-name" alog-action="qb-ask-uname" rel="nofollow" href="http://www.baidu.com/p/(.*?)\?from=zhidao" target="_blank">', content)
-    if m is not None:
-        username = m.group(1)
-        return username
-    return None
-
-def parse_q_time(content):
-    m = re.search('</span></ins>(.*?)</span>', content)
-    if m is not None:
-        q_time = m.group(1)
-        return q_time
-    return None
 
 def parse_recommend(response):
     text = response.xpath('//pre[contains(@id,"recommend-content")]/text()')
@@ -197,11 +156,11 @@ def parse(response):
     if len(answer_list) == 0:
         return
     item = {
-        'question': parse_title(content),
+        'question': parse_page_title(content),
         'id': q_id,
         'question_content': parse_q_content(content),
         'answers':best_answer,
-        'ask_username': parse_username(content),
+        'ask_username': parse_asker_username(content),
         'question_time': parse_q_time(content),
         'parse_time': s,
         'answer_list': answer_list,
@@ -212,9 +171,7 @@ def parse(response):
 
 def traverseDirByListdir(path):
     path = os.path.expanduser(path)
-    count = 0
-    f_name = file_name
-    f = open(f_name, 'w')
+    f = open(file_name, 'w')
     for p in os.listdir(path):
         if p[:4] != 'mres':
             continue
@@ -229,15 +186,10 @@ def traverseDirByListdir(path):
                 if not json:
                     continue
                 f.write(json + '\n')
-                count +=1
-                if count>100000:
-                    print time.time()
-                    print '100000'
-                    count=0
     f.close()
 
 pa = os.path.abspath(os.path.dirname(__file__))
-traverseDirByListdir(pa)
-f=open('log','w')
-f.write(str(replace_count))
-f.close()
+#traverseDirByListdir(pa)
+#f=open('log','w')
+#f.write(str(replace_count))
+#f.close()
