@@ -48,6 +48,7 @@ class MingluSpider(object):
                     print url
                     print 'ERROR PAGE!!'
                     return
+		continue
             for i in name:
                 self.out.write(i+'\n')
             self.update_record()
