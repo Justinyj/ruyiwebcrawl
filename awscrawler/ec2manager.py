@@ -19,7 +19,7 @@ if REGION_NAME == 'us-west-1':
 elif REGION_NAME == 'ap-northeast-1':
     KEYPAIR = 'crawl-tokyo'
     SECURITYGROUPID = 'sg-fcbf0998'
-    AMI_ID = 'ami-adbd48cc'
+    AMI_ID = 'ami-ffba4f9e'
 
 INSTANCE_TYPE = 't2.nano'
 
