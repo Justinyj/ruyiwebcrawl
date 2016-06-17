@@ -21,7 +21,7 @@ class Schedule(object):
         self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
         self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num
 
-        self.backoff_timeout = backoff_timeout
+        self.backoff_timeout = 100 * backoff_timeout / 2**3
 
         self.ec2manager = Ec2Manager(tag)
         self.ids = self.ec2manager.create_instances(self.machine_num)

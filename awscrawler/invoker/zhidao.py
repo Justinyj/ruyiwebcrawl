@@ -35,7 +35,7 @@ def run_zhidao():
     t2 = post_job(BATCH_ID['answer'], 'get', 3, False, [], len(urls) * 3, priority=1, queue_timeout=10, start_delay=180) # delay is 128 once, wait for question to generate answer
     tasks.append(t2)
 
-    schedule = Schedule(30, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=100*10/2**3)
+    schedule = Schedule(30, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=10)
     print('finish start instances initially')
 
     t3 = gevent.spawn(schedule.run_forever)
