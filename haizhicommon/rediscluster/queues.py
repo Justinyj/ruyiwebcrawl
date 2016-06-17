@@ -255,8 +255,8 @@ class HashQueue(object):
         * elements that were not constantly present in the collection during
           a full itertaion, may be returned or not.
         * hscan may return 0 to a few tens of elements.
-        * hscan with count=1 may always return empty.
-          So need count set to 2 with next_seq iteration.
+        * hscan with count=1 may always return empty even if user return cursor 3 times.
+          only count=7 can give data, so need set count to defult(10) with next_seq iteration.
         * hashes or sorted set encoded as ziplists, all returned in first scan
           call regardless of the count value.
 
@@ -269,14 +269,14 @@ class HashQueue(object):
             t = 0
             while timeout is None or t < timeout:
                 # items is {} object
-                next_seq, items = self.conn.hscan(self.key, cursor=cursor, count=2)
+                next_seq, items = self.conn.hscan(self.key, cursor=cursor)
                 if not items:
                     t += interval
                     time.sleep(interval)
                     cursor = next_seq
                 else: break
         else:
-            next_seq, items = self.conn.hscan(self.key, cursor=cursor, count=2)
+            next_seq, items = self.conn.hscan(self.key, cursor=cursor)
 
         # SCAN does not provide guarantees about the
         # number of elements returned at every iteration.
