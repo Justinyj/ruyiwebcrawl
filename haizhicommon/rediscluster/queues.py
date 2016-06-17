@@ -194,8 +194,8 @@ class HashQueue(object):
 
     def __init__(self, key, priority=1, timeout=180, failure_times=3):
         """
-        :param timeout: 如果timeout后，background_cleansing 把任务又加入队列.
-                        task_done 来的超时，
+        :param timeout: timeout后，background_cleansing 把任务又加入队列.
+                        task_done 来的超过timeout，
                         Record success就会一直增加，甚至超过 Recordtotal
         """
         self.key = key
@@ -348,6 +348,7 @@ class HashQueue(object):
         if ret == '0':
             return
 
+        time.sleep(self.timeout)
         print('begin clean : ', self.key)
         while self.qsize() > 0 or self.conn.hlen(self.timehash) > 1:
             self.clean_task()

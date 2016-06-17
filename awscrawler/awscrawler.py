@@ -15,12 +15,16 @@ from settings import RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS
 
 MANAGER = RedisManager(RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS)
 
-def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queue_timeout=180, failure_times=3, start_delay=0):
+def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queue_timeout=10, failure_times=3, start_delay=0):
     """ transmit all urls once, because ThinHash depends on
         modulo algroithm, must calculate modulo in the begining.
         Can not submit second job with same batch_id before first job finished.
+
+    :param queue_timeout: turn to 100 times large,
+                          because hscan get a few tens of items once.(99 max)
     """
     total_count = len(urls) if len(urls) > 0 else total_count
+    queue_timeout *= 100
 
     parameter = '{method}:{gap}:{js}:'.format(
             method=method,
