@@ -44,6 +44,8 @@ def process(url, parameter, manager, *args, **kwargs):
     q_json = generate_question_json(q_id, content)
     if q_json is None:
         return False
+    elif q_json == {}: # question expired in zhidao
+        return True
 
     question_content = json.dumps(q_json)
 

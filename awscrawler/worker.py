@@ -103,8 +103,8 @@ class GetWorker(Worker):
                 if process_status:
                     queue_dict['queue'].task_done(url_id)
                     Record.instance().increase_success(batch_id)
-                else:
-                    Record.instance().increase_failed(batch_id)
+#                else:
+#                    Record.instance().increase_failed(batch_id)
 
 
 def main():

@@ -107,7 +107,7 @@ class ZhidaoPrefetch(object):
         if ret is False:
             return False
         q_json = generate_question_json(qid, ret)
-        if q_json is None:
+        if q_json is None or q_json == {}:
             return False
         success = self.cache.post(question_url, q_json)
         return q_json
