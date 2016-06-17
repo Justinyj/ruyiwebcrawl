@@ -1,5 +1,5 @@
 # import requests
-from cache import Cache
+from downloader.cache import Cache
 import scrapy
 import sys
 reload(sys)

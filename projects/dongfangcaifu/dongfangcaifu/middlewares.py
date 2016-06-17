@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from cache import Cache
 import scrapy
 import sys
+from downloader.cache import Cache
 reload(sys)
 sys.setdefaultencoding('utf-8')
 BATCH_ID = 'dongfang-201606'
@@ -44,4 +44,4 @@ class MyMiddleWare(object):
 m=Cache(BATCH_ID)
 print m.post('test','content3')
 print m.get('http://data.eastmoney.com/Notice/Noticelist.aspx?type=0&market=all&date=&page=29718')
-"""
+'''
