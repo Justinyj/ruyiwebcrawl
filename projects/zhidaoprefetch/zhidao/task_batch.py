@@ -20,11 +20,13 @@ sys.setdefaultencoding("utf-8")
 import downloader
 import es
 import hzlib
+import jieba
 
 from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
 from parsers.zhidao_parser import *
 from hzlib import libfile
+from zhidao_fetch import search_zhidao_best
 
 #############
 # config
@@ -218,7 +220,23 @@ class ZhidaoPrefetch(object):
                 self.run_query(line, limit)
 
 
-    def run_test_search_realtime(self, filename, limit):
+    def run_gen_url_search_realtime(self, filename):
+        lines = libfile.file2list(filename)
+        visited = set()
+        for line in sorted(lines):
+            for query_parser in [0]:
+                query_url, qword = zhidao_fetch.get_search_url_qword(line, query_parser=query_parser)
+
+                if query_url in visited:
+                    continue
+                visited.add(query_url)
+                print qword, query_url
+
+        print len(visited)
+        filename_output = getLocalFile(os.path.basename(filename.replace("human.txt", "_urls.txt")))
+        libfile.lines2file(sorted(list(visited)), filename_output)
+
+  def run_test_search_realtime(self, filename, limit):
         results = []
         counter = collections.Counter()
 
@@ -246,15 +264,75 @@ class ZhidaoPrefetch(object):
         #libfile.writeExcel(results, ["query", "source", "cnt_like",  "cnt_answer", "question", "answers"], filename_output)
         print counter
 
-def main():
-    agt = ZhidaoPrefetch(CONFIG["local"])
-    query = u"珠穆朗玛峰"
-    query = u"天空为什么是黄的"
-    #agt.run_query(query, 1)
-    #agt.run_query_batch( getTheFile("seed_entity.human.txt"), 20)
-    #agt.run_query_batch( getTheFile("seed_sentence.human.txt"), 1)
-    #agt.run_query_batch( getTheFile("seed_class.human.txt"), 40)
-    agt.run_test_search_realtime( getTheFile("seed_test0616.human.txt"), 1)
+    def run_get_best_search_realtime(self, filename):
+        results = []
+        counter = collections.Counter()
 
-if __name__ == "__main__":
+        lines = libfile.file2list(filename)
+        for query_parser in [0]:
+            for line in sorted(lines):
+                cnt_label = "query_{}".format(query_parser)
+                if counter[cnt_label] % 10 == 0:
+                    print datetime.datetime.now().isoformat(), counter[cnt_label], line
+                counter[cnt_label] +=1
+
+                ret_one = search_zhidao_best(line, query_filter=0, query_parser=query_parser)
+                if ret_one:
+                    item = ret_one["best_qapair"]
+                    for p in ["query"]:
+                        item[p] = ret_one[p]
+                    #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
+                    results.append(item)
+                    for p in ["source","result_index"]:
+                        counter["{}_{}".format(p, item[p])] +=1
+                    for p in [  "question", "answers"]:
+                        if p in item:
+                            if not isinstance(item[p],unicode):
+                                item[p] = item[p].decode("gb18030")
+
+        filename_output = getLocalFile(os.path.basename(filename.replace("human.txt", "xls")))
+        libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
+        #libfile.writeExcel(results, ["query", "source", "cnt_like",  "cnt_answer", "question", "answers"], filename_output)
+        print counter
+
+
+def main():
+    #print sys.argv
+
+    if len(sys.argv)<2:
+        return
+
+    agt = ZhidaoPrefetch(CONFIG["prod"])
+    option= sys.argv[1]
+    if "query" == option:
+        query = u"天空为什么是蓝色的？"
+        if len(sys.argv)>2:
+            query = sys.argv[2]
+        agt.run_query(query, 1)
+    elif "batch_entity" == option:
+        agt.run_query_batch( getTheFile("seed_entity.human.txt"), 20)
+    elif "batch_sentence" == option:
+        agt.run_query_batch( getTheFile("seed_sentence.human.txt"), 1)
+    elif "batch_class" == option:
+        agt.run_query_batch( getTheFile("seed_class.human.txt"), 40)
+    elif "realtime_xls" == option:
+        agt = ZhidaoPrefetch(CONFIG["local"])
+        agt.run_test_search_realtime( getTheFile("seed_test0616.human.txt"), 1)
+    elif "realtime_best" == option:
+        worker_id = 0
+        if len(sys.argv)>2:
+            worker_id = int(sys.argv[2])
+        worker_num = 1
+        if len(sys.argv)>3:
+            worker_num = int(sys.argv[3])
+        #agt.run_get_best_search_realtime(getTheFile("seed_test0616.human.txt"))
+
+        agt.run_get_best_search_realtime(getTheFile("seed_sentence.human.txt"))
+    elif "realtime_url" == option:
+        agt.run_gen_url_search_realtime(getTheFile("seed_sentence.human.txt") )
+
+    else:
+        print "unsupported"
+
+if __name__ == '__main__':
     main()

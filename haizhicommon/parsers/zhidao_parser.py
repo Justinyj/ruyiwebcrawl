@@ -189,14 +189,14 @@ def parse_search_get_best(content):
     return False
 
 
-def parse_search_json_v0615(content, start_result_index=0):
+def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = False):
     """
     :param content: content is unicode html string
     :return : a list consists of 1-2 question
     """
-    import lxml.html
     ret = []
 
+    import lxml.html
     dom = lxml.html.fromstring(content)
     #print (content)
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
@@ -207,15 +207,16 @@ def parse_search_json_v0615(content, start_result_index=0):
             item["result_index"] = start_result_index + len(ret)
             item["is_recommend"] = 1
 
-    normal = dom.xpath('//dl[contains(@class,"dl")]')
-    #print (len(normal))
-    for node in normal:
-        #print (idx)
-        item = parse_search_result_item(node)
-        if item:
-            ret.append(item)
-            item["is_recommend"] = 0
-            item["result_index"] = start_result_index + len(ret)
+    if not use_recommend_only:
+        normal = dom.xpath('//dl[contains(@class,"dl")]')
+        #print (len(normal))
+        for node in normal:
+            #print (idx)
+            item = parse_search_result_item(node)
+            if item:
+                ret.append(item)
+                item["is_recommend"] = 0
+                item["result_index"] = start_result_index + len(ret)
 
     return ret
 
@@ -256,7 +257,7 @@ def parse_search_result_item(node):
         qids = re.findall(srcitem["url_pattern"], url)
         if qids:
             #print (qids)
-            qid = "{}:{}".format(src, qids[0])
+            qid = "{0}:{1}".format(src, qids[0])
             #print (qids)
             item = {
                 "id":qid,
