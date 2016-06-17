@@ -221,8 +221,9 @@ def poll(queues, timeout=None):
 
 class HashQueue(object):
     """ The Queue volume is very large, so can not use ziplists compression.
-
         HashQueue has count on every task of get, failed after 3 times
+        Because of hscan's feature, this queue has an unstable get method,
+        do not use this class.(detail see: test_hscan.py)
     """
 
 
