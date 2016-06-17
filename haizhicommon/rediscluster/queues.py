@@ -271,9 +271,11 @@ class HashQueue(object):
                 # items is {} object
                 next_seq, items = self.conn.hscan(self.key, cursor=cursor)
                 if not items:
+                    if next_seq == 0:
+                        break
+                    cursor = next_seq
                     t += interval
                     time.sleep(interval)
-                    cursor = next_seq
                 else: break
         else:
             next_seq, items = self.conn.hscan(self.key, cursor=cursor)
