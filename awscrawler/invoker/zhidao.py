@@ -48,7 +48,7 @@ def run_zhidao():
         ret = delete_distributed_queue(greenlet)
         print('{} return of delete {}'.format(ret, greenlet.value))
 
-    gevent.killall([t3], block=True)
+    gevent.killall([t3], block=False)
     schedule.stop_all_instances()
 
 

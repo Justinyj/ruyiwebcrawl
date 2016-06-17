@@ -88,7 +88,7 @@ class GetWorker(Worker):
         module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
 
         while 1:
-            results = queue_dict['queue'].get(block=True, timeout=5, interval=0.5)
+            results = queue_dict['queue'].get(block=True, timeout=3)
             if results == []: break
             for url_id, count in results:
                 url = queue_dict['thinhash'].hget(url_id)
