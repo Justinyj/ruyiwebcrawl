@@ -236,7 +236,7 @@ class ZhidaoPrefetch(object):
         filename_output = getLocalFile(os.path.basename(filename.replace("human.txt", "_urls.txt")))
         libfile.lines2file(sorted(list(visited)), filename_output)
 
-  def run_test_search_realtime(self, filename, limit):
+    def run_test_search_realtime(self, filename, limit):
         results = []
         counter = collections.Counter()
 
@@ -325,9 +325,10 @@ def main():
         worker_num = 1
         if len(sys.argv)>3:
             worker_num = int(sys.argv[3])
-        #agt.run_get_best_search_realtime(getTheFile("seed_test0616.human.txt"))
+        agt = ZhidaoPrefetch(CONFIG["local"])
+        agt.run_get_best_search_realtime(getTheFile("seed_test0616.human.txt"))
 
-        agt.run_get_best_search_realtime(getTheFile("seed_sentence.human.txt"))
+        #agt.run_get_best_search_realtime(getTheFile("seed_sentence.human.txt"))
     elif "realtime_url" == option:
         agt.run_gen_url_search_realtime(getTheFile("seed_sentence.human.txt") )
 
