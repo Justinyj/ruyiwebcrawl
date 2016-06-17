@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import time
-import random
 import requests
-from fetch.agents import AGENTS_ALL
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -19,8 +17,7 @@ def test_page():
     page_url = 'http://data.eastmoney.com/Notice/Noticelist.aspx?type=0&market=all&date=&page=5'
     error_count = 0
 
-    for i, agent in enumerate(AGENTS_ALL):
-        session.headers['User-Agent'] = agent
+    for i  in range(500):
         resp = session.get(page_url, timeout=10)
         print(resp.headers['Content-Type'])
         if '更多公告' not in resp.text:
@@ -38,8 +35,7 @@ def test_notice():
     notice_url='http://data.eastmoney.com/notice/20160618/2Wvl2aXu2pMEbA.html'
     error_count = 0
 
-    for i, agent in enumerate(AGENTS_ALL):
-        session.headers['User-Agent'] = agent
+    for i  in range(500):
         resp = session.get(notice_url, timeout=10)
         print(resp.headers['Content-Type'])
         if '原文' not in resp.text:
@@ -50,4 +46,5 @@ def test_notice():
                 print('url same, still error')
         time.sleep(3)
     print('Error percentage: {}'.format(error_count / i))
-test_notice()
+#test_notice()
+#test_page()
