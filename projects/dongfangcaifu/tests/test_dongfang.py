@@ -23,11 +23,11 @@ def test_page():
         if '更多公告' not in resp.text:
             print resp.content
             print(resp.status_code, resp.url)
-            print(i, agent)
+            print(i,)
             error_count += 1
             if resp.url == page_url:
                 print('url same, still error')
-        time.sleep(3)
+        time.sleep(2)
     print('Error percentage: {}'.format(error_count / i))
 
 def test_notice():
@@ -39,12 +39,13 @@ def test_notice():
         resp = session.get(notice_url, timeout=10)
         print(resp.headers['Content-Type'])
         if '原文' not in resp.text:
+            print resp.content
             print(resp.status_code, resp.url)
-            print(i, agent)
+            print(i,)
             error_count += 1
             if resp.url == notice_url:
                 print('url same, still error')
-        time.sleep(3)
+        time.sleep(2)
     print('Error percentage: {}'.format(error_count / i))
 #test_notice()
-#test_page()
+test_page()
