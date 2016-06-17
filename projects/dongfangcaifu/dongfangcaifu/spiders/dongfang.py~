@@ -35,7 +35,7 @@ class DongfangSpider(Spider):
         return
 
     def parse_one_page(self, response):
-        return #此前是为了对外面3万个网页进行缓存以及相关测试，这个return去掉后下面完成导出每个公告的url，再用单独的py解析
+        return
         # each page includes 50 notices
         urls = response.xpath('//td[@class="title"]/a/@href')
         for url_tail in urls:
