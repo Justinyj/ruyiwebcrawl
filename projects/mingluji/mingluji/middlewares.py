@@ -24,9 +24,7 @@ class MyMiddleWare(object):
     def process_response(self, request, response, spider):
         url=response.url
         if response.status not in [200, 301]:
-            f=open('log.txt','a')
             f.write(response.url)
-            f.close()
             return response
         m=Cache(BATCH_ID)
         content=m.get(url)

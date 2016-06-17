@@ -21,14 +21,12 @@ class DongfangSpider(Spider):
             yield scrapy.Request(template.format(page), callback=self.parse2)
         return
         for url_tail in urls:
-            break
+            break 
             url = 'http://data.eastmoney.com' + url_tail.extract()
             yield scrapy.Request(url,
                                  headers={'Referer': 'https://www.baidu.com/'},
                                  callback=self.parse_notice)
 
-    def parse2(self, response):
-        pass
 
     def parse_notice(self, response):
         print response.url
@@ -40,4 +38,5 @@ class DongfangSpider(Spider):
         item['url'] = response.url
         item['content'] = response.xpath(
             '//div[@class="content"]//pre/text()').extract()
-        pass
+        
+        yield self.pass_item(item)
