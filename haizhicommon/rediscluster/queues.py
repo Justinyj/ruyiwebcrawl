@@ -68,7 +68,7 @@ class Queue(object):
 
 
     def flush(self):
-#        self.conn.delete(self.timehash)
+        self.conn.delete(self.timehash)
         self.conn.delete(self.key)
 
 
@@ -137,6 +137,9 @@ class Queue(object):
     def get_failed_times(self, field):
         times = self.conn.hget(self.failhash, field)
         return int(times)
+
+    def get_failed_fields(self):
+        return self.conn.hgetall(self.failhash)
 
     def set_failed_times_to_url(self, field, url):
         self.conn.hset(self.failhash, field, url)

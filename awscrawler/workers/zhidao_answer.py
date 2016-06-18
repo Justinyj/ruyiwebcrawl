@@ -13,7 +13,7 @@ import traceback
 import requests
 import time
 
-from invoker.zhidao import BATCH_ID
+from invoker.zhidao_constant import BATCH_ID
 from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
 from parsers.zhidao_parser import generate_answer_json
@@ -21,7 +21,7 @@ from parsers.zhidao_parser import generate_answer_json
 from settings import CACHE_SERVER
 
 
-def process(url, parameter, *args, **kwargs):
+def process(url, batch_id, parameter, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'}))
     if not hasattr(process, '_cache'):
@@ -31,7 +31,7 @@ def process(url, parameter, *args, **kwargs):
     gap = int(gap)
     timeout = int(timeout)
 
-    content = process._downloader.downloader_wrapper(url, BATCH_ID['answer'], gap, timeout=timeout, encoding='gb18030', refresh=True)
+    content = process._downloader.downloader_wrapper(url, batch_id, gap, timeout=timeout, encoding='gb18030', refresh=True)
     if content is False:
         return False
 

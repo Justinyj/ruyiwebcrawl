@@ -138,6 +138,11 @@ class RedisManager(object):
         if distributed['queue'].get_background_cleaning_status() != '0':
             return
 
+        # set failed queue value times to value url
+        for field, times in distributed['queue'].get_failed_fields().iteritems():
+            url = distributed['thinhash'].hget(field)
+            distributed['queue'].set_failed_times_to_url(field, url)
+
         if Record.instance().if_not_finish_set(batch_id) == 1:
             distributed['thinhash'].delete()
             distributed['queue'].flush()

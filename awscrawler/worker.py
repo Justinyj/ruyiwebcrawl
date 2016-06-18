@@ -98,6 +98,7 @@ class GetWorker(Worker):
 
                 try:
                     process_status = module.process(url,
+                                                    batch_id,
                                                     self._batch_param[batch_id],
                                                     self.manager,
                                                     *args,
