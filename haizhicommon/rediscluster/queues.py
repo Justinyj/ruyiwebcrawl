@@ -191,10 +191,14 @@ class Queue(object):
         if ret == '0':
             return
 
+        # it is unecessary to begin background clean when no item timeout
+        time.sleep(self.timeout)
+        print('begin clean:', self.key)
         while self.qsize() > 0 or self.conn.hlen(self.timehash) > 1:
             self.clean_task()
             time.sleep(60)
 
+        print('finish clean:', self.key)
         self.conn.hset(self.timehash, 'background_cleaning', 0)
         return self.key
 
