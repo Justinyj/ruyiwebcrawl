@@ -22,7 +22,7 @@ def getTheFile(filename):
 ###########
 # config parameters
 THE_CONFIG = {
-    "batch_id": 'zhidao-search-20160617',
+    "batch_id": 'zhidao-search-20160619',
     "crawl_http_method" : "get",
     "crawl_gap" : 3,
     "crawl_use_js_engine" : False,
@@ -33,8 +33,8 @@ THE_CONFIG = {
     "aws_machine_number" : 40,
 
     # ln -s /Users/lidingpku/haizhi/project/ruyiwebcrawl/awscrawler/local/
-    "filename_urls" : '/data/awscrawler/local/zhidao_search/urls.20160617.raw.txt',
-    "debug" : True,
+    "filename_urls" : '/data/awscrawler/local/zhidao_search/urls.20160617.raw.txt'
+#    "debug" : True,
 }
 
 def slack(msg):
@@ -44,7 +44,7 @@ def slack(msg):
     requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 def run(config):
-    slack( "run {}".format(config["batch_id"]) )
+    slack( "run {} debug: {}".format(config["batch_id"], config.get("debug",False)) )
     ts_start = time.time()
 
     #load urls

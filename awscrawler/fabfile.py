@@ -52,13 +52,13 @@ def kill():
     run("ps aux | grep python | grep -v grep | grep awscrawler | awk '{print $2}' | xargs -n 1 --no-run-if-empty kill")
     run('[ -e /tmp/awscrawler.sock ] && rm /tmp/awscrawler.sock || echo "no /tmp/awscrawler.sock"')
 
-def runapp(flag_run):
+def runapp(flag_run, job):
     with cd('/opt/service/awscrawler'):
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
             if flag_run:
-                run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/zhidao.py'))
+                run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}.py'.format(job)))
 
 def sync_upload():
     local("rsync -azvrtopg -e 'ssh '  local  admin@{}:/data/awscrawler".format(env.hosts[0]))
@@ -69,13 +69,13 @@ def deploy_worker(host):
     print (env.hosts)
     upload()
     kill()
-    runapp(False)
+    runapp(False, None)
 
-def deploy_run():
+def deploy_run(job):
     sync_upload()
     upload()
     kill()
-    runapp(True)
+    runapp(True, job)
 
 def debug(host):
     env.hosts = [host]
