@@ -15,13 +15,13 @@ from settings import ENV
 
 class Schedule(object):
 
-    def __init__(self, machine_num, tag, cycle=1200, backoff_timeout=180, *args, **kwargs):
+    def __init__(self, machine_num, tag, cycle=1200, backoff_timeout=10, *args, **kwargs):
         self.machine_num = machine_num
         self.cycle = cycle
         self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
         self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num
 
-        self.backoff_timeout = 100 * backoff_timeout / 2**3
+        self.backoff_timeout = 6 * backoff_timeout / 2**3
 
         self.ec2manager = Ec2Manager(tag)
         self.ids = self.ec2manager.create_instances(self.machine_num)

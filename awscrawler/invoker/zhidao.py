@@ -23,10 +23,12 @@ def run_zhidao():
         第二个queue开始后，第一个queue还没有跑worker，并把结果塞入第二个queue，第二个queue就end了。
     """
 
-   timeout = 10
+    local = False
+    timeout = 10
 
-    filename = '/home/admin/split_zhidao_ak'
-#    filename = 'useful_zhidao_urls.txt'
+    filename = 'useful_zhidao_urls.txt'
+    if not local:
+        filename = '/home/admin/split_zhidao_ak'
     urls = load_urls(filename)
 
     tasks = []
@@ -36,10 +38,13 @@ def run_zhidao():
     t2 = post_job(BATCH_ID['answer'], 'get', 3, False, [], len(urls) * 3, priority=1, queue_timeout=timeout, start_delay=180) # delay is 128 once, wait for question to generate answer
     tasks.append(t2)
 
-    schedule = Schedule(30, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=timeout)
+    if not local:
+        schedule = Schedule(30, tag=BATCH_ID['question'].split('-', 1)[0], backoff_timeout=timeout)
+
     print('finish start instances initially')
 
-    t3 = gevent.spawn(schedule.run_forever)
+    if not local:
+        t3 = gevent.spawn(schedule.run_forever)
 
     gevent.joinall(tasks)
 
@@ -48,8 +53,9 @@ def run_zhidao():
         ret = delete_distributed_queue(greenlet)
         print('{} return of delete {}'.format(ret, greenlet.value))
 
-    gevent.killall([t3], block=True)
-    schedule.stop_all_instances()
+    if not local:
+        gevent.killall([t3], block=False)
+        schedule.stop_all_instances()
 
 
 if __name__ == '__main__':

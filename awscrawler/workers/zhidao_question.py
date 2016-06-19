@@ -7,7 +7,7 @@ import re
 import base64
 import json
 
-from invoker.zhidao import BATCH_ID
+from invoker.zhidao_constant import BATCH_ID
 from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
 from parsers.zhidao_parser import parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
@@ -20,7 +20,7 @@ def get_answer_url(q_id, r_id):
             '&rid={}&tag=timeliness'.format(q_id, r_id))
 
 
-def process(url, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'}))
     if not hasattr(process, '_cache'):
@@ -37,7 +37,7 @@ def process(url, parameter, manager, *args, **kwargs):
     gap = int(gap)
     timeout = int(timeout)
 
-    content = process._downloader.downloader_wrapper(url, BATCH_ID['question'], gap, timeout=timeout, encoding='gb18030', error_check=True, refresh=True)
+    content = process._downloader.downloader_wrapper(url, batch_id, gap, timeout=timeout, encoding='gb18030', error_check=True, refresh=True)
     if content is False:
         return False
 
