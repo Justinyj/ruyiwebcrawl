@@ -6,7 +6,6 @@ from __future__ import print_function, division
 
 from fabric.api import *
 
-env.hosts = ['52.196.166.54']
 env.user = 'admin'
 
 DEPLOY_ENV = 'PRODUCTION'
@@ -64,14 +63,18 @@ def sync_upload():
     local("rsync -azvrtopg -e 'ssh '  local  admin@{}:/data/awscrawler".format(env.hosts[0]))
 
 
-def deploy_worker(host):
-    env.hosts = [host]
+def deploy_worker():
+    # fab deploy_worker --hosts 52.69.119.200
+#    env.hosts = [host]
     print (env.hosts)
     upload()
     kill()
     runapp(False, None)
 
 def deploy_run(job):
+    # fab deploy_run:'prefetch_zhidao_search' --hosts 52.196.166.54
+    print (job)
+#    env.hosts = ['52.196.166.54']
     sync_upload()
     upload()
     kill()

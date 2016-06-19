@@ -30,7 +30,7 @@ THE_CONFIG = {
 #    "crawl_refresh" : False,
 #    "crawl_result_content_encoding" : 'gb18030',
 #    "crawl_http_headers": {'Host': 'zhidao.baidu.com'},
-    "aws_machine_number" : 40,
+    "aws_machine_number" : 20,
 
     # ln -s /Users/lidingpku/haizhi/project/ruyiwebcrawl/awscrawler/local/
     "filename_urls" : '/data/awscrawler/local/zhidao_search/urls.20160617.raw.txt'
@@ -121,4 +121,5 @@ def load_urls(fname):
     return list(ret)
 
 if __name__ == '__main__':
+    
     run(THE_CONFIG)
