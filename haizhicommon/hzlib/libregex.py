@@ -10,14 +10,15 @@ import json
 import re
 
 def is_question_baike(question):
+    if not isinstance(question, unicode):
+        question = question.decode("utf-8")
+
     if not question:
         return False
-    if re.search(ur"你|我|几点|爸爸|妈妈", question):
-        if re.search(ur"你知道|我[国]",question):
-            return True
-        else:
-            return False
-    elif re.search(ur"什么|最|哪|谁|有没有|几|吗|如何|是|有多|多[少远长]|怎么?样?|啥|？",question):
+    question_clean = re.sub(ur"你知道|告诉我|我[国]","", question)
+    if re.search(ur"你|我|几点|爸爸|妈妈", question_clean):
+        return False
+    elif re.search(ur"什么|最|第一|哪|谁|有没有|几|吗|如何|是|有多|[多最][快慢好坏强高少远长老久]|怎么?样?|啥|？",question):
         return True
     elif re.search(ur"百科|距离|历史|介绍|信息",question):
         return True

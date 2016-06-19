@@ -27,6 +27,7 @@ from downloader.downloader_wrapper import DownloadWrapper
 from parsers.zhidao_parser import *
 from hzlib import libfile
 from zhidao_fetch import search_zhidao_best
+import zhidao_fetch
 
 #############
 # config
@@ -279,6 +280,11 @@ class ZhidaoPrefetch(object):
                 ret_one = search_zhidao_best(line, query_filter=0, query_parser=query_parser)
                 if ret_one:
                     item = ret_one["best_qapair"]
+
+                    print "=====>", line
+                    print "------", item["match_score"], item["question"]
+                    print item["answers"], "*******", item["answers_raw"][len(item["answers"]):]
+
                     for p in ["query"]:
                         item[p] = ret_one[p]
                     #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)

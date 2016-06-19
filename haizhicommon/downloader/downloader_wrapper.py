@@ -37,7 +37,7 @@ class DownloadWrapper(object):
                            gap,
                            method='get',
                            timeout=10,
-                           encoding='utf-8',
+                           encoding=None,
                            redirect_check=True,
                            error_check=False,
                            refresh=False,

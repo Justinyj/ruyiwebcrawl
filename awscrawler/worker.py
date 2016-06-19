@@ -85,7 +85,11 @@ class GetWorker(Worker):
 
     def work(self, batch_id, queue_dict, *args, **kwargs):
         batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
-        module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
+        print (batch_id,batch_key_filename)
+        try:
+            module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
+        except:
+            module = __import__('workers.prefetch', fromlist=['process'])
 
         while 1:
             result = queue_dict['queue'].get(block=True, timeout=3, interval=1)
@@ -129,4 +133,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

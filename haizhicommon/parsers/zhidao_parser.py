@@ -303,7 +303,10 @@ def parse_search_result_item(node):
     if value_text:
         temp = u"".join(value_text[1:]).strip()
         temp = temp.replace(u"推荐答案","").replace(u"[详细]","").strip()
-        #temp = temp.replace(u"...","")
+        item["answers_raw"] = temp
+
+        temp = temp.replace(u"...","")
+        temp = re.sub(ur"([。！？ ])[^。！？]*$",r"\1", temp).strip()
         item["answers"] = temp
         #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
         #item["answers_"] = temp
