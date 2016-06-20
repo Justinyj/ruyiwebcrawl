@@ -49,22 +49,38 @@ def run(config):
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start post_job')
     tasks = []
-    t1 = post_job(
-        config["batch_id"],
-        config['crawl_http_method'] ,
-        config['crawl_gap'],
-        config["crawl_use_js_engine"],
-        urls,
-        priority=2,
-        queue_timeout=config['crawl_timeout'])
-    tasks.append(t1)
+
+    for i in range(config['job_num']):
+        if i == 0:
+            t = post_job(
+                config["batch_id"][i],
+                config['crawl_http_method'] ,
+                config['crawl_gap'],
+                config["crawl_use_js_engine"],
+                urls,
+                len(urls) * config["length"][i],
+                priority=config["priority"][i],
+                queue_timeout=config['crawl_timeout'])
+        else:
+            t = post_job(
+                config["batch_id"][i],
+                config['crawl_http_method'] ,
+                config['crawl_gap'],
+                config["crawl_use_js_engine"],
+                [],
+                len(urls) * config["length"][i],
+                priority=config["priority"][i],
+                queue_timeout=config['crawl_timeout'],
+                start_delay=120)
+
+        tasks.append(t)
 
 
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start instances')
     if not config.get("debug"):
         schedule = Schedule(    config['aws_machine_number'],
-                            tag=config['batch_id'],
+                            tag=config['batch_id'][0].split('-', 1)[0],
                             backoff_timeout=config['crawl_timeout'])
 
 
