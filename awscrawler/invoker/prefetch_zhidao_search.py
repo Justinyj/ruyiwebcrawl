@@ -33,7 +33,7 @@ THE_CONFIG = {
     "aws_machine_number" : 20,
 
     # ln -s /Users/lidingpku/haizhi/project/ruyiwebcrawl/awscrawler/local/
-    "filename_urls" : '/data/awscrawler/local/zhidao_search/urls.20160617.raw.txt'
+    "filename_urls" : '/data/ruyiwebcrawl/awscrawler/local/zhidao_search/urls.20160617.raw.txt'
 #    "debug" : True,
 }
 

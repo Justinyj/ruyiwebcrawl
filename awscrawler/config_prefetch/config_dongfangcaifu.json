@@ -12,6 +12,6 @@
 		"aws_machine_number": 20,
 		"debug": true,
 		"batch_id": "dongcaigonggao-index0620-v20160620",
-		"filename_urls": "/data/awscrawler/local/dongfangcaifu/v20160620/urls_gonggao_index.raw.txt"
+		"filename_urls": "/data/ruyiwebcrawl/awscrawler/local/dongfangcaifu/v20160620/urls_gonggao_index.raw.txt"
 	}
 }

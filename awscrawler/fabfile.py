@@ -60,7 +60,9 @@ def runapp(flag_run, job):
                 run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}.py'.format(job)))
 
 def sync_upload():
-    local("rsync -azvrtopg -e 'ssh '  local  admin@{}:/data/awscrawler".format(env.hosts[0]))
+    # fab sync_upload --hosts 52.196.166.54
+    local("rsync -azvrtopg -e 'ssh '  local  admin@{}:/data/ruyiwebcrawl/awscrawler".format(env.hosts[0]))
+    local("rsync -azvrtopg -e 'ssh '  ../local/dongfangcaifu  admin@{}:/data/ruyiwebcrawl/local".format(env.hosts[0]))
 
 
 def deploy_worker():
