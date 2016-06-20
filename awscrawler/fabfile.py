@@ -57,10 +57,7 @@ def runapp(flag_run, job, param=None):
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
             if flag_run:
-                if param:
-                    run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}.py {}'.format(job, param)))
-                else:
-                    run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}.py'.format(job)))
+                run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}'.format(job)))
 
 def sync_upload():
     # fab sync_upload --hosts 52.196.166.54
@@ -81,20 +78,15 @@ def deploy_worker():
     runapp(False, None)
 
 def deploy_run(param):
-    # fab deploy_run:'prefetch_zhidao_search' --hosts 52.196.166.54
-    # fab deploy_run:'prefetch_tool config_dongfangcaifu.json prefetch_index' --hosts 52.196.166.54
+    # fab deploy_run:'prefetch_zhidao_search.py' --hosts 52.196.166.54
+    # fab deploy_run:'prefetch_tool.py config_dongfangcaifu.json prefetch_index' --hosts 52.196.166.54
     print (param)
-    temp = param.split(" ", 1)
-    print (temp)
 
 #    env.hosts = ['52.196.166.54']
 #    sync_upload()
     upload()
     kill()
-    if len(temp) ==0:
-        runapp(True, temp[0])
-    else:
-        runapp(True, temp[0], temp[1].strip())
+    runapp(True, param)
 
 
 def debug(host):

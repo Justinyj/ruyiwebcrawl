@@ -319,12 +319,16 @@ def main():
         if len(sys.argv)>2:
             query = sys.argv[2]
         agt.run_query(query, 1)
+
+        
     elif "batch_entity" == option:
         agt.run_query_batch( getTheFile("seed_entity.human.txt"), 20)
     elif "batch_sentence" == option:
         agt.run_query_batch( getTheFile("seed_sentence.human.txt"), 1)
     elif "batch_class" == option:
         agt.run_query_batch( getTheFile("seed_class.human.txt"), 40)
+
+
     elif "realtime_xls" == option:
         config = CONFIG["prod"]
         config["debug"]= True
