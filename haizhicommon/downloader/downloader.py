@@ -8,7 +8,8 @@ from __future__ import print_function, division
 import requests
 import time
 import sys
-
+import re
+import os
 from .cache import Cache
 
 class Downloader(object):

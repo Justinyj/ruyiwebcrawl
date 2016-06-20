@@ -37,6 +37,9 @@ def process(url, batch_id, parameter, *args, **kwargs):
         gap,
         timeout=timeout)
 
+    if kwargs and kwargs.get("debug"):
+        print( len(content), "\n", content[:1000])
+
     if content is False:
         return False
 

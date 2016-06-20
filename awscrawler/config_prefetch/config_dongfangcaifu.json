@@ -10,7 +10,7 @@
 		"crawl_use_js_engine": false,
 		"crawl_timeout": 60,
 		"aws_machine_number": 20,
-		"debug": true,
+		"debug": false,
 		"batch_id": "dongcaigonggao-index0620-v20160620",
 		"filename_urls": "/data/ruyiwebcrawl/awscrawler/local/dongfangcaifu/v20160620/urls_gonggao_index.raw.txt"
 	}
