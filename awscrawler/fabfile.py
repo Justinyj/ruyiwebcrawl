@@ -3,7 +3,7 @@
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 
 from __future__ import print_function, division
-
+import re
 from fabric.api import *
 
 env.user = 'admin'
@@ -51,36 +51,51 @@ def kill():
     run("ps aux | grep python | grep -v grep | grep awscrawler | awk '{print $2}' | xargs -n 1 --no-run-if-empty kill")
     run('[ -e /tmp/awscrawler.sock ] && rm /tmp/awscrawler.sock || echo "no /tmp/awscrawler.sock"')
 
-def runapp(flag_run, job):
+def runapp(flag_run, job, param=None):
     with cd('/opt/service/awscrawler'):
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
             if flag_run:
-                run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}.py'.format(job)))
+                if param:
+                    run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}.py {}'.format(job, param)))
+                else:
+                    run('dtach -n /tmp/{}.sock {}'.format('awscrawler', 'python invoker/{}.py'.format(job)))
 
 def sync_upload():
     # fab sync_upload --hosts 52.196.166.54
     local("rsync -azvrtopg -e 'ssh '  local  admin@{}:/data/ruyiwebcrawl/awscrawler".format(env.hosts[0]))
     local("rsync -azvrtopg -e 'ssh '  ../local/dongfangcaifu  admin@{}:/data/ruyiwebcrawl/local".format(env.hosts[0]))
 
+def sync_download():
+    # fab sync_upload --hosts 52.196.166.54
+    local("rsync -azvrtopg -e 'ssh ' admin@{}:/data/ruyiwebcrawl/awscrawler/local . ".format(env.hosts[0]))
+    local("rsync -azvrtopg -e 'ssh ' admin@{}:/data/ruyiwebcrawl/local/dongfangcaifu  ../local  ".format(env.hosts[0]))
 
 def deploy_worker():
-    # fab deploy_worker --hosts 52.69.119.200
+    # fab deploy_worker --hosts 52.197.48.40
 #    env.hosts = [host]
     print (env.hosts)
     upload()
     kill()
     runapp(False, None)
 
-def deploy_run(job):
+def deploy_run(param):
     # fab deploy_run:'prefetch_zhidao_search' --hosts 52.196.166.54
-    print (job)
+    # fab deploy_run:'prefetch_tool config_dongfangcaifu.json prefetch_index' --hosts 52.196.166.54
+    print (param)
+    temp = param.split(" ", 1)
+    print (temp)
+
 #    env.hosts = ['52.196.166.54']
     sync_upload()
     upload()
     kill()
-    runapp(True, job)
+    if len(temp) ==0:
+        runapp(True, temp[0])
+    else:
+        runapp(True, temp[0], temp[1].strip())
+
 
 def debug(host):
     env.hosts = [host]
