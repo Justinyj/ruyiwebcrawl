@@ -82,7 +82,8 @@ class Downloader(object):
             #GBK 是 GB2312 的超集，当字符在 GBK 集合中，但不在 GB2312 时，就会乱码。
             #当 chardet.detect 识别出 GB2312 时，直接用 GBK 或者 GB18030 decode 即可。
             map_encoding = {
-                "GB2312":"GB18030",
+                "GB2312": "GB18030",
+                "GBK": "GB18030",
             }
             entry = chardet.detect(content[: min(1000, len(content))])
             if entry:
@@ -92,7 +93,7 @@ class Downloader(object):
             encoding = map_encoding.get(encoding.upper(), encoding)
         try:
             return content.decode(encoding)
-        except:
+        except Exception as e:
             print('str2unicode failed: {}, detail: {}'.format(sys.exc_info()[0], e))
             return content.decode(encoding, "ignore")
 
