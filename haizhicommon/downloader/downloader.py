@@ -8,9 +8,8 @@ from __future__ import print_function, division
 import requests
 import time
 import sys
-import re
 
-from cache import Cache
+from .cache import Cache
 
 class Downloader(object):
 
@@ -64,40 +63,7 @@ class Downloader(object):
         """
         return self.gap
 
-    @staticmethod
-    def url2domain(url):
-        from urlparse import urlparse
-        #url = 'http://user:pass@example.com:8080'
-        parsed_uri = urlparse(url)
-        domain = '{uri.netloc}'.format(uri=parsed_uri)
-        domain = re.sub("^.+@","",domain)
-        domain = re.sub(":.+$","",domain)
-        return domain
-
-    @staticmethod
-    def str2unicode(content, encoding=None):
-        if encoding is None:
-            import chardet
-            #https://segmentfault.com/q/1010000004204965
-            #GBK 是 GB2312 的超集，当字符在 GBK 集合中，但不在 GB2312 时，就会乱码。
-            #当 chardet.detect 识别出 GB2312 时，直接用 GBK 或者 GB18030 decode 即可。
-            map_encoding = {
-                "GB2312":"GB18030",
-            }
-            entry = chardet.detect(content[: min(1000, len(content))])
-            if entry:
-                encoding = entry["encoding"]
-            else:
-                encoding = "GB18030"
-            encoding = map_encoding.get(encoding.upper(), encoding)
-        try:
-            return content.decode(encoding)
-        except:
-            print('str2unicode failed: {}, detail: {}'.format(sys.exc_info()[0], e))
-            return content.decode(encoding, "ignore")
-
-
-    def request_download(self, url, method='get', encoding=None, redirect_check=False, error_check=False, data=None):
+    def request_download(self, url, method='get', encoding='utf-8', redirect_check=False, error_check=False, data=None):
         for i in range(self.RETRY):
 
             try:
@@ -112,9 +78,8 @@ class Downloader(object):
                     if error_check:
                         if __import__('downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
                             continue
-
-                    #response.encoding = encoding
-                    return Downloader.str2unicode(response.content, encoding) # text is unicode
+                    response.encoding = encoding
+                    return response.text # text is unicode
             except Exception as e: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
                                    # requests.exceptions.MissingSchema
                 print('requests failed: {}, detail: {}'.format(sys.exc_info()[0], e))
@@ -140,7 +105,7 @@ class Downloader(object):
     def requests_with_cache(self,
                             url,
                             method='get',
-                            encoding=None,
+                            encoding='utf-8',
                             redirect_check=False,
                             error_check=False,
                             data=None,
@@ -151,15 +116,19 @@ class Downloader(object):
             refresh = self.refresh if refresh is None else refresh
             groups = self.groups if groups is None else groups
             ret = self.cache.post(url, source, groups, refresh)
+            #print ("sa", ret, url, self.cache.server)
             if ret not in [True, False]:
                 print('request with cache save_cach return: ', ret)
                 return False
             return ret
 
+        #print ("access", refresh, url, self.cache.server, self.cache.batch_id)
         if refresh is False:
             content = self.cache.get(url)
             if content != u'':
+                #print ("hit", refresh, url, self.cache.server, self.cache.batch_id)
                 return content
+        #print ("miss", refresh, url, self.cache.server, self.cache.batch_id)
 
         if self.request is True:
             source = self.request_download(url, method, encoding, redirect_check, error_check, data)

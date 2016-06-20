@@ -33,12 +33,13 @@ import zhidao_fetch
 # config
 CONFIG_T = {
      "batch_ids": {
-         "search": "zhidao-search-20160614",
+         "search": "zhidao-search-20160619",
          "question": "zhidao-question-20160614",
          "answer": "zhidao-answer-20160614",
          "json": "zhidao-json-20160614"
      },
-     "cache_server": "http://52.192.116.149:8000",
+#     "cache_server": "http://52.192.116.149:8000",
+     "cache_server": "http://52.196.166.54:8000",
      "http_headers": {
          "Host": "zhidao.baidu.com"
      },
@@ -51,9 +52,11 @@ CONFIG_T = {
 }
 
 CONFIG = {
-    "prod": CONFIG_T,
-    "local": CONFIG_T,
+    "prod": {},
+    "local": {},
 }
+CONFIG["prod"].update(CONFIG_T)
+CONFIG["local"].update(CONFIG_T)
 CONFIG["local"]["cache_server"] = "http://192.168.1.179:8000"
 #     "cache_server": "http://52.192.116.149:8000",
 
@@ -71,6 +74,7 @@ def getWorkFile(filename):
 class ZhidaoPrefetch(object):
 
     def __init__(self, config):
+        print config,"-----"
         self.config = config
         self.counter = collections.Counter()
         self.cache = Cache(self.config["batch_ids"]["json"], self.config["cache_server"])
@@ -322,7 +326,9 @@ def main():
     elif "batch_class" == option:
         agt.run_query_batch( getTheFile("seed_class.human.txt"), 40)
     elif "realtime_xls" == option:
-        agt = ZhidaoPrefetch(CONFIG["local"])
+        config = CONFIG["prod"]
+        config["debug"]= True
+        agt = ZhidaoPrefetch(config)
         agt.run_test_search_realtime( getTheFile("seed_test0616.human.txt"), 1)
     elif "realtime_best" == option:
         worker_id = 0
@@ -331,7 +337,7 @@ def main():
         worker_num = 1
         if len(sys.argv)>3:
             worker_num = int(sys.argv[3])
-        agt = ZhidaoPrefetch(CONFIG["local"])
+        agt = ZhidaoPrefetch(CONFIG["prod"])
         agt.run_get_best_search_realtime(getTheFile("seed_test0616.human.txt"))
 
         #agt.run_get_best_search_realtime(getTheFile("seed_sentence.human.txt"))
