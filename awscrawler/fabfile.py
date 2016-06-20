@@ -24,7 +24,7 @@ def _aws():
 def build_env():
     sudo('apt-get update')
     sudo('apt-get -y install libcurl4-gnutls-dev libghc-gnutls-dev python-pip python-dev dtach')
-    sudo('apt-get -y install libssl-dev')
+    sudo('apt-get -y install libssl-dev libxslt-dev')
     sudo('pip install virtualenvwrapper')
 #    sudo('apt-get -y install redis-server') # worker not needed
 #    sudo('sed -i "s/bind 127.0.0.1/bind 0.0.0.0/" /etc/redis/redis.conf')
@@ -77,7 +77,7 @@ def deploy_run(job):
     # fab deploy_run:'prefetch_zhidao_search' --hosts 52.196.166.54
     print (job)
 #    env.hosts = ['52.196.166.54']
-    sync_upload()
+#    sync_upload()
     upload()
     kill()
     runapp(True, job)

@@ -85,7 +85,6 @@ class GetWorker(Worker):
 
     def work(self, batch_id, queue_dict, *args, **kwargs):
         batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
-        print (batch_id,batch_key_filename)
         try:
             module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
         except:
