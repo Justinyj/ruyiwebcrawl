@@ -13,7 +13,9 @@ conn = redis.StrictRedis()
 
 
 def get():
-    """ output will grow gradually to 1132
+    """ output will grow gradually.
+        After this program running for 2 and a half days,
+        redis-cli hlen test comes 7176241, the print count is 11786.
     """
     global conn
     count = 0
