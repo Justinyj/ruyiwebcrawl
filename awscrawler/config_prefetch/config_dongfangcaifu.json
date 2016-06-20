@@ -1,0 +1,17 @@
+{
+	"batch_ids": {
+		"index": "dongcaigonggao-index0620-v20160620",
+		"page": "dongcaigonggao-page-v20160620"
+	},
+	"prefetch_index": {
+		"note": "获取东方财富索引页",
+		"crawl_http_method": "get",
+		"crawl_gap": 10,
+		"crawl_use_js_engine": false,
+		"crawl_timeout": 60,
+		"aws_machine_number": 20,
+		"debug": true,
+		"batch_id": "dongcaigonggao-index0620-v20160620",
+		"filename_urls": "/data/awscrawler/local/dongfangcaifu/v20160620/urls_gonggao_index.raw.txt"
+	}
+}
