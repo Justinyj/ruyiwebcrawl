@@ -1,0 +1,55 @@
+{
+	"jobs": {
+		"qichacha_0612": {
+			"ImageId": "------",
+			"MinCount": 10,
+			"MaxCount": 10,
+			"KeyName": "crawl-tokyo",
+			"InstanceType": "t2.micro",
+			"SecurityGroupIds": ["-----"],
+			"username": "ubuntu",
+			"note": "测试ubuntu爬虫机"
+		}
+	},
+	"cmds": {
+		"qccw_prefetch": [
+			"rm *",
+			"python -u /opt/data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical {worker_id} {worker_num} > out.prefetch.{timestamp} &"
+		],
+		"qccu_fetch": [
+			"python -u /opt/data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch medical > out.fetch{timestamp} &"
+		],
+		"qccu_fetch_cache_only": [
+			"python -u /opt/data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch_cache_only medical > out.fetch_cache_only{timestamp} &"
+		],
+		"qccw_presearch": [
+			"python -u /opt/data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {worker_id} {worker_num} > out.presearch_core.{timestamp} &"
+		],
+		"qccw_presearch_ext": [
+			"python -u /opt/data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_ext_reg {worker_id} {worker_num} > out.presearch_ext.{timestamp} &"
+		],
+		"common_test": [
+			"ps -Af |grep python"
+		],
+		"common_init": [
+			"mkdir -p /opt/data/ruyi/ruyiwebcrawl/local/qichacha/business",
+      "mkdir -p /opt/data/ruyi/ruyiwebcrawl/project/chat4xianliao",
+      "mkdir -p /opt/data/ruyi/ruyiwebcrawl/local/chat4xianliao"
+		]
+	},
+	"sync": {
+		"qccw_up": [
+			"/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no ' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work  ubuntu@{ip}:/opt/data/ruyi/ruyiwebcrawl/local/qichacha/business",
+			"/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no ' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{ip}:/opt/data/ruyi/ruyiwebcrawl/projects"
+		],
+		"zhidaos_up": [
+			"/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no ' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/chat4xianliao  ubuntu@{ip}:/opt/data/ruyi/ruyiwebcrawl/projects",
+			"/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no ' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/chat4xianliao  ubuntu@{ip}:/opt/data/ruyi/ruyiwebcrawl/local"
+		]
+	},
+	"regions": {
+		"tokyo": "ap-northeast-1"
+	},
+	"aws_access_key_id": "-----",
+	"aws_secret_access_key": "--------"
+}
