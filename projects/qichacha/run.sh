@@ -54,6 +54,14 @@ if [ "$1" = "aws-server-down" ]; then
   rsync -azvrtopg -e 'ssh -i /Users/lidingpku/.ssh/crawl-tokyo.pem'  admin@52.69.161.139:/data/ruyi/ruyiwebcrawl/local/qichacha/business/server_output /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business
 fi
 
+if [ "$1" = "179-up" ]; then
+  rsync -azvrtopg ../../local/qichacha/business/server_output  ruyi@192.168.1.179:/data/ruyi/ruyiwebcrawl/local/qichacha/business
+fi
+
+if [ "$1" = "179-down" ]; then
+  rsync -azvrtopg ruyi@192.168.1.179:/data/ruyi/ruyiwebcrawl/local/qichacha/business/server_output .
+fi
+
 
 if [ "$1" = "upload" ]; then
   rsync -azvrtopg -e 'ssh -p50001'  ./local  data@106.75.14.79:/data/ruyi/ruyiwebcrawl/projects/qichacha

@@ -178,6 +178,9 @@ class ZhidaoFetch():
         self.api_nlp = ZhidaoNlp()
         self.config = config
         self.debug = config.get("debug")
+        if config:
+            from downloader.downloader_wrapper import DownloadWrapper
+            self.downloader = DownloadWrapper(self.config["cache_server"], self.config["crawl_http_headers"])
 
     def parse_query(self,query_unicode, query_parser=0):
         if query_parser == 1:
@@ -254,7 +257,8 @@ class ZhidaoFetch():
             return False
 
         ts_start = time.time()
-        content = self.download_direct(query_url)
+        content = self.download(query_url)
+
         ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
 
         if content:
@@ -310,7 +314,7 @@ class ZhidaoFetch():
             return False
 
         ts_start = time.time()
-        content = self.download_direct(query_url)
+        content = self.download(query_url)
         ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
 
 
@@ -327,7 +331,22 @@ class ZhidaoFetch():
 
         return False
 
-    def download_direct(self, query_url, query_filter=2, query_parser=0):
+    def download(self, query_url):
+        if self.config:
+            return self.downloader.download_with_cache(
+                    query_url,
+                    self.config["batch_id"],
+                    self.config["crawl_gap"],
+                    self.config["crawl_http_method"],
+                    self.config["crawl_timeout"],
+                    encoding=None,
+                    redirect_check=True,
+                    error_check=False,
+                    refresh=False)
+        else:
+            return self.download_direct(query_url)
+
+    def download_direct(self, query_url):
         import requests
         #print query_url
         encoding='gb18030'

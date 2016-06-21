@@ -388,7 +388,7 @@ def fetch_prepare_all(batch):
 
 
 #################
-def fetch_detail(batch, worker_id=None, worker_num=1, expand=True, cookie_index =COOKIE_INDEX_PREFETCH, refresh=False):
+def fetch_detail(batch, worker_id=None, worker_num=1, expand=True, cookie_index=COOKIE_INDEX_PREFETCH, refresh=False):
     fetch_tag = "expand" if expand else "regular"
     crawler = get_crawler(BATCH_ID_FETCH, cookie_index, worker_id = worker_id, worker_num=worker_num)
     with open(FILE_CONFIG) as f:
@@ -422,7 +422,7 @@ def _fetch_with_cache(key_num, name, crawler, fetch_tag, counter, cache_only=Fal
         #cache hit
         uri = _get_fetch_company_uri(fetch_tag, key_num)
         cached_data = _get_json(crawler.config, BATCH_ID_JSON_FETCH, uri)
-        if "data" in cached_data:
+        if cached_data and "data" in cached_data:
             cached_data = cached_data["data"]
 
         if cached_data and name in cached_data:
@@ -565,6 +565,54 @@ def fetch_output_putian(batch):
     libfile.lines2file(lines, filename)
 
 
+def fetch_output_all(batch):
+    with open(FILE_CONFIG) as f:
+        config = json.load(f)[COOKIE_INDEX_FETCH]
+
+    #########################
+    #filter
+    crawler = get_crawler(BATCH_ID_FETCH, COOKIE_INDEX_FETCH)
+    names_all = set()
+    counter = collections.Counter()
+    filename_index = getLocalFile("server/company_index_all.{}.tsv".format(batch))
+    filename_raw_all = getLocalFile("server_output/company_raw_all.{}.json.txt".format(batch))
+    with codecs.open(filename_raw_all, "w", encoding="utf-8") as fout:
+        with codecs.open(filename_index, encoding="utf-8") as f:
+            for line in f:
+                key_num, name = line.split('\t', 1)
+                name = name.strip()
+
+                if counter["visited"] % 1000 == 0:
+                    counter["names_all"] = len(names_all)
+                    print batch, datetime.datetime.now().isoformat(), json.dumps(counter, sort_keys=True, ensure_ascii=False)#, json.dumps(gcounter, sort_keys=True)
+                counter["visited"] += 1
+
+                company_raw_one = _fetch_with_cache(key_num, name, crawler, "expand", counter, cache_only=True )
+
+                if not company_raw_one:
+                    counter["miss1"] += 1
+                    continue
+                else:
+                    if "data" in company_raw_one:
+                        company_raw_one  = company_raw_one["data"]
+                    rawitem = company_raw_one.get(name)
+                    if not rawitem:
+                        #print len(company_raw_one.keys())
+                        counter["miss2"] += 1
+                        continue
+                    else:
+                        counter["ok"] += 1
+
+
+                for rawitem in company_raw_one.values():
+                    rawitem_name = rawitem["name"]
+                    if rawitem_name in names_all:
+                        continue
+                    else:
+                        names_all.add(rawitem_name)
+
+                    gcounter["names_all"] += 1
+                    fout.write(u"{}\n".format(json.dumps(rawitem)))
 
 
 
@@ -1566,6 +1614,10 @@ def main():
         fetch_output_putian(batch)
         #fetch_output(batch, "medical", expand=True)
 
+    elif "fetch_output_all" == option:
+
+        fetch_output_all(batch)
+        #fetch_output(batch, "medical", expand=True)
 
 
     elif "expand_agent" == option:

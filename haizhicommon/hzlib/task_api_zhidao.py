@@ -114,9 +114,39 @@ def main():
             print question, ret
             assert(ret)
 
-    elif "test_chat" == option:
+    elif "test_chat_realtime" == option:
         # python hzlib/task_api_zhidao.py test
         api = ZhidaoFetch()
+        if len(sys.argv)>2:
+            question = sys.argv[1]
+            query_filter =2
+            if len(sys.argv)>3:
+                query_filter = int(sys.argv[2])
+            ret = api.search_chat_best(question, query_filter=query_filter)
+            print question, query_filter
+            libdata.print_json(ret)
+
+        else:
+            question = u"你喜欢蓝色么？"
+            ret = api.search_chat_best(question)
+            print question
+            libdata.print_json(ret)
+
+    elif "test_chat_cache" == option:
+        # python hzlib/task_api_zhidao.py test
+
+        config = {
+				"batch_id": "test-test-20160620",
+				"length": 1,
+				"crawl_http_method": "get",
+				"crawl_gap": 1,
+				"crawl_use_js_engine": False,
+				"crawl_timeout": 10,
+				"crawl_http_headers": {},
+				"debug": False,
+				"cache_server": "http://192.168.1.179:8000"
+			}
+        api = ZhidaoFetch(config)
         if len(sys.argv)>2:
             question = sys.argv[1]
             query_filter =2

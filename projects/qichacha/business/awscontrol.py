@@ -136,6 +136,9 @@ class InstanceMgr:
                 "run_fetch_cache_only":[
                     "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch_cache_only medical > out.fetch_cache_only{} &".format(datetime.datetime.now().isoformat())
                 ],
+                "run_fetch_all":[
+                    "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py fetch_output_all medical > out.fetch_output_all_{} &".format(datetime.datetime.now().isoformat())
+                ],                
                 "run_presearch":[
                     "python -u /data/ruyi/ruyiwebcrawl/projects/qichacha/business/crawljob.py search medical seed_person_core_reg {} {} > out.presearch_core.{} &".format(idx, worker_num, datetime.datetime.now().isoformat())
                 ],
@@ -222,6 +225,8 @@ def main():
             work_num = THE_WORKER_NUM
         mgr.run(work_num,option)
     elif "run_fetch" == option:
+        mgr.run(1,option)
+    elif "run_fetch_all" == option:
         mgr.run(1,option)
     elif "run_init" == option:
         if len(sys.argv)>2:
