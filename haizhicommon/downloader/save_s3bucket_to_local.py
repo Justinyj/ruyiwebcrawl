@@ -26,5 +26,6 @@ def save_to_local(bucketname):
             total += 1
 
 
-bucketname = 'dongcaigonggao'
-save_to_local(bucketname)
+if __name__ == '__main':
+    bucketname = 'dongcaigonggao'
+    save_to_local(bucketname)
