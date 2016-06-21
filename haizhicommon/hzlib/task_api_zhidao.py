@@ -94,7 +94,7 @@ def main():
     elif "debug_filter" == option:
         eval_filter([2],True)
 
-    elif "test_baike" == option:
+    elif "test_baike_realtime" == option:
         # python hzlib/task_api_zhidao.py test
         api = ZhidaoNlp()
         if len(sys.argv)>2:
