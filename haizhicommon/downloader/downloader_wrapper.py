@@ -9,7 +9,7 @@ from .downloader import Downloader
 
 
 class DownloadWrapper(object):
-    def __init__(self, cacheserver, headers={}):
+    def __init__(self, cacheserver=None, headers={}):
         self.cacheserver = cacheserver
         self._batches = {}
         self.headers = headers if isinstance(headers, dict) else {}

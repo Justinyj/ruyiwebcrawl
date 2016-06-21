@@ -22,9 +22,11 @@ class Downloader(object):
         self.TIMEOUT = timeout
         self.RETRY = 2
 
+        if cacheserver is None:
+            self.cache = CacheS3(batch_id)
+        else:
+            self.cache = Cache(batch_id, cacheserver)
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
-#        self.cache = Cache(batch_id, cacheserver)
-        self.cache = CacheS3(batch_id)
         self.gap = gap
         self.groups = groups
         self.refresh = refresh
