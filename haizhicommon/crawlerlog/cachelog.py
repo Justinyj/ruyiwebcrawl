@@ -7,17 +7,16 @@ from __future__ import print_function, division
 import logging
 import os
 
-from settings import FSCACHEDIR
-from tools import log, ip, path
+from crawlerlog import log, ip, path
 
-def get_logger(batch_id, today_str):
+def get_logger(batch_id, today_str, cachedir='.'):
     """ 127.0.0.1_20160522.log
 
     :param today_str: datetime.now().strftime('%Y%m%d')
     """
 
-    def filename_in_logger_out(the_batch_id):
-        absdir = os.path.join(FSCACHEDIR, the_batch_id, 'meta')
+    def filename_in_logger_out(the_batch_id, cachedir):
+        absdir = os.path.join(cachedir, the_batch_id, 'meta')
         path.makedir(absdir)
         absfname = os.path.join(absdir,
                                 '{}_{}.log'.format(
@@ -43,7 +42,7 @@ def get_logger(batch_id, today_str):
         need_update_loggers = True
 
     if need_update_loggers:
-        loggers[batch_id] =  filename_in_logger_out(batch_id)
+        loggers[batch_id] =  filename_in_logger_out(batch_id, cachedir)
         setattr(get_logger, '_logger', loggers)
 
     return get_logger._logger[batch_id]
