@@ -19,7 +19,6 @@ def genEsId(text):
     text =text.encode('utf-8')
     return hashlib.md5(text).hexdigest()
 
-
 def writeExcel(items, keys, filename):
     import xlwt
     wb = xlwt.Workbook()

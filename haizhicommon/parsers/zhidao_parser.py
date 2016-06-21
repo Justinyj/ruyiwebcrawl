@@ -306,7 +306,15 @@ def parse_search_result_item(node):
         item["answers_raw"] = temp
 
         temp = temp.replace(u"...","")
-        temp = re.sub(ur"([。！？ ])[^。！？]*$",r"\1", temp).strip()
+
+        index = "temp".find(" ")
+        if index > 5:
+            temp = temp[:index]
+        else:
+            temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp).strip()
+        if re.search(ur"(：|；|，|。。｜\.\.)$", temp):
+            return None
+
         item["answers"] = temp
         #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
         #item["answers_"] = temp
