@@ -5,6 +5,29 @@ if [ $# -eq 0 ]; then
     exit
 fi
 
+if [ "$1" = "aws-init-image" ]; then
+  python hzlib/api_aws.py chat4xianliao_0621 list
+#  python hzlib/api_aws.py chat4xianliao_0621 start 1
+  python hzlib/api_aws.py chat4xianliao_0621 local 1 chat4xl_up
+fi
+
+if [ "$1" = "aws-list" ]; then
+  python hzlib/api_aws.py chat4xianliao_0621 list
+fi
+
+if [ "$1" = "aws-create" ]; then
+  python hzlib/api_aws.py chat4xianliao_0621 create 4
+fi
+
+# python -u /opt/data/ruyi/ruyiwebcrawl/projects/chat4xianliao/chat/task_run.py fetch {worker_id} {worker_num}
+if [ "$1" = "aws-start" ]; then
+  python hzlib/api_aws.py chat4xianliao_0621 start 4
+fi
+
+if [ "$1" = "aws-run" ]; then
+  python hzlib/api_aws.py chat4xianliao_0621 server 4 chat4xl_prefetch ~/.ssh/crawl-tokyo.pem
+fi
+
 
 if [ "$1" = "upload-local" ]; then
   rsync -azvrtopg -e 'ssh -p50001'  ../../local/haizhicommon  data@106.75.14.79:/data/ruyi/ruyiwebcrawl/local
