@@ -122,29 +122,24 @@ class InstanceMgr:
             self.print_ssh(job_index, i)
 
 
-    def upload(self, job_index, worker_num):
+    def upload(self, job_index, worker_num, cmds_option):
         instances = self.select(job_index, 'running')
         i_num = len(list(instances))
         if worker_num != i_num:
             print "SKIP mismatch running:{}, expect worker:{} ".format(i_num, worker_num)
             return
-
         print "upload", i_num
-        for i in instances:
-            cmds = [
-#                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no ' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/server  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(i.public_ip_address),
-                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no ' /Users/lidingpku/haizhi/project/ruyiwebcrawl/local/qichacha/business/work  ubuntu@{}:/data/ruyi/ruyiwebcrawl/local/qichacha/business".format(i.public_ip_address),
-                "/usr/bin/rsync -azvrtopg -e '/usr/bin/ssh -o StrictHostKeyChecking=no ' /Users/lidingpku/haizhi/project/ruyiwebcrawl/projects/qichacha  ubuntu@{}:/data/ruyi/ruyiwebcrawl/projects".format(i.public_ip_address),
-                #"ping {}".format( i.public_ip_address)
-            ]
-            print "\n==================\n"
-            for cmd in cmds:
+
+
+        cmds=self.config["sync"]
+        for idx, i in enumerate(instances):
+            for cmd_template in cmds[cmds_option]:
+                cmd = cmd_template.format(ip=i.public_ip_address, worker_id=idx,  worker_num=worker_num, timestamp=datetime.datetime.now().isoformat())
+
                 print "{}".format(cmd)
                 ret = subprocess.call(cmd, shell=True)
                 print ret
-                print ""
-                print "ssh ubuntu@{} -i {}".format(i.public_ip_address)
-                print ""
+            self.print_ssh(job_index, i)
 
 
 
@@ -181,11 +176,12 @@ def main(config):
         mgr.start(job_index, work_num)
 
     elif "upload" == option:
-        if len(sys.argv)>3:
-            work_num = int(sys.argv[3])
+        if len(sys.argv)>4:
+            worker_num = int(sys.argv[3])
+            cmds_option = sys.argv[4]
+            mgr.upload(job_index, worker_num, cmds_option)
         else:
-            work_num = THE_WORKER_NUM
-        mgr.upload(job_index, work_num)
+            print "SKIP , not enough params"
 
     elif "run" == option:
         if len(sys.argv)>5:
