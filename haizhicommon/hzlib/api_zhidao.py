@@ -203,8 +203,82 @@ class ZhidaoFetch():
                 ret ["best_qapair"] = item
                 return ret
 
-    def select_best_chat_0621(self, query, search_result_json):
-        return search_result_json[0]
+    def select_top_n_chat_0621(self, query, search_result_json, num_answers_needed):
+
+        good_answers = []
+        bad_answers = []
+        result_answers = []
+
+        match_score_threshold = 0.6
+
+        for item in search_result_json:
+            #print type(query), type(item["question"])
+            discount_skip_word = 0
+            if self.api_nlp.detect_skip_words(item["question"]):
+                print "did not skip min-gan-ci question"
+                # continue
+
+            if self.api_nlp.detect_skip_words(item["answers"]):
+                print "did not skip min-gan-ci answers"
+                # continue
+
+            match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
+            item["match_score"] = match_score
+
+            if self.api_nlp.is_answer_bad(item["answers"]):
+                bad_answers.append(item)
+            else:
+                good_answers.append(item)
+
+        for item in sorted(good_answers, key=lambda elem: 0-elem["match_score"]):
+            match_score = item["match_score"]
+            if match_score >= match_score_threshold and len(result_answers) < num_answers_needed:
+                result_answers.append(item)
+            else:
+                break
+
+        if len(result_answers) < num_answers_needed:
+            for item in sorted(bad_answers, key=lambda elem: 0-elem["match_score"]):
+                match_score = item["match_score"]
+                if match_score >= match_score_threshold and len(result_answers) < num_answers_needed:
+                    result_answers.append(item)
+                else:
+                    break
+
+        return result_answers
+
+    def search_chat_top_n(self,query,num_answers_needed,query_filter=2, query_parser=0):
+        result = self.prepare_query(query, query_filter, query_parser)
+        if not result:
+            return False
+
+        ret = result["ret"]
+        query_url = result["query_url"]
+        query_unicode = ret["query"]
+        if self.api_nlp.is_question_baike( query_unicode , query_filter= query_filter):
+            print "not skip query, baike", query_filter,  query_unicode
+            # return False
+
+        ts_start = time.time()
+        content = self.download(query_url)
+
+        ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
+
+        if content:
+            ts_start = time.time()
+            search_result_json = parse_search_json_v0615(content)
+            ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
+
+            answer_item = self.select_top_n_chat_0621(query_unicode, search_result_json, num_answers_needed)
+            if answer_item:
+                index = 0
+                for item in answer_item:
+                    ret ["qapair{}".format(index)] = item
+                    index += 1
+                return ret
+            #print json.dumps(search_result_json,ensure_ascii=False)
+
+        return False
 
 
     def select_best_qapair_0617(self,query, search_result_json):
