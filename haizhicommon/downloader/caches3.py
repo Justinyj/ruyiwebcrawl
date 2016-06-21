@@ -17,6 +17,7 @@ class CacheS3(object):
     def __init__(self, batch_id, region_name='ap-northeast-1'):
         self.batch_id = batch_id
         self.batch_key = batch_id.rsplit('-', 1)[0]
+        self.region_name = region_name
         self.S3 = boto3.resource('s3', region_name=region_name, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
 
@@ -89,7 +90,7 @@ class CacheS3(object):
     def create_bucket(self):
         for _ in range(3):
             try:
-                return self.S3.create_bucket(Bucket=self.batch_key, CreateBucketConfiguration={'LocationConstraint': REGION_NAME})
+                return self.S3.create_bucket(Bucket=self.batch_key, CreateBucketConfiguration={'LocationConstraint': self.region_name})
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
                     pass
