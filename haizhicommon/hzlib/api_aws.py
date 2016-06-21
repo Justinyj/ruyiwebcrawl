@@ -16,10 +16,10 @@ import time
 import json
 
 class InstanceMgr:
-    def __init__(self, config):
+    def __init__(self, config, region_id="tokyo"):
         self.config = config
         self.conn = boto3.resource('ec2',
-            region_name= config['region_name'],
+            region_name= config['regions'][region_id],
             aws_access_key_id=config["aws_access_key_id"],
             aws_secret_access_key=config["aws_secret_access_key"])
 
