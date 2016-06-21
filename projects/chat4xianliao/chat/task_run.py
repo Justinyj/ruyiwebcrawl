@@ -26,36 +26,32 @@ from hzlib import libfile
 from hzlib import libdata
 from hzlib.api_zhidao import ZhidaoFetch
 
-KIDS_2W_FILENAME = "projects/chat4xianliao/kidsfaq2w.json"
-KIDS_2W_QUERY_FILENAME = "projects/chat4xianliao/kidsfaq2w.txt"
-KIDS_2W_SAMPLE_RESULT_QUESTION = "projects/chat4xianliao/kids_faq_result_question.xls"
-KIDS_2W_SAMPLE_RESULT_ANSWER = "projects/chat4xianliao/kids_faq_result_answer.xls"
+KIDS_2W_FILENAME = "raw/kidsfaq2w.json"
+KIDS_2W_QUERY_FILENAME = "input/kidsfaq2w.txt"
+KIDS_2W_SAMPLE_RESULT_QUESTION = "output/kids_faq_result_question.xls"
+KIDS_2W_SAMPLE_RESULT_ANSWER = "output/kids_faq_result_answer.xls"
+
+def getLocalFile(filename):
+    return os.path.abspath(os.path.dirname(__file__)).replace("/projects/","/local/") +"/"+filename
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
-def getLocalFile(filename):
-    return getTheFile("../../../local/"+filename)
-
 def read_kidsfaq2w(limit=10):
-    filename = getLocalFile(KIDS_2W_FILENAME)
-    list_json = libfile.file2list(filename)
-    list_question = []
-    for item in list_json:
-        item = json.loads(item)
-        q = item["_source"]["question"]
-        if "@" not in q:
-            list_question.append(q)
-
-    libfile.lines2file(list_question, getLocalFile(KIDS_2W_QUERY_FILENAME))
+    # filename = getLocalFile(KIDS_2W_FILENAME)
+    # list_json = libfile.file2list(filename)
+    # list_question = []
+    # for item in list_json:
+    #     item = json.loads(item)
+    #     q = item["_source"]["question"]
+    #     if "@" not in q:
+    #         list_question.append(q)
+    # libfile.lines2file(list_question, getLocalFile(KIDS_2W_QUERY_FILENAME))
+    list_question = libfile.file2list(getLocalFile(KIDS_2W_QUERY_FILENAME))
     print "Length of kidsfaq2w ", len(list_question)
 
     random.shuffle(list_question)
     return list_question[0: limit if limit<len(list_question) else len(list_question)]
-    # if limit < len(list_question):
-    #     return list_question[0:limit]
-    # else:
-    #     return list_question
 
 def main():
     #print sys.argv
@@ -119,7 +115,7 @@ def main():
                             "query" : query,
                             "a" : top3_item[key]["answers"]
                         }
-                        
+
                         to_write_question.append(one_item_question)
                         to_write_answer.append(one_item_answer)
 
