@@ -9,14 +9,15 @@ import botocore
 import hashlib
 
 from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
-from settings import REGION_NAME
 
-S3 = boto3.resource('s3', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
 class CacheS3(object):
-    def __init__(self, batch_id):
+
+
+    def __init__(self, batch_id, region_name='ap-northeast-1'):
         self.batch_id = batch_id
         self.batch_key = batch_id.rsplit('-', 1)[0]
+        self.S3 = boto3.resource('s3', region_name=region_name, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
 
     def exists(self, url):
@@ -54,7 +55,7 @@ class CacheS3(object):
 
     def get_cache(self, filename):
         try:
-            streaming_body = S3.Object(self.batch_key, filename).get()
+            streaming_body = self.S3.Object(self.batch_key, filename).get()
             content = streaming_body[u'Body'].read()
         except botocore.exceptions.ClientError as e:
             # NoSuchKey, NoSuchBucket
@@ -64,7 +65,7 @@ class CacheS3(object):
 
     def head_cache(self, filename):
         try:
-            S3.Object(self.batch_key, filename).load()
+            self.S3.Object(self.batch_key, filename).load()
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
                 return False
@@ -72,7 +73,7 @@ class CacheS3(object):
 
     def put_cache(self, filename, content):
         try:
-            ret = S3.Object(self.batch_key, filename).put(Body=content)
+            ret = self.S3.Object(self.batch_key, filename).put(Body=content)
             if ret['ResponseMetadata']['HTTPStatusCode'] == 200:
                 return {'success': True}
         except botocore.exceptions.ClientError as e:
@@ -88,7 +89,7 @@ class CacheS3(object):
     def create_bucket(self):
         for _ in range(3):
             try:
-                return S3.create_bucket(Bucket=self.batch_key, CreateBucketConfiguration={'LocationConstraint': REGION_NAME})
+                return self.S3.create_bucket(Bucket=self.batch_key, CreateBucketConfiguration={'LocationConstraint': REGION_NAME})
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
                     pass

@@ -20,6 +20,7 @@ from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
 from downloader.downloader_wrapper import Downloader
 
+from settings import REGION_NAME
 
 from crawlerlog.cachelog import get_logger
 from datetime import datetime
@@ -28,7 +29,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
-        setattr(process, '_downloader', DownloadWrapper(None, headers))
+        setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)

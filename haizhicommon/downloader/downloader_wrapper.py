@@ -9,15 +9,16 @@ from .downloader import Downloader
 
 
 class DownloadWrapper(object):
-    def __init__(self, cacheserver=None, headers={}):
+    def __init__(self, cacheserver=None, headers={}, region_name='ap-northeast-1'):
         self.cacheserver = cacheserver
         self._batches = {}
         self.headers = headers if isinstance(headers, dict) else {}
+        self.region_name = region_name
 
 
     def download_with_cache(self, url, batch_id, gap, method, timeout, encoding, redirect_check, error_check, refresh):
         if batch_id not in self._batches:
-            downloader = Downloader(batch_id, self.cacheserver, True, gap, timeout)
+            downloader = Downloader(batch_id, self.cacheserver, True, gap, timeout, region_name=self.region_name)
             if self.headers:
                 downloader.update_header(self.headers)
             self._batches[batch_id] = downloader

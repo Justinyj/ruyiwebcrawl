@@ -14,18 +14,18 @@ import requests
 import time
 
 from invoker.zhidao_constant import BATCH_ID
-from downloader.cache import Cache
+from downloader.cache import CacheS3
 from downloader.downloader_wrapper import DownloadWrapper
 from parsers.zhidao_parser import generate_answer_json
 
-from settings import CACHE_SERVER
+from settings import REGION_NAME
 
 
 def process(url, batch_id, parameter, *args, **kwargs):
     if not hasattr(process, '_downloader'):
-        setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, {'Host': 'zhidao.baidu.com'}))
+        setattr(process, '_downloader', DownloadWrapper(None, {'Host': 'zhidao.baidu.com'}, REGION_NAME))
     if not hasattr(process, '_cache'):
-        setattr(process, '_cache', Cache(BATCH_ID['json'], CACHE_SERVER))
+        setattr(process, '_cache', CacheS3(BATCH_ID['json'])
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)

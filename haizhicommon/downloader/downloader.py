@@ -15,7 +15,7 @@ from .caches3 import CacheS3
 
 class Downloader(object):
 
-    def __init__(self, batch_id, cacheserver=None, request=False, gap=0, timeout=10, groups=None, refresh=False):
+    def __init__(self, batch_id, cacheserver=None, request=False, gap=0, timeout=10, groups=None, refresh=False, region_name='ap-northeast-1'):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
@@ -23,7 +23,7 @@ class Downloader(object):
         self.RETRY = 2
 
         if cacheserver is None:
-            self.cache = CacheS3(batch_id)
+            self.cache = CacheS3(batch_id, region_name)
         else:
             self.cache = Cache(batch_id, cacheserver)
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
