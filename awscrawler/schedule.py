@@ -21,7 +21,7 @@ class Schedule(object):
         self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
         self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num
 
-        self.backoff_timeout = 6 * backoff_timeout / 2**3
+        self.backoff_timeout = 15 * backoff_timeout / 2**3 # magic number because queue.get
 
         self.ec2manager = Ec2Manager(tag)
         self.ids = self.ec2manager.create_instances(self.machine_num)
@@ -93,5 +93,5 @@ class Schedule(object):
         self.ssh.close()
 
 
-    def stop_all_instances(self):
+    def stop_all_instances(self, signum=9, frame=None):
         self.ec2manager.terminate(self.ids)

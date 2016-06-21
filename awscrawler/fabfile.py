@@ -33,7 +33,7 @@ def build_env():
 def upload():
     archive = 'awscrawler.tar.bz2'
     with lcd('..'):
-        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir awscrawler$dirtime; cp -r awscrawler/* awscrawler$dirtime; cp -r haizhicommon/downloader haizhicommon/parsers haizhicommon/rediscluster awscrawler$dirtime; tar jcf {} --exclude='*.pyc' awscrawler$dirtime; rm -r awscrawler$dirtime".format(archive))
+        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir awscrawler$dirtime; cp -r awscrawler/* awscrawler$dirtime; cp -r haizhicommon/downloader haizhicommon/parsers haizhicommon/rediscluster haizhicommon/crawlerlog awscrawler$dirtime; tar jcf {} --exclude='*.pyc' awscrawler$dirtime; rm -r awscrawler$dirtime".format(archive))
         put('{}'.format(archive), '/tmp/')
         put('~/.ssh/crawl-tokyo.pem', '/home/admin/.ssh/')
 

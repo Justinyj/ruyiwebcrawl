@@ -15,12 +15,14 @@ import time
 
 import lxml.html
 
-from downloader.cache import Cache
+from downloader.cache import CacheS3
 from downloader.downloader_wrapper import DownloadWrapper
 from downloader.downloader_wrapper import Downloader
 
 from settings import CACHE_SERVER
 
+from crawlerlog.cachelog import get_logger
+from datetime import datetime
 
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
@@ -28,17 +30,20 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         headers = {"Host": domain_name}
         setattr(process, '_downloader', DownloadWrapper(CACHE_SERVER, headers))
     if not hasattr(process, '_cache'):
-        setattr(process, '_cache', Cache(batch_id.split('-', 1)[0]+'-json', CACHE_SERVER))
+        setattr(process, '_cache', CacheS3(batch_id.split('-', 1)[0]+'-json'))
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
 
+    today_str = datetime.now().strftime('%Y%m%d')
+    get_logger(batch_id, today_str, '/opt/service/log/').info('start download content')
     content = process._downloader.downloader_wrapper(url,
         batch_id,
         gap,
         timeout=timeout,
         encoding='gb18030')
+    get_logger(batch_id, today_str, '/opt/service/log/').info('stop download content')
 
     if kwargs and kwargs.get("debug"):
         print(len(content), "\n", content[:1000])
@@ -46,6 +51,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if content is False:
         return False
 
+    get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing content')
     tree = lxml.html.fromstring(content)
     title = tree.xpath('//div[@class="content"]/h4/text()')
     if isinstance(title, list) and len(title) > 0:
@@ -63,5 +69,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     else:
         body = None
     notice_content = json.dumps({'url': url, 'title': title, 'public_date': public_date, 'body': body})
+    get_logger(batch_id, today_str, '/opt/service/log/').info('stop parsing content')
 
-    return process._cache.post(url, notice_content)
+    get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
+    ret = process._cache.post(url, notice_content)
+    get_logger(batch_id, today_str, '/opt/service/log/').info('stop post json')
+    return ret

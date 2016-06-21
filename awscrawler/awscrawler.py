@@ -30,7 +30,7 @@ def post_job(batch_id, method, gap, js, urls, total_count=None, priority=1, queu
             js=1 if js else 0,
             timeout=queue_timeout)
 
-    queue_timeout *= 6
+    queue_timeout *= 15 # magic number because of the queue.get
     queue_dict = MANAGER.init_distributed_queue(batch_id,
                                                 parameter,
                                                 total_count,

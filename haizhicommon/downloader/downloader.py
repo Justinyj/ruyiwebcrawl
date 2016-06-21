@@ -11,10 +11,11 @@ import sys
 import re
 import os
 from .cache import Cache
+from .caches3 import CacheS3
 
 class Downloader(object):
 
-    def __init__(self, batch_id, cacheserver, request=False, gap=0, timeout=10, groups=None, refresh=False):
+    def __init__(self, batch_id, cacheserver=None, request=False, gap=0, timeout=10, groups=None, refresh=False):
         """ batch_id can be 'zhidao', 'music163', ...
         """
         self.request = request
@@ -22,7 +23,8 @@ class Downloader(object):
         self.RETRY = 2
 
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
-        self.cache = Cache(batch_id, cacheserver)
+#        self.cache = Cache(batch_id, cacheserver)
+        self.cache = CacheS3(batch_id)
         self.gap = gap
         self.groups = groups
         self.refresh = refresh
