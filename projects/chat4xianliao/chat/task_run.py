@@ -16,6 +16,7 @@ reload(sys)
 sys.setdefaultencoding("utf-8")
 import downloader
 import es
+import json
 
 from hzlib import libfile
 from hzlib.api_zhidao import ZhidaoFetch
@@ -32,7 +33,7 @@ def main():
 
     agt = ZhidaoFetch(config)
     option= sys.argv[1]
-    if "realtime_chat" == option:
+    if "test_chat_realtime" == option:
         query = u"你喜欢蓝色吗？"
         if len(sys.argv)>2:
             query = sys.argv[2]
