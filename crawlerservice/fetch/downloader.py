@@ -10,7 +10,7 @@ import time
 import sys
 
 from header import choice_agent, choice_proxy, common_header
-from tools.log import log_traceback
+from crawlerlog.log import log_traceback
 from cache import Cache
 from proxy import Proxy
 

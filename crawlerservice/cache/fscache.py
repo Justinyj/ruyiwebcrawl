@@ -17,7 +17,7 @@ import json
 import os
 
 from settings import FSCACHEDIR
-from tools import path, cachelog
+from crawlerlog import path, cachelog
 
 
 def fs_get_cache(b64url, url_hash, batch_id):
@@ -60,7 +60,7 @@ def fs_set_cache(b64url, url_hash, batch_id, groups, content, refresh=False):
             'groups': groups,
             'url': base64.urlsafe_b64decode(b64url),
         })
-        cachelog.get_logger(batch_id, now.strftime('%Y%m%d')).info(log_line)
+        cachelog.get_logger(batch_id, now.strftime('%Y%m%d'), FSCACHEDIR).info(log_line)
     except Exception as e:
         return {'success': False, 'error': e}
     return {'success': True}

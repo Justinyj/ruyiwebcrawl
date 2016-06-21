@@ -11,6 +11,10 @@ from rediscluster.record import Record
 from rediscluster.redismanager import RedisManager
 from settings import RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS
 
+from crawlerlog.cachelog import get_logger
+from datetime import datetime
+
+
 class Worker(object):
     """ General worker
     """
@@ -91,13 +95,17 @@ class GetWorker(Worker):
             module = __import__('workers.prefetch', fromlist=['process'])
 
         while 1:
-            result = queue_dict['queue'].get(block=True, timeout=3, interval=1)
-            if not result:
+            today_str = datetime.now().strftime('%Y%m%d')
+            get_logger(batch_id, today_str, '/opt/service/log/').info('begin get items from queue')
+            results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
+            get_logger(batch_id, today_str, '/opt/service/log/').info('finish get items from queue')
+            if not results:
                 break
-            results = [result]
 
             for url_id in results:
+                get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
                 url = queue_dict['thinhash'].hget(url_id)
+                get_logger(batch_id, today_str, '/opt/service/log/').info('end get url from thinhash redis')
 
                 try:
                     process_status = module.process(url,
@@ -112,8 +120,10 @@ class GetWorker(Worker):
                     continue
 
                 if process_status:
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('begin task done for record redis')
                     queue_dict['queue'].task_done(url_id)
                     Record.instance().increase_success(batch_id)
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('end task done for record redis')
 
 
 def main():

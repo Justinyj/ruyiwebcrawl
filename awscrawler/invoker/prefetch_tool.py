@@ -13,11 +13,17 @@ import os
 import sys
 import requests
 import json
+import signal
+
 from awscrawler import post_job, delete_distributed_queue
 from schedule import Schedule
 
 VERSION ='v20160620'
 
+
+def catch_terminate_instances_signal(schedule):
+    signal.signal(signal.SIGINT, schedule.stop_all_instances)
+    signal.signal(signal.SIGTERM, schedule.stop_all_instances)
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
@@ -48,30 +54,30 @@ def run(config):
 
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start post_job')
-    tasks = []
 
+    tasks = []
     for i in range(config['job_num']):
         if i == 0:
             t = post_job(
                 config["batch_id"][i],
                 config['crawl_http_method'] ,
-                config['crawl_gap'],
+                config['crawl_gap'][i],
                 config["crawl_use_js_engine"],
                 urls,
-                len(urls) * config["length"][i],
+                len(urls) * config['length'][i],
                 priority=config["priority"][i],
                 queue_timeout=config['crawl_timeout'])
         else:
             t = post_job(
                 config["batch_id"][i],
                 config['crawl_http_method'] ,
-                config['crawl_gap'],
+                config['crawl_gap'][i],
                 config["crawl_use_js_engine"],
                 [],
-                len(urls) * config["length"][i],
+                len(urls) * config['length'][i],
                 priority=config["priority"][i],
                 queue_timeout=config['crawl_timeout'],
-                start_delay=120)
+                start_delay=180)
 
         tasks.append(t)
 
@@ -83,6 +89,7 @@ def run(config):
                             tag=config['batch_id'][0].split('-', 1)[0],
                             backoff_timeout=config['crawl_timeout'])
 
+        catch_terminate_instances_signal(schedule)
 
 
     if config.get("debug"):

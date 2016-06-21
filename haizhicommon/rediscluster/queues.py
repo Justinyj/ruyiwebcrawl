@@ -104,6 +104,7 @@ class Queue(object):
 
         """
         # queue connect time out.
+        results = []
         if block:
             t = 0
             while timeout is None or t < timeout:
@@ -111,13 +112,23 @@ class Queue(object):
                 if not result:
                     t += interval
                     time.sleep(interval)
-                else: break
+                else:
+                    results.append(result)
+                    for i in range(9):
+                        result = self.conn.spop(self.key)
+                        if result:
+                            results.append(result)
+                    break
         else:
-            result = self.conn.spop(self.key)
+            for i in range(10):
+                result = self.conn.spop(self.key)
+                if result:
+                    results.append(result)
 
-        if result:
-            self.task_start(result)
-        return result
+        if results:
+            for item in results:
+                self.task_start(item)
+        return results
 
 
     def task_start(self, result):
@@ -136,6 +147,8 @@ class Queue(object):
 
     def get_failed_times(self, field):
         times = self.conn.hget(self.failhash, field)
+        if times is None:
+            return 0
         return int(times)
 
     def get_failed_fields(self):
@@ -166,6 +179,8 @@ class Queue(object):
             start_time = float(value)
             if time_now - start_time > self.timeout:
                 failed_times = self.get_failed_times(field)
+                if failed_times == 0: # means task_done already for this field
+                    continue
                 failed_times += 1
                 if failed_times > self.failure_times:
                     Record.instance().increase_failed(self.key)
@@ -188,8 +203,8 @@ class Queue(object):
             background_cleaning will end.
         """
         ret = self.conn.hsetnx(self.timehash, 'background_cleaning', 1)
-        if ret == '0':
-            return
+#        if ret == '0':
+#            return
 
         # it is unecessary to begin background clean when no item timeout
         time.sleep(self.timeout)
