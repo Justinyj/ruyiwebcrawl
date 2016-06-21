@@ -94,7 +94,7 @@ def main():
     elif "debug_filter" == option:
         eval_filter([2],True)
 
-    elif "test_baike_realtime" == option:
+    elif "test_is_baike_realtime" == option:
         # python hzlib/task_api_zhidao.py test
         api = ZhidaoNlp()
         if len(sys.argv)>2:
@@ -118,10 +118,11 @@ def main():
         # python hzlib/task_api_zhidao.py test
         api = ZhidaoFetch()
         if len(sys.argv)>2:
-            question = sys.argv[1]
+            question = sys.argv[2]
             query_filter =2
             if len(sys.argv)>3:
-                query_filter = int(sys.argv[2])
+                query_filter = int(sys.argv[3])
+            print question, query_filter
             ret = api.search_chat_best(question, query_filter=query_filter)
             print question, query_filter
             libdata.print_json(ret)
@@ -148,10 +149,10 @@ def main():
 			}
         api = ZhidaoFetch(config)
         if len(sys.argv)>2:
-            question = sys.argv[1]
+            question = sys.argv[2]
             query_filter =2
             if len(sys.argv)>3:
-                query_filter = int(sys.argv[2])
+                query_filter = int(sys.argv[3])
             ret = api.search_chat_best(question, query_filter=query_filter)
             print question, query_filter
             libdata.print_json(ret)
