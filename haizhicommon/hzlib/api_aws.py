@@ -135,7 +135,7 @@ class InstanceMgr:
             self.print_ssh(job_index, i)
 
 
-    def upload(self, job_index, worker_num, cmds_option):
+    def upload(self, job_index, worker_num, cmds_option, ip=None):
         instances = self.select(job_index, 'running')
         i_num = len(list(instances))
         if worker_num != i_num:
@@ -143,16 +143,21 @@ class InstanceMgr:
             return
         print "upload", i_num
 
+        if ip:
+            cmd = cmd_template.format(ip=ip, timestamp=datetime.datetime.now().isoformat())
+            print "{}".format(cmd)
+            ret = subprocess.call(cmd, shell=True)
+            print ret
+        else:
+            cmds=self.config["local_cmds"]
+            for idx, i in enumerate(instances):
+                for cmd_template in cmds[cmds_option]:
+                    cmd = cmd_template.format(ip=i.public_ip_address, worker_id=idx,  worker_num=worker_num, timestamp=datetime.datetime.now().isoformat())
 
-        cmds=self.config["local_cmds"]
-        for idx, i in enumerate(instances):
-            for cmd_template in cmds[cmds_option]:
-                cmd = cmd_template.format(ip=i.public_ip_address, worker_id=idx,  worker_num=worker_num, timestamp=datetime.datetime.now().isoformat())
-
-                print "{}".format(cmd)
-                ret = subprocess.call(cmd, shell=True)
-                print ret
-            self.print_ssh(job_index, i)
+                    print "{}".format(cmd)
+                    ret = subprocess.call(cmd, shell=True)
+                    print ret
+                self.print_ssh(job_index, i)
 
 
 

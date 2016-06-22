@@ -32,7 +32,7 @@ def slack(msg):
     data={
         "text": msg
     }
-    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 def run(config):
     ts_start = time.time()
