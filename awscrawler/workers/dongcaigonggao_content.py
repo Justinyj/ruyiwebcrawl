@@ -52,7 +52,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         return False
 
     get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing content')
-    tree = lxml.html.fromstring(content)
+    begin = content.find('<div class="mainbox">')
+    end = content.find('<div id="footer">', begin)
+    tree = lxml.html.fromstring(content[begin:end])
     title = tree.xpath('//div[@class="content"]/h4/text()')
     if isinstance(title, list) and len(title) > 0:
         title = title[0]
