@@ -59,11 +59,11 @@ def clean_cmu():
                 lines.add(zhstr)
 
     print len(lines)
-    filename_output = getLocalFile("output/kids_faq_result_2w.txt")
+    filename_output = getLocalFile("output/cmu6w.txt")
     libfile.lines2file(sorted(list(lines)), filename_output)
 
     print len(seq)
-    filename_output = getLocalFile("output/kids_faq_result_seq_2w.txt")
+    filename_output = getLocalFile("output/cmu6w_seq.txt")
     libfile.lines2file(seq, filename_output)
 
 
@@ -83,10 +83,11 @@ def read_kidsfaq2w(limit=10):
     random.shuffle(list_query)
     return list_query[0: limit if limit<len(list_query) else len(list_query)]
 
-def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod"):
+def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod", filename_input=None):
     flag_batch = (worker_id is not None and worker_num is not None and worker_num>1)
     flag_prod = (config_index == "prod")
     flag_slack = (flag_prod and worker_id == 0)
+
 
     CONFIG ={
         "local":{
@@ -114,11 +115,17 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
             }
 
     }
+    print filename_input
+    if not filename_input:
+        print "FATAL "
+        return
+    else:
+        list_query = libfile.file2list(filename_input)
+        print "Length of kidsfaq2w ", len(list_query)
+
     config = CONFIG[config_index]
     #config = {}
     api = ZhidaoFetch(config)
-    list_query = libfile.file2list(getLocalFile(KIDS_2W_QUERY_FILENAME))
-    print "Length of kidsfaq2w ", len(list_query)
 
 
 
@@ -162,9 +169,9 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                 ts_lap_start = time.time()
 
         #ret = api.search_all(query)
-        ret = api.search_chat_top_n(query, 3, select_best= (not flag_batch) )
+        ret = api.search_chat_top_n(query, 3 )
 
-        if not flag_batch and ret and ret["items"]:
+        if ret and ret["items"]:
             counter["has_result"] +=1
             counter["total_qa"] += len(ret["items"])
             if config.get("debug"):
@@ -180,18 +187,21 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                         if not isinstance(item[p], unicode):
                             item[p] = item[p].decode("gb18030")
         else:
-            #print "missing data", query, ret
+            counter["missing_data"] +=1
             pass
 
     for item in results:
         item["label"]=""
 
-    if not flag_batch:
-        filename_output = getLocalFile("output/kids_faq_sample.2w.xls")
-        #libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
-        #libfile.writeExcel(results, [ "id","is_good", "match_score", "result_index", "cnt_like",  "cnt_answer", "query", "question", "answers"], filename_output, page_size=5000)
-        print filename_output
-        libfile.writeExcel(results, [ "label","query", "answers"], filename_output, page_size=5000)
+    job_name = os.path.basename(filename_input).replace(".txt","")
+    if flag_batch:
+        filename_output = getLocalFile("output/{}.worker_{}.xls".format(job_name, worker_id))
+    else:
+        filename_output = getLocalFile("output/{}.{}.xls".format(job_name, "all"))
+    #libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
+    #libfile.writeExcel(results, [ "id","is_good", "match_score", "result_index", "cnt_like",  "cnt_answer", "query", "question", "answers"], filename_output, page_size=5000)
+    #print filename_output
+    libfile.writeExcel(results, [ "label","query", "answers", "match_score", "question"], filename_output)
 
 
     duration_sec =  int( time.time() -ts_start )
@@ -203,6 +213,44 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                 worker_num,
                 config["batch_id"],
                 duration_sec) )
+
+
+def run_chat_realtime(query_filter, query_parser, limit):
+    data = read_kidsfaq2w(limit)
+    print "Length of sample data ",len(data)
+
+
+    to_write_question = []
+    to_write_answer = []
+
+    for query in data:
+        top3_item = agt.search_chat_top_n(query, 3, query_filter=query_filter, query_parser=query_parser)
+        print libdata.print_json(top3_item)
+
+        if top3_item:
+            for key in ["qapair0","qapair1","qapair2"]:
+                if key in top3_item.keys():
+                    one_item_question = {
+                        "query" : query,
+                        "q" : top3_item[key]["question"]
+                    }
+
+                    one_item_answer = {
+                        "query" : query,
+                        "a" : top3_item[key]["answers"]
+                    }
+
+                    to_write_question.append(one_item_question)
+                    to_write_answer.append(one_item_answer)
+
+                    print libdata.print_json(one_item_question)
+                    print libdata.print_json(one_item_answer)
+                else:
+                    break
+
+            print "===================================\n"
+    libfile.writeExcel(to_write_question, ["query", "q"], getLocalFile(KIDS_2W_SAMPLE_RESULT_QUESTION))
+    libfile.writeExcel(to_write_answer, ["query", "a"], getLocalFile(KIDS_2W_SAMPLE_RESULT_ANSWER))
 
 
 def main():
@@ -231,18 +279,33 @@ def main():
         print libdata.print_json(best_item)
 
     elif "fetch" == option:
-        if len(sys.argv)>3:
-            worker_id = int(sys.argv[2])
-            worker_num = int(sys.argv[3])
+        """
+            python chat/task_run.py fetch input/chat8cmu6w.txt 1 2
+        """
+        if len(sys.argv)>4:
+            filename_input = sys.argv[2]
+            worker_id = int(sys.argv[3])
+            worker_num = int(sys.argv[4])
+            filename_input = getLocalFile(filename_input)
             print "fetch with prefetch"
-            fetch_detail( worker_id=worker_id, worker_num=worker_num)
+            fetch_detail(worker_id=worker_id, worker_num=worker_num, filename_input=filename_input)
         else:
+            """
+                python chat/task_run.py fetch input/chat8cmu6w.txt
+            """
             print "fetch mono"
-            fetch_detail()
+            filename_input = sys.argv[2]
+            filename_input = getLocalFile(filename_input)
+            fetch_detail(filename_input=filename_input)
 
     elif "fetch_debug" == option:
+        """
+            python chat/task_run.py fetch_debug input/chat8cmu6w.txt
+        """
         print "fetch_debug mono"
-        fetch_detail(limit=100, config_index="local")
+        filename_input = sys.argv[2]
+        filename_input = getLocalFile(filename_input)
+        fetch_detail(limit=10, config_index="local", filename_input=filename_input)
 
     elif "clean_cmu" == option:
         clean_cmu()
@@ -261,41 +324,8 @@ def main():
         if len(sys.argv)>4:
             query_parser = sys.argv[4]
 
-        data = read_kidsfaq2w(limit)
-        print "Length of sample data ",len(data)
+        run_chat_realtime(query_filter, query_parser, limit)
 
-
-        to_write_question = []
-        to_write_answer = []
-
-        for query in data:
-            top3_item = agt.search_chat_top_n(query, 3, query_filter=query_filter, query_parser=query_parser)
-            print libdata.print_json(top3_item)
-
-            if top3_item:
-                for key in ["qapair0","qapair1","qapair2"]:
-                    if key in top3_item.keys():
-                        one_item_question = {
-                            "query" : query,
-                            "q" : top3_item[key]["question"]
-                        }
-
-                        one_item_answer = {
-                            "query" : query,
-                            "a" : top3_item[key]["answers"]
-                        }
-
-                        to_write_question.append(one_item_question)
-                        to_write_answer.append(one_item_answer)
-
-                        print libdata.print_json(one_item_question)
-                        print libdata.print_json(one_item_answer)
-                    else:
-                        break
-
-                print "===================================\n"
-        libfile.writeExcel(to_write_question, ["query", "q"], getLocalFile(KIDS_2W_SAMPLE_RESULT_QUESTION))
-        libfile.writeExcel(to_write_answer, ["query", "a"], getLocalFile(KIDS_2W_SAMPLE_RESULT_ANSWER))
     else:
         print "unsupported"
 
