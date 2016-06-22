@@ -8,6 +8,7 @@ import collections
 import codecs
 import datetime
 import time
+import re
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)) )
 # sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -39,6 +40,9 @@ def getLocalFile(filename):
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
+LONGQUAN_18W_FILENAME = getLocalFile("raw/xianer_all_question.xlsx")
+LONGQUAN_18W_FILENAME_QUESTION = getLocalFile("input/xianer_all_question.txt")
+
 def read_kidsfaq2w(limit=10):
     # filename = getLocalFile(KIDS_2W_FILENAME)
     # list_json = libfile.file2list(filename)
@@ -54,6 +58,39 @@ def read_kidsfaq2w(limit=10):
 
     random.shuffle(list_query)
     return list_query[0: limit if limit<len(list_query) else len(list_query)]
+
+def read_longquan18w():
+
+    # test
+    print re.compile(u"师父").search(u"师父")
+
+    data = libfile.readExcel(["count", "question"], LONGQUAN_18W_FILENAME)
+    result = []
+    for sheet in data:
+        for item in data[sheet]:
+            q = clean_longquan_question(item["question"])
+            if q and len(q) > 2:
+                result.append(q)
+    print "Number of longquan question ", len(result)
+    libfile.lines2file(result, LONGQUAN_18W_FILENAME_QUESTION)
+
+def clean_longquan_question(question):
+    if not question:
+        return ""
+
+    if re.compile(u"|尼玛|释迦牟尼|六根|师兄|观音|菩萨|出家|般若|波罗蜜|修行|方丈|三宝|三藏|菩提|素斋|业障|宗派|五蕴|开悟|参禅|涅槃|慧根|我执|众生|心经|俗家|受戒|龙泉|和尚|法师|佛|禪|禅|丈|淫|寺").search(question):
+        print question
+        return ""
+
+    question = re.sub(u'师傅', u'师父', question)
+    question = re.sub(u'贤二(师父|师傅)|^贤二|^你师父|^师父', u'你', question)
+    question = re.sub(u'问你师父$|问师父', u'别人', question)
+
+    if re.compile(u"师父|贤二").search(question):
+        print question
+        return ""
+
+    return question
 
 def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod"):
     CONFIG ={
