@@ -28,16 +28,17 @@ from hzlib import libdata
 from hzlib.api_zhidao import ZhidaoFetch
 from hzlib.libdata import slack_msg
 
-KIDS_2W_FILENAME = "raw/kidsfaq2w.json"
-KIDS_2W_QUERY_FILENAME = "input/kidsfaq2w.txt"
-KIDS_2W_SAMPLE_RESULT_QUESTION = "output/kids_faq_result_question.xls"
-KIDS_2W_SAMPLE_RESULT_ANSWER = "output/kids_faq_result_answer.xls"
-
 def getLocalFile(filename):
     return os.path.abspath(os.path.dirname(__file__)).replace("/projects/","/local/") +"/"+filename
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
+
+KIDS_2W_FILENAME = "raw/kidsfaq2w.json"
+KIDS_2W_QUERY_FILENAME = "input/kidsfaq2w.txt"
+KIDS_2W_SAMPLE_RESULT_QUESTION = "output/kids_faq_result_question.xls"
+KIDS_2W_SAMPLE_RESULT_ANSWER = "output/kids_faq_result_answer.xls"
+
 
 def read_kidsfaq2w(limit=10):
     # filename = getLocalFile(KIDS_2W_FILENAME)
@@ -56,6 +57,10 @@ def read_kidsfaq2w(limit=10):
     return list_query[0: limit if limit<len(list_query) else len(list_query)]
 
 def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod"):
+    flag_batch = (worker_id is not None and worker_num is not None and worker_num>1)
+    flag_prod = (config_index == "prod")
+    flag_slack = (flag_prod and worker_id == 0)
+
     CONFIG ={
         "local":{
                 "batch_id": "zhidao-chat4xl0621-20160621",
@@ -97,7 +102,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
         list_query = list_query[:limit]
     print len(list_query)
 
-    if config_index=="prod" and worker_id is None or worker_id == 0:
+    if flag_slack:
         slack_msg( u"AWS {}/{}. run {} batch_id: {}, urls: {} debug: {}".format(
             worker_id,
             worker_num,
@@ -106,12 +111,13 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
             len(list_query),
             config.get("debug",False)) )
 
+    results = []
     for query in list_query:
 
         if counter["visited"] % 100 ==0:
             print datetime.datetime.now().isoformat(), counter
         counter["visited"]+=1
-        if worker_id is not None and worker_num>1:
+        if flag_batch:
             if (counter["visited"] % worker_num) != worker_id:
                 counter["skipped_peer"]+=1
                 continue
@@ -119,7 +125,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
 
         counter["processed"]+=1
         if counter["processed"] % 1000 == 0:
-            if config_index=="prod" and worker_id is None or worker_id == 0:
+            if flag_slack:
                 slack_msg( "AWS {}/{}. working {}. lap {} seconds. {}".format(
                         worker_id,
                         worker_num,
@@ -128,15 +134,31 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                         json.dumps(counter) ))
                 ts_lap_start = time.time()
 
-        select_best = worker_id is None
-        ret = api.search_chat_top_n(query, 3, select_best=select_best)
+        ret = api.search_all(query)
         if config.get("debug"):
             print json.dumps(ret, ensure_ascii=False)
+
+        if not flag_batch and ret:
+            for item in ret["items"]:
+                #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
+                results.append(item)
+                item["query"] = query
+                for p in ["source","result_index"]:
+                    counter["{}_{}".format(p, item[p])] +=1
+                for p in [  "question", "answers"]:
+                    if p in item:
+                        if not isinstance(item[p], unicode):
+                            item[p] = item[p].decode("gb18030")
+
+    if not flag_batch:
+        filename_output = getLocalFile("output/kids_faq_sample.xls")
+        libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
+
 
     duration_sec =  int( time.time() -ts_start )
     print "all done, seconds", duration_sec, duration_sec/counter["visited"], counter
 
-    if config_index=="prod" and worker_id is None or worker_id == 0:
+    if flag_slack:
         slack_msg( "AWS {}/{}. done {}. total {} seconds".format(
                 worker_id,
                 worker_num,
@@ -181,7 +203,7 @@ def main():
 
     elif "fetch_debug" == option:
         print "fetch_debug mono"
-        fetch_detail(limit=10, config_index="local")
+        fetch_detail(limit=100, config_index="local")
 
     elif "run_chat_realtime" == option:
 

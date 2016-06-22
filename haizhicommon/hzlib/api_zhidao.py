@@ -349,7 +349,31 @@ class ZhidaoFetch():
 
         return False
 
-    def prepare_query(self, query, query_filter, query_parser ):
+    def search_all(self, query, query_filter=2, query_parser=0):
+        result = self.prepare_query(query, query_filter, query_parser,use_skip_words=False)
+
+        if not result:
+            print query
+            return
+
+        ret = result["ret"]
+        query_url = result["query_url"]
+        query_unicode = ret["query"]
+
+        ts_start = time.time()
+        content = self.download(query_url)
+
+        ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
+
+        if content:
+            ts_start = time.time()
+            search_result_json = parse_search_json_v0615(content)
+            ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
+            ret ["items"] = search_result_json
+            return ret
+
+
+    def prepare_query(self, query, query_filter, query_parser, use_skip_words=True ):
         if not query:
             print "skip query, empty"
             return False
@@ -358,10 +382,9 @@ class ZhidaoFetch():
         if not isinstance(query_unicode, unicode):
             query_unicode = query_unicode.decode("utf-8")
 
-        if self.api_nlp.detect_skip_words(query_unicode):
+        if use_skip_words and self.api_nlp.detect_skip_words(query_unicode):
             print "skip bad query, empty"
             return False
-
 
         query_unicode = re.sub(u"？$","",query_unicode)
         query_url, qword = self.get_search_url_qword(query_unicode, query_parser)
