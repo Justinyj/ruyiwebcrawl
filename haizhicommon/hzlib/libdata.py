@@ -10,6 +10,12 @@ import re
 import time
 import random
 
+def extract_zh(text):
+    if text:
+        return re.sub(ur"[^\u4E00-\u9FA5]","", text).strip()
+    else:
+        return text
+
 def print_json(data):
     print json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True)
 

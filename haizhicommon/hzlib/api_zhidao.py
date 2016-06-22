@@ -11,7 +11,7 @@ import time
 import random
 import urllib
 import difflib
-
+#import distance
 
 import libfile
 from parsers.zhidao_parser import parse_search_json_v0615
@@ -51,7 +51,7 @@ class ZhidaoNlp():
 
     def clean_sentence(self, sentence):
         temp = sentence
-        map_punc ={".","。","?","？","!","！",",","，",":","："}
+        #map_punc ={".":"。",  "?":"？", "!":"！", ",":"，",  ":":"："}
         temp = re.sub(ur"([\u4E00-\u9FA5])\\s?(\.)\\s{0,5}([\u4E00-\u9FA5])","\1。\3",temp)
         return temp
 
@@ -248,38 +248,80 @@ class ZhidaoFetch():
 
         return result_answers
 
+
+    def select_top_n_chat_0622(self, query, search_result_json, result_limit=3, answer_len_limit=30, question_len_limit=20, question_match_limit=0.4):
+        result_answers = []
+
+        for item in search_result_json:
+            if "answers" not in item:
+                continue
+
+            #skip long answers
+            if len(item["answers"]) > answer_len_limit:
+                #print "skip answer_len_limit", type(item["answers"]), len(item["answers"]), item["answers"]
+                continue
+
+            #too long question
+            if len(item["question"]) > question_len_limit:
+                #print "skip question_len_limit", len(item["question"])
+                continue
+
+            question_match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
+            question_match_score_b = difflib.SequenceMatcher(None,  item["question"], query).ratio()
+            item["match_score"] = question_match_score
+
+            #skip not matching questions
+            if (question_match_score < question_match_limit):
+                #print "skip question_match_limit", question_match_score
+                continue
+
+            result_answers.append(item)
+
+        ret = sorted(result_answers, key= lambda x:x["match_score"])
+        if len(ret) > result_limit:
+            ret = ret[:result_limit]
+        return ret
+
+
     def search_chat_top_n(self,query,num_answers_needed,query_filter=2, query_parser=0, select_best=True):
-        result = self.prepare_query(query, query_filter, query_parser)
+        result = self.prepare_query(query, query_filter, query_parser, use_skip_words=False)
         if not result:
             return False
 
         ret = result["ret"]
         query_url = result["query_url"]
         query_unicode = ret["query"]
-        if self.api_nlp.is_question_baike( query_unicode , query_filter= query_filter):
-            print "not skip query, baike", query_filter,  query_unicode
+        #if self.api_nlp.is_question_baike( query_unicode , query_filter= query_filter):
+        #    print "not skip query, baike", query_filter,  query_unicode
             # return False
+        #print query
 
         ts_start = time.time()
         content = self.download(query_url)
 
         ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
+        if content:
+            ret ["content_len"] = len(content)
+            #print content
 
         if select_best and content:
             ts_start = time.time()
             search_result_json = parse_search_json_v0615(content)
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
+            ret ["item_len"] = len(search_result_json)
 
-            answer_item = self.select_top_n_chat_0621(query_unicode, search_result_json, num_answers_needed)
-            if answer_item:
-                index = 0
-                for item in answer_item:
-                    ret ["qapair{}".format(index)] = item
-                    index += 1
-                return ret
+            answer_items = self.select_top_n_chat_0622(query_unicode, search_result_json, num_answers_needed)
+            #print "select_best", len(answer_items)
+            ret ["items"] = answer_items
+            # if answer_items:
+            #     index = 0
+            #     for item in answer_items:
+            #         ret ["qapair{}".format(index)] = item
+            #         index += 1
+            #     return ret
             #print json.dumps(search_result_json,ensure_ascii=False)
 
-        return False
+        return ret
 
 
     def select_best_qapair_0617(self,query, search_result_json):

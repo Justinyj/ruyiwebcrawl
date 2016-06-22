@@ -22,6 +22,8 @@ import downloader
 import es
 import json
 import random
+import glob
+import collections
 
 from hzlib import libfile
 from hzlib import libdata
@@ -38,6 +40,31 @@ KIDS_2W_FILENAME = "raw/kidsfaq2w.json"
 KIDS_2W_QUERY_FILENAME = "input/kidsfaq2w.txt"
 KIDS_2W_SAMPLE_RESULT_QUESTION = "output/kids_faq_result_question.xls"
 KIDS_2W_SAMPLE_RESULT_ANSWER = "output/kids_faq_result_answer.xls"
+
+def clean_cmu():
+    dirname = getLocalFile("raw/cmu/*.txt")
+    #print dirname
+    lines = set()
+    seq = []
+    counter = collections.Counter()
+    for filename in glob.glob(dirname):
+        counter["files"]+=1
+        for line in libfile.file2list(filename):
+            zhstr = libdata.extract_zh(line)
+            counter["lines"]+=1
+            if zhstr and len(zhstr)>1:
+                counter["occurs"]+=1
+                #print zhstr
+                seq.append(zhstr)
+                lines.add(zhstr)
+
+    print len(lines)
+    filename_output = getLocalFile("output/kids_faq_result_2w.txt")
+    libfile.lines2file(sorted(list(lines)), filename_output)
+
+    print len(seq)
+    filename_output = getLocalFile("output/kids_faq_result_seq_2w.txt")
+    libfile.lines2file(seq, filename_output)
 
 
 def read_kidsfaq2w(limit=10):
@@ -134,11 +161,14 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                         json.dumps(counter) ))
                 ts_lap_start = time.time()
 
-        ret = api.search_all(query)
-        if config.get("debug"):
-            print json.dumps(ret, ensure_ascii=False)
+        #ret = api.search_all(query)
+        ret = api.search_chat_top_n(query, 3, select_best= (not flag_batch) )
 
-        if not flag_batch and ret:
+        if not flag_batch and ret and ret["items"]:
+            counter["has_result"] +=1
+            counter["total_qa"] += len(ret["items"])
+            if config.get("debug"):
+                print len(ret["items"]), json.dumps(ret, ensure_ascii=False)
             for item in ret["items"]:
                 #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
                 results.append(item)
@@ -149,10 +179,19 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                     if p in item:
                         if not isinstance(item[p], unicode):
                             item[p] = item[p].decode("gb18030")
+        else:
+            #print "missing data", query, ret
+            pass
+
+    for item in results:
+        item["label"]=""
 
     if not flag_batch:
-        filename_output = getLocalFile("output/kids_faq_sample.xls")
-        libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
+        filename_output = getLocalFile("output/kids_faq_sample.2w.xls")
+        #libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
+        #libfile.writeExcel(results, [ "id","is_good", "match_score", "result_index", "cnt_like",  "cnt_answer", "query", "question", "answers"], filename_output, page_size=5000)
+        print filename_output
+        libfile.writeExcel(results, [ "label","query", "answers"], filename_output, page_size=5000)
 
 
     duration_sec =  int( time.time() -ts_start )
@@ -196,7 +235,7 @@ def main():
             worker_id = int(sys.argv[2])
             worker_num = int(sys.argv[3])
             print "fetch with prefetch"
-            fetch_detail(worker_id=worker_id, worker_num=worker_num)
+            fetch_detail( worker_id=worker_id, worker_num=worker_num)
         else:
             print "fetch mono"
             fetch_detail()
@@ -204,6 +243,9 @@ def main():
     elif "fetch_debug" == option:
         print "fetch_debug mono"
         fetch_detail(limit=100, config_index="local")
+
+    elif "clean_cmu" == option:
+        clean_cmu()
 
     elif "run_chat_realtime" == option:
 

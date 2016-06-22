@@ -19,14 +19,13 @@ def genEsId(text):
     text =text.encode('utf-8')
     return hashlib.md5(text).hexdigest()
 
-def writeExcel(items, keys, filename):
+def writeExcel(items, keys, filename, page_size=60000):
     import xlwt
     wb = xlwt.Workbook()
-    PAGE_SIZE = 60000
     rowindex =0
     sheetindex=0
     for item in items:
-        if rowindex % PAGE_SIZE ==0:
+        if rowindex % page_size ==0:
             sheetname = "%02d" % sheetindex
             ws = wb.add_sheet(sheetname)
             rowindex = 0

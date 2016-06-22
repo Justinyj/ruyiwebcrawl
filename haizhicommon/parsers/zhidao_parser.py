@@ -195,11 +195,15 @@ def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = 
     :return : a list consists of 1-2 question
     """
     ret = []
+    #print (type(content), len(content))
+    if not isinstance(content, unicode):
+        content = content.decode("utf-8")
 
     import lxml.html
     dom = lxml.html.fromstring(content)
     #print (content)
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
+    #print (len(recommend))
     for node in recommend:
         item = parse_search_result_item(node)
         if item:
@@ -218,6 +222,7 @@ def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = 
                 item["is_recommend"] = 0
                 item["result_index"] = start_result_index + len(ret)
 
+    #print (len(ret))
     return ret
 
 URL_PATTERNS = [
@@ -305,6 +310,7 @@ def parse_search_result_item(node):
         temp = temp.replace(u"推荐答案","").replace(u"[详细]","").strip()
         item["answers_raw"] = temp
 
+
         temp = temp.replace(u"...","")
 
         index = "temp".find(" ")
@@ -315,6 +321,7 @@ def parse_search_result_item(node):
         if re.search(ur"(：|；|，|。。｜\.\.)$", temp):
             return None
 
+        #print("answers", type(temp), temp)
         item["answers"] = temp
         #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
         #item["answers_"] = temp
