@@ -50,10 +50,11 @@ class InstanceMgr:
 
     def stop(self, job_index, worker_num=None):
         instances = self.select(job_index, 'running')
-        print "stop", worker_num , "out of", len(list(instances))
         if worker_num is None:
+            print "stop all", len(list(instances))
             instances.stop()
         else:
+            print "stop", worker_num , "out of", len(list(instances))
             if i_num < worker_num:
                 print "SKIP, not enough workers", i_num, worker_num
                 return
