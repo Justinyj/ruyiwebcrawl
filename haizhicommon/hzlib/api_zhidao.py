@@ -180,7 +180,8 @@ class ZhidaoFetch():
         self.debug = config.get("debug")
         if config:
             from downloader.downloader_wrapper import DownloadWrapper
-            self.downloader = DownloadWrapper(self.config["cache_server"], self.config["crawl_http_headers"])
+            print self.config
+            self.downloader = DownloadWrapper(self.config.get("cache_server"), self.config["crawl_http_headers"])
 
     def parse_query(self,query_unicode, query_parser=0):
         if query_parser == 1:
@@ -247,7 +248,7 @@ class ZhidaoFetch():
 
         return result_answers
 
-    def search_chat_top_n(self,query,num_answers_needed,query_filter=2, query_parser=0):
+    def search_chat_top_n(self,query,num_answers_needed,query_filter=2, query_parser=0, select_best=True):
         result = self.prepare_query(query, query_filter, query_parser)
         if not result:
             return False
@@ -264,7 +265,7 @@ class ZhidaoFetch():
 
         ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
 
-        if content:
+        if select_best and content:
             ts_start = time.time()
             search_result_json = parse_search_json_v0615(content)
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )

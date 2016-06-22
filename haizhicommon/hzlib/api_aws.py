@@ -48,10 +48,19 @@ class InstanceMgr:
 
         return self.conn.instances.filter(Filters=filters)
 
-    def stop(self, job_index):
+    def stop(self, job_index, worker_num=None):
         instances = self.select(job_index, 'running')
-        print "stop", len(list(instances))
-        instances.stop()
+        if worker_num is None:
+            print "stop all", len(list(instances))
+            instances.stop()
+        else:
+            print "stop", worker_num , "out of", len(list(instances))
+            if i_num < worker_num:
+                print "SKIP, not enough workers", i_num, worker_num
+                return
+            for idx, instance in enumerate(instances):
+                if idx < worker_num:
+                    instance.stop()
 
     def start(self, job_index, worker_num=None):
         instances = self.select(job_index, 'stopped')
@@ -72,11 +81,15 @@ class InstanceMgr:
         instances = self.select(job_index)
         counter = collections.Counter()
         print "list", job_config["note"], len(list(instances))
-        for i in instances:
-            print i.id, i.instance_type, i.public_ip_address, i.state['Name']
+        running = set()
+        for idx, i in enumerate(instances):
             counter["state_"+i.state['Name']]+=1
             counter["type_"+i.instance_type]+=1
-            self.print_ssh(job_index, i)
+            #only print the first 10 running machines
+            if len(running) < 10 and i.state['Name'] in ['running']:
+                print i.id, i.instance_type, i.public_ip_address, i.state['Name']
+                self.print_ssh(job_index, i)
+                running.add(i.id)
         print json.dumps(counter,ensure_ascii=False,indent=4, sort_keys=True)
 
     def print_ssh(self, job_index, i):
@@ -86,7 +99,7 @@ class InstanceMgr:
 
     def terminate(self, job_index):
         instances = self.select(job_index)
-        print "terminate", len(list(instances))
+        print "terminate all", len(list(instances))
         instances.terminate()
 
     def _execute_cmd(self, host, username, cmds, filename_pem):
@@ -110,7 +123,7 @@ class InstanceMgr:
         if worker_num != i_num:
             print "SKIP mismatch running:{}, expect worker:{} ".format(i_num, worker_num)
             return
-        cmds=self.config["cmds"]
+        cmds=self.config["server_cmds"]
         print "run",i_num, cmds_option
         for idx, i in enumerate(instances):
             print "========="
@@ -131,7 +144,7 @@ class InstanceMgr:
         print "upload", i_num
 
 
-        cmds=self.config["sync"]
+        cmds=self.config["local_cmds"]
         for idx, i in enumerate(instances):
             for cmd_template in cmds[cmds_option]:
                 cmd = cmd_template.format(ip=i.public_ip_address, worker_id=idx,  worker_num=worker_num, timestamp=datetime.datetime.now().isoformat())
@@ -175,7 +188,7 @@ def main(config):
             work_num = None
         mgr.start(job_index, work_num)
 
-    elif "upload" == option:
+    elif "local" == option:
         if len(sys.argv)>4:
             worker_num = int(sys.argv[3])
             cmds_option = sys.argv[4]
@@ -183,7 +196,7 @@ def main(config):
         else:
             print "SKIP , not enough params"
 
-    elif "run" == option:
+    elif "server" == option:
         if len(sys.argv)>5:
             worker_num = int(sys.argv[3])
             cmds_option = sys.argv[4]
@@ -193,8 +206,8 @@ def main(config):
             print "SKIP , not enough params"
 
 if __name__ == "__main__":
-    filename = getTheFile("local/config_aws.json")
-    print filename
+    filename = getTheFile("local/config/config_aws.json")
+    #print filename
     with open(filename) as f:
         config = json.load(f)
     main(config)

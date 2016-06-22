@@ -13,6 +13,13 @@ import random
 def print_json(data):
     print json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True)
 
+def slack_msg(msg, channel_url = 'https://hooks.slack.com/services/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'):
+    import requests
+    data={ "text": msg }
+    #"https://hooks.slack.com/services/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"
+    requests.post(channel_url, data=json.dumps(data))
+    print (u"slack msg"+msg)
+
 def items2sample(data, limit=10):
     if isinstance(data, list):
         temp = data
