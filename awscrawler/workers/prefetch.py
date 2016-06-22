@@ -15,6 +15,7 @@ import requests
 import time
 
 from downloader.cache import Cache
+from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import DownloadWrapper
 from downloader.downloader_wrapper import Downloader
 

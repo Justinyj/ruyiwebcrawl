@@ -15,7 +15,7 @@ import time
 
 import lxml.html
 
-from downloader.cache import CacheS3
+from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import DownloadWrapper
 from downloader.downloader_wrapper import Downloader
 

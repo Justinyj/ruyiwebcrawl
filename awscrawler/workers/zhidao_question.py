@@ -8,7 +8,7 @@ import base64
 import json
 
 from invoker.zhidao_constant import BATCH_ID
-from downloader.cache import CacheS3
+from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import DownloadWrapper
 from parsers.zhidao_parser import parse_q_time, parse_q_content, parse_answer_ids, generate_question_json
 
