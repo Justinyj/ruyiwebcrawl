@@ -13,7 +13,8 @@ import os
 import sys
 import requests
 import json
-import signal
+
+from gevent import signal
 
 from awscrawler import post_job, delete_distributed_queue
 from schedule import Schedule
@@ -22,8 +23,8 @@ VERSION ='v20160620'
 
 
 def catch_terminate_instances_signal(schedule):
-    signal.signal(signal.SIGINT, schedule.stop_all_instances)
-    signal.signal(signal.SIGTERM, schedule.stop_all_instances)
+    signal.signal(2, schedule.stop_all_instances)
+    signal.signal(15, schedule.stop_all_instances)
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
@@ -110,7 +111,7 @@ def run(config):
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'killall')
     if not config.get("debug"):
-        gevent.killall([t3], block=True)
+        gevent.killall([t3], block=False)
         schedule.stop_all_instances()
 
     if config.get("debug"):
