@@ -14,7 +14,7 @@ import requests
 import time
 
 from invoker.zhidao_constant import BATCH_ID
-from downloader.cache import CacheS3
+from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import DownloadWrapper
 from parsers.zhidao_parser import generate_answer_json
 

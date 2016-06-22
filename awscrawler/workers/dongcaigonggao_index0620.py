@@ -16,7 +16,6 @@ import time
 import lxml.html
 import urlparse
 
-from downloader.cache import Cache
 from downloader.downloader_wrapper import DownloadWrapper
 from downloader.downloader_wrapper import Downloader
 

@@ -93,5 +93,5 @@ class Schedule(object):
         self.ssh.close()
 
 
-    def stop_all_instances(self, signum=9, frame=None):
+    def stop_all_instances(self, *_):
         self.ec2manager.terminate(self.ids)

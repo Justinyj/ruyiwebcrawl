@@ -4,7 +4,8 @@
 
 from __future__ import print_function, division
 
-import signal
+#import signal
+from gevent import signal
 
 class Schedule(object):
     def __init__(self, num):

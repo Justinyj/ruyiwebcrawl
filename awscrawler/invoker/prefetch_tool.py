@@ -22,8 +22,8 @@ VERSION ='v20160620'
 
 
 def catch_terminate_instances_signal(schedule):
-    signal.signal(signal.SIGINT, schedule.stop_all_instances)
-    signal.signal(signal.SIGTERM, schedule.stop_all_instances)
+    gevent.signal(signal.SIGINT, schedule.stop_all_instances)
+    gevent.signal(signal.SIGTERM, schedule.stop_all_instances)
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
@@ -32,7 +32,7 @@ def slack(msg):
     data={
         "text": msg
     }
-    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 def run(config):
     ts_start = time.time()
@@ -110,7 +110,7 @@ def run(config):
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'killall')
     if not config.get("debug"):
-        gevent.killall([t3], block=True)
+        gevent.killall([t3], block=False)
         schedule.stop_all_instances()
 
     if config.get("debug"):
