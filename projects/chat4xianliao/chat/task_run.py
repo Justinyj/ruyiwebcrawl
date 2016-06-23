@@ -92,18 +92,18 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
     output_dir = "output0623"
     if flag_batch:
         filename_output_xls = getLocalFile("{}/{}.{}_worker.xls".format(output_dir, job_name, worker_id))
-        filename_output_xls2 = getLocalFile("{}/{}.{}_worker2.xls".format(output_dir, job_name, worker_id))
+        filename_output_xls2 = getLocalFile("{}/{}.{}_worker_query.xls".format(output_dir, job_name, worker_id))
         filename_output_json = getLocalFile("{}/{}.{}_worker.json.txt".format(output_dir, job_name, worker_id))
     else:
         filename_output_xls = getLocalFile("{}/{}.batch_{}.all.xls".format(output_dir, job_name, config_index))
-        filename_output_xls2 = getLocalFile("{}/{}.batch_{}.all2.xls".format(output_dir, job_name, config_index))
+        filename_output_xls2 = getLocalFile("{}/{}.batch_{}.all_query.xls".format(output_dir, job_name, config_index))
         filename_output_json = getLocalFile("{}/{}.batch_{}.all.json.txt".format(output_dir, job_name, config_index))
 
     CONFIG ={
         "local":{
                 "batch_id": "zhidao-search0623-20160621",
                 "crawl_http_method": "get",
-                "crawl_gap": 3,
+                "crawl_gap": 2,
                 "crawl_use_js_engine": False,
                 "crawl_timeout": 10,
                 "crawl_http_headers": {},
