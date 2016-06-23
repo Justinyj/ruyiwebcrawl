@@ -11,6 +11,7 @@ if [ "$1" = "aws-init-image" ]; then
   python hzlib/api_aws.py chat4xianliao_0621 local 1 chat4xl_up
 fi
 
+
 if [ "$1" = "aws-list" ]; then
   python hzlib/api_aws.py chat4xianliao_0621 list
 fi
@@ -29,11 +30,15 @@ if [ "$1" = "aws-start" ]; then
 fi
 
 if [ "$1" = "aws-run" ]; then
-  python hzlib/api_aws.py chat4xianliao_0621 server 4 chat4xl_prefetch ~/.ssh/crawl-tokyo.pem
+  python hzlib/api_aws.py chat4xianliao_0621 server 10 chat4xl_prefetch ~/.ssh/crawl-tokyo.pem
 fi
 
 if [ "$1" = "aws-stop" ]; then
   python hzlib/api_aws.py chat4xianliao_0621 stop 4
+fi
+
+if [ "$1" = "aws-upload-server" ]; then
+  python hzlib/api_aws.py chat4xianliao_0621 local 1 chat4xl_up 52.69.161.139
 fi
 
 if [ "$1" = "upload-local" ]; then

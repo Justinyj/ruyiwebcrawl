@@ -31,6 +31,9 @@ class CacheS3(object):
         try:
             url_hash = hashlib.sha1(url).hexdigest()
             filename = '{}_{}'.format(self.batch_id, url_hash)
+            #check exists before get
+            if not self.head_cache(filename):
+                return u''
             ret = self.get_cache(filename)
             if 'error' in ret:
                 return u''
@@ -56,6 +59,7 @@ class CacheS3(object):
 
     def get_cache(self, filename):
         try:
+            # https://github.com/boto/boto3/blob/05dc945a9798c8ccce3f66b9f64c3c51bdf2e8a1/tests/functional/test_s3.py
             streaming_body = self.S3.Object(self.batch_key, filename).get()
             content = streaming_body[u'Body'].read()
         except botocore.exceptions.ClientError as e:

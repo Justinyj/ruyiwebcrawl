@@ -11,7 +11,7 @@ import time
 import random
 import urllib
 import difflib
-
+#import distance
 
 import libfile
 from parsers.zhidao_parser import parse_search_json_v0615
@@ -51,7 +51,7 @@ class ZhidaoNlp():
 
     def clean_sentence(self, sentence):
         temp = sentence
-        map_punc ={".","。","?","？","!","！",",","，",":","："}
+        #map_punc ={".":"。",  "?":"？", "!":"！", ",":"，",  ":":"："}
         temp = re.sub(ur"([\u4E00-\u9FA5])\\s?(\.)\\s{0,5}([\u4E00-\u9FA5])","\1。\3",temp)
         return temp
 
@@ -105,6 +105,38 @@ class ZhidaoNlp():
         else:
             return False
 
+    def filter_chat(self, q, a):
+        qa = q+a
+
+        zhstr = re.sub(ur"[^\u4E00-\u9FA5]","", a)
+        if len(zhstr)<2:
+            return u"无中文"
+
+        if re.search(ur"几[岁]|今年|今天|生日|联系|邮箱|电话|手机|号码|地址",qa):
+            return u"个性化"
+
+        if re.search(ur"采纳|百度|知乎|求书|请问|用户|楼[主上下]|度娘|经验|推荐|积分|附件|跪求|粉丝|http|ftp|php|ps|网盘|链接|答题", qa):
+            return u"网络"
+
+        return False
+
+    def get_chat_label(self, q, a):
+        qa = q+a
+
+        if re.search(ur"百科|翻译|日语|汉语|英语|介绍|解释|理解|说明", q):
+            return u"服务"
+
+        if re.search(ur"[这那谁]一?[个是]+",q):
+            return u"指代"
+
+        if re.search(ur"[ ，？！。：,\.\?\!\t][\u4E00-\u9FA5]",q):
+            return u"断句"
+
+        words =self.detect_skip_words(qa)
+        if words:
+            return u"敏感：{}".format(u",".join(words))
+
+        return u""
 
     def clean_question(self, question):
         question_clean = question
@@ -248,38 +280,86 @@ class ZhidaoFetch():
 
         return result_answers
 
+
+    def select_top_n_chat_0622(self, query, search_result_json, result_limit=3, answer_len_limit=30, question_len_limit=20, question_match_limit=0.4):
+        result_answers = []
+
+        for item in search_result_json:
+            if "answers" not in item:
+                continue
+
+            #skip long answers
+            if len(item["answers"]) > answer_len_limit:
+                #print "skip answer_len_limit", type(item["answers"]), len(item["answers"]), item["answers"]
+                continue
+
+            #too long question
+            if len(item["question"]) > question_len_limit:
+                #print "skip question_len_limit", len(item["question"])
+                continue
+
+            if self.api_nlp.filter_chat(item["question"], item["answers"]):
+                continue
+
+            question_match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
+#            question_match_score_b = difflib.SequenceMatcher(None,  item["question"], query).ratio()
+            item["match_score"] = question_match_score
+            item["label"] = self.api_nlp.get_chat_label(item["question"], item["answers"])
+
+            #skip not matching questions
+            if (question_match_score < question_match_limit):
+                #print "skip question_match_limit", question_match_score
+                continue
+
+            result_answers.append(item)
+
+        ret = sorted(result_answers, key= lambda x:x["match_score"])
+        if len(ret) > result_limit:
+            ret = ret[:result_limit]
+        return ret
+
+
     def search_chat_top_n(self,query,num_answers_needed,query_filter=2, query_parser=0, select_best=True):
-        result = self.prepare_query(query, query_filter, query_parser)
+        result = self.prepare_query(query, query_filter, query_parser, use_skip_words=False)
         if not result:
             return False
 
         ret = result["ret"]
         query_url = result["query_url"]
         query_unicode = ret["query"]
-        if self.api_nlp.is_question_baike( query_unicode , query_filter= query_filter):
-            print "not skip query, baike", query_filter,  query_unicode
+        #if self.api_nlp.is_question_baike( query_unicode , query_filter= query_filter):
+        #    print "not skip query, baike", query_filter,  query_unicode
             # return False
+        #print query
 
         ts_start = time.time()
         content = self.download(query_url)
 
         ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
+        if content:
+            ret ["content_len"] = len(content)
+            #print type(content)
+            #print content
 
         if select_best and content:
             ts_start = time.time()
             search_result_json = parse_search_json_v0615(content)
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
+            ret ["item_len"] = len(search_result_json)
 
-            answer_item = self.select_top_n_chat_0621(query_unicode, search_result_json, num_answers_needed)
-            if answer_item:
-                index = 0
-                for item in answer_item:
-                    ret ["qapair{}".format(index)] = item
-                    index += 1
-                return ret
+            answer_items = self.select_top_n_chat_0622(query_unicode, search_result_json, num_answers_needed)
+            #print "select_best", len(answer_items)
+            ret ["items"] = answer_items
+            ret ["items_all"] = search_result_json
+            # if answer_items:
+            #     index = 0
+            #     for item in answer_items:
+            #         ret ["qapair{}".format(index)] = item
+            #         index += 1
+            #     return ret
             #print json.dumps(search_result_json,ensure_ascii=False)
 
-        return False
+        return ret
 
 
     def select_best_qapair_0617(self,query, search_result_json):
@@ -349,7 +429,31 @@ class ZhidaoFetch():
 
         return False
 
-    def prepare_query(self, query, query_filter, query_parser ):
+    def search_all(self, query, query_filter=2, query_parser=0):
+        result = self.prepare_query(query, query_filter, query_parser,use_skip_words=False)
+
+        if not result:
+            print query
+            return
+
+        ret = result["ret"]
+        query_url = result["query_url"]
+        query_unicode = ret["query"]
+
+        ts_start = time.time()
+        content = self.download(query_url)
+
+        ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
+
+        if content:
+            ts_start = time.time()
+            search_result_json = parse_search_json_v0615(content)
+            ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
+            ret ["items"] = search_result_json
+            return ret
+
+
+    def prepare_query(self, query, query_filter, query_parser, use_skip_words=True ):
         if not query:
             print "skip query, empty"
             return False
@@ -358,10 +462,9 @@ class ZhidaoFetch():
         if not isinstance(query_unicode, unicode):
             query_unicode = query_unicode.decode("utf-8")
 
-        if self.api_nlp.detect_skip_words(query_unicode):
+        if use_skip_words and self.api_nlp.detect_skip_words(query_unicode):
             print "skip bad query, empty"
             return False
-
 
         query_unicode = re.sub(u"？$","",query_unicode)
         query_url, qword = self.get_search_url_qword(query_unicode, query_parser)
@@ -414,7 +517,7 @@ class ZhidaoFetch():
                     self.config["crawl_gap"],
                     self.config["crawl_http_method"],
                     self.config["crawl_timeout"],
-                    encoding=None,
+                    encoding='gb18030',
                     redirect_check=True,
                     error_check=False,
                     refresh=False)
