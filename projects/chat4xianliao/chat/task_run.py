@@ -103,7 +103,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
         "local":{
                 "batch_id": "zhidao-search0623-20160621",
                 "crawl_http_method": "get",
-                "crawl_gap": 2,
+                "crawl_gap": 3,
                 "crawl_use_js_engine": False,
                 "crawl_timeout": 10,
                 "crawl_http_headers": {},

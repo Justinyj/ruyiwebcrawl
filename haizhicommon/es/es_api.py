@@ -11,6 +11,7 @@ import os.path
 import collections
 import codecs
 import urllib
+import hashlib
 
 INDEX_OPTION_INDEX = "index"
 INDEX_OPTION_DELETE = "delete"
@@ -21,6 +22,12 @@ def getTheFile(filename):
 
 def test_echo(text):
     print text
+
+def gen_es_id(text):
+    #assert question as utf8
+    if isinstance(text, unicode):
+        text = text.encode('utf-8')
+    return hashlib.md5(text).hexdigest()
 
 def get_esconfig(config_option):
     filename_esconfig = getTheFile("esconfig.{}.json".format(config_option))
