@@ -160,7 +160,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
     with codecs.open(filename_output_json, 'w') as fjson:
         for query in list_query:
 
-            if counter["visited"] % 100 ==0:
+            if counter["visited"] % 1000 ==0:
                 print datetime.datetime.now().isoformat(), counter
             counter["visited"]+=1
             if flag_batch:
@@ -196,7 +196,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                     #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
                     results.append(item)
                     item["query"] = query
-                    for p in ["source","result_index"]:
+                    for p in ["source"]:
                         counter["{}_{}".format(p, item[p])] +=1
                     for p in [  "question", "answers"]:
                         if p in item:

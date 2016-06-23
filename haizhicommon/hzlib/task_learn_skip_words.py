@@ -10,7 +10,9 @@ import json
 import re
 import time
 
-sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
+sys.path.append(os.path.abspath("../"))
+sys.path.append(os.path.abspath("../../"))
+#sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname((os.path.dirname(__file__)[:-1])[:-1])))
 
 import libfile
 import libdata
@@ -74,7 +76,7 @@ def learn_skip_words_0619():
 
     print json.dumps(gcounter, ensure_ascii=False),"\n\n------ load not clean "
     not_skip_words_clean = set()
-    filenames = glob.glob( getTheFile("local/skip_words/not_skip_words_*.human.txt") )
+    filenames = glob.glob( getTheFile("model/skip_words_no.human.txt") )
     for filename in filenames:
         for line in libfile.file2list(filename):
             if line not in not_skip_words_clean:
