@@ -39,10 +39,10 @@ def insert():
             eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'),
                                             a.encode('utf-8')))
 
-            if attribute == u'中文名':
+            if a == u'中文名':
                 continue
 
-            attribut_hit = [a]
+            attribute_hit = [a]
             tags = [entity]
             m = re.compile(u'(.+)(\(|（).+(\)|）)').match(entity)
             if m:
