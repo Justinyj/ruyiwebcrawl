@@ -39,6 +39,10 @@ def insert():
             eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'),
                                             a.encode('utf-8')))
 
+            if a == u'中文名':
+                continue
+
+            attribute_hit = [a]
             tags = [entity]
             m = re.compile(u'(.+)(\(|（).+(\)|）)').match(entity)
             if m:
@@ -49,7 +53,8 @@ def insert():
                           'attribute': a,
                           'values': v,
                           'value': v[0],
-                          'tags': tags})
+                          'tags': tags,
+                          'attribute_hit': attribute_hit})
     return eavps
 
 def sendto_es(eavps):
