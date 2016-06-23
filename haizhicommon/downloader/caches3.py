@@ -8,7 +8,7 @@ import boto3
 import botocore
 import hashlib
 
-from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
+from .secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
 
 class CacheS3(object):
