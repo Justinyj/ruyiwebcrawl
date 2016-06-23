@@ -126,9 +126,16 @@ class Queue(object):
                     results.append(result)
 
         if results:
-            for item in results:
-                self.task_start(item)
+            self.task_start_batch(results)
         return results
+
+
+    def task_start_batch(self, results):
+        pipeline = self.conn.pipeline()
+        for result in results:
+            pipline.hincrby(self.failhash, result, 1)
+            pipline.hsetnx(self.timehash, result, time.time())
+        pipeline.execute()
 
 
     def task_start(self, result):
@@ -141,8 +148,10 @@ class Queue(object):
         """ clear start time in redis hash, indicating the task done
             increase successful count in record hash
         """
-        self.conn.hdel(self.failhash, result)
-        return self.conn.hdel(self.timehash, result)
+        pipeline = self.conn.pipeline()
+        pipline.hdel(self.failhash, result)
+        pipline.hdel(self.timehash, result)
+        pipeline.execute()
 
 
     def get_failed_times(self, field):

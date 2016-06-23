@@ -1,0 +1,15 @@
+{
+      "properties" : {
+          "question": {
+              "type": "string"
+          },
+          "id": {
+              "type": "string",
+              "index": "no"
+          },
+          "answers": {
+              "type": "string",
+              "index": "no"
+          }
+      }
+  }
