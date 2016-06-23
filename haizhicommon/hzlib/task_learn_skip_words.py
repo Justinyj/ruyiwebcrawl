@@ -21,6 +21,8 @@ from api_zhidao import ZhidaoNlp
 
 false_positive = []
 false_negative = []
+true_positive = []
+true_negative = []
 
 gcounter = collections.Counter()
 def getTheFile(filename):
@@ -43,12 +45,12 @@ def fn_classify_0619(line, api, test_expect=None, test_data=None):
 
     if len(detected_skip_words) == 0:
         actual = 0
-        if test_expect == 0:
-            false_negative.append(line + "\t" + u"\t".join(list(detected_skip_words)))
+        if test_expect == 1:
+            false_positive.append(line) # + "\t" + u"\t".join(list(detected_skip_words))
     else:
         actual = 1
-        if test_expect == 1:
-            false_positive.append(line + "\t" + u"\t".join(list(detected_skip_words)))
+        if test_expect == 0:
+            false_negative.append(line) # + "\t" + u"\t".join(list(detected_skip_words))
 
     if api.debug:
         print actual, "\n", u"\n".join(list(detected_skip_words))
@@ -130,8 +132,8 @@ def learn_skip_words_0619():
 def test():
     api = ZhidaoNlp(debug=False)
     filenames = [
-        # ( getLocalFile("chat4xianliao/chat/input/chat8xianer12w.txt"), 0 ),
-        ( getLocalFile("chat4xianliao/chat/input/chat8xianer12w.txt"), 1 ),
+        ( getLocalFile("haizhicommon/hzlib/skip_words/test_question_skip_yes.human.txt"), 1 ),
+        ( getLocalFile("haizhicommon/hzlib/skip_words/test_question_skip_no.human.txt"), 0 ),
     ]
     tests = []
     for filename, expect in filenames:
@@ -149,7 +151,65 @@ def test():
 
     libfile.lines2file(false_positive, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_positive.txt"))
     libfile.lines2file(false_negative, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_negative.txt"))
+    # libfile.lines2file(libdata.items2sample(true_negative, 1500 if len(true_negative)>1500 else len(true_negative)), \
+    # getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_true_negative.txt"))
     print json.dumps(gcounter, ensure_ascii=False),"\n\n------ all done"
+
+def removeLen1Word(words):
+    new_words = set()
+    for word in words:
+        if len(word) > 1:
+            new_words.add(word)
+    return new_words
+
+def clean_skip_words_all():
+    filepath_skip_words_all_new = getTheFile("model/skip_words_all_new.human.txt")
+    filepath_skip_words_all_auto = getLocalFile("haizhicommon/hzlib/skip_words/test_question_all.auto.txt")
+
+    skip_words_all_new = libfile.file2list(filepath_skip_words_all_new)
+
+
+    to_remove = set()
+    for i in range(0,len(skip_words_all_new)):
+        for j in range(i+1,len(skip_words_all_new)):
+            if skip_words_all_new[i] in skip_words_all_new[j]:
+                to_remove.add(skip_words_all_new[j])
+            elif skip_words_all_new[j] in skip_words_all_new[i]:
+                to_remove.add(skip_words_all_new[i])
+    print "to remove ", len(to_remove)
+    libfile.lines2file(sorted(list(to_remove)), getTheFile("model/skip_words_all_to_remove.txt"))
+
+    skip_words_all_new = set(skip_words_all_new)
+    skip_words_all_new.difference_update(to_remove)
+    print "skip_words_all_new after removing to_remove", len(skip_words_all_new)
+
+    skip_words_all_auto = libfile.file2list(filepath_skip_words_all_auto)
+    skip_words_all_auto = set(skip_words_all_auto)
+
+    print "skip_words_all_new ", len(skip_words_all_new)
+    print "skip_words_all_auto ", len(skip_words_all_auto)
+
+    skip_words_all_new = removeLen1Word(skip_words_all_new)
+    skip_words_all_auto = removeLen1Word(skip_words_all_auto)
+
+    print "skip_words_all_new after remove len 1", len(skip_words_all_new)
+    print "skip_words_all_auto after remove len 1", len(skip_words_all_auto)
+
+    skip_words_all_core = skip_words_all_new.intersection(skip_words_all_auto)
+    skip_words_all_new.difference_update(skip_words_all_core)
+
+    print "skip_words_all_core ", len(skip_words_all_core)
+
+    api = ZhidaoNlp(debug=True)
+    skip_words_all_diff = set()
+    for word in skip_words_all_new:
+        detected_skip_words = api.detect_skip_words(word, skip_words_all_core)
+        if len(detected_skip_words) == 0:
+            skip_words_all_diff.add(word)
+    print "skip_words_all_diff ", len(skip_words_all_diff)
+
+    libfile.lines2file(sorted(list(skip_words_all_core)), getTheFile("model/skip_words_all_core.txt"))
+    libfile.lines2file(sorted(list(skip_words_all_diff)), getTheFile("model/skip_words_all_diff.txt"))
 
 
 
@@ -167,7 +227,8 @@ def main():
     elif "learn" == option:
         learn_skip_words_0619()
 
-
+    elif "clean_skip_words_all" == option:
+        clean_skip_words_all()
 
 
 if __name__ == "__main__":
