@@ -105,6 +105,32 @@ class ZhidaoNlp():
         else:
             return False
 
+    def filter_chat(self, q, a):
+        qa = q+a
+
+        zhstr = re.sub(ur"[^\u4E00-\u9FA5]","", a)
+        if len(zhstr)<2:
+            return u"无中文"
+
+        if re.search(ur"几[岁]|今年|今天|生日|联系|邮箱|电话|手机|号码|地址",qa):
+            return u"个性化"
+
+        if re.search(ur"采纳|百度|知乎|用户|楼[主上下]|度娘|经验|推荐|积分|粉丝|http|ftp|php|ps|网盘|链接|答题", qa):
+            return u"网络"
+
+        return False
+
+    def get_chat_label(self, q, a):
+        qa = q+a
+
+        if re.search(ur"百科|翻译|日语|汉语|英语|介绍|解释|理解|说明", q):
+            return u"服务"
+
+        words =self.detect_skip_words(qa)
+        if words:
+            return u"敏感：{}".format(u",".join(words))
+
+        return u""
 
     def clean_question(self, question):
         question_clean = question
@@ -249,7 +275,7 @@ class ZhidaoFetch():
         return result_answers
 
 
-    def select_top_n_chat_0622(self, query, search_result_json, result_limit=3, answer_len_limit=30, question_len_limit=20, question_match_limit=0):
+    def select_top_n_chat_0622(self, query, search_result_json, result_limit=3, answer_len_limit=30, question_len_limit=20, question_match_limit=0.4):
         result_answers = []
 
         for item in search_result_json:
@@ -266,9 +292,13 @@ class ZhidaoFetch():
                 #print "skip question_len_limit", len(item["question"])
                 continue
 
+            if self.api_nlp.filter_chat(item["question"], item["answers"]):
+                continue
+
             question_match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
 #            question_match_score_b = difflib.SequenceMatcher(None,  item["question"], query).ratio()
             item["match_score"] = question_match_score
+            item["label"] = self.api_nlp.get_chat_label(item["question"], item["answers"])
 
             #skip not matching questions
             if (question_match_score < question_match_limit):
