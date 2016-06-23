@@ -150,18 +150,21 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
     flag_slack = (flag_prod and worker_id == 0)
 
     job_name = os.path.basename(filename_input).replace(".txt","")
+    output_dir = "output0623"
     if flag_batch:
-        filename_output_xls = getLocalFile("output/{}.worker_{}.xls".format(job_name, worker_id))
-        filename_output_json = getLocalFile("output/{}.{}_worker.json.txt".format(job_name, worker_id))
+        filename_output_xls = getLocalFile("{}/{}.{}_worker.xls".format(output_dir, job_name, worker_id))
+        filename_output_xls2 = getLocalFile("{}/{}.{}_worker2.xls".format(output_dir, job_name, worker_id))
+        filename_output_json = getLocalFile("{}/{}.{}_worker.json.txt".format(output_dir, job_name, worker_id))
     else:
-        filename_output_xls = getLocalFile("output/{}.batch_{}.all.xls".format(job_name, config_index))
-        filename_output_json = getLocalFile("output/{}.batch_{}.all.json.txt".format(job_name, config_index))
+        filename_output_xls = getLocalFile("{}/{}.batch_{}.all.xls".format(output_dir, job_name, config_index))
+        filename_output_xls2 = getLocalFile("{}/{}.batch_{}.all2.xls".format(output_dir, job_name, config_index))
+        filename_output_json = getLocalFile("{}/{}.batch_{}.all.json.txt".format(output_dir, job_name, config_index))
 
     CONFIG ={
         "local":{
-                "batch_id": "zhidao-chat4xl0621-20160621",
+                "batch_id": "zhidao-search0623-20160621",
                 "crawl_http_method": "get",
-                "crawl_gap": 5,
+                "crawl_gap": 3,
                 "crawl_use_js_engine": False,
                 "crawl_timeout": 10,
                 "crawl_http_headers": {},
@@ -172,9 +175,9 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                 "cache_server": "http://192.168.1.179:8000"
             },
         "prod":{
-                "batch_id": "zhidao-chat4xl0621-20160621",
+                "batch_id": "zhidao-search0623-20160621",
                 "crawl_http_method": "get",
-                "crawl_gap": 5,
+                "crawl_gap": 3,
                 "crawl_use_js_engine": False,
                 "crawl_timeout": 10,
                 "crawl_http_headers": {},
@@ -201,7 +204,8 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
     ts_lap_start = time.time()
     counter = collections.Counter()
     if limit:
-        list_query = list_query[:limit]
+        step = len(list_query)/limit
+        list_query = [list_query[i*step] for i in range(limit)]
     print len(list_query)
 
     if flag_slack:
@@ -217,7 +221,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
     with codecs.open(filename_output_json, 'w') as fjson:
         for query in list_query:
 
-            if counter["visited"] % 100 ==0:
+            if counter["visited"] % 1000 ==0:
                 print datetime.datetime.now().isoformat(), counter
             counter["visited"]+=1
             if flag_batch:
@@ -253,7 +257,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                     #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
                     results.append(item)
                     item["query"] = query
-                    for p in ["source","result_index"]:
+                    for p in ["source"]:
                         counter["{}_{}".format(p, item[p])] +=1
                     for p in [  "question", "answers"]:
                         if p in item:
@@ -263,13 +267,14 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                 counter["missing_data"] +=1
                 pass
 
-    for item in results:
-        item["label"]=""
+
 
     #libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output_xls)
     #libfile.writeExcel(results, [ "id","is_good", "match_score", "result_index", "cnt_like",  "cnt_answer", "query", "question", "answers"], filename_output_xls, page_size=5000)
     #print filename_output_xls
-    libfile.writeExcel(results, [ "label","query", "answers", "match_score", "question"], filename_output_xls)
+#    libfile.writeExcel(results, [ "label","query", "answers", "match_score", "question"], filename_output_xls)
+    libfile.writeExcel(results, [ "label","question", "answers"], filename_output_xls)
+    libfile.writeExcel(results, [ "label","query", "answers", "match_score"], filename_output_xls2)
 
 
     duration_sec =  int( time.time() -ts_start )
