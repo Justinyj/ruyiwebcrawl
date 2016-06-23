@@ -27,7 +27,7 @@ def gen_es_id(text):
     #assert question as utf8
     if isinstance(text, unicode):
         text = text.encode('utf-8')
-    return hashlib.md5(text).hexdigest()
+    return hashlib.sha1(text).hexdigest()
 
 def get_esconfig(config_option):
     filename_esconfig = getTheFile("esconfig.{}.json".format(config_option))
