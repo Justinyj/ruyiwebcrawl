@@ -30,7 +30,7 @@ if [ "$1" = "aws-start" ]; then
 fi
 
 if [ "$1" = "aws-run" ]; then
-  python hzlib/api_aws.py chat4xianliao_0621 server 4 chat4xl_prefetch ~/.ssh/crawl-tokyo.pem
+  python hzlib/api_aws.py chat4xianliao_0621 server 10 chat4xl_prefetch ~/.ssh/crawl-tokyo.pem
 fi
 
 if [ "$1" = "aws-stop" ]; then

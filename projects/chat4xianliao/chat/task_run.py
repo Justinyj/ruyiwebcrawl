@@ -88,6 +88,13 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
     flag_prod = (config_index == "prod")
     flag_slack = (flag_prod and worker_id == 0)
 
+    job_name = os.path.basename(filename_input).replace(".txt","")
+    if flag_batch:
+        filename_output_xls = getLocalFile("output/{}.worker_{}.xls".format(job_name, worker_id))
+        filename_output_json = getLocalFile("output/{}.{}_worker.json.txt".format(job_name, worker_id))
+    else:
+        filename_output_xls = getLocalFile("output/{}.batch_{}.all.xls".format(job_name, config_index))
+        filename_output_json = getLocalFile("output/{}.batch_{}.all.json.txt".format(job_name, config_index))
 
     CONFIG ={
         "local":{
@@ -146,62 +153,62 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
             config.get("debug",False)) )
 
     results = []
-    for query in list_query:
+    with codecs.open(filename_output_json, 'w') as fjson:
+        for query in list_query:
 
-        if counter["visited"] % 100 ==0:
-            print datetime.datetime.now().isoformat(), counter
-        counter["visited"]+=1
-        if flag_batch:
-            if (counter["visited"] % worker_num) != worker_id:
-                counter["skipped_peer"]+=1
-                continue
+            if counter["visited"] % 100 ==0:
+                print datetime.datetime.now().isoformat(), counter
+            counter["visited"]+=1
+            if flag_batch:
+                if (counter["visited"] % worker_num) != worker_id:
+                    counter["skipped_peer"]+=1
+                    continue
 
 
-        counter["processed"]+=1
-        if counter["processed"] % 1000 == 0:
-            if flag_slack:
-                slack_msg( "AWS {}/{}. working {}. lap {} seconds. {}".format(
-                        worker_id,
-                        worker_num,
-                        config["batch_id"],
-                        int( time.time() - ts_lap_start ),
-                        json.dumps(counter) ))
-                ts_lap_start = time.time()
+            counter["processed"]+=1
+            if counter["processed"] % 1000 == 0:
+                if flag_slack:
+                    slack_msg( "AWS {}/{}. working {}. lap {} seconds. {}".format(
+                            worker_id,
+                            worker_num,
+                            config["batch_id"],
+                            int( time.time() - ts_lap_start ),
+                            json.dumps(counter) ))
+                    ts_lap_start = time.time()
 
-        #ret = api.search_all(query)
-        ret = api.search_chat_top_n(query, 3 )
+            #ret = api.search_all(query)
+            ret = api.search_chat_top_n(query, 3 )
 
-        if ret and ret["items"]:
-            counter["has_result"] +=1
-            counter["total_qa"] += len(ret["items"])
-            if config.get("debug"):
-                print len(ret["items"]), json.dumps(ret, ensure_ascii=False)
-            for item in ret["items"]:
-                #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
-                results.append(item)
-                item["query"] = query
-                for p in ["source","result_index"]:
-                    counter["{}_{}".format(p, item[p])] +=1
-                for p in [  "question", "answers"]:
-                    if p in item:
-                        if not isinstance(item[p], unicode):
-                            item[p] = item[p].decode("gb18030")
-        else:
-            counter["missing_data"] +=1
-            pass
+            if ret:
+                ret["query"] = query
+                fjson.write(u"{}\n".format(json.dumps(ret, ensure_ascii=False)))
+
+            if ret and ret.get("items"):
+                counter["has_result"] +=1
+                counter["total_qa"] += len(ret["items"])
+                if config.get("debug"):
+                    print len(ret["items"]), json.dumps(ret, ensure_ascii=False)
+                for item in ret["items"]:
+                    #print json.dumps(item, ensure_ascii=False, indent=4, sort_keys=True)
+                    results.append(item)
+                    item["query"] = query
+                    for p in ["source","result_index"]:
+                        counter["{}_{}".format(p, item[p])] +=1
+                    for p in [  "question", "answers"]:
+                        if p in item:
+                            if not isinstance(item[p], unicode):
+                                item[p] = item[p].decode("gb18030")
+            else:
+                counter["missing_data"] +=1
+                pass
 
     for item in results:
         item["label"]=""
 
-    job_name = os.path.basename(filename_input).replace(".txt","")
-    if flag_batch:
-        filename_output = getLocalFile("output/{}.worker_{}.xls".format(job_name, worker_id))
-    else:
-        filename_output = getLocalFile("output/{}.{}.xls".format(job_name, "all"))
-    #libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output)
-    #libfile.writeExcel(results, [ "id","is_good", "match_score", "result_index", "cnt_like",  "cnt_answer", "query", "question", "answers"], filename_output, page_size=5000)
-    #print filename_output
-    libfile.writeExcel(results, [ "label","query", "answers", "match_score", "question"], filename_output)
+    #libfile.writeExcel(results, [ "id", "source", "result_index", "cnt_like",  "cnt_answer", "query", "question_id", "question", "answers"], filename_output_xls)
+    #libfile.writeExcel(results, [ "id","is_good", "match_score", "result_index", "cnt_like",  "cnt_answer", "query", "question", "answers"], filename_output_xls, page_size=5000)
+    #print filename_output_xls
+    libfile.writeExcel(results, [ "label","query", "answers", "match_score", "question"], filename_output_xls)
 
 
     duration_sec =  int( time.time() -ts_start )
@@ -296,7 +303,11 @@ def main():
             print "fetch mono"
             filename_input = sys.argv[2]
             filename_input = getLocalFile(filename_input)
-            fetch_detail(filename_input=filename_input)
+            limit = None
+            if len(sys.argv)>3:
+                limit = int(sys.argv[3])
+
+            fetch_detail(limit =limit, filename_input=filename_input)
 
     elif "fetch_debug" == option:
         """
@@ -305,7 +316,10 @@ def main():
         print "fetch_debug mono"
         filename_input = sys.argv[2]
         filename_input = getLocalFile(filename_input)
-        fetch_detail(limit=10, config_index="local", filename_input=filename_input)
+        limit = 10
+        if len(sys.argv)>3:
+            limit = int(sys.argv[3])
+        fetch_detail(limit=limit, config_index="local", filename_input=filename_input)
 
     elif "clean_cmu" == option:
         clean_cmu()

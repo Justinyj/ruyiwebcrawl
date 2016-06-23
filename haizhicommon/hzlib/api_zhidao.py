@@ -249,7 +249,7 @@ class ZhidaoFetch():
         return result_answers
 
 
-    def select_top_n_chat_0622(self, query, search_result_json, result_limit=3, answer_len_limit=30, question_len_limit=20, question_match_limit=0.4):
+    def select_top_n_chat_0622(self, query, search_result_json, result_limit=3, answer_len_limit=30, question_len_limit=20, question_match_limit=0):
         result_answers = []
 
         for item in search_result_json:
@@ -267,7 +267,7 @@ class ZhidaoFetch():
                 continue
 
             question_match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
-            question_match_score_b = difflib.SequenceMatcher(None,  item["question"], query).ratio()
+#            question_match_score_b = difflib.SequenceMatcher(None,  item["question"], query).ratio()
             item["match_score"] = question_match_score
 
             #skip not matching questions
@@ -302,6 +302,7 @@ class ZhidaoFetch():
         ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
         if content:
             ret ["content_len"] = len(content)
+            #print type(content)
             #print content
 
         if select_best and content:
@@ -313,6 +314,7 @@ class ZhidaoFetch():
             answer_items = self.select_top_n_chat_0622(query_unicode, search_result_json, num_answers_needed)
             #print "select_best", len(answer_items)
             ret ["items"] = answer_items
+            ret ["items_all"] = search_result_json
             # if answer_items:
             #     index = 0
             #     for item in answer_items:
@@ -479,7 +481,7 @@ class ZhidaoFetch():
                     self.config["crawl_gap"],
                     self.config["crawl_http_method"],
                     self.config["crawl_timeout"],
-                    encoding=None,
+                    encoding='gb18030',
                     redirect_check=True,
                     error_check=False,
                     refresh=False)
