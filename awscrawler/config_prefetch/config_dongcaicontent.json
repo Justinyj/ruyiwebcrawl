@@ -8,7 +8,7 @@
 		"crawl_http_method": "get",
 		"crawl_use_js_engine": false,
 		"crawl_timeout": 10,
-		"aws_machine_number": 600,
+		"aws_machine_number": 500,
 		"note": "获取东方财富公告",
 		"debug": false,
 		"filename_urls": "/home/admin/url_per_notice.txt"
