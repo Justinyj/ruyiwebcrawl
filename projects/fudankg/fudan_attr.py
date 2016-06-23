@@ -116,18 +116,23 @@ def generate_thousand_words():
     obj = FudanAttr()
     obj.prepare_entities()
 
-def generate_entity_avp_excel():
-    result = []
-    obj = FudanAttr()
 
+def get_entity_avps_results():
+    results = []
+    obj = FudanAttr()
     with open('picked_thousand_words.txt') as fd:
         for word in fd:
             word = word.strip()
             for entity in obj.fudan_entities(word):
-                result.append((word, entity, obj.fudan_attrvalue(entity)))
+                results.append((word, entity, obj.fudan_attrvalue(entity)))
+    return results
 
-    obj.fudan_attr_count(result)
-    obj.fudan_gen_excel(result)
+
+def generate_entity_avp_excel():
+    results = get_entity_avps_result()
+    obj = FudanAttr()
+    obj.fudan_attr_count(results)
+    obj.fudan_gen_excel(results)
 
 
 if __name__ == '__main__':
