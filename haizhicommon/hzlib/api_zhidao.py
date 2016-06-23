@@ -115,7 +115,7 @@ class ZhidaoNlp():
         if re.search(ur"几[岁]|今年|今天|生日|联系|邮箱|电话|手机|号码|地址",qa):
             return u"个性化"
 
-        if re.search(ur"采纳|百度|知乎|用户|楼[主上下]|度娘|经验|推荐|积分|粉丝|http|ftp|php|ps|网盘|链接|答题", qa):
+        if re.search(ur"采纳|百度|知乎|求书|请问|用户|楼[主上下]|度娘|经验|推荐|积分|附件|跪求|粉丝|http|ftp|php|ps|网盘|链接|答题", qa):
             return u"网络"
 
         return False
@@ -125,6 +125,12 @@ class ZhidaoNlp():
 
         if re.search(ur"百科|翻译|日语|汉语|英语|介绍|解释|理解|说明", q):
             return u"服务"
+
+        if re.search(ur"[这那谁]一?[个是]+",q):
+            return u"指代"
+
+        if re.search(ur"[ ，？！。：,\.\?\!\t][\u4E00-\u9FA5]",q):
+            return u"断句"
 
         words =self.detect_skip_words(qa)
         if words:
