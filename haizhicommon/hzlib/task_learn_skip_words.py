@@ -19,10 +19,15 @@ import libdata
 import glob
 from api_zhidao import ZhidaoNlp
 
+false_positive = []
+false_negative = []
 
 gcounter = collections.Counter()
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
+
+def getLocalFile(filename):
+    return os.path.join(os.path.abspath("../../local/"), filename)
 
 
 def fn_classify_0619(line, api, test_expect=None, test_data=None):
@@ -38,8 +43,12 @@ def fn_classify_0619(line, api, test_expect=None, test_data=None):
 
     if len(detected_skip_words) == 0:
         actual = 0
+        if test_expect == 0:
+            false_negative.append(line + "\t" + u"\t".join(list(detected_skip_words)))
     else:
         actual = 1
+        if test_expect == 1:
+            false_positive.append(line + "\t" + u"\t".join(list(detected_skip_words)))
 
     if api.debug:
         print actual, "\n", u"\n".join(list(detected_skip_words))
@@ -116,13 +125,32 @@ def learn_skip_words_0619():
     setattr(api, "skip_words_all", skip_words_all)
     libdata.eval_fn(tests, target_names, fn_classify_0619, api)
 
-
     print json.dumps(gcounter, ensure_ascii=False),"\n\n------ all done"
 
-def test(query):
-    api = HzNlp(debug=True)
-    print api.skip
-    print "test"
+def test():
+    api = ZhidaoNlp(debug=False)
+    filenames = [
+        # ( getLocalFile("chat4xianliao/chat/input/chat8xianer12w.txt"), 0 ),
+        ( getLocalFile("chat4xianliao/chat/input/chat8xianer12w.txt"), 1 ),
+    ]
+    tests = []
+    for filename, expect in filenames:
+        entry = {
+            "data":libfile.file2list(filename),
+            "expect": expect
+        }
+        tests.append(entry)
+        gcounter["from_{}".format(os.path.basename(filename))] = len(entry["data"])
+
+    target_names = [u"正常", u"敏感词"]
+    all_detected_skip_words = collections.Counter()
+    setattr(api, "all_detected_skip_words", all_detected_skip_words)
+    libdata.eval_fn(tests, target_names, fn_classify_0619, api)
+
+    libfile.lines2file(false_positive, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_positive.txt"))
+    libfile.lines2file(false_negative, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_negative.txt"))
+    print json.dumps(gcounter, ensure_ascii=False),"\n\n------ all done"
+
 
 
 def main():
@@ -134,8 +162,7 @@ def main():
     option= sys.argv[1]
 
     if "test" == option:
-        query = sys.argv[2]
-        fn_classify_0619(query, api)
+        test()
 
     elif "learn" == option:
         learn_skip_words_0619()
