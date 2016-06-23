@@ -90,35 +90,59 @@ def read_kidsfaq2w(limit=10):
 def read_longquan18w():
 
     # test
-    print re.compile(u"师父").search(u"师父")
 
     data = libfile.readExcel(["count", "question"], LONGQUAN_18W_FILENAME)
-    result = []
+    result = set()
     for sheet in data:
         for item in data[sheet]:
             q = clean_longquan_question(item["question"])
             if q and len(q) > 2:
-                result.append(q)
+                result.add(q)
     print "Number of longquan question ", len(result)
     libfile.lines2file(result, LONGQUAN_18W_FILENAME_QUESTION)
 
 def clean_longquan_question(question):
+    question = question.strip()
     if not question:
         return ""
 
-    if re.compile(u"|尼玛|释迦牟尼|六根|师兄|观音|菩萨|出家|般若|波罗蜜|修行|方丈|三宝|三藏|菩提|素斋|业障|宗派|五蕴|开悟|参禅|涅槃|慧根|我执|众生|心经|俗家|受戒|龙泉|和尚|法师|佛|禪|禅|丈|淫|寺").search(question):
-        print question
+    if re.compile(ur"^[A-Za-z\*\~\{\}\(\)\[\]\+\?\^\$\"\\\'\|\|\-\.\^\_\d\s,;/:~<>!，。、！？（）＋‘’《》｛｝＊…～★【】“” ｜〈〉︿#％@=&`０１２３４５６７８９：；＜＞＠［］～￥·—『』]+$") \
+     .search(question):
+        # print question
         return ""
 
-    question = re.sub(u'师傅', u'师父', question)
-    question = re.sub(u'贤二(师父|师傅)|^贤二|^你师父|^师父', u'你', question)
-    question = re.sub(u'问你师父$|问师父', u'别人', question)
-
-    if re.compile(u"师父|贤二").search(question):
-        print question
+    if re.compile(ur"|善哉|尼玛|释迦牟尼|六根|师兄|观音|菩萨|出家|般若|波罗蜜|修行|方丈|三宝|三藏|菩提| \
+    素斋|业障|宗派|五蕴|开悟|参禅|涅槃|慧根|我执|众生|心经|俗家|受戒|龙泉|和尚|法师|佛|禪|禅|丈|淫|寺") \
+    .search(question):
+        # print question
         return ""
 
-    return question
+    if re.compile(ur"下一句|馅儿|轮回|出家|诗|僧|阿弥|色即是空|唵|经书|经文|男无|释迦|[念诵].{0,2}经") \
+    .search(question):
+        # print question
+        return ""
+
+    if re.compile(ur"师[叔公妹哥母]|师父|贤二|二贤|师傅").search(question):
+        # print question
+        return ""
+
+    if re.compile(ur"[\dA-Za-z●☆]").search(question):
+        # print question
+        return ""
+
+    # question = re.sub(ur'师傅', u'师父', question)
+    # question = re.sub(ur'贤二(师父|师傅)|贤二|^你师父|^师父|二贤', u'', question)
+    # question = re.sub(ur'问你师父$|问师父', u'问别人', question)
+    question = re.sub(ur'|🙏|\.{3,}|\t|\[.{1,2}\]', "", question)
+    question = re.sub(ur'/?:[A-Za-z\*\~\{\}\(\)\[\]\+\?\^\$\"\\\'\|\|\-\.\^\_\d,;/:~<>!，。、！？\
+    （）＋‘’《》｛｝＊…～★【】“” ｜〈〉︿#％@=&`０１２３４５６７８９：；＜＞＠［］～￥·—『』]{1,4}', "", question)
+    question = question.strip()
+    question = re.sub(ur".+\s+.+", "，", question)
+
+    if len(question) > 15:
+        return ""
+
+    return question.strip()
 
 def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod", filename_input=None):
     flag_batch = (worker_id is not None and worker_num is not None and worker_num>1)
@@ -345,6 +369,9 @@ def main():
 
     elif "clean_cmu" == option:
         clean_cmu()
+
+    elif "read_longquan18w" == option:
+        read_longquan18w()
 
     elif "run_chat_realtime" == option:
 
