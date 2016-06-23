@@ -39,19 +39,19 @@ gcounter = collections.Counter()
 ES_DATASET_CONFIG ={
     "chat8cmu6w":
     {   "description":"知道短问答",
-        "es_index":"ruyiwebcrawl_zhidaoqa_0623",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0624",
         "es_type":"default",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
     "chat8xianer12w":
     {   "description":"知道短问答 chat8xianer12w",
-        "es_index":"ruyiwebcrawl_zhidaoqa_0623",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0624",
         "es_type":"chat8xianer12w",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
     "xianer12w":
         {   "description":"贤二短问答",
-            "es_index":"ruyiwebcrawl_zhidaoqa_0623",
+            "es_index":"ruyiwebcrawl_zhidaoqa_0624",
             "es_type":"xianer12w",
             "filepath_mapping": getTheFile("faq_mappings.json"),
     }
@@ -66,11 +66,27 @@ class ZhidaoQa():
         if not self.dryrun:
             es_api.batch_init(self.esconfig, self.datasets.values())
 
-    def index_chat(self, dataset_index = "chat8cmu6w"):
+    def index_chat(self, dataset_index = "chat8cmu6w", option=None):
         dirname = getLocalFile( "output0623/{}*worker*xls".format(dataset_index) )
         print dirname
+        filenames = []
 
-        for filename in glob.glob(dirname):
+        if option and option is "query":
+            for filename in glob.glob(dirname):
+                if not "query" in filename:
+                    continue
+                filenames.append(filename)
+        else:
+            for filename in glob.glob(dirname):
+                if "query" in filename:
+                    continue
+                filenames.append(filename)
+
+        self._index_chat(filenames, dataset_index)
+
+    def _index_chat(self, filenames, dataset_index = "chat8cmu6w"):
+        ids = set()
+        for filename in filenames:
             print filename
             gcounter["files"]+=1
             ret = libfile.readExcel(["category","question","answers"], filename, start_row=1)
@@ -130,6 +146,11 @@ def main():
     option= sys.argv[1]
 
     if "index_chat" == option:
+        """
+            python chat/task_es.py index_chat chat8xianer12w
+            python chat/task_es.py index_chat chat8cmu6w
+            python chat/task_es.py index_xianer12w
+        """
         dataset_index = "chat8cmu6w"
         if len(sys.argv)>2:
             dataset_index = sys.argv[2]
