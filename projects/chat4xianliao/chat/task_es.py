@@ -37,32 +37,31 @@ def getTheFile(filename):
 gcounter = collections.Counter()
 
 ES_DATASET_CONFIG ={
-    "local":{ "qa":
-        {   "description":"知道短问答",
-            "es_index":"ruyiwebcrawl_zhidaoqa_0623",
-            "es_type":"default",
-            "filepath_mapping": getTheFile("faq_mappings.json"),
-        },
+    "zhidao4chat":
+    {   "description":"知道短问答",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0623",
+        "es_type":"default",
+        "filepath_mapping": getTheFile("faq_mappings.json"),
     },
-    "prod":{ "qa":
-        {   "description":"知道短问答",
+    "xianer12w":
+        {   "description":"贤二短问答",
             "es_index":"ruyiwebcrawl_zhidaoqa_0623",
-            "es_type":"default",
+            "es_type":"xianer12w",
             "filepath_mapping": getTheFile("faq_mappings.json"),
-        },
     }
 }
 
 class ZhidaoQa():
     def __init__(self, config_option="prod", dryrun=True):
-        self.esdata = []
+        self.esdata = collections.defaultdict(list)
         self.dryrun = dryrun
-        self.datasets = ES_DATASET_CONFIG[config_option]
+        self.datasets = ES_DATASET_CONFIG
         self.esconfig = es_api.get_esconfig(config_option)
         if not self.dryrun:
             es_api.batch_init(self.esconfig, self.datasets.values())
 
-    def index(self):
+    def index_chat(self):
+        dataset_index = "zhidao4chat"
         dirname = getLocalFile("output0623/*worker*xls")
         print dirname
 
@@ -81,20 +80,36 @@ class ZhidaoQa():
                         item_new = {}
                         for p in ["question","answers","id"]:
                             item_new[p] = item[p]
-                        self.upload(item_new, dataset_index="qa")
-        self.upload(dataset_index="qa")
+                        self.upload(dataset_index, item_new)
+        self.upload(dataset_index)
 
-    def upload(self, item=None, dataset_index="qa"):
+    def index_xianer12w(self):
+        dataset_index = "xianer12w"
+        filename = getLocalFile("input/chat8xianer12w.txt")
+        for line in libfile.file2list(filename):
+
+            gcounter["lines"]+=1
+            item = {
+                "question": line,
+                "answer": u"呵呵",
+                "id": es_api.gen_es_id(line)
+            }
+
+            self.upload(dataset_index, item)
+        self.upload(dataset_index)
+
+    def upload(self, dataset_index, item=None):
+        bucket = self.esdata[dataset_index]
         if item:
-            self.esdata.append(item)
+            bucket.append(item)
 
-        if item is None or len(self.esdata) == 1000:
+        if item is None or len(bucket) == 5000:
             if not self.dryrun:
-                es_api.run_esbulk_rows(self.esdata, "index", self.esconfig, self.datasets[dataset_index] )
+                es_api.run_esbulk_rows(bucket, "index", self.esconfig, self.datasets[dataset_index] )
             else:
-                print "dryrun, upload ", len(self.esdata)
-            gcounter["uploaded_esdata_{}".format(dataset_index)] +=  len(self.esdata)
-            self.esdata = []
+                print "dryrun, upload ", len(bucket)
+            gcounter["uploaded_esdata_{}".format(dataset_index)] +=  len(bucket)
+            self.esdata[dataset_index] = []
 
 
 
@@ -109,12 +124,15 @@ def main():
 
     option= sys.argv[1]
 
-    if "index" == option:
+    if "index_chat" == option:
         agt = ZhidaoQa(config_option="prod", dryrun=False)
-        agt.index()
-    elif "index_debug" == option:
+        agt.index_chat()
+    elif "index_chat_debug" == option:
         agt = ZhidaoQa(config_option="local", dryrun=False)
-        agt.index()
+        agt.index_chat()
+    elif "index_xianer12w" == option:
+        agt = ZhidaoQa(config_option="prod", dryrun=False)
+        agt.index_xianer12w()
     else:
         print "unsupported"
 
