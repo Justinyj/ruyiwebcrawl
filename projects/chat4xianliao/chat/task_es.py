@@ -37,10 +37,16 @@ def getTheFile(filename):
 gcounter = collections.Counter()
 
 ES_DATASET_CONFIG ={
-    "zhidao4chat":
+    "chat8cmu6w":
     {   "description":"知道短问答",
         "es_index":"ruyiwebcrawl_zhidaoqa_0623",
         "es_type":"default",
+        "filepath_mapping": getTheFile("faq_mappings.json"),
+    },
+    "chat8xianer12w":
+    {   "description":"知道短问答 chat8xianer12w",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0623",
+        "es_type":"chat8xianer12w",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
     "xianer12w":
@@ -60,9 +66,8 @@ class ZhidaoQa():
         if not self.dryrun:
             es_api.batch_init(self.esconfig, self.datasets.values())
 
-    def index_chat(self):
-        dataset_index = "zhidao4chat"
-        dirname = getLocalFile("output0623/*worker*xls")
+    def index_chat(self, dataset_index = "chat8cmu6w"):
+        dirname = getLocalFile( "output0623/{}*worker*xls".format(dataset_index) )
         print dirname
 
         for filename in glob.glob(dirname):
@@ -91,7 +96,7 @@ class ZhidaoQa():
             gcounter["lines"]+=1
             item = {
                 "question": line,
-                "answer": u"呵呵",
+                "answers": u"呵呵",
                 "id": es_api.gen_es_id(line)
             }
 
@@ -125,11 +130,17 @@ def main():
     option= sys.argv[1]
 
     if "index_chat" == option:
+        dataset_index = "chat8cmu6w"
+        if len(sys.argv)>2:
+            dataset_index = sys.argv[2]
         agt = ZhidaoQa(config_option="prod", dryrun=False)
-        agt.index_chat()
+        agt.index_chat(dataset_index)
     elif "index_chat_debug" == option:
+        dataset_index = "chat8cmu6w"
+        if len(sys.argv)>2:
+            dataset_index = sys.argv[2]
         agt = ZhidaoQa(config_option="local", dryrun=False)
-        agt.index_chat()
+        agt.index_chat(dataset_index)
     elif "index_xianer12w" == option:
         agt = ZhidaoQa(config_option="prod", dryrun=False)
         agt.index_xianer12w()

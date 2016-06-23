@@ -16,6 +16,44 @@ def extract_zh(text):
     else:
         return text
 
+class Enum(set):
+    def __getattr__(self, name):
+        if name in self:
+            return name.lower()
+        raise AttributeError
+
+def jsonp(query, output):
+    jsonp = query.get("callback", query.get("jsonp"))
+    if jsonp:
+        if type(output) in [list,dict]:
+            output =  json.dumps(output, sort_keys=True)
+        return "{0}({1})".format(jsonp, output)
+    else:
+        return output
+
+def json_update_by_copy(json_to, json_from, list_field, flag_incremental):
+    for field in list_field:
+        if json_from.get(field):
+            if flag_incremental:
+                if not json_to.get(field):
+                   json_to[field] = json_from.get(field)
+            else:
+                json_to[field] = json_from.get(field)
+
+def any2utf8(data):
+    ret = data
+    if type(data) is dict:
+        ret = {}
+        for key in data:
+            ret[any2utf8(key)] = any2utf8(data[key])
+    elif type(data) is list:
+        ret = []
+        for item in data:
+            ret.append(any2utf8(item))
+    elif type(data) is unicode:
+        ret = data.encode("utf-8")
+    return ret
+    
 def print_json(data):
     print json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True)
 
