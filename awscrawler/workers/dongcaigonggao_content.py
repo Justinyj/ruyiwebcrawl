@@ -43,7 +43,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         gap,
         timeout=timeout,
         encoding='gb18030')
-    get_logger(batch_id, today_str, '/opt/service/log/').info('stop download content')
 
     if kwargs and kwargs.get("debug"):
         print(len(content), "\n", content[:1000])
@@ -71,9 +70,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     else:
         body = None
     notice_content = json.dumps({'url': url, 'title': title, 'public_date': public_date, 'body': body})
-    get_logger(batch_id, today_str, '/opt/service/log/').info('stop parsing content')
 
     get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
     ret = process._cache.post(url, notice_content)
-    get_logger(batch_id, today_str, '/opt/service/log/').info('stop post json')
     return ret

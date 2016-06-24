@@ -85,12 +85,15 @@ class Queue(object):
 
     def put(self, *items):
         """ put item(s) into queue """
-        if items:
-            return self.conn.sadd(self.key, *items)
-        else:
+        if not items:
             return 0
 
-    put_init = put
+        items, items_tail = items[:self.batch_size], items[self.batch_size:]
+        pipeline = self.conn.pipeline()
+        while items:
+            pipeline.sadd(self.key, *items)
+            items, items_tail = items_tail[:self.batch_size], items_tail[self.batch_size:]
+        return sum(pipeline.execute())
 
 
     def get(self, block=True, timeout=None, interval=0.1):
@@ -133,8 +136,8 @@ class Queue(object):
     def task_start_batch(self, results):
         pipeline = self.conn.pipeline()
         for result in results:
-            pipline.hincrby(self.failhash, result, 1)
-            pipline.hsetnx(self.timehash, result, time.time())
+            pipeline.hincrby(self.failhash, result, 1)
+            pipeline.hsetnx(self.timehash, result, time.time())
         pipeline.execute()
 
 
@@ -149,8 +152,8 @@ class Queue(object):
             increase successful count in record hash
         """
         pipeline = self.conn.pipeline()
-        pipline.hdel(self.failhash, result)
-        pipline.hdel(self.timehash, result)
+        pipeline.hdel(self.failhash, result)
+        pipeline.hdel(self.timehash, result)
         pipeline.execute()
 
 
@@ -217,12 +220,12 @@ class Queue(object):
 
         # it is unecessary to begin background clean when no item timeout
         time.sleep(self.timeout)
-        print('begin clean:', self.key)
+        print('{} begin clean: {}'.format(self.key, time.time()))
         while self.qsize() > 0 or self.conn.hlen(self.timehash) > 1:
             self.clean_task()
             time.sleep(60)
 
-        print('finish clean:', self.key)
+        print('{} finish clean: {}'.format(self.key, time.time()))
         self.conn.hset(self.timehash, 'background_cleaning', 0)
         return self.key
 

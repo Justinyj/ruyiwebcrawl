@@ -96,16 +96,26 @@ class GetWorker(Worker):
 
         while 1:
             today_str = datetime.now().strftime('%Y%m%d')
-            get_logger(batch_id, today_str, '/opt/service/log/').info('begin get items from queue')
+
+            if kwargs and kwargs.get("debug"):
+                get_logger(batch_id, today_str, '/opt/service/log/').info('begin get items from queue')
+
             results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
-            get_logger(batch_id, today_str, '/opt/service/log/').info('finish get items from queue')
+
+            if kwargs and kwargs.get("debug"):
+                get_logger(batch_id, today_str, '/opt/service/log/').info('finish get items from queue')
+
             if not results:
                 break
 
             for url_id in results:
-                get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
+                if kwargs and kwargs.get("debug"):
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
+
                 url = queue_dict['thinhash'].hget(url_id)
-                get_logger(batch_id, today_str, '/opt/service/log/').info('end get url from thinhash redis')
+
+                if kwargs and kwargs.get("debug"):
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('end get url from thinhash redis')
 
                 try:
                     process_status = module.process(url,
@@ -120,10 +130,14 @@ class GetWorker(Worker):
                     continue
 
                 if process_status:
-                    get_logger(batch_id, today_str, '/opt/service/log/').info('begin task done for record redis')
+                    if kwargs and kwargs.get("debug"):
+                        get_logger(batch_id, today_str, '/opt/service/log/').info('begin task done for record redis')
+
                     queue_dict['queue'].task_done(url_id)
                     Record.instance().increase_success(batch_id)
-                    get_logger(batch_id, today_str, '/opt/service/log/').info('end task done for record redis')
+
+                    if kwargs and kwargs.get("debug"):
+                        get_logger(batch_id, today_str, '/opt/service/log/').info('end task done for record redis')
 
 
 def main():
@@ -132,13 +146,14 @@ def main():
     parser.add_argument('--index', '-i', type=int, help='index of this machine in all this batch machines')
     parser.add_argument('--cookie', '-c', type=str, help='cookie for this machine')
     parser.add_argument('--timeout', '-t', type=float, default=60, help='timeout for timehash to enqueue')
+    parser.add_argument('--debug', '-d', type=bool, default=True, help='print debug info')
     option = parser.parse_args()
     if option.index:
         obj = GetWorker(option.index)
         if option.cookie:
-            obj.schedule(cookie=option.cookie, timeout=option.timeout)
+            obj.schedule(cookie=option.cookie, timeout=option.timeout, debug=option.debug)
         else:
-            obj.schedule(timeout=option.timeout)
+            obj.schedule(timeout=option.timeout, debug=option.debug)
 
 if __name__ == '__main__':
     main()

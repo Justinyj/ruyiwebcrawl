@@ -36,47 +36,51 @@ def slack(msg):
 
 def run(config):
     ts_start = time.time()
-    urls = load_urls(config["filename_urls"])
 
-    slack( u"run {} batch_id: {}, urls: {} debug: {}".format(
-        config["note"],
-        config["batch_id"],
-        len(urls),
-        config.get("debug",False)) )
-
-
-    #load urls
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start load_urls --- dryrun mode')
     else:
         print(datetime.datetime.now().isoformat(), 'start load_urls --- work mode')
 
+    mini_key = min(config["jobs"].keys())
+    partial_url = config["jobs"][mini_key]["partial_url"] if "partial_url" in config["jobs"][mini_key] else None
+    urls = load_urls(config["jobs"][mini_key]["filename_urls"], partial_url)
 
-    if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start post_job')
+    slack( u"run {} batch_id: {}, urls length: {} debug: {}".format(
+        config["note"],
+        config["jobs"][mini_key]["batch_id"],
+        len(urls),
+        config.get("debug",False)) )
+
 
     tasks = []
-    for i in range(config['job_num']):
-        if i == 0:
+    for i, v in config["jobs"].iteritems():
+        if i == mini_key:
+            if config.get("debug"):
+                print(datetime.datetime.now().isoformat(), 'start post_job ', v["batch_id"])
+
             t = post_job(
-                config["batch_id"][i],
-                config['crawl_http_method'] ,
-                config['crawl_gap'][i],
-                config["crawl_use_js_engine"],
+                v["batch_id"],
+                v["crawl_http_method"],
+                v["crawl_gap"],
+                v["crawl_use_js_engine"],
                 urls,
-                len(urls) * config['length'][i],
-                priority=config["priority"][i],
-                queue_timeout=config['crawl_timeout'])
+                len(urls) * v["length"],
+                priority=v["priority"],
+                queue_timeout=v["crawl_timeout"])
         else:
+            if config.get("debug"):
+                print(datetime.datetime.now().isoformat(), 'start post_job with delay', v["batch_id"])
+
             t = post_job(
-                config["batch_id"][i],
-                config['crawl_http_method'] ,
-                config['crawl_gap'][i],
-                config["crawl_use_js_engine"],
+                v["batch_id"],
+                v["crawl_http_method"],
+                v["crawl_gap"],
+                v["crawl_use_js_engine"],
                 [],
-                len(urls) * config['length'][i],
-                priority=config["priority"][i],
-                queue_timeout=config['crawl_timeout'],
+                len(urls) * v["length"],
+                priority=v["priority"],
+                queue_timeout=v["crawl_timeout"],
                 start_delay=180)
 
         tasks.append(t)
@@ -85,12 +89,11 @@ def run(config):
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start instances')
     if not config.get("debug"):
-        schedule = Schedule(    config['aws_machine_number'],
-                            tag=config['batch_id'][0].split('-', 1)[0],
-                            backoff_timeout=config['crawl_timeout'])
+        schedule = Schedule(config["aws_machine_number"],
+                            tag=config["jobs"][mini_key]["batch_id"][0].split('-', 1)[0],
+                            backoff_timeout=config["jobs"][mini_key]["crawl_timeout"])
 
         catch_terminate_instances_signal(schedule)
-
 
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start job, spawn')
@@ -119,10 +122,11 @@ def run(config):
         print(datetime.datetime.now().isoformat(), 'all done.  --- work mode')
 
     seconds = int(time.time() - ts_start)
-    slack( "done {}, {} seconds".format(config["batch_id"], seconds) )
+    slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"], seconds) )
 
 
-def load_urls(fname):
+def load_urls(fname, partial_url=None):
+    import urllib
     ret = set()
     with open(fname) as fd:
         for line in fd:
@@ -131,14 +135,15 @@ def load_urls(fname):
             if not line or line.startswith('#'):
                 continue
 
-            ret.add(line)
+            url = line if partial_url is None else partial_url.format(urllib.quote(line))
+            ret.add(url)
     return list(ret)
 
 if __name__ == '__main__':
     """
-        python invoker/prefetch_tool.py config_dongfangcaifu.json prefetch_index
+        python invoker/prefetch_tool.py config_fudankg.json indexes
     """
-    filename_config = getTheFile("../config_prefetch/"+sys.argv[1])
+    filename_config = getTheFile("../config_prefetch/" + sys.argv[1])
     config_index = sys.argv[2]
     with open(filename_config) as f:
         config_all = json.load(f)

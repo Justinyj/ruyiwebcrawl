@@ -93,7 +93,7 @@ class RedisManager(object):
 
         # keep the order
         self.cache[batch_id]['thinhash'].hset(field, url)
-        self.cache[batch_id]['queue'].put_init(field)
+        self.cache[batch_id]['queue'].put(field)
         return True
 
 
