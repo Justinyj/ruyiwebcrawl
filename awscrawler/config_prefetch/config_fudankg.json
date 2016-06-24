@@ -1,33 +1,23 @@
 {
     "batch_ids": {
-        "entity": "fudankg-entity-20160624",
-        "avp": "fudankg-avp-20160624"
+        "entity": "fudankg-20160624"
     },
-	"indexes": {
-		"jobs": {
-			"0": {
-				"batch_id": "fudankg-entity-20160624",
-				"crawl_http_method": "get",
-				"crawl_gap": 0,
-				"crawl_use_js_engine": false,
-				"length": 1,
-				"priority": 2,
-				"crawl_timeout": 10,
-				"filename_urls": "/Users/bishop/百度云同步盘/entities_for_fudankg_search.txt",
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "fudankg-20160624",
+                "crawl_http_method": "get",
+                "crawl_gap": 0,
+                "crawl_use_js_engine": false,
+                "length": 1,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "filename_urls": "/home/admin/zgdbk_entities.txt",
                 "partial_url": "http://kw.fudan.edu.cn/cndbpedia/api/entity?mention={}"
-			},
-			"1": {
-				"batch_id": "fudankg-avp-20160624",
-				"crawl_http_method": "get",
-				"crawl_gap": 0,
-				"crawl_use_js_engine": false,
-				"length": 1,
-				"priority": 1,
-				"crawl_timeout": 10
-			}
-		},
-		"aws_machine_number": 3,
-		"note": "复旦百科实体属性值爬取",
-		"debug": true
-	}
+            }
+        },
+        "aws_machine_number": 500,
+        "note": "复旦百科实体属性值爬取",
+        "debug": false
+    }
 }
