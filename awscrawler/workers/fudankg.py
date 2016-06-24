@@ -7,8 +7,10 @@ from __future__ import print_function, division
 import os
 import json
 import urllib
+import re
 from datetime import datetime
 
+from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
@@ -21,9 +23,14 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
         setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
-    if not hasattr(process, '_next_batch_id'):
-        fname = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) + '/config_prefetch/config_fudankg.json'
-        setattr(process, '_next_batch_id', json.load(open(fname))['batch_ids']['avp'])
+    if not hasattr(process, '_cache'):
+        setattr(process, '_cache', CacheS3(batch_id.split('-', 1)[0] + '-json'))
+
+    if not hasattr(process, '_regentity'):
+        setattr(process, '_regentity', re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entity\?mention=(.+)'))
+    if not hasattr(process, '_regavp'):
+        setattr(process, '_regavp', re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityAVP\?entity=(.+)'))
+
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
@@ -43,11 +50,25 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if kwargs and kwargs.get("debug"):
         get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url')
 
-    urls = []
-    avpair_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityAVP?entity={}'
-    for entity in json.loads(content)[u'entity']:
-        urls.append( avpair_api.format(urllib.quote(entity)) )
+    m = process._regentity.match(url)
+    if m:
+        entity = urllib.unquote(m.group(1))
+        urls = []
+        avpair_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityAVP?entity={}'
+        for ent in json.loads(content)[u'entity']:
+            urls.append( avpair_api.format(urllib.quote(ent)) )
 
-    manager.put_urls_enqueue(process._next_batch_id, urls)
+        manager.put_urls_enqueue(batch_id, urls)
+        return True
 
-    return True
+    else:
+        m = process._regavp.match(url)
+        if m:
+            entity = urllib.unquote(m.group(1))
+            eavp = json.dumps({entity: json.loads(content).values()[0]})
+
+            if kwargs and kwargs.get("debug"):
+                get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
+
+            return process._cache.post(url, eavp)
+
