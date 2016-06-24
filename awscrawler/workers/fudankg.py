@@ -56,6 +56,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         urls = []
         avpair_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityAVP?entity={}'
         for ent in json.loads(content)[u'entity']:
+            if isinstance(ent, unicode):
+                ent = ent.encode('utf-8')
             urls.append( avpair_api.format(urllib.quote(ent)) )
 
         manager.put_urls_enqueue(batch_id, urls)

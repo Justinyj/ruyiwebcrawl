@@ -83,7 +83,7 @@ def run(config):
                 len(urls) * v["length"],
                 priority=v["priority"],
                 queue_timeout=v["crawl_timeout"],
-                start_delay=180)
+                start_delay=200)
 
         tasks.append(t)
 
@@ -92,7 +92,7 @@ def run(config):
         print(datetime.datetime.now().isoformat(), 'start instances')
     if not config.get("debug"):
         schedule = Schedule(config["aws_machine_number"],
-                            tag=config["jobs"][mini_key]["batch_id"][0].split('-', 1)[0],
+                            tag=config["jobs"][mini_key]["batch_id"].split('-', 1)[0],
                             backoff_timeout=config["jobs"][mini_key]["crawl_timeout"])
 
         catch_terminate_instances_signal(schedule)
