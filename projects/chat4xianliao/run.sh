@@ -8,7 +8,7 @@ fi
 if [ "$1" = "aws-init-image" ]; then
   python hzlib/api_aws.py chat4xianliao_0621 list
 #  python hzlib/api_aws.py chat4xianliao_0621 start 1
-  python hzlib/api_aws.py chat4xianliao_0621 local 1 chat4xl_up
+  python hzlib/api_aws.py chat4xianliao_0621 local 50 chat4xl_up
 fi
 
 

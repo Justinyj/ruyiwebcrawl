@@ -10,8 +10,8 @@ import json
 import re
 import time
 
-sys.path.append(os.path.abspath("../"))
-sys.path.append(os.path.abspath("../../"))
+sys.path.append(os.path.join(os.path.dirname(__file__),"../"))
+sys.path.append(os.path.join(os.path.dirname(__file__),"../../"))
 #sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname((os.path.dirname(__file__)[:-1])[:-1])))
 
 import libfile
@@ -28,8 +28,6 @@ gcounter = collections.Counter()
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
-def getLocalFile(filename):
-    return os.path.join(os.path.abspath("../../local/"), filename)
 
 
 def fn_classify_0619(line, api, test_expect=None, test_data=None):
@@ -166,8 +164,8 @@ def removeLen1Word(words):
     return new_words
 
 def clean_skip_words_all():
-    filepath_skip_words_all_new = getTheFile("model/skip_words_all_new.human.txt")
-    filepath_skip_words_all_auto = getLocalFile("haizhicommon/hzlib/skip_words/test_question_all.auto.txt")
+    filepath_skip_words_all_new = getTheFile("local/skip_words/skip_words_all_new.human.txt")
+    filepath_skip_words_all_auto = getTheFile("localskip_words/test_question_all.auto.txt")
 
     skip_words_all_new = libfile.file2list(filepath_skip_words_all_new)
 
@@ -180,7 +178,7 @@ def clean_skip_words_all():
             elif skip_words_all_new[j] in skip_words_all_new[i]:
                 to_remove.add(skip_words_all_new[i])
     print "to remove ", len(to_remove)
-    libfile.lines2file(sorted(list(to_remove)), getTheFile("model/skip_words_all_to_remove.txt"))
+    libfile.lines2file(sorted(list(to_remove)), getTheFile("local/skip_words/skip_words_all_to_remove.txt"))
 
     skip_words_all_new = set(skip_words_all_new)
     skip_words_all_new.difference_update(to_remove)
@@ -211,8 +209,8 @@ def clean_skip_words_all():
             skip_words_all_diff.add(word)
     print "skip_words_all_diff ", len(skip_words_all_diff)
 
-    libfile.lines2file(sorted(list(skip_words_all_core)), getTheFile("model/skip_words_all_core.txt"))
-    libfile.lines2file(sorted(list(skip_words_all_diff)), getTheFile("model/skip_words_all_diff.txt"))
+    libfile.lines2file(sorted(list(skip_words_all_core)), getTheFile("local/skip_words/skip_words_all_core.txt"))
+    libfile.lines2file(sorted(list(skip_words_all_diff)), getTheFile("local/skip_words/skip_words_all_diff.txt"))
 
 
 

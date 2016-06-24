@@ -25,11 +25,13 @@ class ZhidaoNlp():
         import jieba
         words_lists =[
             "skip_words_all",
+            "skip_words_zhidao",
             "baike_words_white",
             "baike_words_black",
         ]
         for words in words_lists:
             filename = getTheFile("model/{}.human.txt".format(words))
+            print filename
 
             temp = set()
             for line in  libfile.file2set(filename):
@@ -38,18 +40,7 @@ class ZhidaoNlp():
             setattr(self, words, temp)
             jieba.load_userdict(filename)
 
-        skip_words_yes = set()
-        for line in libfile.file2set("model/skip_words_yes.human.txt"):
-            line = line.split(" ")[0]
-            if line:
-                skip_words_yes.add(line)
-        self.skip_words_all.update(skip_words_yes)
-
-        skip_words_no = set()
-        for line in libfile.file2set("model/skip_words_no.human.txt"):
-            line = line.split(" ")[0]
-            if line:
-                skip_words_no.add(line)
+        skip_words_no = libfile.file2set(getTheFile("model/skip_words_all_no.human.txt"))
         self.skip_words_all.difference_update(skip_words_no)
 
         print "Number of skip words ", len(self.skip_words_all)
@@ -72,6 +63,10 @@ class ZhidaoNlp():
         return temp
 
     def detect_skip_words(self, text, skip_words=None):
+        m = re.search(u"啪啪啪", text)
+        if m:
+            return [m.group(0)]
+
         words = set(self.cut_text(text))
         if self.debug:
             print "detect_skip_words words", json.dumps(list(words), ensure_ascii=False)
@@ -81,6 +76,43 @@ class ZhidaoNlp():
         if self.debug:
             print "detect_skip_words skip_words",json.dumps(list(ret), ensure_ascii=False)
         return ret
+
+    def detect_skip_words_0624(self, text, skip_words=None, check_list=["skip_words_all"]):
+        m = re.search(u"啪啪啪|[0-9]{9,11}", text)
+        if m:
+            return [{
+                "group": "skip_phrase",
+                "match":[m.group(0)]
+            }]
+
+        words = set(self.cut_text(text))
+        if self.debug:
+            print "detect_skip_words words", json.dumps(list(words), ensure_ascii=False)
+
+        ret = []
+        if skip_words is not None:
+            item = {
+                "group": "skip_words_user",
+                "match": words.intersection(skip_words)
+            }
+            ret.append(item)
+        else:
+            for group in check_list:
+                item = {
+                    "group": group,
+                    "match": words.intersection( getattr(self, group) )
+                }
+                if item["match"]:
+                    ret.append(item)
+                    break
+
+        if self.debug:
+            print "detect_skip_words_0624 ",json.dumps(ret, ensure_ascii=False)
+
+        if ret and ret[0]["match"]:
+            return ret
+        else:
+            return []
 
     def is_answer_bad(self, answer):
         if not isinstance(answer, unicode):
@@ -124,33 +156,27 @@ class ZhidaoNlp():
     def filter_chat(self, q, a):
         qa = q+a
 
-        zhstr = re.sub(ur"[^\u4E00-\u9FA5]","", a)
-        if len(zhstr)<2:
-            return u"无中文"
-
-        if re.search(ur"几[岁]|今年|今天|生日|联系|邮箱|电话|手机|号码|地址",qa):
-            return u"个性化"
-
-        if re.search(ur"采纳|百度|知乎|求书|请问|用户|楼[主上下]|度娘|经验|推荐|积分|附件|跪求|粉丝|http|ftp|php|ps|网盘|链接|答题", qa):
-            return u"网络"
+        a_zh = a
+        a_zh = re.sub(ur"[^\u4E00-\u9FA5]","", a_zh)
+        a_zh = re.sub(ur"[，。？！；：]","", a_zh)
+        if len(a_zh) < 2:
+            return u"外文"
 
         return False
 
     def get_chat_label(self, q, a):
         qa = q+a
+        map_data = {"skip_phrase": "词组", "skip_words_all": "敏感", "skip_words_zhidao": "知道" }
+        ret = self.detect_skip_words_0624(qa, check_list=["skip_words_zhidao", "skip_words_all"])
+        if ret:
+            return u"{}:{}".format(map_data.get(ret[0]["group"]),u",".join(ret[0]["match"]))
 
-        if re.search(ur"百科|翻译|日语|汉语|英语|介绍|解释|理解|说明", q):
-            return u"服务"
+        #if re.search(ur"[这那谁]一?[个是]+",q):
+        #    return u"指代"
 
-        if re.search(ur"[这那谁]一?[个是]+",q):
-            return u"指代"
+        #if re.search(ur"[？！。\?\!][\u4E00-\u9FA5]",q):
+        #    return u"断句"
 
-        if re.search(ur"[ ，？！。：,\.\?\!\t][\u4E00-\u9FA5]",q):
-            return u"断句"
-
-        words =self.detect_skip_words(qa)
-        if words:
-            return u"敏感：{}".format(u",".join(words))
 
         return u""
 
