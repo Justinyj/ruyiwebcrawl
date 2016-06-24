@@ -44,7 +44,7 @@ def insert():
 
             attribute_hit = [a]
             tags = [entity]
-            m = re.compile(u'(.+)(\(|（).+(\)|）)').match(entity)
+            m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
             if m:
                 tags.append(m.group(1))
             # entity(index: yes) used for full text retrieval, tags(not_analyzed) used for exactly match
