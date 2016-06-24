@@ -4,6 +4,7 @@
 
 from __future__ import print_function, division
 
+import os
 import json
 import urllib
 from datetime import datetime
@@ -21,7 +22,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         headers = {'Host': domain_name}
         setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
     if not hasattr(process, '_next_batch_id'):
-        setattr(process, '_next_batch_id', json.load(open('../config_prefetch/config_fudankg.json'))['batch_ids']['avp'])
+        fname = os.path.abspath(os.path.dirname(os.path.dirname(__file__))) + '/config_prefetch/config_fudankg.json'
+        setattr(process, '_next_batch_id', json.load(open(fname))['batch_ids']['avp'])
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
