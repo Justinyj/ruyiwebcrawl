@@ -14,6 +14,7 @@ import sys
 import requests
 import json
 import signal
+from operator import itemgetter
 
 from awscrawler import post_job, delete_distributed_queue
 from schedule import Schedule
@@ -54,7 +55,8 @@ def run(config):
 
 
     tasks = []
-    for i, v in config["jobs"].iteritems():
+    jobs = sorted(config["jobs"].iteritems(), key=itemgetter(0), reverse=False)
+    for i, v in jobs:
         if i == mini_key:
             if config.get("debug"):
                 print(datetime.datetime.now().isoformat(), 'start post_job ', v["batch_id"])

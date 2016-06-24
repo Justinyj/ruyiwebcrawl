@@ -11,6 +11,7 @@
 # the range is [0, 100]
 
 import time
+from datetime import datetime
 
 from redispool import RedisPool
 from record import Record
@@ -220,12 +221,12 @@ class Queue(object):
 
         # it is unecessary to begin background clean when no item timeout
         time.sleep(self.timeout)
-        print('{} begin clean: {}'.format(self.key, time.time()))
+        print('{} begin clean: {}'.format(datetime.now().isoformat(), self.key))
         while self.qsize() > 0 or self.conn.hlen(self.timehash) > 1:
             self.clean_task()
             time.sleep(60)
 
-        print('{} finish clean: {}'.format(self.key, time.time()))
+        print('{} finish clean: {}'.format(datetime.now().isoformat(), self.key))
         self.conn.hset(self.timehash, 'background_cleaning', 0)
         return self.key
 
