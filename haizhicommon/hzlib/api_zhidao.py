@@ -38,6 +38,22 @@ class ZhidaoNlp():
             setattr(self, words, temp)
             jieba.load_userdict(filename)
 
+        skip_words_yes = set()
+        for line in libfile.file2set("model/skip_words_yes.human.txt"):
+            line = line.split(" ")[0]
+            if line:
+                skip_words_yes.add(line)
+        self.skip_words_all.update(skip_words_yes)
+
+        skip_words_no = set()
+        for line in libfile.file2set("model/skip_words_no.human.txt"):
+            line = line.split(" ")[0]
+            if line:
+                skip_words_no.add(line)
+        self.skip_words_all.difference_update(skip_words_no)
+
+        print "Number of skip words ", len(self.skip_words_all)
+
         self.jieba = jieba
         import jieba.posseg as pseg
         self.pseg = pseg
