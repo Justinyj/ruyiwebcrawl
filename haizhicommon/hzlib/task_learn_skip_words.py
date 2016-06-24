@@ -31,12 +31,9 @@ def getTheFile(filename):
 
 
 def fn_classify_0619(line, api, test_expect=None, test_data=None):
-    skip_words_all = api.skip_words_all
     all_detected_skip_words = api.all_detected_skip_words
 
-    if api.debug:
-        print len(skip_words_all)
-    detected_skip_words = api.detect_skip_words(line, skip_words_all)
+    detected_skip_words = api.detect_skip_words(line)
     if all_detected_skip_words:
         for word in detected_skip_words:
             all_detected_skip_words[word]+=1
@@ -53,7 +50,8 @@ def fn_classify_0619(line, api, test_expect=None, test_data=None):
             false_negative.append(line + "\t" + u"\t".join(list(detected_skip_words)))
 
     if api.debug:
-        print actual, "\n", u"\n".join(list(detected_skip_words))
+        if expect != actual:
+            print expect, actual, "\n", u"\n".join(list(detected_skip_words))
     return actual
 
 def learn_skip_words_0619():
@@ -106,10 +104,10 @@ def learn_skip_words_0619():
 
     print json.dumps(gcounter, ensure_ascii=False),"\n\n------ eval performance"
     filenames = [
-        ( getTheFile("local/skip_words/test_question_skip_no.human.txt"), 0 ),
+        ( getTheFile("test/test_question_skip_no.human.txt"), 0 ),
 #        ( getTheFile("local/baike/baike_questions_pos.human.txt"), 0),
 #        [ getTheFile("local/baike/baike_questions_neg.human.txt"), 0 ],
-        ( getTheFile("local/skip_words/test_question_skip_yes.human.txt"), 1 ),
+        ( getTheFile("test/test_question_skip_yes.human.txt"), 1 ),
     ]
     all_detected_skip_words = collections.Counter()
     counter = collections.Counter()
@@ -127,14 +125,13 @@ def learn_skip_words_0619():
     setattr(api, "skip_words_all", skip_words_all)
     libdata.eval_fn(tests, target_names, fn_classify_0619, api)
 
-    print json.dumps(gcounter, ensure_ascii=False),"\n\n------ all done"
 
-def test():
+def eval_fn():
     api = ZhidaoNlp(debug=False)
     filenames = [
-        ( getLocalFile("haizhicommon/hzlib/skip_words/test_question_skip_yes.human.txt"), 1 ),
+        ( getTheFile("test/test_question_skip_yes.human.txt"), 1 ),
         # ( getLocalFile("chat4xianliao/chat/input/xianer_all_question.txt"), 0 ),
-        ( getLocalFile("haizhicommon/hzlib/skip_words/test_question_skip_no.human.txt"), 0 ),
+        ( getTheFile("test/test_question_skip_no.human.txt"), 0 ),
     ]
     tests = []
     for filename, expect in filenames:
@@ -150,10 +147,10 @@ def test():
     setattr(api, "all_detected_skip_words", all_detected_skip_words)
     libdata.eval_fn(tests, target_names, fn_classify_0619, api)
 
-    libfile.lines2file(false_positive, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_positive.txt"))
-    libfile.lines2file(false_negative, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_negative.txt"))
+    libfile.lines2file(false_positive, getTheFile("local/skip_words/chat8xianer12w_test_false_positive.txt"))
+    libfile.lines2file(false_negative, getTheFile("local/skip_words/chat8xianer12w_test_false_negative.txt"))
     libfile.lines2file(libdata.items2sample(true_negative, 1500 if len(true_negative)>1500 else len(true_negative)), \
-    getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_true_negative.txt"))
+    getTheFile("local/skip_words/chat8xianer12w_test_true_negative.txt"))
     print json.dumps(gcounter, ensure_ascii=False),"\n\n------ all done"
 
 def removeLen1Word(words):
@@ -213,6 +210,10 @@ def clean_skip_words_all():
     libfile.lines2file(sorted(list(skip_words_all_diff)), getTheFile("local/skip_words/skip_words_all_diff.txt"))
 
 
+def test(text):
+    api = ZhidaoNlp(debug=True)
+    ret = api.detect_skip_words(text)
+    print json.dumps(list(ret), ensure_ascii=False, indent=4)
 
 def main():
 
@@ -222,8 +223,13 @@ def main():
 
     option= sys.argv[1]
 
-    if "test" == option:
-        test()
+    if "eval_fn" == option:
+        eval_fn()
+
+    elif "test" == option:
+        if len(sys.argv)>2:
+            sentence = sys.argv[2]
+        test(sentence)
 
     elif "learn" == option:
         learn_skip_words_0619()
@@ -234,3 +240,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print json.dumps(gcounter, ensure_ascii=False, indent=4, sort_keys=True),"\n\n------ all done"
