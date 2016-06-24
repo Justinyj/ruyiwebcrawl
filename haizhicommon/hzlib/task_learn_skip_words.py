@@ -46,11 +46,13 @@ def fn_classify_0619(line, api, test_expect=None, test_data=None):
     if len(detected_skip_words) == 0:
         actual = 0
         if test_expect == 1:
-            false_positive.append(line) # + "\t" + u"\t".join(list(detected_skip_words))
+            false_positive.append(line + "\t" + u"\t".join(list(detected_skip_words)))
+        else:
+            true_negative.append(line)
     else:
         actual = 1
         if test_expect == 0:
-            false_negative.append(line) # + "\t" + u"\t".join(list(detected_skip_words))
+            false_negative.append(line + "\t" + u"\t".join(list(detected_skip_words)))
 
     if api.debug:
         print actual, "\n", u"\n".join(list(detected_skip_words))
@@ -133,6 +135,7 @@ def test():
     api = ZhidaoNlp(debug=False)
     filenames = [
         ( getLocalFile("haizhicommon/hzlib/skip_words/test_question_skip_yes.human.txt"), 1 ),
+        # ( getLocalFile("chat4xianliao/chat/input/xianer_all_question.txt"), 0 ),
         ( getLocalFile("haizhicommon/hzlib/skip_words/test_question_skip_no.human.txt"), 0 ),
     ]
     tests = []
@@ -151,8 +154,8 @@ def test():
 
     libfile.lines2file(false_positive, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_positive.txt"))
     libfile.lines2file(false_negative, getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_false_negative.txt"))
-    # libfile.lines2file(libdata.items2sample(true_negative, 1500 if len(true_negative)>1500 else len(true_negative)), \
-    # getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_true_negative.txt"))
+    libfile.lines2file(libdata.items2sample(true_negative, 1500 if len(true_negative)>1500 else len(true_negative)), \
+    getLocalFile("haizhicommon/hzlib/skip_words/chat8xianer12w_test_true_negative.txt"))
     print json.dumps(gcounter, ensure_ascii=False),"\n\n------ all done"
 
 def removeLen1Word(words):
