@@ -265,10 +265,14 @@ class ZhidaoFetch():
 
         return qword
 
-    def get_search_url_qword(self,query_unicode, query_parser=0):
+    def get_search_url_qword(self,query_unicode, query_parser=0, page_number=0):
         qword = self.parse_query(query_unicode, query_parser=query_parser)
 
-        query_url = "http://zhidao.baidu.com/search/?word={0}".format( urllib.quote(qword.encode("utf-8")) )
+        if page_number == 0:
+            query_url = "http://zhidao.baidu.com/search/?word={0}".format( urllib.quote(qword.encode("utf-8")) )
+        else:
+            query_url = "http://zhidao.baidu.com/search/?pn={}&word={}".format( page_number*10, urllib.quote(query) )
+
         return query_url, qword
 
     def select_best_qapair_0616(self,search_result_json):
@@ -361,7 +365,7 @@ class ZhidaoFetch():
         return ret
 
 
-    def search_chat_top_n(self,query,num_answers_needed,query_filter=2, query_parser=0, select_best=True):
+    def search_chat_top_n(self,query,num_answers_needed=3,query_filter=2, query_parser=0, select_best=True):
         result = self.prepare_query(query, query_filter, query_parser, use_skip_words=False)
         if not result:
             return False
@@ -471,31 +475,36 @@ class ZhidaoFetch():
 
         return False
 
-    def search_all(self, query, query_filter=2, query_parser=0):
-        result = self.prepare_query(query, query_filter, query_parser,use_skip_words=False)
+    def search_all(self, query, query_filter=0, query_parser=0, limit=10):
+        max_page_number = (limit-1)/10+1
+        output = { "items":[], "metadata":[], "query":query, "limit":limit,
+                "query_filter":query_filter, "query_parser":query_parser }
+        for page_number in range(max_page_number):
+            result = self.prepare_query(query, query_filter, query_parser, use_skip_words=False)
 
-        if not result:
-            print query
-            return
+            if not result:
+                print query
+                break
 
-        ret = result["ret"]
-        query_url = result["query_url"]
-        query_unicode = ret["query"]
+            ret = result["ret"]
+            query_url = result["query_url"]
+            query_unicode = ret["query"]
 
-        ts_start = time.time()
-        content = self.download(query_url)
-
-        ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
-
-        if content:
             ts_start = time.time()
-            search_result_json = parse_search_json_v0615(content)
-            ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
-            ret ["items"] = search_result_json
-            return ret
+            content = self.download(query_url)
 
+            ret ["milliseconds_fetch"] = int( (time.time() - ts_start) * 1000 )
 
-    def prepare_query(self, query, query_filter, query_parser, use_skip_words=True ):
+            if content:
+                ts_start = time.time()
+                search_result_json = parse_search_json_v0615(content)
+                ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
+                output["items"].extend( search_result_json )
+                output["metadata"].extend( ret )
+
+        return output
+
+    def prepare_query(self, query, query_filter, query_parser, use_skip_words=True, page_number=0):
         if not query:
             print "skip query, empty"
             return False
@@ -509,7 +518,7 @@ class ZhidaoFetch():
             return False
 
         query_unicode = re.sub(u"？$","",query_unicode)
-        query_url, qword = self.get_search_url_qword(query_unicode, query_parser)
+        query_url, qword = self.get_search_url_qword(query_unicode, query_parser, page_number=page_number)
 
         ret = {
             "query":query_unicode,

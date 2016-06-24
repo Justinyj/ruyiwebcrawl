@@ -144,7 +144,7 @@ def clean_longquan_question(question):
 
     return question.strip()
 
-def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod", filename_input=None):
+def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod", filename_input=None, fetch_option="top_n", fetch_limit=100):
     flag_batch = (worker_id is not None and worker_num is not None and worker_num>1)
     flag_prod = (config_index == "prod")
     flag_slack = (flag_prod and worker_id == 0)
@@ -177,7 +177,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
         "prod":{
                 "batch_id": "zhidao-search0623-20160621",
                 "crawl_http_method": "get",
-                "crawl_gap": 3,
+                "crawl_gap": 5,
                 "crawl_use_js_engine": False,
                 "crawl_timeout": 10,
                 "crawl_http_headers": {},
@@ -241,8 +241,10 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
                             json.dumps(counter) ))
                     ts_lap_start = time.time()
 
-            #ret = api.search_all(query)
-            ret = api.search_chat_top_n(query, 3 )
+            if "search_all" == fetch_option:
+                ret = api.search_all(query, limit = fetch_limit)
+            else:
+                ret = fn_fetch(query )
 
             if ret:
                 ret["query"] = query
@@ -274,7 +276,7 @@ def fetch_detail(worker_id=None, worker_num=None, limit=None, config_index="prod
     #print filename_output_xls
 #    libfile.writeExcel(results, [ "label","query", "answers", "match_score", "question"], filename_output_xls)
     libfile.writeExcel(results, [ "label","question", "answers"], filename_output_xls)
-    libfile.writeExcel(results, [ "label","query", "answers", "match_score"], filename_output_xls2)
+    libfile.writeExcel(results, [ "label","query", "answers", "match_score", "question"], filename_output_xls2)
 
 
     duration_sec =  int( time.time() -ts_start )
@@ -386,6 +388,42 @@ def main():
         if len(sys.argv)>3:
             limit = int(sys.argv[3])
         fetch_detail(limit=limit, config_index="local", filename_input=filename_input)
+
+    elif "fetch_all" == option:
+        """
+            python chat/task_run.py fetch_all input/search4intent.txt 1 2
+        """
+        if len(sys.argv)>4:
+            filename_input = sys.argv[2]
+            worker_id = int(sys.argv[3])
+            worker_num = int(sys.argv[4])
+            filename_input = getLocalFile(filename_input)
+            print "fetch with prefetch"
+            fetch_detail(worker_id=worker_id, worker_num=worker_num, filename_input=filename_input, fetch_option="search_all")
+        else:
+            """
+                python chat/task_run.py fetch input/chat8cmu6w.txt
+            """
+            print "fetch mono"
+            filename_input = sys.argv[2]
+            filename_input = getLocalFile(filename_input)
+            limit = None
+            if len(sys.argv)>3:
+                limit = int(sys.argv[3])
+
+            fetch_detail(limit =limit, filename_input=filename_input, fetch_option="search_all")
+
+    elif "fetch_all_debug" == option:
+        """
+            python chat/task_run.py fetch_all_debug input/search4intent.txt
+        """
+        print "fetch_debug mono"
+        filename_input = sys.argv[2]
+        filename_input = getLocalFile(filename_input)
+        limit = 10
+        if len(sys.argv)>3:
+            limit = int(sys.argv[3])
+        fetch_detail(limit=limit, config_index="local", filename_input=filename_input, fetch_option="search_all")
 
     elif "clean_cmu" == option:
         clean_cmu()
