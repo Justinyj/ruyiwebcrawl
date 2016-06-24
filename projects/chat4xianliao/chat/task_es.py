@@ -8,6 +8,7 @@ import collections
 import codecs
 import datetime
 import time
+import re
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)) )
 # sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
@@ -27,6 +28,7 @@ import collections
 from es import es_api
 from hzlib import libfile
 from hzlib import libdata
+from hzlib.api_zhidao import ZhidaoNlp
 
 def getLocalFile(filename):
     return os.path.abspath(os.path.dirname(__file__)).replace("/projects/","/local/") +"/"+filename
@@ -63,15 +65,83 @@ class ZhidaoQa():
         self.dryrun = dryrun
         self.datasets = ES_DATASET_CONFIG
         self.esconfig = es_api.get_esconfig(config_option)
+        self.api_nlp = ZhidaoNlp()
         if not self.dryrun:
             es_api.batch_init(self.esconfig, self.datasets.values())
 
-    def index_chat(self, dataset_index = "chat8cmu6w", option=None):
+    def merge_chat(self, option="question"):
+        filenames = []
+        for dataset_index in ["chat8cmu6w","chat8xianer12w"]:
+            filenames.extend( self._filter_filenames(dataset_index, option))
+
+        self._merge_chat(filenames, option)
+
+    def _merge_chat(self, filenames, option):
+        data = {}
+        for filename in filenames:
+            #print filename
+            gcounter["files"]+=1
+            ret = libfile.readExcel(["category","question","answers"], filename, start_row=1)
+            if ret:
+                for items in ret.values():
+                    for item in items:
+                        gcounter["items"]+=1
+
+                        item["id"]= es_api.gen_es_id(item["question"]+item["answers"])
+                        if item["id"] in data:
+                            continue
+
+                        for dataset_index in ["chat8cmu6w","chat8xianer12w"]:
+                            if dataset_index  in filename:
+                                gcounter["from_"+dataset_index] += 1
+
+                        label = self.filter_qa_by_label(item["category"], item["question"], item["answers"])
+                        if label:
+                            item["label"] = label
+                            #print "SKIP", label, "\t---\t", item["question"], "\t---\t", item["answers"]
+                            #gcounter["_esdata_label_{}".format(label)]+=1
+                        #elif not self.api_nlp.is_question_baike(item["question"]):
+                        #    item["label"] = u"百科"
+                        else:
+                            item["label"] = u""
+                        xlabel = re.sub(":.*$","",item["label"])
+                        gcounter["data_with_label_{}".format( xlabel )]+=1
+
+                        data[item["id"]] = item
+                        item_new = {}
+                        for p in ["question","answers","id"]:
+                            item_new[p] = item[p]
+
+        gcounter["data"] = len(data)
+        results = sorted(data.values(),  key=lambda x:x["question"])
+        print len(data), len(results)
+        filename_output = getLocalFile("output/edit_{}.xls".format(option))
+        libfile.writeExcel(results, ["label","question", "answers"], filename_output)
+
+        filename_output = getLocalFile("edit0623/sample1000_edit_{}.xls".format(option))
+        libfile.writeExcel(libdata.items2sample(data.values(), limit=1000), ["label","question", "answers"], filename_output)
+
+        page_size = 2000
+        max_page = len(results)/page_size + 1
+        for i in range(max_page):
+            filename_output = getLocalFile("edit0623/edit_{}_{}.xls".format( option, i))
+            #print filename_output
+            idx_start = i*page_size
+            idx_end = min(len(results),(i+1)*page_size)
+            libfile.writeExcel(results[idx_start:idx_end], ["label","question", "answers"], filename_output)
+
+    def index_chat(self, dataset_index = "chat8cmu6w", option="question"):
+        filenames = self._filter_filenames(dataset_index, option)
+        self._index_chat(filenames, dataset_index)
+
+    def _filter_filenames(self,  dataset_index, option):
+        gcounter[dataset_index] = 1
+        gcounter[option] = 1
         dirname = getLocalFile( "output0623/{}*worker*xls".format(dataset_index) )
         print dirname
         filenames = []
 
-        if option and option is "query":
+        if option == "query":
             for filename in glob.glob(dirname):
                 if not "query" in filename:
                     continue
@@ -81,10 +151,18 @@ class ZhidaoQa():
                 if "query" in filename:
                     continue
                 filenames.append(filename)
+        return filenames
 
-        self._index_chat(filenames, dataset_index)
+    def filter_qa_by_label(self, cat, q, a):
+        if len(cat) == 1:
+            #keep human label
+            return cat
+        else:
+            #re-evaluate label
+            label = self.api_nlp.get_chat_label(q, a)
+            return label
 
-    def _index_chat(self, filenames, dataset_index = "chat8cmu6w"):
+    def _index_chat(self, filenames, dataset_index):
         ids = set()
         for filename in filenames:
             print filename
@@ -93,16 +171,24 @@ class ZhidaoQa():
             if ret:
                 for items in ret.values():
                     for item in items:
-                        if item["category"]:
-                            continue
                         gcounter["items"]+=1
 
                         item["id"]= es_api.gen_es_id(item["question"]+item["answers"])
+                        if item["id"] in ids:
+                            continue
+
+                        label = self.filter_qa_by_label(item["category"], item["question"], item["answers"])
+                        if label:
+                            print "SKIP", label, "\t---\t", item["question"], "\t---\t", item["answers"]
+                            gcounter["esdata_label_{}".format(label)]+=1
+
+                        ids.add(item["id"])
                         item_new = {}
                         for p in ["question","answers","id"]:
                             item_new[p] = item[p]
                         self.upload(dataset_index, item_new)
         self.upload(dataset_index)
+        gcounter["esdata"] = len(ids)
 
     def index_xianer12w(self):
         dataset_index = "xianer12w"
@@ -154,8 +240,20 @@ def main():
         dataset_index = "chat8cmu6w"
         if len(sys.argv)>2:
             dataset_index = sys.argv[2]
-        agt = ZhidaoQa(config_option="prod", dryrun=False)
+        dryrun = False
+        if len(sys.argv)>3:
+            dryrun = True
+        agt = ZhidaoQa(config_option="prod", dryrun=dryrun)
         agt.index_chat(dataset_index)
+    elif "merge_chat" == option:
+        """
+            python chat/task_es.py merge_chat question
+            python chat/task_es.py merge_chat query
+        """
+        if len(sys.argv)>2:
+            option = sys.argv[2]
+            agt = ZhidaoQa()
+            agt.merge_chat(option)
     elif "index_chat_debug" == option:
         dataset_index = "chat8cmu6w"
         if len(sys.argv)>2:
