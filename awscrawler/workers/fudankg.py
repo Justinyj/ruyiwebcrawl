@@ -24,7 +24,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         headers = {'Host': domain_name}
         setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
     if not hasattr(process, '_cache'):
-        setattr(process, '_cache', CacheS3(batch_id.split('-', 1)[0] + '-json'))
+        head, tail = batch_id.split('-')
+        setattr(process, '_cache', CacheS3(head + '-json-' + tail))
 
     if not hasattr(process, '_regentity'):
         setattr(process, '_regentity', re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entity\?mention=(.+)'))
@@ -55,7 +56,11 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         entity = urllib.unquote(m.group(1))
         urls = []
         avpair_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityAVP?entity={}'
-        for ent in json.loads(content)[u'entity']:
+        if content == '':
+            return False
+
+        js = json.loads(content)
+        for ent in js[u'entity']:
             if isinstance(ent, unicode):
                 ent = ent.encode('utf-8')
             urls.append( avpair_api.format(urllib.quote(ent)) )
@@ -67,6 +72,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         m = process._regavp.match(url)
         if m:
             entity = urllib.unquote(m.group(1))
+            if content == '':
+                return False
+
             eavp = json.dumps({entity: json.loads(content).values()[0]})
 
             if kwargs and kwargs.get("debug"):

@@ -15,6 +15,7 @@ import requests
 import json
 import signal
 from operator import itemgetter
+from functools import partial
 
 from awscrawler import post_job, delete_distributed_queue
 from schedule import Schedule
@@ -39,54 +40,55 @@ def run(config):
     ts_start = time.time()
 
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start load_urls --- dryrun mode')
+        print(datetime.datetime.now().isoformat(), 'start finding first job --- dryrun mode')
     else:
-        print(datetime.datetime.now().isoformat(), 'start load_urls --- work mode')
+        print(datetime.datetime.now().isoformat(), 'start finding first job --- work mode')
 
     mini_key = min(config["jobs"].keys())
-    partial_url = config["jobs"][mini_key]["partial_url"] if "partial_url" in config["jobs"][mini_key] else None
-    urls = load_urls(config["jobs"][mini_key]["filename_urls"], partial_url)
+    job = config["jobs"][mini_key]
+    url_length = get_urls_length(job["filename_urls"])
+
+    url_pattern = job["url_pattern"] if "url_pattern" in job else None
+    urls_func = partial(load_urls, job["filename_urls"], url_pattern)
 
     slack( u"run {} batch_id: {}, urls length: {} debug: {}".format(
         config["note"],
-        config["jobs"][mini_key]["batch_id"],
-        len(urls),
+        job["batch_id"],
+        url_length,
         config.get("debug",False)) )
 
+    print(datetime.datetime.now().isoformat(), 'start post_job')
 
-    tasks = []
+    tasks = [
+        post_job(job["batch_id"],
+                 job["crawl_http_method"],
+                 job["crawl_gap"],
+                 job["crawl_use_js_engine"],
+                 url_length * job["length"],
+                 urls_func=urls_func,
+                 priority=job["priority"],
+                 queue_timeout=job["crawl_timeout"],
+                 failure_times=job.get('failure_times', 3))
+    ]
+
+
+    print(datetime.datetime.now().isoformat(), 'start post_job with delay')
+
     jobs = sorted(config["jobs"].iteritems(), key=itemgetter(0), reverse=False)
     for i, v in jobs:
         if i == mini_key:
-            if config.get("debug"):
-                print(datetime.datetime.now().isoformat(), 'start post_job ', v["batch_id"])
-
-            t = post_job(
-                v["batch_id"],
-                v["crawl_http_method"],
-                v["crawl_gap"],
-                v["crawl_use_js_engine"],
-                urls,
-                len(urls) * v["length"],
-                priority=v["priority"],
-                queue_timeout=v["crawl_timeout"])
-        else:
-            if config.get("debug"):
-                print(datetime.datetime.now().isoformat(), 'start post_job with delay', v["batch_id"])
-
-            t = post_job(
-                v["batch_id"],
-                v["crawl_http_method"],
-                v["crawl_gap"],
-                v["crawl_use_js_engine"],
-                [],
-                len(urls) * v["length"],
-                priority=v["priority"],
-                queue_timeout=v["crawl_timeout"],
-                start_delay=200)
-
-        tasks.append(t)
-
+            continue
+        tasks.append( post_job(v["batch_id"],
+                               v["crawl_http_method"],
+                               v["crawl_gap"],
+                               v["crawl_use_js_engine"],
+                               url_length * v["length"],
+                               urls_func=None,
+                               priority=v["priority"],
+                               queue_timeout=v["crawl_timeout"],
+                               failure_times=v.get('failure_times', 3),
+                               start_delay=200)
+                    )
 
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start instances')
@@ -98,7 +100,7 @@ def run(config):
         catch_terminate_instances_signal(schedule)
 
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start job, spawn')
+        print(datetime.datetime.now().isoformat(), 'start spawn to run instances')
     if not config.get("debug"):
         t3 = gevent.spawn(schedule.run_forever)
 
@@ -127,6 +129,10 @@ def run(config):
     slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"], seconds) )
 
 
+def get_urls_length(fname):
+    with open(fname) as fd:
+        return len(fd.readlines())
+
 def load_urls(fname, partial_url=None):
     import urllib
     ret = set()
@@ -139,7 +145,12 @@ def load_urls(fname, partial_url=None):
 
             url = line if partial_url is None else partial_url.format(urllib.quote(line))
             ret.add(url)
-    return list(ret)
+
+            if len(ret) > 10000:
+                yield list(ret)
+                ret = set()
+    yield list(ret)
+
 
 if __name__ == '__main__':
     """

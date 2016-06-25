@@ -1,20 +1,34 @@
 {
-	"batch_ids": {
-		"index": "dongcaigonggao-index0620-20160620",
-		"page": "dongcaigonggao-page-20160620"
-	},
-	"prefetch_index": {
-        "job_num": 2,
-		"batch_id": ["dongcaigonggao-index0620-20160620", "dongcaigonggao-content-20160620"],
-        "length": [1, 50],
-        "priority": [2, 1],
-		"crawl_http_method": "get",
-		"crawl_gap": [5, 3],
-		"crawl_use_js_engine": false,
-		"crawl_timeout": 10,
-		"aws_machine_number": 400,
-		"note": "获取东方财富公告",
-		"debug": false,
-		"filename_urls": "/data/ruyiwebcrawl/awscrawler/local/dongfangcaifu/v20160620/urls_gonggao_index.raw.txt"
+    "batch_ids": {
+        "index": "dongcaigonggao-index0620-20160620",
+        "page": "dongcaigonggao-page-20160620"
+    },
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "dongcaigonggao-index0620-20160620",
+                "crawl_http_method": "get",
+                "crawl_gap": 5,
+                "crawl_use_js_engine": false,
+                "length": 1,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 3,
+                "filename_urls": "/data/ruyiwebcrawl/awscrawler/local/dongfangcaifu/v20160620/urls_gonggao_index.raw.txt"
+            },
+            "1": {
+                "batch_id": "dongcaigonggao-content-20160620",
+                "crawl_http_method": "get",
+                "crawl_gap": 3,
+                "crawl_use_js_engine": false,
+                "length": 50,
+                "priority": 1,
+                "crawl_timeout": 10,
+                "failure_times": 3
+            }
+        },
+        "aws_machine_number": 400,
+        "note": "获取东方财富公告",
+        "debug": false
 	}
 }

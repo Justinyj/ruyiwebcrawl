@@ -155,6 +155,7 @@ class Queue(object):
         pipeline = self.conn.pipeline()
         pipeline.hdel(self.failhash, result)
         pipeline.hdel(self.timehash, result)
+        pipeline.srem(self.key, result)
         pipeline.execute()
 
 

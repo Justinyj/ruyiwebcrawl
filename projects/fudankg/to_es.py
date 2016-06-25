@@ -5,9 +5,11 @@
 from __future__ import print_function, division
 
 import hashlib
+import json
 import os
 import re
 from collections import defaultdict
+from datetime import datetime
 
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
@@ -32,36 +34,60 @@ def insert():
     eavps = []
 
     for word, entity, avps in results:
-        attr_values = defaultdict(list)
-        for a, v in avps:
-            attr_values[a].append(v)
-        for a, v in attr_values.iteritems():
-            eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'),
-                                            a.encode('utf-8')))
-
-            if a == u'中文名':
-                continue
-
-            attribute_hit = [a]
-            tags = [entity]
-            m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
-            if m:
-                tags.append(m.group(1))
-            # entity(index: yes) used for full text retrieval, tags(not_analyzed) used for exactly match
-            eavps.append({'id': eid,
-                          'entity': entity,
-                          'attribute': a,
-                          'values': v,
-                          'value': v[0],
-                          'tags': tags,
-                          'attribute_hit': attribute_hit})
+        eavp = parse_one_entity(entity, avps)
+        eavps.extend(eavp)
     return eavps
+
 
 def sendto_es(eavps):
     esconfig = get_esconfig(ENV)
     # post 'http://localhost:9200/_bulk'
     run_esbulk_rows(eavps, "index", esconfig, ES_DATASET_CONFIG)
 
+
+def load_json_files(dirname='.'):
+    eavps = []
+    count = 0
+
+    for f in os.listdir(dirname):
+        with open(os.path.join(dirname, f)) as fd:
+            for entity, avps in json.load(fd).items():
+                eavp = parse_one_entity(entity, avps)
+                eavps.extend(eavp)
+
+        count += 1
+        if len(eavps) > 10000:
+            sendto_es(eavps)
+            eavps = []
+            print('{} process {} files.'.format(datetime.now().isoformat(), count))
+
+
+def parse_one_entity(entity, avps):
+    eavp = []
+    attr_values = defaultdict(list)
+
+    for a, v in avps:
+        attr_values[a].append(v)
+    for a, v in attr_values.iteritems():
+        eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'),
+                                        a.encode('utf-8')))
+        if a == u'中文名':
+            continue
+
+        attribute_hit = [a]
+        tags = [entity]
+        m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
+        if m:
+            tags.append(m.group(1))
+        # entity(index: yes) used for full text retrieval, tags(not_analyzed) used for exactly match
+        eavp.append({'id': eid,
+                      'entity': entity,
+                      'attribute': a,
+                      'values': v,
+                      'value': v[0],
+                      'tags': tags,
+                      'attribute_hit': attribute_hit})
+    return eavp
+
 if __name__ == '__main__':
-    eavps = insert()
-    sendto_es(eavps)
+    load_json_files('/Users/bishop/百度云同步盘/fudankg-json')
