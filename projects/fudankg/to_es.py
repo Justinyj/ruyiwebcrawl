@@ -92,5 +92,40 @@ def parse_one_entity(entity, avps):
                       'attribute_hit': attribute_hit})
     return eavp
 
+
+def load_zgdbk_info():
+    einfos = []
+    count = 0
+
+    with open('zgdbk_entity_info.txt') as fd:
+        for line in fd:
+            js = json.loads(line.strip())
+            for entity, info in js.items():
+
+                tags = [entity, '定义']
+                m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
+                if m:
+                    tags.append(m.group(1))
+                eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'), '定义'))
+
+                einfos.append({
+                        'id': eid,
+                        'entity': entity,
+                        'attribute': '定义',
+                        'value': info,
+                        'values': [info],
+                        'tags': tags})
+            count += 1
+            if len(einfos) > 1000:
+                sendto_es(einfos)
+                einfos = []
+                print('{} process {} files.'.format(datetime.now().isoformat(), count))
+
+    if einfos:
+        sendto_es(einfos)
+
+
 if __name__ == '__main__':
-    load_json_files('/Users/bishop/百度云同步盘/fudankg-json')
+#    load_json_files('/Users/bishop/百度云同步盘/fudankg-json')
+
+    load_zgdbk_info()
