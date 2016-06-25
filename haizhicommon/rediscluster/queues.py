@@ -124,7 +124,7 @@ class Queue(object):
                             results.append(result)
                     break
         else:
-            for i in range(10):
+            for i in range(5):
                 result = self.conn.spop(self.key)
                 if result:
                     results.append(result)

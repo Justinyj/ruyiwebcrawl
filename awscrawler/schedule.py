@@ -21,7 +21,7 @@ class Schedule(object):
         self.group_num = int(ceil(machine_num * 2 / cycle)) if machine_num * 2 >= cycle else 1
         self.restart_interval = 0 if machine_num * 2 >= cycle else cycle / machine_num
 
-        self.backoff_timeout = 20 * backoff_timeout / 2**3 # magic number because queue.get
+        self.backoff_timeout = 50 * backoff_timeout / 2**3 # magic number because queue.get
 
         self.ec2manager = Ec2Manager(tag)
         self.ids = self.ec2manager.create_instances(self.machine_num)
@@ -81,7 +81,7 @@ class Schedule(object):
 
 
     def remote_command(self, ipaddr, command):
-        for _ in range(6):
+        for _ in range(10):
             try:
                 self.ssh.connect(ipaddr, username='admin', pkey=self.pkey)
                 ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)
