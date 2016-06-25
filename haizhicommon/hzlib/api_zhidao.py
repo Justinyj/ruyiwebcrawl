@@ -23,6 +23,8 @@ class ZhidaoNlp():
     def __init__(self, debug=False):
         self.debug = debug
         import jieba
+
+        #load text
         words_lists =[
             "skip_words_all",
             "skip_words_zhidao",
@@ -30,25 +32,34 @@ class ZhidaoNlp():
             "baike_words_black",
         ]
         for words in words_lists:
+            lines = set()
             filename = getTheFile("model/{}.human.txt".format(words))
             print filename
+            lines = libfile.file2set(filename)
+
+            filename_no = getTheFile("model/{}_no.human.txt".format(words))
+            if os.path.exists(filename_no):
+                lines.difference_update( libfile.file2set(filename_no) )
 
             temp = set()
-            for line in  libfile.file2set(filename):
+            for line in lines:
                 temp.add( line.split(" ")[0] )
             print words, len(temp)
             setattr(self, words, temp)
-            jieba.load_userdict(filename)
+            for word in temp:
+                jieba.add_word( word )
 
-        skip_words_no = libfile.file2set(getTheFile("model/skip_words_all_no.human.txt"))
-        self.skip_words_all.difference_update(skip_words_no)
-
+        #update skip_word
+        skip_words_ext = libfile.file2set(getTheFile("model/skip_words_all_ext.human.txt"))
+        self.skip_words_all.update(skip_words_ext)
         print "Number of skip words ", len(self.skip_words_all)
 
         self.jieba = jieba
         import jieba.posseg as pseg
         self.pseg = pseg
         self.debug = False
+
+
 
     def cut_text(self, text):
         if not isinstance(text, unicode):
@@ -63,6 +74,14 @@ class ZhidaoNlp():
         return temp
 
     def detect_skip_words(self, text, skip_words=None):
+        ret = self.detect_skip_words_0624(text, skip_words=skip_words)
+        #print ret
+        if ret  and ret[0]["group"] in ["skip_words_all", "skip_phrase" ]:
+            return ret[0]["match"]
+
+        return []
+
+    def detect_skip_words_0618(self, text, skip_words=None):
         m = re.search(u"啪啪啪", text)
         if m:
             return [m.group(0)]
@@ -78,7 +97,7 @@ class ZhidaoNlp():
         return ret
 
     def detect_skip_words_0624(self, text, skip_words=None, check_list=["skip_words_all"]):
-        m = re.search(u"啪啪啪|[0-9]{9,11}", text)
+        m = re.search(u"啪啪啪", text)
         if m:
             return [{
                 "group": "skip_phrase",
@@ -88,6 +107,8 @@ class ZhidaoNlp():
         words = set(self.cut_text(text))
         if self.debug:
             print "detect_skip_words words", json.dumps(list(words), ensure_ascii=False)
+
+        #print json.dumps(list(words), ensure_ascii=False)
 
         ret = []
         if skip_words is not None:
