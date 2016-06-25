@@ -7,12 +7,20 @@
         "entity": {
             "type": "string"
         },
+        "entity_name": {
+            "type": "string"
+        },
+        "entity_expand": {
+            "type": "string"
+        },
         "attribute": {
             "type": "string"
         },
-        "attribute_hit": {
-            "type": "string",
-            "index": "not_analyzed"
+        "attribute_name": {
+            "type": "string"
+        },
+        "attribute_expand": {
+            "type": "string"
         },
         "value": {
             "type": "string",

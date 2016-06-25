@@ -8,13 +8,15 @@ import hashlib
 import json
 import os
 import re
-from collections import defaultdict
 from datetime import datetime
+from operator import itemgetter
+from collections import defaultdict, Counter
 
+from hzlib.libfile import readExcel
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
 
-ENV = 'prod'
+ENV = 'local'
 # http://localhost:9200/fudankg0623/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
         "description": "复旦百科实体属性值0623",
@@ -34,9 +36,23 @@ def insert():
     eavps = []
 
     for word, entity, avps in results:
-        eavp = parse_one_entity(entity, avps)
+        eavp = parse_fudan_entity(entity, avps)
         eavps.extend(eavp)
     return eavps
+
+
+def get_attributes(dirname='.'):
+    attributes = Counter()
+
+    for f in os.listdir(dirname):
+        with open(os.path.join(dirname, f)) as fd:
+            for entity, avps in json.load(fd).items():
+                for a, v in avps:
+                    attributes[a] += 1
+
+    items = sorted(attributes.items(), key=itemgetter(1), reverse=True)
+    with open('attributes.txt', 'w') as fd:
+        json.dump(items, fd, ensure_ascii=False, indent=4)
 
 
 def sendto_es(eavps):
@@ -45,14 +61,14 @@ def sendto_es(eavps):
     run_esbulk_rows(eavps, "index", esconfig, ES_DATASET_CONFIG)
 
 
-def load_json_files(dirname='.'):
+def load_fudan_json_files(dirname='.'):
     eavps = []
     count = 0
 
     for f in os.listdir(dirname):
         with open(os.path.join(dirname, f)) as fd:
             for entity, avps in json.load(fd).items():
-                eavp = parse_one_entity(entity, avps)
+                eavp = parse_fudan_entity(entity, avps)
                 eavps.extend(eavp)
 
         count += 1
@@ -65,56 +81,61 @@ def load_json_files(dirname='.'):
         sendto_es(eavps)
 
 
-def parse_one_entity(entity, avps):
+def parse_fudan_entity(entity, avps):
     eavp = []
     attr_values = defaultdict(list)
+    readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
 
     for a, v in avps:
         attr_values[a].append(v)
+
     for a, v in attr_values.iteritems():
-        eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'),
-                                        a.encode('utf-8')))
         if a == u'中文名':
             continue
 
-        attribute_hit = [a]
-        tags = [entity]
-        m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
-        if m:
-            tags.append(m.group(1))
-        # entity(index: yes) used for full text retrieval, tags(not_analyzed) used for exactly match
-        eavp.append({'id': eid,
-                      'entity': entity,
-                      'attribute': a,
-                      'values': v,
-                      'value': v[0],
-                      'tags': tags,
-                      'attribute_hit': attribute_hit})
+        attribute = a.encode('utf-8')
+        attribute_name = '' # TODO mapping
+        eavp.append( ea_to_json(entity, attribute, '属性', v) )
     return eavp
 
 
-def load_zgdbk_info():
+def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
+
+    tags = [entity, extra_tag]
+    entity_name = entity
+
+    m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
+    if m:
+        tags.append(m.group(1))
+        entity_name = m.group(1)
+
+    eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'), attribute))
+
+    # entity(index: yes) used for full text retrieval, tags(not_analyzed) used for exactly match
+    return {
+        'id': eid,
+        'entity': entity,
+        'entity_name': entity_name,
+        'attribute': attribute,
+        'attribute_name': attribute_name,
+        'value': values[0],
+        'values': values,
+        'tags': tags
+    }
+
+
+
+def load_zgdbk_info(dirname='.'):
     einfos = []
     count = 0
 
-    with open('zgdbk_entity_info.txt') as fd:
+    fname = os.path.join(dirname, 'zgdbk_entity_info.txt')
+    with open(fname) as fd:
         for line in fd:
             js = json.loads(line.strip())
             for entity, info in js.items():
+                einfos.append( ea_to_json(entity, '定义', '定义', '定义', [info]) )
 
-                tags = [entity, '定义']
-                m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
-                if m:
-                    tags.append(m.group(1))
-                eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'), '定义'))
-
-                einfos.append({
-                        'id': eid,
-                        'entity': entity,
-                        'attribute': '定义',
-                        'value': info,
-                        'values': [info],
-                        'tags': tags})
             count += 1
             if len(einfos) > 1000:
                 sendto_es(einfos)
@@ -126,6 +147,10 @@ def load_zgdbk_info():
 
 
 if __name__ == '__main__':
-#    load_json_files('/Users/bishop/百度云同步盘/fudankg-json')
+#    get_attributes('/Users/bishop/百度云同步盘/fudankg-json')
 
-    load_zgdbk_info()
+#    load_fudan_json_files('/Users/bishop/百度云同步盘/fudankg-json')
+
+#    load_zgdbk_info('/Users/bishop/百度云同步盘/')
+
+    readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
