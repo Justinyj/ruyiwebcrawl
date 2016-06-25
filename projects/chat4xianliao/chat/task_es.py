@@ -76,8 +76,104 @@ class ZhidaoQa():
 
         self._merge_chat(filenames, option)
 
-    def _merge_chat(self, filenames, option):
+    def test(self, dataset_index="chat8xianer12w", option="query"):
+        filename_todo = getLocalFile("input/{}_todo.txt".format(option))
+        print "filename_todo",  filename_todo
+        q_todo = set()
+        if os.path.exists(filename_todo):
+            q_todo = libfile.file2set(filename_todo)
+            gcounter["q_todo"] = len(q_todo)
+            print "filename_todo",  filename_todo, len(q_todo)
+
+        filename_skip = getLocalFile("input/{}_skip.txt".format(option))
+        print "filename_skip",  filename_skip
+        q_skip = set()
+        if os.path.exists(filename_skip):
+            q_skip = libfile.file2set(filename_skip)
+            gcounter["q_skip"] = len(q_skip)
+            print "filename_skip",  filename_skip, len(q_skip)
+
         data = {}
+        q_all = set()
+        dirname = getLocalFile( "output0623/{}*worker*json.txt".format(dataset_index) )
+
+        for filename in glob.glob(dirname):
+            print filename
+            gcounter["files"]+=1
+
+            for line in libfile.file2list(filename):
+                entry = json.loads(line)
+                query = entry["query"]
+
+                #print entry.keys()
+                if "items_all" not in entry:
+                    gcounter["selected_no_data"]+=1
+                    continue
+                elif len(entry["items_all"])==0:
+                    gcounter["selected_no_item"]+=1
+                    continue
+
+
+                if q_skip and query in q_skip:
+                    gcounter["items_skip"]+=1
+                    q_all.add(query)
+                    continue
+
+                if self.api_nlp.detect_skip_words(query):
+                    gcounter["selected_query_skipwords"]+=1
+                    q_all.add(query)
+                    continue
+
+                items_select = self.api_nlp.select_qapair_0624(query, entry["items_all"])
+                if items_select:
+                    gcounter["selected_yes"]+=1
+                    q_all.add(query)
+                else:
+                    gcounter["selected_no"]+=1
+
+                for item in items_select:
+                    item["id"]= es_api.gen_es_id(item["question"]+item["answers"])
+                    if item["id"] in data:
+                        continue
+
+                    label = self.filter_qa_by_label("", item["question"], item["answers"])
+                    if label:
+                        item["label"] = label
+                    else:
+                        item["label"] = u""
+                    xlabel = re.sub(":.*$","",item["label"])
+                    gcounter["data_with_label_{}".format( xlabel )]+=1
+                    gcounter["items"]+=1
+
+                    data[item["id"]] = item
+                #ret = libfile.readExcel(["category","question","answers"], filename, start_row=1)
+
+        if q_todo:
+            q_todo.difference_update(q_all)
+            filename_output = getLocalFile("edit0623/query_miss_{}.xls".format(option))
+            libfile.lines2file(sorted(list(q_todo)), filename_output)
+            gcounter["q_all"] = len(q_all)
+            gcounter["q_miss"] = len(q_todo)
+
+    def _merge_chat(self, filenames, option):
+        filename_todo = getLocalFile("input/{}_todo.txt".format(option))
+        print "filename_todo",  filename_todo
+        q_todo = set()
+        if os.path.exists(filename_todo):
+            q_todo = libfile.file2set(filename_todo)
+            gcounter["q_todo"] = len(q_todo)
+            print "filename_todo",  filename_todo, len(q_todo)
+
+        filename_skip = getLocalFile("input/{}_skip.txt".format(option))
+        print "filename_skip",  filename_skip
+        q_skip = set()
+        if os.path.exists(filename_skip):
+            q_skip = libfile.file2set(filename_skip)
+            gcounter["q_skip"] = len(q_skip)
+            print "filename_skip",  filename_skip, len(q_skip)
+
+        data = {}
+        q_all = set()
         for filename in filenames:
             #print filename
             gcounter["files"]+=1
@@ -86,6 +182,12 @@ class ZhidaoQa():
                 for items in ret.values():
                     for item in items:
                         gcounter["items"]+=1
+
+                        q_all.add(item["question"])
+
+                        if q_skip and item["question"] in q_skip:
+                            gcounter["items_skip"]+=1
+                            continue
 
                         item["id"]= es_api.gen_es_id(item["question"]+item["answers"])
                         if item["id"] in data:
@@ -120,6 +222,13 @@ class ZhidaoQa():
 
         filename_output = getLocalFile("edit0623/sample1000_edit_{}.xls".format(option))
         libfile.writeExcel(libdata.items2sample(data.values(), limit=1000), ["label","question", "answers"], filename_output)
+
+        if q_todo:
+            q_todo.difference_update(q_all)
+            filename_output = getLocalFile("edit0623/question_miss_{}.xls".format(option))
+            libfile.lines2file(sorted(list(q_todo)), filename_output)
+            gcounter["q_all"] = len(q_all)
+            gcounter["q_miss"] = len(q_todo)
 
         page_size = 2000
         max_page = len(results)/page_size + 1
@@ -164,8 +273,10 @@ class ZhidaoQa():
 
     def _index_chat(self, filenames, dataset_index):
         ids = set()
+
         for filename in filenames:
             print filename
+
             gcounter["files"]+=1
             ret = libfile.readExcel(["category","question","answers"], filename, start_row=1)
             if ret:
@@ -263,6 +374,9 @@ def main():
     elif "index_xianer12w" == option:
         agt = ZhidaoQa(config_option="prod", dryrun=False)
         agt.index_xianer12w()
+    elif "test" == option:
+        agt = ZhidaoQa(config_option="prod", dryrun=False)
+        agt.test(option="query")
     else:
         print "unsupported"
 

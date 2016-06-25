@@ -267,6 +267,48 @@ class ZhidaoNlp():
 
         return False
 
+    def select_qapair_0624(self, query, search_result_json, result_limit=3, answer_len_limit=40, question_len_limit=30, question_match_limit=0.3):
+        result_answers = []
+
+        for item in search_result_json:
+            if "answers" not in item:
+                continue
+
+            #too long question
+            if len(item["question"]) > question_len_limit:
+                #print "skip question_len_limit", len(item["question"])
+                continue
+
+            #skip long answers
+            if len(item["answers"]) > answer_len_limit:
+                #print "skip answer_len_limit", type(item["answers"]), len(item["answers"]), item["answers"]
+                continue
+
+            if self.filter_chat(item["question"], item["answers"]):
+                continue
+
+
+            question_match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
+            answer_match_score   = difflib.SequenceMatcher(None, query, item["answers"]).ratio()
+            item["match_score"] = question_match_score
+            item["match_score_answers"] = answer_match_score
+            item["label"] = self.get_chat_label(item["question"], item["answers"])
+
+            #skip not matching questions
+            if (question_match_score < question_match_limit):
+                #print "skip question_match_limit", question_match_score
+                continue
+
+            result_answers.append(item)
+
+        ret = sorted(result_answers, key= lambda x: 0 - x["match_score"] )
+        if len(ret) > result_limit:
+            ret = ret[:result_limit]
+#        if len(ret) == 0:
+#            for item in search_result_json:
+#                print u"{} | {} | {} | {} | {} | {}".format(query, item["question"], item.get("answers"), item.get("label"), item.get("match_score"), item.get("match_score_answers"))
+#                print json.dumps(item, ensure_ascii=False)
+        return ret
 
 class ZhidaoFetch():
     def __init__(self, config={}):
@@ -348,6 +390,7 @@ class ZhidaoFetch():
         return result_answers
 
 
+
     def select_top_n_chat_0622(self, query, search_result_json, result_limit=3, answer_len_limit=30, question_len_limit=20, question_match_limit=0.4):
         result_answers = []
 
@@ -380,7 +423,7 @@ class ZhidaoFetch():
 
             result_answers.append(item)
 
-        ret = sorted(result_answers, key= lambda x:x["match_score"])
+        ret = sorted(result_answers, key= lambda x: 0 - x["match_score"])
         if len(ret) > result_limit:
             ret = ret[:result_limit]
         return ret
