@@ -132,6 +132,8 @@ def eval_fn():
         ( getTheFile("test/test_question_skip_yes.human.txt"), 1 ),
         # ( getLocalFile("chat4xianliao/chat/input/xianer_all_question.txt"), 0 ),
         ( getTheFile("test/test_question_skip_no.human.txt"), 0 ),
+        ( getTheFile("test/test_ask_baike_all.human.txt"), 0 ),
+        ( getTheFile("test/test_ask_chat_all.human.txt"), 0 ),
     ]
     tests = []
     for filename, expect in filenames:
