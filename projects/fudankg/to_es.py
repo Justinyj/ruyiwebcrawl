@@ -16,7 +16,7 @@ from hzlib.libfile import readExcel
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
 
-ENV = 'local'
+ENV = 'prod'
 # http://localhost:9200/fudankg0623/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
         "description": "复旦百科实体属性值0623",
@@ -84,7 +84,7 @@ def load_fudan_json_files(dirname='.'):
 def parse_fudan_entity(entity, avps):
     eavp = []
     attr_values = defaultdict(list)
-    readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
+#    readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
 
     for a, v in avps:
         attr_values[a].append(v)
@@ -95,7 +95,7 @@ def parse_fudan_entity(entity, avps):
 
         attribute = a.encode('utf-8')
         attribute_name = '' # TODO mapping
-        eavp.append( ea_to_json(entity, attribute, '属性', v) )
+        eavp.append( ea_to_json(entity, attribute, attribute_name, '属性', v) )
     return eavp
 
 
@@ -149,8 +149,9 @@ def load_zgdbk_info(dirname='.'):
 if __name__ == '__main__':
 #    get_attributes('/Users/bishop/百度云同步盘/fudankg-json')
 
-#    load_fudan_json_files('/Users/bishop/百度云同步盘/fudankg-json')
+    load_fudan_json_files('/Users/bishop/百度云同步盘/fudankg-json')
 
-#    load_zgdbk_info('/Users/bishop/百度云同步盘/')
+    load_zgdbk_info('/Users/bishop/百度云同步盘/')
 
-    readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
+#    items = readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
+#    print(items)
