@@ -12,7 +12,7 @@
                 "length": 1,
                 "priority": 2,
                 "crawl_timeout": 10,
-                "failure_times": 10,
+                "failure_times": 6,
                 "filename_urls": "/home/admin/entities_for_fudankg_search.txt",
                 "partial_url": "http://kw.fudan.edu.cn/cndbpedia/api/entity?mention={}"
             }

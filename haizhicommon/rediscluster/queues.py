@@ -124,7 +124,7 @@ class Queue(object):
                             results.append(result)
                     break
         else:
-            for i in range(5):
+            for i in range(10):
                 result = self.conn.spop(self.key)
                 if result:
                     results.append(result)
@@ -155,6 +155,7 @@ class Queue(object):
         pipeline = self.conn.pipeline()
         pipeline.hdel(self.failhash, result)
         pipeline.hdel(self.timehash, result)
+        pipeline.srem(self.key, result)
         pipeline.execute()
 
 
