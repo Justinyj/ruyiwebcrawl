@@ -69,7 +69,8 @@ def run(config):
                 urls,
                 len(urls) * v["length"],
                 priority=v["priority"],
-                queue_timeout=v["crawl_timeout"])
+                queue_timeout=v["crawl_timeout"],
+                failure_times=v['failure_times'])
         else:
             if config.get("debug"):
                 print(datetime.datetime.now().isoformat(), 'start post_job with delay', v["batch_id"])
@@ -83,6 +84,7 @@ def run(config):
                 len(urls) * v["length"],
                 priority=v["priority"],
                 queue_timeout=v["crawl_timeout"],
+                failure_times=v['failure_times'],
                 start_delay=200)
 
         tasks.append(t)
