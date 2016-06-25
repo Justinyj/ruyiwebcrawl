@@ -149,7 +149,8 @@ def load_urls(fname, partial_url=None):
             if len(ret) > 10000:
                 yield list(ret)
                 ret = set()
-    yield list(ret)
+    if len(ret) > 0:
+        yield list(ret)
 
 
 if __name__ == '__main__':

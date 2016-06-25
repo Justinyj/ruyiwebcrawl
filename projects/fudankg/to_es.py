@@ -14,7 +14,7 @@ from datetime import datetime
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
 
-ENV = 'local'
+ENV = 'prod'
 # http://localhost:9200/fudankg0623/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
         "description": "复旦百科实体属性值0623",
@@ -56,10 +56,13 @@ def load_json_files(dirname='.'):
                 eavps.extend(eavp)
 
         count += 1
-        if len(eavps) > 10000:
+        if len(eavps) > 1000:
             sendto_es(eavps)
             eavps = []
             print('{} process {} files.'.format(datetime.now().isoformat(), count))
+
+    if eavps:
+        sendto_es(eavps)
 
 
 def parse_one_entity(entity, avps):
