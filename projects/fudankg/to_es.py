@@ -9,6 +9,7 @@ import json
 import os
 import re
 from collections import defaultdict
+from datetime import datetime
 
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
@@ -58,7 +59,7 @@ def load_json_files(dirname='.'):
         if len(eavps) > 10000:
             sendto_es(eavps)
             eavps = []
-            print('{} process {} files.'.format(datetime.not().isoformat(), count))
+            print('{} process {} files.'.format(datetime.now().isoformat(), count))
 
 
 def parse_one_entity(entity, avps):
@@ -89,4 +90,4 @@ def parse_one_entity(entity, avps):
     return eavp
 
 if __name__ == '__main__':
-    load_json_files()
+    load_json_files('/Users/bishop/百度云同步盘/fudankg-json')
