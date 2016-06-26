@@ -1,3 +1,4 @@
+*.auto.txt
 .idea/
 temp/
 log.txt
