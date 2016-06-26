@@ -211,6 +211,14 @@ def clean_skip_words_all():
     libfile.lines2file(sorted(list(skip_words_all_core)), getTheFile("local/skip_words/skip_words_all_core.txt"))
     libfile.lines2file(sorted(list(skip_words_all_diff)), getTheFile("local/skip_words/skip_words_all_diff.txt"))
 
+def export_skip_words():
+    lines = set()
+    lines = libfile.file2set(getTheFile("model/skip_words_all.human.txt"))
+    lines.difference_update( libfile.file2set(getTheFile("model/skip_words_all_no.human.txt")) )
+    libfile.lines2file(sorted(list(lines)), getTheFile("model/skip_words_x_all.auto.txt"))
+
+    lines.update( libfile.file2set(getTheFile("model/skip_words_all_ext.human.txt")) )
+    libfile.lines2file(sorted(list(lines)), getTheFile("model/skip_words_x_nlp.auto.txt"))
 
 def test(text):
     api = ZhidaoNlp(debug=True)
@@ -235,6 +243,9 @@ def main():
 
     elif "learn" == option:
         learn_skip_words_0619()
+
+    elif "export" == option:
+        export_skip_words()
 
     elif "clean_skip_words_all" == option:
         clean_skip_words_all()

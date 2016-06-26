@@ -104,7 +104,7 @@ def parse_fudan_entity(entity, avps):
 
         attribute = a.encode('utf-8')
         attribute_name = attribute_mapping.get(a, attribute) # mapping is unicode
-        eavp.append( ea_to_json(entity, attribute, attribute_name, '属性', v) )
+        eavp.append( ea_to_json(entity, attribute, attribute_name, 'attribute', v) )
     return eavp
 
 
@@ -133,6 +133,12 @@ def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
     }
 
 
+def summary(text):
+    idx = text.find("。")
+    if idx>0:
+        return text[:text.index("。")+1]
+    else:
+        return text
 
 def load_zgdbk_info(dirname='.'):
     einfos = []
@@ -143,7 +149,8 @@ def load_zgdbk_info(dirname='.'):
         for line in fd:
             js = json.loads(line.strip())
             for entity, info in js.items():
-                einfos.append( ea_to_json(entity, '定义', '定义', '定义', [info]) )
+                info_short = summary(info)
+                einfos.append( ea_to_json(entity, '定义', '定义', 'definition', [info_short, info]) )
 
             count += 1
             if len(einfos) > 1000:
@@ -161,4 +168,5 @@ if __name__ == '__main__':
     load_fudan_json_files('/Users/bishop/百度云同步盘/fudankg-json')
 
     load_zgdbk_info('/Users/bishop/百度云同步盘/')
+    #load_zgdbk_info('local/')
 

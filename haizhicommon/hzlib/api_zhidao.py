@@ -73,8 +73,8 @@ class ZhidaoNlp():
         temp = re.sub(ur"([\u4E00-\u9FA5])\\s?(\.)\\s{0,5}([\u4E00-\u9FA5])","\1。\3",temp)
         return temp
 
-    def detect_skip_words(self, text, skip_words=None):
-        ret = self.detect_skip_words_0624(text, skip_words=skip_words)
+    def detect_skip_words(self, text, skip_words=None, check_list=["skip_words_all"]):
+        ret = self.detect_skip_words_0624(text, skip_words=skip_words, check_list=check_list)
         #print ret
         if ret  and ret[0]["group"] in ["skip_words_all", "skip_phrase" ]:
             return ret[0]["match"]
