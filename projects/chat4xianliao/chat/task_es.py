@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#  curl -XDELETE -u es_ruyi:ruyiruyies http://nlp.ruyi.ai:9200/ruyiwebcrawl_zhidaoqa_0626
+# http://api.ruyi.ai/ruyi-nlp/cache/clear?prefix=prod&suffix=answers
+
 
 import urllib
 import os
@@ -41,32 +44,38 @@ gcounter = collections.Counter()
 ES_DATASET_CONFIG ={
     "chat8cmu6w":
     {   "description":"知道短问答",
-        "es_index":"ruyiwebcrawl_zhidaoqa_0624",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
         "es_type":"default",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
     "chat8xianer12w":
     {   "description":"知道短问答 chat8xianer12w",
-        "es_index":"ruyiwebcrawl_zhidaoqa_0624",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
         "es_type":"chat8xianer12w",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
     "zhidao_question":
     {   "description":"知道短问答 zhidao_question",
-        "es_index":"ruyiwebcrawl_zhidaoqa_0624",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
         "es_type":"zhidao_question",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
     "zhidao_query":
     {   "description":"知道短问答 zhidao_query",
-        "es_index":"ruyiwebcrawl_zhidaoqa_0624",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
         "es_type":"zhidao_query",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
-    "xianer12w":
+    "xianer7w_rewrite":
+    {   "description":"知道短问答 xianer7w_rewrite",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
+        "es_type":"xianer7w_rewrite",
+        "filepath_mapping": getTheFile("faq_mappings.json"),
+    },
+    "xianer12w_test":
         {   "description":"贤二短问答",
-            "es_index":"ruyiwebcrawl_zhidaoqa_0624",
-            "es_type":"xianer12w",
+            "es_index":"ruyiwebcrawl_zhidaoqa_0626",
+            "es_type":"xianer12w_test",
             "filepath_mapping": getTheFile("faq_mappings.json"),
     }
 }
@@ -298,7 +307,7 @@ class ZhidaoQa():
                     for item in items:
                         gcounter["items"]+=1
 
-                        item["id"]= es_api.gen_es_id(item["question"]+item["answers"])
+                        item["id"]= es_api.gen_es_id(item["question"])
                         if item["id"] in ids:
                             continue
 
@@ -314,6 +323,77 @@ class ZhidaoQa():
                         self.upload(dataset_index, item_new)
         self.upload(dataset_index)
         gcounter["esdata"] = len(ids)
+
+    def index_edit_xianer7w_rewrite(self):
+        dataset_index = "xianer7w_rewrite"
+        gcounter[dataset_index] = 1
+
+        ids = set()
+
+        filename = getLocalFile( "label0625/xianer7w_rewrite_map.xlsx" )
+        print filename
+
+        gcounter["files"]+=1
+        ret = libfile.readExcel(["question","old_answers", "answers"], filename, start_row=0)
+
+        #collect answer mapping
+        map_answers = {}
+        for item in ret.values()[0]:
+            if item.get("old_answers"):
+                a_old = item["old_answers"].strip()
+            if item.get("answers"):
+                a = item["answers"].strip()
+
+            if a and a_old:
+                map_answers[a_old] = a
+
+        print len(map_answers)
+
+
+
+        filename = getLocalFile( "label0625/xianer7w_rewrite.xlsx" )
+        print filename
+
+        gcounter["files"]+=1
+        ret = libfile.readExcel(["question","old_answers", "answers"], filename, start_row=0)
+
+        #use mapping
+        for item in ret.values()[0]:
+            gcounter["items"]+=1
+            q = item["question"]
+            if item["old_answers"]:
+                a = map_answers.get(item["old_answers"])
+            else:
+                a = ""
+
+            if not a:
+                print "SKIP no mapping", q, item["old_answers"]
+                gcounter["items_no_mapping"]+=1
+                continue
+
+            qa = q + a
+            item["id"]= es_api.gen_es_id(q)
+            if item["id"] in ids:
+                gcounter["items_skip_dup"]+=1
+                continue
+
+            skip_words = self.api_nlp.detect_skip_words(qa, check_list=["skip_words_all","skip_words_zhidao"])
+            if skip_words:
+                print "SKIP", u"/".join(skip_words), "\t---\t", item["question"], "\t---\t", a
+                gcounter["items_skip_minganci"]+=1
+                continue
+
+            ids.add(item["id"])
+            item_new = {
+                "question": q,
+                "answers": a,
+                "id": item["id"] ,
+            }
+            self.upload(dataset_index, item_new)
+        self.upload(dataset_index)
+        gcounter["esdata"] = len(ids)
+
+
 
     def index_edit(self, option="question"):
         dataset_index = "zhidao_{}".format(option)
@@ -348,6 +428,7 @@ class ZhidaoQa():
                         if skip_words:
                             print "SKIP", u"/".join(skip_words), "\t---\t", item["question"], "\t---\t", item["answers"]
                             gcounter["items_skip_minganci"]+=1
+                            continue
 
                         ids.add(item["id"])
                         item_new = {}
@@ -357,15 +438,20 @@ class ZhidaoQa():
         self.upload(dataset_index)
         gcounter["esdata"] = len(ids)
 
-    def index_xianer12w(self):
-        dataset_index = "xianer12w"
+    def index_xianer12w_test(self):
+        dataset_index = "xianer12w_test"
         filename = getLocalFile("input/chat8xianer12w.txt")
+        visited = set()
         for line in libfile.file2list(filename):
 
+            if line in visited:
+                continue
+
+            visited.add(line)
             gcounter["lines"]+=1
             item = {
                 "question": line,
-                "answers": u"呵呵",
+                "answers": u"无语",
                 "id": es_api.gen_es_id(line)
             }
 
@@ -402,7 +488,7 @@ def main():
         """
             python chat/task_es.py index_chat chat8xianer12w
             python chat/task_es.py index_chat chat8cmu6w
-            python chat/task_es.py index_xianer12w
+            python chat/task_es.py index_xianer12w_test
         """
         dataset_index = "chat8cmu6w"
         if len(sys.argv)>2:
@@ -428,9 +514,17 @@ def main():
         agt = ZhidaoQa(config_option="local", dryrun=False)
         agt.index_chat(dataset_index)
 
+
+
+
+
+
+
+
     elif "index_edit" == option:
         """
-            python chat/task_es.py index_edit local query
+            python chat/task_es.py index_edit prod query
+            python chat/task_es.py index_edit prod question
 
         """
         if len(sys.argv)>3:
@@ -439,9 +533,26 @@ def main():
             agt = ZhidaoQa(config_option=config_option, dryrun=False)
             agt.index_edit(option)
 
-    elif "index_xianer12w" == option:
-        agt = ZhidaoQa(config_option="prod", dryrun=False)
-        agt.index_xianer12w()
+    elif "index_edit_xianer7w_rewrite" == option:
+        """
+            python chat/task_es.py index_edit_xianer7w_rewrite prod
+        """
+        if len(sys.argv)>2:
+            config_option = sys.argv[2]
+            agt = ZhidaoQa(config_option=config_option, dryrun=False)
+            agt.index_edit_xianer7w_rewrite()
+
+    elif "index_xianer12w_test" == option:
+        """
+            python chat/task_es.py index_xianer12w_test  prod
+        """
+        if len(sys.argv)>2:
+            config_option = sys.argv[2]
+            agt = ZhidaoQa(config_option=config_option, dryrun=False)
+            agt.index_xianer12w_test()
+
+
+
     elif "test" == option:
         agt = ZhidaoQa(config_option="prod", dryrun=False)
         agt.test(option="query")
