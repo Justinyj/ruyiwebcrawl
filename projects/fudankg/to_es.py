@@ -16,7 +16,7 @@ from hzlib.libfile import readExcel
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
 
-ENV = 'prod'
+ENV = 'local'
 # http://localhost:9200/fudankg0623/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
         "description": "复旦百科实体属性值0623",
@@ -80,11 +80,20 @@ def load_fudan_json_files(dirname='.'):
     if eavps:
         sendto_es(eavps)
 
+def load_attribute_mapping():
+    if not hasattr(load_attribute_mapping, '_attr'):
+        attribute_mapping = {}
+        items = readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
+        for i in items['Sheet1']:
+            attribute_mapping[ i['FD属性'] ] = i['多种属性表达']
+        setattr(load_attribute_mapping, '_attr', attribute_mapping)
+    return load_attribute_mapping._attr
 
 def parse_fudan_entity(entity, avps):
     eavp = []
     attr_values = defaultdict(list)
-#    readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
+
+    attribute_mapping = load_attribute_mapping()
 
     for a, v in avps:
         attr_values[a].append(v)
@@ -94,7 +103,7 @@ def parse_fudan_entity(entity, avps):
             continue
 
         attribute = a.encode('utf-8')
-        attribute_name = '' # TODO mapping
+        attribute_name = attribute_mapping.get(a, attribute) # mapping is unicode
         eavp.append( ea_to_json(entity, attribute, attribute_name, '属性', v) )
     return eavp
 
@@ -153,5 +162,3 @@ if __name__ == '__main__':
 
     load_zgdbk_info('/Users/bishop/百度云同步盘/')
 
-#    items = readExcel(['实体', '属性标准名', 'FD属性', '多种属性表达'], '/Users/bishop/百度云同步盘/baike_attribute.xls', 1)
-#    print(items)
