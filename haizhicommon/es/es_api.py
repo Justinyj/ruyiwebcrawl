@@ -2,6 +2,8 @@
 # author  Li Ding
 # change log
 #     2016-06-15  refactor code with run_esbulk_rows and example code working
+# curl -XDELETE -u es_admin:ruyiruyies http://nlp.ruyi.ai:9200/ruyiwebcrawl_zhidaoqa_0626
+# curl -XDELETE -u es_ruyi:ruyiruyies http://nlp.ruyi.ai:9200/ruyiwebcrawl_zhidaoqa_0626
 
 import requests
 import json
