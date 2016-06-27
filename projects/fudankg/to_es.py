@@ -41,19 +41,6 @@ def insert():
     return eavps
 
 
-def get_attributes(dirname='.'):
-    attributes = Counter()
-
-    for f in os.listdir(dirname):
-        with open(os.path.join(dirname, f)) as fd:
-            for entity, avps in json.load(fd).items():
-                for a, v in avps:
-                    attributes[a] += 1
-
-    items = sorted(attributes.items(), key=itemgetter(1), reverse=True)
-    with open('attributes.txt', 'w') as fd:
-        json.dump(items, fd, ensure_ascii=False, indent=4)
-
 
 def sendto_es(eavps):
     esconfig = get_esconfig(ENV)
@@ -163,10 +150,6 @@ def load_zgdbk_info(dirname='.'):
 
 
 if __name__ == '__main__':
-#    get_attributes('/Users/bishop/百度云同步盘/fudankg-json')
-
     load_fudan_json_files('/Users/bishop/百度云同步盘/fudankg-json')
-
     load_zgdbk_info('/Users/bishop/百度云同步盘/')
-    #load_zgdbk_info('local/')
 

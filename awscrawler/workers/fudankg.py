@@ -69,7 +69,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             if isinstance(ent, unicode):
                 ent = ent.encode('utf-8')
             urls.append( avpair_api.format(urllib.quote(ent)) )
-            urls.append( info_api.format(urllib.quote(ent)) )
+#            urls.append( info_api.format(urllib.quote(ent)) )
 
         manager.put_urls_enqueue(batch_id, urls)
         return True
