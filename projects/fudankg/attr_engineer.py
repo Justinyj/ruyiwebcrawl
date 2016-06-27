@@ -45,5 +45,5 @@ if __name__ == '__main__':
     dirname = os.path.join(DIR, 'fudankg-json')
     fname = os.path.join(DIR, 'attributes.txt')
 
-#    get_attributes(dirname)
+    get_attributes(dirname)
     attr_clustering(fname)
