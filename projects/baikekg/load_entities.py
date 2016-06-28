@@ -89,8 +89,8 @@ def wiki_extract_entity():
         m = disambiguation.match(jsn['chinese_label'])
         item = m.group(1) if m else jsn['chinese_label']
         entities.add(item)
-        if 'chinese_aliases' in js:
-            entities.update(js['chinese_aliases'])
+        if 'chinese_aliases' in jsn:
+            entities.update(jsn['chinese_aliases'])
 
     for jsn in read_file_iter('merge_step_5_simplified.json', jsn=True):
         key = jsn.keys()[0]
