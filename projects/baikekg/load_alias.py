@@ -69,7 +69,7 @@ def load_fudankg_alias(dirname):
     for f in os.listdir(dirname):
         jsn = read_file(os.path.join(dirname, f), jsn=True)
         for entity, avps in jsn.items():
-            for a, v in avps:
+            for a, v in avps[u'av pair']:
                 if a == u'别名':
                     fudan_entity_alias[entity] = v
 #    print(json.dumps(fudan_entity_alias, ensure_ascii=False, indent=4))

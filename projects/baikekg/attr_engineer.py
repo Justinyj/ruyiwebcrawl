@@ -21,7 +21,7 @@ def get_attributes(dirname='fudankg-json'):
     for f in os.listdir(dirname):
         jsn = read_file(os.path.join(dirname, f), ret='json')
         for entity, avps in jsn.items():
-            for a, v in avps:
+            for a, v in avps[u'av pair']:
                 attributes[a] += 1
 
     items = sorted(attributes.items(), key=itemgetter(1), reverse=True)

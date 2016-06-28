@@ -94,7 +94,9 @@ def wiki_extract_entity():
 
     for jsn in read_file_iter('merge_step_5_simplified.json', jsn=True):
         key = jsn.keys()[0]
-        entities.add( key[key.rfind('/') + 1:-1] )
+        key = key[key.rfind('/') + 1:-1]
+        m = disambiguation.match(key)
+        entities.add(m.group(1) if m else key)
 
     write_file('entities/wiki_entities.txt', entities)
     print('wiki entities length: ', len(entities))
@@ -127,5 +129,6 @@ if __name__ == '__main__':
     entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns0.txt') )
     entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns1.txt') )
 
-    write_file('entityes_0628_raw.txt', entities)
+    entities.remove('')
+    write_file('entities/entities_0628_raw.txt', entities)
 
