@@ -11,6 +11,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from algorithm import combination
+from load_file import read_file, write_file
 
 DIR = '/Users/bishop/百度云同步盘/'
 
@@ -18,16 +19,15 @@ def get_attributes(dirname='fudankg-json'):
     attributes = Counter()
 
     for f in os.listdir(dirname):
-        with open(os.path.join(dirname, f)) as fd:
-            for entity, avps in json.load(fd).items():
-                for a, v in avps:
-                    attributes[a] += 1
+        jsn = read_file(os.path.join(dirname, f), ret='json')
+        for entity, avps in jsn.items():
+            for a, v in avps:
+                attributes[a] += 1
 
     items = sorted(attributes.items(), key=itemgetter(1), reverse=True)
 
     wfname = os.path.join(DIR, 'attributes.txt')
-    with open(wfname, 'w') as fd:
-        json.dump(items, fd, ensure_ascii=False, indent=4)
+    write_file(wfname, items, jsn=True)
 
 
 def attr_clustering(fname):
@@ -37,9 +37,8 @@ def attr_clustering(fname):
     groups = combination(attributes)
 
     wfname = os.path.join(DIR, 'attributes_in_groups.txt')
-    with open(wfname, 'w') as fd:
-        json.dump(groups, fd, ensure_ascii=False, indent=4)
-    
+    write_file(wfname, groups, jsn=True)
+
 
 if __name__ == '__main__':
     dirname = os.path.join(DIR, 'fudankg-json')
