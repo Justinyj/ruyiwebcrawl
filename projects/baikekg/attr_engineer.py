@@ -11,7 +11,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from algorithm import combination
-from load_file import read_file, write_file
+from load_entities import read_file, write_file
 
 DIR = '/Users/bishop/百度云同步盘/'
 

@@ -5,7 +5,7 @@
 from __future__ import print_function, division
 
 import re
-from load_entities import read_file_iter, write_file
+from hzlib.libfile import read_file_iter, write_file
 
 regchinese = re.compile(u'^[\u4e00-\u9fff]{2,10}$')
 

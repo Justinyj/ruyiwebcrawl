@@ -7,7 +7,7 @@ from __future__ import print_function, division
 import re
 import os
 
-from load_entities import read_file, read_file_iter
+from hzlib.libfile import read_file, read_file_iter, write_file
 
 DIR = '/Users/bishop/百度云同步盘/'
 

@@ -13,34 +13,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-
-def read_file(fname, jsn=False):
-    """
-    :param ret: content, json, line, line_json
-    """
-    with codecs.open(fname, 'r') as fd:
-        if jsn:
-            return json.load(fd)
-        else:
-            return fd.read()
-
-def read_file_iter(fname, jsn=False):
-    with codecs.open(fname, 'r') as fd:
-        if jsn:
-            for line in fd:
-                yield json.loads(line.strip())
-        else:
-            for line in fd:
-                yield line.strip()
-
-
-def write_file(fname, lines, jsn=False):
-    with codecs.open(fname, 'w', encoding='utf-8') as fd:
-        if jsn:
-            json.dump(lines, fd, ensure_ascii=False, indent=4)
-        else:
-            fd.write('\n'.join(lines))
-
+from hzlib.libfile import read_file_iter, write_file
 
 
 def zgdbk_parse_entity(entity):

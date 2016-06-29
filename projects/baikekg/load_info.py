@@ -4,7 +4,7 @@
 
 from __future__ import print_function, division
 
-from load_entities import read_file, write_file
+from hzlib.libfile import read_file, write_file
 
 def zgdbk_extract_info():
     pairs = []
