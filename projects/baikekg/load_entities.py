@@ -8,6 +8,7 @@ import codecs
 import lxml.html
 import json
 import re
+import string
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -58,7 +59,7 @@ def zgdbk_extract_entity(infilename):
         if m:
             entity = zgdbk_parse_entity( m.group(1) )
             if entity:
-                entities.add(entity)
+                entities.add(entity.strip().lower())
 
     write_file('entities/zgdbk_entities.txt', entities)
     print('zgdbk entities length: ', len(entities))
@@ -70,6 +71,7 @@ def bdbk_extract_entity(ifilename):
     last_line = '</>'
 
     for line in read_file_iter(ifilename):
+        line = line.lower()
         if last_line == '</>':
             entities.add(line)
         elif line.startswith('@@@LINK='):
@@ -83,20 +85,21 @@ def bdbk_extract_entity(ifilename):
 
 def wiki_extract_entity():
     entities = set()
-    disambiguation = re.compile('(.*)_\([^\)]+\)')
+    disambiguation = re.compile(u'(.*)_\([^\)]+\)')
 
     for jsn in read_file_iter('wikidata_zh_simplified.json', jsn=True):
-        m = disambiguation.match(jsn['chinese_label'])
-        item = m.group(1) if m else jsn['chinese_label']
-        entities.add(item)
-        if 'chinese_aliases' in jsn:
-            entities.update(jsn['chinese_aliases'])
+        m = disambiguation.match(jsn[u'chinese_label'])
+        item = m.group(1) if m else jsn[u'chinese_label']
+        entities.add(item.encode('utf-8').strip().lower())
+        if u'chinese_aliases' in jsn:
+            entities.update(map(string.lower, map(string.strip, map(lambda x: x.encode('utf-8'), jsn[u'chinese_aliases']))))
 
     for jsn in read_file_iter('merge_step_5_simplified.json', jsn=True):
         key = jsn.keys()[0]
-        key = key[key.rfind('/') + 1:-1]
+        key = key[key.rfind('/') + 1:-1].strip().lower()
         m = disambiguation.match(key)
-        entities.add(m.group(1) if m else key)
+        entity = m.group(1) if m else key
+        entities.add(entity.encode('utf-8'))
 
     write_file('entities/wiki_entities.txt', entities)
     print('wiki entities length: ', len(entities))
@@ -111,9 +114,9 @@ def wiki_title_entity(fname):
         m = disambiguation.match(line.strip())
         item = m.group(1) if m else line.strip()
         if not item.startswith('\xee'): # human unreadable string
-            entities.add(item)
+            entities.add(item.strip().lower())
 
-    write_file('{}_title', entities)
+    write_file('entities/{}_title'.format(fname), entities)
     print('wiki title entities length: ', len(entities))
     return entities
 
@@ -126,9 +129,8 @@ if __name__ == '__main__':
     entities.update( bdbk_extract_entity('vbk2012.txt') )
     entities.update( bdbk_extract_entity('vbk2012_ext.txt') )
     entities.update( wiki_extract_entity() )
-    entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns0.txt') )
-    entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns1.txt') )
+    entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns2.txt') )
 
     entities.remove('')
-    write_file('entities/entities_0628_raw.txt', entities)
+    write_file('entities/entities_0629_raw.txt', entities)
 
