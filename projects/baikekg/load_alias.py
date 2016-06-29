@@ -8,6 +8,7 @@ import re
 import os
 
 from hzlib.libfile import read_file, read_file_iter, write_file
+from filter_lib import regchinese
 
 DIR = '/Users/bishop/百度云同步盘/'
 
@@ -108,7 +109,6 @@ def get_all_aliases(entity):
         aliases.add(entity.rstrip(u'脉').encode('utf-8'))
 
     removed = []
-    regchinese = re.compile(u'^[\u4e00-\u9fff]+$')
     for i in aliases:
         j = i.decode('utf-8')
         if len(j) == 1:

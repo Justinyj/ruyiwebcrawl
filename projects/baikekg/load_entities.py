@@ -14,6 +14,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from hzlib.libfile import read_file_iter, write_file
+from filter_lib import regdisambiguation, regfdentitysearch
 
 
 def zgdbk_parse_entity(entity):
@@ -58,10 +59,9 @@ def bdbk_extract_entity(ifilename):
 
 def wiki_extract_entity():
     entities = set()
-    disambiguation = re.compile(u'(.*)_\([^\)]+\)')
 
     for jsn in read_file_iter('wikidata_zh_simplified.json', jsn=True):
-        m = disambiguation.match(jsn[u'chinese_label'])
+        m = regdisambiguation.match(jsn[u'chinese_label'])
         item = m.group(1) if m else jsn[u'chinese_label']
         entities.add(item.encode('utf-8').strip().lower())
         if u'chinese_aliases' in jsn:
@@ -70,7 +70,7 @@ def wiki_extract_entity():
     for jsn in read_file_iter('merge_step_5_simplified.json', jsn=True):
         key = jsn.keys()[0]
         key = key[key.rfind('/') + 1:-1].strip().lower()
-        m = disambiguation.match(key)
+        m = regdisambiguation.match(key)
         entity = m.group(1) if m else key
         entities.add(entity.encode('utf-8'))
 
@@ -81,11 +81,10 @@ def wiki_extract_entity():
 
 def wiki_title_entity(fname):
     entities = set()
-    disambiguation = re.compile('(.*)_\([^\)]+\)')
 
     for line in read_file_iter(fname):
-        m = disambiguation.match(line.strip())
-        item = m.group(1) if m else line.strip()
+        m = regdisambiguation.match(line.strip().decode('utf-8'))
+        item = m.group(1).encode('utf-8') if m else line.strip()
         if not item.startswith('\xee'): # human unreadable string
             entities.add(item.strip().lower())
 
@@ -93,6 +92,16 @@ def wiki_title_entity(fname):
     print('wiki title entities length: ', len(entities))
     return entities
 
+
+def comic_song_extract_entity(fname):
+    entities = set()
+
+    for line in read_file_iter(fname):
+        m = regfdentitysearch.match(line.decode('utf-8'))
+        entity = m.group(1).encode('utf-8') if m else line
+        entities.add(entity)
+
+    return entities
 
 
 if __name__ == '__main__':

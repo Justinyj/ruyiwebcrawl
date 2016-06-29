@@ -6,8 +6,8 @@ from __future__ import print_function, division
 
 import re
 from hzlib.libfile import read_file_iter, write_file
+from filter_lib import regchinese
 
-regchinese = re.compile(u'^[\u4e00-\u9fff]{2,10}$')
 
 def filter_entities(ifilename):
     entities = set()

@@ -15,6 +15,7 @@ from collections import defaultdict, Counter
 from hzlib.libfile import readExcel
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
+from filter_lib import regfdentitysearch
 
 DIR = '/Users/bishop/百度云同步盘/'
 BATCH = 2000
@@ -109,7 +110,7 @@ def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
 
     entity_name = entity
 
-    m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
+    m = regfdentitysearch.match(entity)
     if m:
         tags.append(m.group(1))
         entity_name = m.group(1)

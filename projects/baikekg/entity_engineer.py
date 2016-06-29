@@ -10,10 +10,12 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+from filter_lib import regchinese
+
+
 DIR = '/Users/bishop/百度云同步盘/'
 
 def entity_pure_chinese(fname):
-    regchinese = re.compile(u'^[\u4e00-\u9fff]+$')
     pure_chinese = []
     alphanumeric = []
 
