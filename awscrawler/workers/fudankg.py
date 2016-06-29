@@ -32,7 +32,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             'entity': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entity\?mention=(.+)'),
             'avp': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityAVP\?entity=(.+)'),
             'info': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityInformation\?entity=(.+)'),
-            'tags', re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityTag\?entity=(.+)'),
+            'tags': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityTag\?entity=(.+)'),
         })
 
 

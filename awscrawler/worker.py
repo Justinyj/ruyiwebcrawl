@@ -112,6 +112,7 @@ class GetWorker(Worker):
                 if kwargs and kwargs.get("debug"):
                     get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
 
+                # TODO change to hmget
                 url = queue_dict['thinhash'].hget(url_id)
 
                 if kwargs and kwargs.get("debug"):
