@@ -8,7 +8,7 @@ import re
 import os
 
 from hzlib.libfile import read_file, read_file_iter, write_file
-from filter_lib import regchinese
+from filter_lib import regchinese, regdropbrackets
 
 DIR = '/Users/bishop/百度云同步盘/'
 
@@ -58,9 +58,13 @@ def load_merge_step5_wiki_simplified(dirname, fname):
     name = os.path.join(dirname, fname)
     for js in read_file_iter(name, jsn=True):
         for key, value in js.iteritems():
-            entity = key[key.rfind('/') + 1:-1]
+            entity = value[u'resource_label']
             if u'resource_alias' in value:
                 merge_step5_wiki_simplified[entity] = value[u'resource_alias']
+                m = regdropbrackets.match(entity)
+                if m:
+                    merge_step5_wiki_simplified[m.group(1)] = value[u'resource_alias']
+
     return merge_step5_wiki_simplified
 
 
@@ -69,8 +73,8 @@ def load_fudankg_alias(dirname):
 
     for f in os.listdir(dirname):
         jsn = read_file(os.path.join(dirname, f), jsn=True)
-        for entity, avps in jsn.items():
             for a, v in avps[u'av pair']:
+            for a, v in avps:
                 if a == u'别名':
                     fudan_entity_alias[entity] = v
 #    print(json.dumps(fudan_entity_alias, ensure_ascii=False, indent=4))
@@ -86,7 +90,7 @@ def get_all_aliases(entity):
         _aliases = {
             'fudan': load_fudankg_alias(dirname),
             'bdbk': load_bdbk_alias(DIR, 'bdbk_entity_alias.json'),
-            'zhwiki': load_zhwiki_alias(DIR, 'wikidata_zh.json'),
+            'zhwiki': load_zhwiki_alias(DIR, 'wikidata_zh_simplified.json'),
             'merge': load_merge_step5_wiki_simplified(DIR, 'merge_step_5_simplified.json'),
         }
         setattr(get_all_aliases, '_aliases', _aliases)

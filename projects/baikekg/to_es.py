@@ -13,17 +13,19 @@ from operator import itemgetter
 from collections import defaultdict, Counter
 
 from hzlib.libfile import readExcel
+from hzlib.libfile import read_file_iter, write_file
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
-from filter_lib import regfdentitysearch
+from filter_lib import regdropbrackets
+from load_alias import get_all_aliases
 
 DIR = '/Users/bishop/百度云同步盘/'
 BATCH = 2000
 ENV = 'local'
 # http://localhost:9200/fudankg0623/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
-        "description": "复旦百科实体属性值0623",
-        "es_index": "fudankg0623",
+        "description": "复旦百科实体属性值0630",
+        "es_index": "fudankg0630",
         "es_type": "fudankg_faq",
         "filepath_mapping": os.path.abspath(os.path.dirname(__file__)) +"/"+"fudankg_es_schema.json"
 }
@@ -98,22 +100,52 @@ def parse_fudan_entity(entity, avps):
     return eavp
 
 
+def send_definition_to_es(data, field='definition'):
+    pairs = []
+    count = 0
+
+    for entity, info in data.iteritems():
+        if field is None:
+            definition = info.strip()
+        else:
+            if field not in info:
+                continue
+            definition = info[field].strip()
+
+        definition_short = summary(definition)
+        values = [definition] if definition == definition_short else [definition_short, definition]
+        pairs.append( ea_to_json(entity, '定义', '定义', 'definition', values) )
+        count += 1
+
+        if len(pairs) > BATCH:
+            sendto_es(pairs)
+            pairs = []
+            print('{} process {} files.'.format(datetime.now().isoformat(), count))
+
+    if pairs:
+        sendto_es(pairs)
+
+
 def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
     """
     :param entity: type(entity) is unicode
     """
 
-    tags = [entity, extra_tag]
-    alias_mapping = load_alias_mapping()
-    if entity in alias_mapping:
-        tags.extend(alias_mapping[entity])
+    tags = [entity, entity.lower(), entity.upper(), extra_tag]
+    alias = get_all_aliases(entity)
+    if alias:
+        tags.extend(list(alias))
+#    alias_mapping = load_alias_mapping()
+#    if entity in alias_mapping:
+#        tags.extend(alias_mapping[entity])
 
     entity_name = entity
 
-    m = regfdentitysearch.match(entity)
+    m = regdropbrackets.match(entity)
     if m:
-        tags.append(m.group(1))
         entity_name = m.group(1)
+        tags.append(entity_name.lower())
+        tags.append(entity_name.upper())
 
     eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'), attribute))
 
@@ -137,27 +169,10 @@ def summary(text):
     else:
         return text
 
+
 def load_zgdbk_info(dirname='.'):
-    einfos = []
-    count = 0
-
     fname = os.path.join(dirname, 'zgdbk_entity_info.txt')
-    with open(fname) as fd:
-        for line in fd:
-            js = json.loads(line.strip())
-            for entity, info in js.items():
-                info = info.strip()
-                info_short = summary(info)
-                einfos.append( ea_to_json(entity, '定义', '定义', 'definition', [info_short, info]) )
-
-            count += 1
-            if len(einfos) > BATCH:
-                sendto_es(einfos)
-                einfos = []
-                print('{} process {} files.'.format(datetime.now().isoformat(), count))
-
-    if einfos:
-        sendto_es(einfos)
+    send_definition_to_es( read_file_iter(fname, jsn=True), field=None )
 
 
 def load_alias_mapping():

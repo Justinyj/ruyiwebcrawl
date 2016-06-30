@@ -14,7 +14,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from hzlib.libfile import read_file_iter, write_file
-from filter_lib import regdisambiguation, regfdentitysearch
+from filter_lib import regdisambiguation, regdropbrackets
 
 
 def zgdbk_parse_entity(entity):
@@ -97,10 +97,12 @@ def comic_song_extract_entity(fname):
     entities = set()
 
     for line in read_file_iter(fname):
-        m = regfdentitysearch.match(line.decode('utf-8'))
+        m = regdropbrackets.match(line.decode('utf-8'))
         entity = m.group(1).encode('utf-8') if m else line
         entities.add(entity)
 
+    print('comic song entities length: ', len(entities))
+    write_file('entities/comic_song_entities.txt', entities)
     return entities
 
 
@@ -112,7 +114,8 @@ if __name__ == '__main__':
     entities.update( bdbk_extract_entity('vbk2012_ext.txt') )
     entities.update( wiki_extract_entity() )
     entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns2.txt') )
+    entities.update( comic_song_extract_entity('ertong.txt') )
 
     entities.remove('')
-    write_file('entities/entities_0629_raw.txt', entities)
+    write_file('entities/entities_0630_raw.txt', entities)
 

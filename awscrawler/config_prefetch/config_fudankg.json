@@ -17,7 +17,7 @@
                 "url_pattern": "http://kw.fudan.edu.cn/cndbpedia/api/entity?mention={}"
             }
         },
-        "aws_machine_number": 500,
+        "aws_machine_number": 60,
         "note": "复旦百科实体属性值爬取",
         "debug": false
     }
