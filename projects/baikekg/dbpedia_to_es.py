@@ -5,7 +5,6 @@
 from __future__ import print_function, division
 
 from hzlib.libfile import read_file_iter, write_file
-from filter_lib import regdisambiguation
 from to_es import send_definition_to_es
 
 DIR = '/Users/bishop/百度云同步盘/'

@@ -4,6 +4,7 @@
 
 from __future__ import print_function, division
 
+import lxml.html
 from hzlib.libfile import read_file, write_file
 
 def zgdbk_extract_info():

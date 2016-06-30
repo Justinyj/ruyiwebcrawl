@@ -8,6 +8,7 @@ import os
 import json
 import urllib
 import re
+import urlparse
 from datetime import datetime
 
 from downloader.caches3 import CacheS3
@@ -17,6 +18,8 @@ from downloader.downloader_wrapper import DownloadWrapper
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
+#SITE = 'http://kw.fudan.edu.cn'
+SITE = 'https://crl.ptopenlab.com:8800'
 
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
@@ -29,10 +32,10 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
-            'entity': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entity\?mention=(.+)'),
-            'avp': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityAVP\?entity=(.+)'),
-            'info': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityInformation\?entity=(.+)'),
-            'tags': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityTag\?entity=(.+)'),
+            'entity': re.compile(urlparse.urljoin(SITE, 'cndbpedia/api/entity\?mention=(.+)')),
+            'avp': re.compile(urlparse.urljoin(SITE, 'cndbpedia/api/entityAVP\?entity=(.+)')),
+            'info': re.compile(urlparse.urljoin(SITE, 'cndbpedia/api/entityInformation\?entity=(.+)')),
+            'tags': re.compile(urlparse.urljoin(SITE, 'cndbpedia/api/entityTag\?entity=(.+)')),
         })
 
 
@@ -65,9 +68,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         entity = urllib.unquote(m.group(1))
         if label == 'entity':
             urls = []
-            avpair_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityAVP?entity={}'
-            info_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityInformation?entity={}'
-            tags_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityTag?entity={}'
+            avpair_api = urlparse.urljoin(SITE, 'cndbpedia/api/entityAVP?entity={}')
+            info_api = urlparse.urljoin(SITE, 'cndbpedia/api/entityInformation?entity={}')
+            tags_api = urlparse.urljoin(SITE, 'cndbpedia/api/entityTag?entity={}')
             js = json.loads(content)
             for ent in js[u'entity']:
                 if isinstance(ent, unicode):
