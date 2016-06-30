@@ -39,7 +39,7 @@ def writeExcel(items, keys, filename, page_size=60000):
 
         colindex =0
         for key in keys:
-            v = item.get(key,"na")
+            v = item.get(key,"")
             if type(v) == list:
                 v = ','.join(v)
             if type(v) == set:

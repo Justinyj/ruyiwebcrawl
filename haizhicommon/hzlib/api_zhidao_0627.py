@@ -74,15 +74,29 @@ class ZhidaoNlp():
         return temp
 
     def detect_skip_words(self, text, skip_words=None, check_list=["skip_words_all"]):
-        ret = self.detect_skip_groups(text, skip_words=skip_words, check_list=check_list)
+        ret = self.detect_skip_words_0624(text, skip_words=skip_words, check_list=check_list)
         #print ret
         if ret  and ( ret[0]["group"] in ["skip_phrase" ] or ret[0]["group"] in check_list ):
             return ret[0]["match"]
 
         return []
 
+    def detect_skip_words_0618(self, text, skip_words=None):
+        m = re.search(u"啪啪啪", text)
+        if m:
+            return [m.group(0)]
 
-    def detect_skip_groups(self, text, skip_words=None, check_list=["skip_words_all"]):
+        words = set(self.cut_text(text))
+        if self.debug:
+            print "detect_skip_words words", json.dumps(list(words), ensure_ascii=False)
+        if skip_words is None:
+            skip_words = self.skip_words_all
+        ret =  words.intersection(skip_words)
+        if self.debug:
+            print "detect_skip_words skip_words",json.dumps(list(ret), ensure_ascii=False)
+        return ret
+
+    def detect_skip_words_0624(self, text, skip_words=None, check_list=["skip_words_all"]):
         m = re.search(u"啪啪啪", text)
         if m:
             return [{
@@ -115,7 +129,7 @@ class ZhidaoNlp():
                     break
 
         if self.debug:
-            print "detect_skip_groups ",json.dumps(ret, ensure_ascii=False)
+            print "detect_skip_words_0624 ",json.dumps(ret, ensure_ascii=False)
 
         if ret and ret[0]["match"]:
             return ret
@@ -177,7 +191,7 @@ class ZhidaoNlp():
     def get_chat_label(self, q, a):
         qa = q+a
         map_data = {"skip_phrase": "词组", "skip_words_all": "敏感", "skip_words_zhidao": "知道" }
-        ret = self.detect_skip_groups(qa, check_list=["skip_words_zhidao", "skip_words_all"])
+        ret = self.detect_skip_words_0624(qa, check_list=["skip_words_zhidao", "skip_words_all"])
         if ret:
             return u"{}:{}".format(map_data.get(ret[0]["group"]),u",".join(ret[0]["match"]))
 
@@ -276,32 +290,24 @@ class ZhidaoNlp():
             debug_item['note']= u"[-]其他"
         return False
 
-    def select_qapair_0624(self, query, search_result_json, result_limit=3, answer_len_limit=100, question_len_limit=30, question_match_limit=0.3):
+    def select_qapair_0624(self, query, search_result_json, result_limit=3, answer_len_limit=40, question_len_limit=30, question_match_limit=0.3):
         result_answers = []
 
         for item in search_result_json:
             if "answers" not in item:
-                item["debug-note"]= u"[-]无答案"
                 continue
 
             #too long question
             if len(item["question"]) > question_len_limit:
-                item["debug-note"]= u"[-]问题长度过长:{}".format(len(item["question"]) )
                 #print "skip question_len_limit", len(item["question"])
                 continue
 
             #skip long answers
             if len(item["answers"]) > answer_len_limit:
-                item["debug-note"]= u"[-]答案长度过长:{}".format(len(item["answers"]) )
                 #print "skip answer_len_limit", type(item["answers"]), len(item["answers"]), item["answers"]
                 continue
 
-            if len(item["answers"]) < 2:
-                item["debug-note"]= u"[-]答案长度过短:{}".format(len(item["answers"]) )
-                continue
-
             if self.filter_chat(item["question"], item["answers"]):
-                item["debug-note"]= u"[-]是闲聊"
                 continue
 
 
@@ -309,12 +315,11 @@ class ZhidaoNlp():
             answer_match_score   = difflib.SequenceMatcher(None, query, item["answers"]).ratio()
             item["match_score"] = question_match_score
             item["match_score_answers"] = answer_match_score
-            item["qa_label"] = self.get_chat_label(item["question"], item["answers"])
+            item["label"] = self.get_chat_label(item["question"], item["answers"])
 
             #skip not matching questions
             if (question_match_score < question_match_limit):
                 #print "skip question_match_limit", question_match_score
-                item["debug-note"]= u"[-]问题匹配度低: ％1.2f" % question_match_score
                 continue
 
             result_answers.append(item)
@@ -489,51 +494,16 @@ class ZhidaoFetch():
 
         return ret
 
-    # def text2bigram(self, text):
-    #     ret = set()
-    #     if not text:
-    #         return ret
-    #     text = text.lower()
-    #     symbols = list(self.api_nlp.cut_text(text))
-    #
-    #     for i in range(len(symbols)):
-    #         if i==0:
-    #             word = u'___{}'.format(symbols[i])
-    #             ret.add(word)
-    #             word = text[i:i+2]
-    #             ret.add(word)
-    #         elif i == len(text)-1:
-    #             word = u'{}___'.format(symbols[i])
-    #             ret.add(word)
-    #         else:
-    #             word = u"".join(symbols[i:i+2])
-    #             ret.add(word)
-    #     return ret
-    #
-    # def bigram_sim(self, q1, q2):
-    #     b1 = self.text2bigram(q1)
-    #     b2 = self.text2bigram(q2)
-    #     b1 = set(self.api_nlp.cut_text(q1.lower()))
-    #     b2 = set(self.api_nlp.cut_text(q2.lower()))
-    #     b1d = set(b1)
-    #     b1d.difference_update(b2)
-    #
-    #     sim = 1.0 * len(b1.intersection(b2))/ len(b1.union(b2))
-    #     return sim
 
     def select_best_qapair_0617(self,query, search_result_json):
         best_item = None
-        best_score = 0.66
+        best_score = 0.4
         best_cnt_like = -1
         for item in search_result_json:
             print json.dumps(item, ensure_ascii=False)
             print "\n\n--------select_best_qapair_0617 "
-
-            #match_score = self.bigram_sim(query, item["question"])
-            match_score = difflib.SequenceMatcher(None, query.lower(), item["question"].lower()).ratio()
-            item["match_score"] = match_score
-
             #print type(query), type(item["question"])
+            discount_skip_word = 0
             temp = self.api_nlp.detect_skip_words(item["question"])
             if temp:
                 print "skip min-gan-ci question", json.dumps(list(temp), ensure_ascii=False)
@@ -551,29 +521,22 @@ class ZhidaoFetch():
                 item["debug_note"] = u"[-]问答对－答案有符号"
                 continue
 
+            match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
+            item["match_score"] = match_score
             if self.api_nlp.debug:
-                print match_score, item["answers"]
+                print match_score, discount_skip_word, item["answers"]
 
             #print query, item["question"] ,match_score, item["cnt_like"]
             this_answer_is_better = False
-            if item["source"] == "baike":
-                item["debug_note"] = u"[+]问答对－使用百科"
+            if match_score > best_score * 1.5:
                 this_answer_is_better = True
-            elif not best_item or best_item["source"] != "baike":
-                if match_score > best_score * 1.1:
-                    this_answer_is_better = True
-                elif match_score > best_score * 0.9 and item["cnt_like"] > best_cnt_like*1.5:
-                    this_answer_is_better = True
+            elif match_score > best_score * 0.9 and item["cnt_like"] > best_cnt_like:
+                this_answer_is_better = True
 
             if this_answer_is_better:
                 best_item = item
-                best_score = max(match_score, best_score)
+                best_score = match_score
                 best_cnt_like = item["cnt_like"]
-                if not item.get("debug_note"):
-                    item["debug_note"] = u"[?]问答对－maybe best={}".format( best_score )
-            else:
-                if not item.get("debug_note"):
-                    item["debug_note"] = u"[-]问答对－低于best={}".format( best_score )
 
         return best_item
 
@@ -694,7 +657,7 @@ class ZhidaoFetch():
             search_result_json = parse_search_json_v0615(content)
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
 
-            #deprecated
+            #deprecated 
             best_item = self.select_best_chat_0621(query_unicode, search_result_json)
             if best_item:
                 ret ["best_qapair"] = best_item
