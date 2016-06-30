@@ -202,6 +202,31 @@ def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = 
     import lxml.html
     dom = lxml.html.fromstring(content)
     #print (content)
+    baike = dom.xpath('//div[@id="wgt-baike"]')
+    if baike:
+        url = baike[0].xpath('.//a/@href')[0]
+        q_id = re.findall('http://baike.baidu.com/subview/\d+/(\d+).htm', url)
+        if q_id:
+            node = baike[0]
+            question = u"".join(node.xpath('.//dt[@class="title"]/a//text()')).strip()
+            question = question.replace(u"_百度百科","")
+            answers_raw = u"".join(node.xpath('.//div[@class="desc"]/p[not(contains(@class, "lnkList"))]//text()')).strip()
+
+            src = "baike"
+            item = {
+                "id": u"{}:{}".format(src, q_id),
+                "question_id": q_id[0],
+                "source": src,
+                "cnt_answer": 0,
+                "cnt_like": 0,
+                "question": question,
+                "answers": clean_answers(answers_raw),
+                "answers_raw": answers_raw,
+            }
+            #print (json.dumps(item, ensure_ascii=False, indent=4))
+            ret.append(item)
+
+
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
     #print (len(recommend))
     for node in recommend:
@@ -311,18 +336,13 @@ def parse_search_result_item(node):
         item["answers_raw"] = temp
 
 
-        temp = temp.replace(u"...","")
+        answers_clean  = clean_answers(temp)
 
-        index = "temp".find(" ")
-        if index > 5:
-            temp = temp[:index]
-        else:
-            temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp).strip()
-        if re.search(ur"(：|；|，|。。｜\.\.)$", temp):
+        if re.search(ur"(：|；|，|。。｜\.\.)$", answers_clean):
             return None
 
         #print("answers", type(temp), temp)
-        item["answers"] = temp
+        item["answers"] = answers_clean
         #temp = re.sub(ur"([。！？ ]).*$",r"\1", temp).strip()
         #item["answers_"] = temp
         #item["answers_good"] =  (re.search(ur"^[^？。！]+[。！]?$", temp) is not None)
@@ -341,3 +361,13 @@ def parse_search_result_item(node):
     }
     """
     return item
+
+def clean_answers(temp):
+    temp = temp.replace(u"...","")
+
+    index = "temp".find(" ")
+    if index > 5:
+        temp = temp[:index]
+    else:
+        temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp).strip()
+    return temp

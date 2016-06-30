@@ -164,5 +164,106 @@ def main():
             libdata.print_json(ret)
 
 
+    elif "test_baike_realtime" == option:
+        # python hzlib/task_api_zhidao.py test
+        api = ZhidaoFetch()
+        if len(sys.argv)>2:
+            question = sys.argv[2]
+            query_filter =2
+            if len(sys.argv)>3:
+                query_filter = int(sys.argv[3])
+            print question, query_filter
+            ret = api.search_baike_best(question, query_filter=query_filter)
+            print question, query_filter
+            libdata.print_json(ret)
+
+        else:
+            question = u"天空是什么颜色的？"
+            ret = api.search_baike_best(question)
+            print question
+            libdata.print_json(ret)
+
+    elif option.startswith("test_baike_cache"):
+        # python hzlib/task_api_zhidao.py test_baike_cache
+        print "========"
+        config = {
+				"batch_id": "test-test-20160620",
+				"length": 1,
+				"crawl_http_method": "get",
+				"crawl_gap": 1,
+				"crawl_use_js_engine": False,
+				"crawl_timeout": 10,
+				"crawl_http_headers": {},
+				"debug": True,
+				"cache_server": "http://192.168.1.179:8000"
+			}
+        api = ZhidaoFetch(config)
+        if option == "test_baike_cache_one":
+            #question = u"你喜欢蓝色么？"
+            question = u"天空是什么颜色的？"
+            question = u"掏粪男孩就是指TFboys吗?"
+            question = u"爱因斯坦是谁"
+            if len(sys.argv)>2:
+                question = sys.argv[2]
+            ret = api.search_baike_best(question)
+            libdata.print_json(ret)
+            print question
+        else:
+            filename_question = sys.argv[2]
+            questions = libfile.file2list(filename_question)
+
+            if questions:
+                filename =  u"{}.temp".format(filename_question)
+                libfile.lines2file(sorted(list(questions)), filename)
+
+            print len(questions)
+            results = []
+            for question in questions:
+                query_filter =2
+                if len(sys.argv)>3:
+                    query_filter = int(sys.argv[3])
+                debug_item = {}
+                ret = api.search_baike_best(question, query_filter=query_filter, debug_item=debug_item)
+                print question, query_filter
+                #libdata.print_json(ret)
+                if not ret:
+                    debug_item["best"] = u"异常"
+                    debug_item["query"] = question
+                    results.append(debug_item)
+
+                elif not ret.get("items_all",[]):
+                    debug_item["query"] = question
+                    debug_item["best"] = u"无结果"
+                    results.append(debug_item)
+
+                else:
+                    for item in ret.get("items_all",[]):
+                        item["query"] = question
+                        results.append(item)
+                        if item["id"] == ret.get("best_qapair",{}).get("id"):
+                            item["best"] = u"最优"
+                        else:
+                            item["best"] = u""
+
+
+            filename = getLocalFile("temp/test_baike_cache.{}.xls".format(os.path.basename(filename_question)))
+            fields = [u"标注", "best", "debug_note", "query", "answers", "match_score", "cnt_like", "cnt_answer", "question", "id", "answers_raw", "question_content"]
+            libfile.writeExcel(results, fields, filename)
+
+
+
+    elif "test_jieba" == option:
+        api = ZhidaoNlp()
+        question = sys.argv[2]
+        if not isinstance(question, unicode):
+            question = question.decode("utf-8")
+
+        temp = api.cut_text( question )
+        print json.dumps(list(temp), ensure_ascii=False)
+
+        temp = api.pseg.cut( question )
+        for word, pos in temp:
+            print word, pos
+
 if __name__ == "__main__":
     main()
