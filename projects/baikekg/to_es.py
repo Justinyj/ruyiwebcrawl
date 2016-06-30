@@ -15,7 +15,10 @@ from collections import defaultdict, Counter
 from hzlib.libfile import readExcel
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows, gen_es_id
 from fudan_attr import get_entity_avps_results
+from filter_lib import regfdentitysearch
 
+DIR = '/Users/bishop/百度云同步盘/'
+BATCH = 2000
 ENV = 'local'
 # http://localhost:9200/fudankg0623/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
@@ -41,19 +44,6 @@ def insert():
     return eavps
 
 
-def get_attributes(dirname='.'):
-    attributes = Counter()
-
-    for f in os.listdir(dirname):
-        with open(os.path.join(dirname, f)) as fd:
-            for entity, avps in json.load(fd).items():
-                for a, v in avps:
-                    attributes[a] += 1
-
-    items = sorted(attributes.items(), key=itemgetter(1), reverse=True)
-    with open('attributes.txt', 'w') as fd:
-        json.dump(items, fd, ensure_ascii=False, indent=4)
-
 
 def sendto_es(eavps):
     esconfig = get_esconfig(ENV)
@@ -72,7 +62,7 @@ def load_fudan_json_files(dirname='.'):
                 eavps.extend(eavp)
 
         count += 1
-        if len(eavps) > 1000:
+        if len(eavps) > BATCH:
             sendto_es(eavps)
             eavps = []
             print('{} process {} files.'.format(datetime.now().isoformat(), count))
@@ -109,11 +99,18 @@ def parse_fudan_entity(entity, avps):
 
 
 def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
+    """
+    :param entity: type(entity) is unicode
+    """
 
     tags = [entity, extra_tag]
+    alias_mapping = load_alias_mapping()
+    if entity in alias_mapping:
+        tags.extend(alias_mapping[entity])
+
     entity_name = entity
 
-    m = re.compile(u'(.+?)(\(|（).+(\)|）)').match(entity)
+    m = regfdentitysearch.match(entity)
     if m:
         tags.append(m.group(1))
         entity_name = m.group(1)
@@ -129,13 +126,13 @@ def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
         'attribute_name': attribute_name,
         'value': values[0],
         'values': values,
-        'tags': tags
+        'tags': list(set(tags))
     }
 
 
 def summary(text):
     idx = text.find("。")
-    if idx>0:
+    if idx > 0:
         return text[:text.index("。")+1]
     else:
         return text
@@ -149,11 +146,12 @@ def load_zgdbk_info(dirname='.'):
         for line in fd:
             js = json.loads(line.strip())
             for entity, info in js.items():
+                info = info.strip()
                 info_short = summary(info)
                 einfos.append( ea_to_json(entity, '定义', '定义', 'definition', [info_short, info]) )
 
             count += 1
-            if len(einfos) > 1000:
+            if len(einfos) > BATCH:
                 sendto_es(einfos)
                 einfos = []
                 print('{} process {} files.'.format(datetime.now().isoformat(), count))
@@ -162,11 +160,24 @@ def load_zgdbk_info(dirname='.'):
         sendto_es(einfos)
 
 
+def load_alias_mapping():
+    if not hasattr(load_alias_mapping, '_mapping'):
+        entity_alias_mapping = {}
+
+        infile = os.path.join(DIR, 'zgdbk_entity_with_alias.txt')
+        with open(infile) as fd:
+            for line in fd:
+                line = line.strip()
+                words = line.split('\t')
+                if len(words) > 1:
+                    entity_alias_mapping[words[0].decode('utf-8')] = words[1:]
+        setattr(load_alias_mapping, '_mapping', entity_alias_mapping)
+    return load_alias_mapping._mapping
+
+
 if __name__ == '__main__':
-#    get_attributes('/Users/bishop/百度云同步盘/fudankg-json')
 
-    load_fudan_json_files('/Users/bishop/百度云同步盘/fudankg-json')
+    load_fudan_json_files(DIR + 'fudankg-json')
+    load_zgdbk_info(DIR)
 
-    load_zgdbk_info('/Users/bishop/百度云同步盘/')
-    #load_zgdbk_info('local/')
 

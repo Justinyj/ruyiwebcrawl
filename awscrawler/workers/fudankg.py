@@ -27,13 +27,13 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         head, tail = batch_id.split('-')
         setattr(process, '_cache', CacheS3(head + '-json-' + tail))
 
-    if not hasattr(process, '_regentity'):
-        setattr(process, '_regentity', re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entity\?mention=(.+)'))
-    if not hasattr(process, '_regavp'):
-        setattr(process, '_regavp', re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityAVP\?entity=(.+)'))
-    if not hasattr(process, '_reginfo'):
-        setattr(process, '_reginfo', re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityInformation\?entity=(.+)'))
-
+    if not hasattr(process, '_regs'):
+        setattr(process, '_regs', {
+            'entity': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entity\?mention=(.+)'),
+            'avp': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityAVP\?entity=(.+)'),
+            'info': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityInformation\?entity=(.+)'),
+            'tags': re.compile('http://kw.fudan.edu.cn/cndbpedia/api/entityTag\?entity=(.+)'),
+        })
 
 
     method, gap, js, timeout, data = parameter.split(':')
@@ -57,41 +57,34 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if kwargs and kwargs.get("debug"):
         get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url')
 
-    m = process._regentity.match(url)
-    if m:
+    for label, reg in process._regs.iteritems():
+        m = reg.match(url)
+        if not m:
+            continue
+
         entity = urllib.unquote(m.group(1))
-        urls = []
+        if label == 'entity':
+            urls = []
+            avpair_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityAVP?entity={}'
+            info_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityInformation?entity={}'
+            tags_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityTag?entity={}'
+            js = json.loads(content)
+            for ent in js[u'entity']:
+                if isinstance(ent, unicode):
+                    ent = ent.encode('utf-8')
+                ent = urllib.quote(ent)
+                urls.append( avpair_api.format(ent) )
+                urls.append( info_api.format(ent) )
+                urls.append( tags_api.format(ent) )
 
-        avpair_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityAVP?entity={}'
-        info_api = 'http://kw.fudan.edu.cn/cndbpedia/api/entityInformation?entity={}'
-        js = json.loads(content)
-        for ent in js[u'entity']:
-            if isinstance(ent, unicode):
-                ent = ent.encode('utf-8')
-            urls.append( avpair_api.format(urllib.quote(ent)) )
-            urls.append( info_api.format(urllib.quote(ent)) )
+            manager.put_urls_enqueue(batch_id, urls)
 
-        manager.put_urls_enqueue(batch_id, urls)
-        return True
-
-    else:
-        m = process._regavp.match(url)
-        if m:
-            entity = urllib.unquote(m.group(1))
-            eavp = json.dumps({entity: json.loads(content).values()[0]})
+            return True
+        else:
+            data = json.dumps({entity: json.loads(content)})
 
             if kwargs and kwargs.get("debug"):
-                get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
+                get_logger(batch_id, today_str, '/opt/service/log/').info('start post {} json'.format(label))
 
-            return process._cache.post(url, eavp)
-#        else:
-#            m = process._reginfo.match(url)
-#            if m:
-#                entity = urllib.unquote(m.group(1))
-#                infobox = json.dumps({entity: json.loads(content)})
-#
-#                if kwargs and kwargs.get("debug"):
-#                    get_logger(batch_id, today_str, '/opt/service/log/').info('start post info json')
-#
-#                return process._cache.post(url, infobox)
+            return process._cache.post(url, data)
 

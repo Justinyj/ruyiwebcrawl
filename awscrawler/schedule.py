@@ -80,8 +80,8 @@ class Schedule(object):
                 before = now
 
 
-    def remote_command(self, ipaddr, command):
-        for _ in range(10):
+    def remote_command(self, ipaddr, command, repeat=11):
+        for _ in range(repeat):
             try:
                 self.ssh.connect(ipaddr, username='admin', pkey=self.pkey)
                 ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)

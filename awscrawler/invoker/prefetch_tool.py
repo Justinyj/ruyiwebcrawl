@@ -72,12 +72,12 @@ def run(config):
     ]
 
 
-    print(datetime.datetime.now().isoformat(), 'start post_job with delay')
 
     jobs = sorted(config["jobs"].iteritems(), key=itemgetter(0), reverse=False)
     for i, v in jobs:
         if i == mini_key:
             continue
+        print(datetime.datetime.now().isoformat(), 'start post_job with delay')
         tasks.append( post_job(v["batch_id"],
                                v["crawl_http_method"],
                                v["crawl_gap"],

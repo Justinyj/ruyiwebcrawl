@@ -124,3 +124,32 @@ def items2file(items, filename,encoding ='utf-8', modifier='w'):
     with codecs.open(filename, modifier, encoding=encoding) as f:
         for item in items:
             f.write("{}\n".format(json.dumps(item, ensure_ascii=False)))
+
+
+def read_file(fname, jsn=False):
+    """
+    :param ret: content, json, line, line_json
+    """
+    with codecs.open(fname, 'r') as fd:
+        if jsn:
+            return json.load(fd)
+        else:
+            return fd.read()
+
+def read_file_iter(fname, jsn=False):
+    with codecs.open(fname, 'r') as fd:
+        if jsn:
+            for line in fd:
+                yield json.loads(line.strip())
+        else:
+            for line in fd:
+                yield line.strip()
+
+
+def write_file(fname, lines, jsn=False):
+    with codecs.open(fname, 'w', encoding='utf-8') as fd:
+        if jsn:
+            json.dump(lines, fd, ensure_ascii=False, indent=4)
+        else:
+            fd.write('\n'.join(lines))
+
