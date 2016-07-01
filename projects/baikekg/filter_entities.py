@@ -40,7 +40,11 @@ def begin_filter_with_search(fname):
 
 if __name__ == '__main__':
     entities = set()
-    entities.update( begin_filter_with_search('entities/first_order_entities.txt') )
-    print('length of first order filtered entities', len(entities))
+#    entities.update( begin_filter_with_search('entities/first_order_entities.txt') )
+
     entities.update( begin_filter_with_search('entities/second_order_entities.txt') )
-    write_file('for_fudan_search_entity.txt', entities)
+    entities.update( begin_filter_with_search('entities/third_order_entities.txt') )
+
+    print('length of first order filtered entities', len(entities))
+    write_file('entities_for_fudankg_search.txt', entities)
+

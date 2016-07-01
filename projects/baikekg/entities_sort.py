@@ -24,12 +24,11 @@ def run():
     print('zgdbk and comic length', len(entities))
 
     dbpedia, wikidata, bdbk = load_db_data_bd()
-    inter, tidy_inter, _ = intersection_of3(dbpedia, wikidata, bdbk)
-    print('intersection length', len(inter))
+    inter3, tidy_inter, db_wiki_each = intersection_of3(dbpedia, wikidata, bdbk)
+    print('intersection length', len(inter3))
     print('dbpedia, wikidata unique intersection length', len(tidy_inter))
 
-    entities.extend(list( inter ))
-    entities.extend(list( tidy_inter ))
+    entities.extend(list( db_wiki_each ))
     return entities
 
 def load_db_data_bd():
@@ -44,21 +43,21 @@ def load_db_data_bd():
 def intersection_of3(dbpedia, wikidata, bdbk):
     if not hasattr(intersection_of3, '_cache'):
         inter_temp = dbpedia.intersection(wikidata)
-        inter = inter_temp.intersection(bdbk)
-        setattr(intersection_of3, '_cache', (inter, inter_temp - inter, inter_temp))
+        inter3 = inter_temp.intersection(bdbk)
+        setattr(intersection_of3, '_cache', (inter3, inter_temp - inter3, inter_temp))
     return intersection_of3._cache
 
 
 def get_dbpedia_wikidata():
     dbpedia, wikidata, bdbk = load_db_data_bd()
-    _, _, inter = intersection_of3(dbpedia, wikidata, bdbk)
-    return list(dbpedia - inter) + list(wikidata - inter)
+    _, _, db_wiki_each = intersection_of3(dbpedia, wikidata, bdbk)
+    return list(dbpedia - db_wiki_each) + list(wikidata - db_wiki_each)
 
 
 def get_bdbk():
     dbpedia, wikidata, bdbk = load_db_data_bd()
-    inter3, _, _ = intersection_of3(dbpedia, wikidata, bdbk)
-    return list(bdbk - inter3)
+    return list( bdbk.difference(dbpedia).difference(wikidata) )
+
 
 
 if __name__ == '__main__':
