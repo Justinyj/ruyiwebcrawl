@@ -362,12 +362,21 @@ def parse_search_result_item(node):
     """
     return item
 
-def clean_answers(temp):
-    temp = temp.replace(u"...","")
+def clean_answers(answers):
 
-    index = "temp".find(" ")
-    if index > 5:
-        temp = temp[:index]
-    else:
+    temp = re.sub(ur"[\.]{3,10}$", "",answers)
+    if temp == answers or re.search(ur"[。！？]", temp):
         temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp).strip()
+    elif re.match(ur"^[\u4E00-\u9FA5]{20,1000}$", temp):
+        temp = ""
+    else:
+        temp = temp.strip()
     return temp
+
+    # index = "temp".find(" ")
+    # if index > 5:
+    #     temp = temp[:index]
+    # else:
+    #     temp = re.sub(ur"\(.?\)","", temp)
+    #     temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp).strip()
+    # return temp

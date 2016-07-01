@@ -122,11 +122,12 @@ class ZhidaoNlp():
         else:
             return []
 
-    def is_answer_bad(self, answer):
+    def get_answer_filter_word(self, answer):
         if not isinstance(answer, unicode):
             answer = answer.decode("utf-8")
-        if re.search(ur"？|。。。|\.\.\.|\?", answer):
-            return True
+        m = re.search(ur"？|[。、，！？·；]{2,100}|[我]的|\.\.\.|\?", answer)
+        if m:
+            return m.group(0)
 
         return False
 
@@ -190,11 +191,21 @@ class ZhidaoNlp():
 
         return u""
 
+    def rewrite_zhidao_query(self, question):
+        question_clean = question
+        question_clean = re.sub(ur"^你?[有是否没能可以不]*(知道|听说过?|认为|觉得|见过|介绍一?下?|认识|告诉我?)","", question_clean)
+        question_clean = re.sub(ur"^你?(给|跟)我(讲|说)*",r"", question_clean)
+        question_clean = re.sub(u"为[何啥]子?", u"为什么", question_clean)
+        question_clean = re.sub(u"在那里?$", u"在哪里$", question_clean)
+        return question_clean
+
     def clean_question(self, question):
         question_clean = question
+        question_clean = question_clean.lower()
         question_clean = re.sub(ur"你(知道|了解|听说|说|认为|觉得|见过|认识)","", question_clean)
         question_clean = re.sub(ur"你?(告诉|给|跟)我(讲|说|推荐)?",r"", question_clean)
         question_clean = re.sub(u"为何", u"为什么", question_clean)
+        question_clean = re.sub(u"[“”]", u"", question_clean)
         #question_clean = re.sub(ur"[向对]你",r"", question_clean)
         return question_clean
 
@@ -281,27 +292,27 @@ class ZhidaoNlp():
 
         for item in search_result_json:
             if "answers" not in item:
-                item["debug-note"]= u"[-]无答案"
+                item["debug_note"]= u"[-]无答案"
                 continue
 
             #too long question
             if len(item["question"]) > question_len_limit:
-                item["debug-note"]= u"[-]问题长度过长:{}".format(len(item["question"]) )
+                item["debug_note"]= u"[-]问题长度过长:{}".format(len(item["question"]) )
                 #print "skip question_len_limit", len(item["question"])
                 continue
 
             #skip long answers
             if len(item["answers"]) > answer_len_limit:
-                item["debug-note"]= u"[-]答案长度过长:{}".format(len(item["answers"]) )
+                item["debug_note"]= u"[-]答案长度过长:{}".format(len(item["answers"]) )
                 #print "skip answer_len_limit", type(item["answers"]), len(item["answers"]), item["answers"]
                 continue
 
             if len(item["answers"]) < 2:
-                item["debug-note"]= u"[-]答案长度过短:{}".format(len(item["answers"]) )
+                item["debug_note"]= u"[-]答案长度过短:{}".format(len(item["answers"]) )
                 continue
 
             if self.filter_chat(item["question"], item["answers"]):
-                item["debug-note"]= u"[-]是闲聊"
+                item["debug_note"]= u"[-]是闲聊"
                 continue
 
 
@@ -314,7 +325,7 @@ class ZhidaoNlp():
             #skip not matching questions
             if (question_match_score < question_match_limit):
                 #print "skip question_match_limit", question_match_score
-                item["debug-note"]= u"[-]问题匹配度低: ％1.2f" % question_match_score
+                item["debug_note"]= u"[-]问题匹配度低: ％1.2f" % question_match_score
                 continue
 
             result_answers.append(item)
@@ -385,7 +396,7 @@ class ZhidaoFetch():
             match_score = difflib.SequenceMatcher(None, query, item["question"]).ratio()
             item["match_score"] = match_score
 
-            if self.api_nlp.is_answer_bad(item["answers"]):
+            if self.api_nlp.get_answer_filter_word(item["answers"]):
                 bad_answers.append(item)
             else:
                 good_answers.append(item)
@@ -520,17 +531,31 @@ class ZhidaoFetch():
     #
     #     sim = 1.0 * len(b1.intersection(b2))/ len(b1.union(b2))
     #     return sim
+    def sim(self, q1, q2):
+        q1 = self.api_nlp.clean_question(q1)
+        q2 = self.api_nlp.clean_question(q2)
+        match_score = difflib.SequenceMatcher(None, q1, q2).ratio()
+        return match_score
 
-    def select_best_qapair_0617(self,query, search_result_json):
+
+    def select_best_qapair_0630(self,query, search_result_json, question_len_max=30, answer_len_max=90, answer_len_min=2 ):
         best_item = None
-        best_score = 0.66
+        best_score = 0.6
         best_cnt_like = -1
+        used_skip_sources = list()
         for item in search_result_json:
             print json.dumps(item, ensure_ascii=False)
-            print "\n\n--------select_best_qapair_0617 "
+            print "\n\n--------select_best_qapair_0630 "
+
+
+            if item["source"] in ["muzhi"]:
+                used_skip_sources.append( item["source"] )
+
+                item["debug_note"] = u"[-]问答对－来自拇指"
+                continue
 
             #match_score = self.bigram_sim(query, item["question"])
-            match_score = difflib.SequenceMatcher(None, query.lower(), item["question"].lower()).ratio()
+            match_score = self.sim( query, item["question"])
             item["match_score"] = match_score
 
             #print type(query), type(item["question"])
@@ -546,9 +571,20 @@ class ZhidaoFetch():
                 item["debug_note"] = u"[-]问答对－答案敏感词:{}".format( u"/".join( temp ))
                 continue
 
-            if self.api_nlp.is_answer_bad(item["answers"]):
+            #too long question
+            #if len(item["question"]) > question_len_max:
+            #    item["debug_note"]= u"[-]问题长度过长:{}".format(len(item["question"]) )
+            #    continue
+
+
+            if len(item["answers"]) < answer_len_min:
+                item["debug_note"]= u"[-]答案长度过短:{}".format(len(item["answers"]) )
+                continue
+
+            filter_word =  self.api_nlp.get_answer_filter_word(item["answers"])
+            if filter_word:
                 print "skip bad answers"
-                item["debug_note"] = u"[-]问答对－答案有符号"
+                item["debug_note"] = u"[-]问答对－答案有符号:{}".format(filter_word)
                 continue
 
             if self.api_nlp.debug:
@@ -560,9 +596,14 @@ class ZhidaoFetch():
                 item["debug_note"] = u"[+]问答对－使用百科"
                 this_answer_is_better = True
             elif not best_item or best_item["source"] != "baike":
-                if match_score > best_score * 1.1:
+                #skip long answers
+                #if len(item["answers"]) > answer_len_max and item["cnt_like"] < 50:
+                #    item["debug_note"]= u"[-]答案长度过长:{}".format(len(item["answers"]) )
+                #    continue
+
+                if match_score > best_score and item["cnt_like"] >= best_cnt_like*0.2:
                     this_answer_is_better = True
-                elif match_score > best_score * 0.9 and item["cnt_like"] > best_cnt_like*1.5:
+                elif match_score > best_score * 0.95 and item["cnt_like"] > best_cnt_like*1.5 + 2:
                     this_answer_is_better = True
 
             if this_answer_is_better:
@@ -575,17 +616,27 @@ class ZhidaoFetch():
                 if not item.get("debug_note"):
                     item["debug_note"] = u"[-]问答对－低于best={}".format( best_score )
 
+        if best_item and item["source"] not in ["baike"] and len( used_skip_sources )>=4 :
+            if best_item:
+                best_item["debug_note"] += u"－－规避医疗类问题{}".format("/".join(used_skip_sources))
+            #母婴类，医疗类问题不能给出答案，要专业人士做这件事
+            return None
+
         return best_item
 
     def search_baike_best(self,query, query_filter=2, query_parser=0, debug_item=None):
-        result = self.prepare_query(query, query_filter, query_parser, debug_item=debug_item)
+        query_unicode = query
+        if not isinstance(query, unicode):
+            query_unicode = query.decode("utf-8")
+
+        query_unicode = self.api_nlp.rewrite_zhidao_query(query_unicode)
+        result = self.prepare_query(query_unicode, query_filter, query_parser, debug_item=debug_item)
         if not result:
             return False
 
         ret = result["ret"]
+        result["query"] = query
         query_url = result["query_url"]
-        query_unicode = ret["query"]
-
         if not self.api_nlp.is_question_baike( query_unicode , query_filter= query_filter, debug_item=debug_item):
             print "skip query, not baike", query_filter,  query_unicode
             return False
@@ -602,7 +653,7 @@ class ZhidaoFetch():
             if self.debug:
                 ret["items_all"] = search_result_json
 
-            best_item = self.select_best_qapair_0617(query_unicode, search_result_json)
+            best_item = self.select_best_qapair_0630(query_unicode, search_result_json)
             if best_item:
                 ret ["best_qapair"] = best_item
                 return ret
