@@ -24,41 +24,46 @@ def run():
     print('zgdbk and comic length', len(entities))
 
     dbpedia, wikidata, bdbk = load_db_data_bd()
-    inter, tidy_inter = intersection_of3(dbpedia, wikidata, bdbk)
+    inter, tidy_inter, _ = intersection_of3(dbpedia, wikidata, bdbk)
     print('intersection length', len(inter))
+    print('dbpedia, wikidata unique intersection length', len(tidy_inter))
 
     entities.extend(list( inter ))
+    entities.extend(list( tidy_inter ))
     return entities
 
 def load_db_data_bd():
-    dbpedia = dbpedia_extract_entity('merge_step_5_simplified.json')
-    wikidata = wiki_extract_entity('wikidata_zh_simplified.json')
-    bdbk = bdbk_extract_entity('vbk2012.txt')
-    return dbpedia, wikidata, bdbk
+    if not hasattr(load_db_data_bd, '_cache'):
+        dbpedia = dbpedia_extract_entity('merge_step_5_simplified.json')
+        wikidata = wiki_extract_entity('wikidata_zh_simplified.json')
+        bdbk = bdbk_extract_entity('vbk2012.txt')
+        setattr(load_db_data_bd, '_cache', (dbpedia, wikidata, bdbk))
+    return load_db_data_bd._cache
 
 
 def intersection_of3(dbpedia, wikidata, bdbk):
-    inter_temp = dbpedia.intersection(wikidata)
-    inter = inter_temp.intersection(bdbk)
-    return inter, inter_temp - inter
+    if not hasattr(intersection_of3, '_cache'):
+        inter_temp = dbpedia.intersection(wikidata)
+        inter = inter_temp.intersection(bdbk)
+        setattr(intersection_of3, '_cache', (inter, inter_temp - inter, inter_temp))
+    return intersection_of3._cache
 
 
-def db_data_unique():
+def get_dbpedia_wikidata():
     dbpedia, wikidata, bdbk = load_db_data_bd()
-    inter, tidy_inter = intersection_of3(dbpedia, wikidata, bdbk)
-    print('dbpedia, wikidata unique intersection length', len(tidy_inter))
-    return list(tidy_inter)
+    _, _, inter = intersection_of3(dbpedia, wikidata, bdbk)
+    return list(dbpedia - inter) + list(wikidata - inter)
 
 
-def sort_wiki():
-    pass
+def get_bdbk():
+    dbpedia, wikidata, bdbk = load_db_data_bd()
+    inter3, _, _ = intersection_of3(dbpedia, wikidata, bdbk)
+    return list(bdbk - inter3)
 
-def sort_dbpedia():
-    pass
-
-def sort_bdbk():
-    pass
 
 if __name__ == '__main__':
-    write_file('entities/first_order_entities.txt', run())
-    write_file('entities/second_order_entities.txt', db_data_unique())
+    first = run()
+    write_file('entities/first_order_entities.txt', first)
+    
+    write_file('entities/second_order_entities.txt', get_dbpedia_wikidata())
+    write_file('entities/third_order_entities.txt', get_bdbk())

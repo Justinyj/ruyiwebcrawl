@@ -1,0 +1,12 @@
+
+python entities_sort.py
+genereate first_order_entities.txt
+
+python filter_entities.py
+get entities can be searched
+
+redis flushall
+make sure the batch_id are right.
+make sure the url is unchanged(domain and the rest).
+
+fab deploy
