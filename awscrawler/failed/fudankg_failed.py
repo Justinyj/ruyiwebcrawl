@@ -6,8 +6,9 @@ from __future__ import print_function, division
 
 from settings import QUEUE_REDIS, RECORD_REDIS, CACHE_REDIS
 from settings import REGION_NAME
-from redispool import RedisPool
-from queues import Queue
+from rediscluster.redispool import RedisPool
+from rediscluster.queues import Queue
+from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
@@ -24,7 +25,7 @@ redispool = RedisPool.instance(RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS)
 
 def run():
     queue = Queue(batch_id)
-    for field, value in queue.get_failed_fields():
+    for field, value in queue.get_failed_fields().iteritems():
         ret = until_true(value)
         if isinstance(ret, list):
             for url in ret:
