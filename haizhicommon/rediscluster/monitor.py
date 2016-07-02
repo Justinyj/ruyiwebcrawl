@@ -23,7 +23,7 @@ def get_status(batch_id):
     if not hasattr(get_status, '_queue'):
         setattr(get_status, '_queue', Queue(batch_id))
 
-    print('job {} remain {} url to crawl'.format(batch_id,
+    print('job {} remain {} urls need to crawl'.format(batch_id,
                 get_status._queue.conn.scard(batch_id)))
     for key, value in Record.instance().conn.hgetall(batch_id).iteritems():
         print('\t{}: {}'.format(key, value))
