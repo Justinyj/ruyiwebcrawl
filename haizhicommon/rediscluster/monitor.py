@@ -9,6 +9,7 @@ import os
 import sys
 from rediscluster.redispool import RedisPool
 from rediscluster.record import Record
+from rediscluster.queues import Queue
 
 
 def init():
@@ -19,9 +20,13 @@ def init():
 
 
 def get_status(batch_id):
-    print('job {}: '.format(batch_id))
+    if not hasattr(get_status, '_queue'):
+        setattr(get_status, '_queue', Queue(batch_id))
+
+    print('job {} remain {} url to crawl'.format(batch_id,
+                get_status._queue.conn.scard(batch_id)))
     for key, value in Record.instance().conn.hgetall(batch_id).iteritems():
-        print('{}: {}'.format(key, value))
+        print('\t{}: {}'.format(key, value))
 
 
 def interval(val, func, arg):
