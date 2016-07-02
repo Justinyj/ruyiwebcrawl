@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 import os
 import sys
 import collections
@@ -705,7 +706,7 @@ class ZhidaoFetch():
         if use_skip_words:
             detected_words = self.api_nlp.detect_skip_words(query_unicode)
             if detected_words:
-                print "skip bad query, empty",  u"/".join( detected_words ) 
+                print "skip bad query, empty",  u"/".join( detected_words )
                 if debug_item is not None:
                     debug_item["debug_note"] = u"[-]问题敏感词:{}".format( u"/".join( detected_words ) )
                 return False

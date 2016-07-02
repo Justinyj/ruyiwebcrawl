@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+＃
+# 2016-07-01  测试 609 百科类问题
+# 543 最优   89%
+#	361 正确  59%正确
+#	67 错误   10%
+#	115 存疑，18%  不完整，应该落入其他领域服务  （对错各半）
+#21 问题敏感词 （3%）
+
 import urllib
 import os
 import sys
@@ -46,12 +54,18 @@ def fn_query_filter(line, api_obj, test_expect=None, test_data=None):
 def load_good_qa():
 	EXCEL_FIELDS_ONE = ["note", "q","a"]
 
+    filenames = [
+    ""
+    ]
+
 	qa = {}
 	for filename in glob.glob(pathexpr):
 		print filename
 		tests = libfile.readExcel(EXCEL_FIELDS_ONE, filename, start_row=1).values()[0]
 		for row in tests.values()[0]:
-			qa = row["q"]+row["a"]
+            rowid = u"{}###{}".format(row["q"],row["a"])
+			qa[rowid] = row["note"]
+
 
 def eval_filter(query_filters=[1,3,2], flag_debug=False):
     api = ZhidaoNlp()
