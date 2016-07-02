@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+#
+# lower of entities should be do in filter, when entities used for search.
+# if use the original dataset, lower should not be used when import to es.
 
 from __future__ import print_function, division
 
 import codecs
-import lxml.html
 import json
 import re
 import string
@@ -14,7 +16,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 from hzlib.libfile import read_file_iter, write_file
-from filter_lib import regdisambiguation, regfdentitysearch
+from filter_lib import regdisambiguation, regdropbrackets, regrmlabel
 
 
 def zgdbk_parse_entity(entity):
@@ -24,95 +26,113 @@ def zgdbk_parse_entity(entity):
         return
     return entity
 
-def zgdbk_extract_entity(infilename):
+def zgdbk_extract_entity(infilename, persistent=False):
     entities = set()
     re_entity = re.compile('<span id="span2" class="STYLE2">(.+)</span')
 
     for line in read_file_iter(infilename):
         m = re_entity.match(line)
         if m:
-            entity = zgdbk_parse_entity( m.group(1) )
+            entity = regrmlabel( m.group(1) )
+            entity = zgdbk_parse_entity(entity)
             if entity:
-                entities.add(entity.strip().lower())
+                entities.add(entity.strip())
 
-    write_file('entities/zgdbk_entities.txt', entities)
     print('zgdbk entities length: ', len(entities))
+    if persistent:
+        write_file('entities/zgdbk_entities.txt', entities)
     return entities
 
 
-def bdbk_extract_entity(ifilename):
+def bdbk_extract_entity(ifilename, persistent=False):
     entities = set()
     last_line = '</>'
 
     for line in read_file_iter(ifilename):
-        line = line.lower()
         if last_line == '</>':
             entities.add(line)
         elif line.startswith('@@@LINK='):
             entities.add(line[8:])
         last_line = line
 
-    write_file('entities/{}_entities.txt'.format(ifilename), entities)
     print('bdbk entities length: ', len(entities))
+    if persistent:
+        write_file('entities/{}_entities.txt'.format(ifilename), entities)
     return entities
 
 
-def wiki_extract_entity():
+def wiki_extract_entity(fname, persistent=False):
     entities = set()
 
-    for jsn in read_file_iter('wikidata_zh_simplified.json', jsn=True):
+    for jsn in read_file_iter(fname, jsn=True):
         m = regdisambiguation.match(jsn[u'chinese_label'])
         item = m.group(1) if m else jsn[u'chinese_label']
-        entities.add(item.encode('utf-8').strip().lower())
+        entities.add(item.encode('utf-8').strip())
         if u'chinese_aliases' in jsn:
-            entities.update(map(string.lower, map(string.strip, map(lambda x: x.encode('utf-8'), jsn[u'chinese_aliases']))))
+            entities.update(map(string.strip, map(lambda x: x.encode('utf-8'), jsn[u'chinese_aliases'])))
 
-    for jsn in read_file_iter('merge_step_5_simplified.json', jsn=True):
-        key = jsn.keys()[0]
-        key = key[key.rfind('/') + 1:-1].strip().lower()
+    print('wiki entities length: ', len(entities))
+    if persistent:
+        write_file('entities/wiki_entities.txt', entities)
+    return entities
+
+
+def dbpedia_extract_entity(fname, persistent=False):
+    entities = set()
+
+    for jsn in read_file_iter(fname, jsn=True):
+        key, value = jsn.items()[0]
+        key = value[u'resource_label'].strip()
+
         m = regdisambiguation.match(key)
         entity = m.group(1) if m else key
         entities.add(entity.encode('utf-8'))
 
-    write_file('entities/wiki_entities.txt', entities)
-    print('wiki entities length: ', len(entities))
+    print('dbpedia entities length: ', len(entities))
+    if persistent:
+        write_file('entities/dbpedia_entities.txt', entities)
     return entities
 
 
-def wiki_title_entity(fname):
+def wiki_title_entity(fname, persistent=False):
     entities = set()
 
     for line in read_file_iter(fname):
         m = regdisambiguation.match(line.strip().decode('utf-8'))
         item = m.group(1).encode('utf-8') if m else line.strip()
         if not item.startswith('\xee'): # human unreadable string
-            entities.add(item.strip().lower())
+            entities.add(item.strip())
 
     write_file('entities/{}_title'.format(fname), entities)
-    print('wiki title entities length: ', len(entities))
+    if persistent:
+        print('wiki title entities length: ', len(entities))
     return entities
 
 
-def comic_song_extract_entity(fname):
+def comic_song_extract_entity(fname, persistent=False):
     entities = set()
 
     for line in read_file_iter(fname):
-        m = regfdentitysearch.match(line.decode('utf-8'))
+        m = regdropbrackets.match(line.decode('utf-8'))
         entity = m.group(1).encode('utf-8') if m else line
         entities.add(entity)
 
+    print('comic song entities length: ', len(entities))
+    if persistent:
+        write_file('entities/comic_song_entities.txt', entities)
     return entities
 
 
 if __name__ == '__main__':
     entities = set()
 
-    entities.update( zgdbk_extract_entity('zgdbk.txt') )
-    entities.update( bdbk_extract_entity('vbk2012.txt') )
-    entities.update( bdbk_extract_entity('vbk2012_ext.txt') )
-    entities.update( wiki_extract_entity() )
-    entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns2.txt') )
+    entities.update( zgdbk_extract_entity('zgdbk.txt', True) )
+    entities.update( bdbk_extract_entity('vbk2012.txt', True) )
+    entities.update( bdbk_extract_entity('vbk2012_ext.txt', True) )
+    entities.update( wiki_extract_entity('wikidata_zh_simplified.json', True) )
+    entities.update( dbpedia_extract_entity('merge_step_5_simplified.json', True) )
+    entities.update( wiki_title_entity('zhwiki-20160601-all-titles-in-ns2.txt', True) )
+    entities.update( comic_song_extract_entity('ertong.txt', True) )
 
-    entities.remove('')
-    write_file('entities/entities_0629_raw.txt', entities)
+    write_file('entities/entities_0630_raw.txt', entities)
 

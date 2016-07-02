@@ -4,21 +4,49 @@
 
 from __future__ import print_function, division
 
-import json
-import urllib
-import re
-import urlparse
-from datetime import datetime
-
+from settings import QUEUE_REDIS, RECORD_REDIS, CACHE_REDIS
+from settings import REGION_NAME
+from rediscluster.redispool import RedisPool
+from rediscluster.queues import Queue
 from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
-from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
+import json
+import urllib
+import re
+import urlparse
+import time
 
-#SITE = 'http://kw.fudan.edu.cn'
+
 SITE = 'https://crl.ptopenlab.com:8800'
+batch_id = 'fudankg-20160625'
+redispool = RedisPool.instance(RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS)
+
+def run():
+    queue = Queue(batch_id)
+    for field, value in queue.get_failed_fields().iteritems():
+        ret = until_true(value)
+        if isinstance(ret, list):
+            for url in ret:
+                ret = until_true(url)
+
+
+def until_true(url):
+    global batch_id
+    for i in xrange(100):
+        if i == 10:
+            print('This url is crawling 10 times', url)
+            return False
+        ret = process(url, batch_id, None, None)
+        if not isinstance(ret, list):
+            if not ret:
+                time.sleep(10)
+            else:
+                return True
+        else:
+            return ret
+
 
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
@@ -36,28 +64,15 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             'info': re.compile(urlparse.urljoin(SITE, 'cndbpedia/api/entityInformation\?entity=(.+)')),
             'tags': re.compile(urlparse.urljoin(SITE, 'cndbpedia/api/entityTag\?entity=(.+)')),
         })
-
-
-    method, gap, js, timeout, data = parameter.split(':')
-    gap = int(gap)
-    timeout= int(timeout)
-
-    today_str = datetime.now().strftime('%Y%m%d')
-
-    if kwargs and kwargs.get("debug"):
-        get_logger(batch_id, today_str, '/opt/service/log/').info('start download')
-
+    
     content = process._downloader.downloader_wrapper(url,
         batch_id,
-        gap,
-        timeout=timeout,
+        0,
+        timeout=10,
         encoding='utf-8')
 
     if content == '':
         return False
-
-    if kwargs and kwargs.get("debug"):
-        get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url')
 
     for label, reg in process._regs.iteritems():
         m = reg.match(url)
@@ -79,14 +94,10 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 urls.append( info_api.format(ent) )
                 urls.append( tags_api.format(ent) )
 
-            manager.put_urls_enqueue(batch_id, urls)
-
-            return True
+            return urls
         else:
             data = json.dumps({entity: json.loads(content)})
-
-            if kwargs and kwargs.get("debug"):
-                get_logger(batch_id, today_str, '/opt/service/log/').info('start post {} json'.format(label))
-
             return process._cache.post(url, data)
+
+run()
 
