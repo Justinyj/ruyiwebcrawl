@@ -55,6 +55,8 @@ def main():
     init()
 
     try:
+        if not args.batch_id:
+            raise()
         interval(args.interval, get_status, args.batch_id)
     except KeyboardInterrupt:
         sys.exit(0)
