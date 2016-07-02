@@ -43,6 +43,15 @@ def fn_query_filter(line, api_obj, test_expect=None, test_data=None):
     return actual
 
 
+def load_good_qa():
+	EXCEL_FIELDS_ONE = ["note", "q","a"]
+
+	qa = {}
+	for filename in glob.glob(pathexpr):
+		print filename
+		tests = libfile.readExcel(EXCEL_FIELDS_ONE, filename, start_row=1).values()[0]
+		for row in tests.values()[0]:
+			qa = row["q"]+row["a"]
 
 def eval_filter(query_filters=[1,3,2], flag_debug=False):
     api = ZhidaoNlp()

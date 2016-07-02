@@ -125,7 +125,7 @@ class ZhidaoNlp():
     def get_answer_filter_word(self, answer):
         if not isinstance(answer, unicode):
             answer = answer.decode("utf-8")
-        m = re.search(ur"？|[。、，！？·；]{2,100}|[我]的|\.\.\.|\?", answer)
+        m = re.search(ur"？|[。、，！？·；]{2,100}|[我][是想和有的要也]|\.\.\.|\?", answer)
         if m:
             return m.group(0)
 
@@ -616,7 +616,7 @@ class ZhidaoFetch():
                 if not item.get("debug_note"):
                     item["debug_note"] = u"[-]问答对－低于best={}".format( best_score )
 
-        if best_item and item["source"] not in ["baike"] and len( used_skip_sources )>=4 :
+        if best_item and best_item["source"] not in ["baike"] and len( used_skip_sources )>=4 :
             if best_item:
                 best_item["debug_note"] += u"－－规避医疗类问题{}".format("/".join(used_skip_sources))
             #母婴类，医疗类问题不能给出答案，要专业人士做这件事
@@ -705,9 +705,9 @@ class ZhidaoFetch():
         if use_skip_words:
             detected_words = self.api_nlp.detect_skip_words(query_unicode)
             if detected_words:
-                print "skip bad query, empty"
+                print "skip bad query, empty",  u"/".join( detected_words ) 
                 if debug_item is not None:
-                    debug_item["debug_note"] = u"[-]问题敏感词:{}".format( u"/".format( detected_words ) )
+                    debug_item["debug_note"] = u"[-]问题敏感词:{}".format( u"/".join( detected_words ) )
                 return False
 
         query_unicode = re.sub(u"？$","",query_unicode)
