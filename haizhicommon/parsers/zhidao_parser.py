@@ -338,8 +338,8 @@ def parse_search_result_item(node):
 
         answers_clean  = clean_answers(temp)
 
-        if re.search(ur"(：|；|，|。。｜\.\.)$", answers_clean):
-            return None
+        #if re.search(ur"(：|；|，|。。｜\.\.)$", answers_clean):
+        #    return None
 
         #print("answers", type(temp), temp)
         item["answers"] = answers_clean
@@ -362,12 +362,26 @@ def parse_search_result_item(node):
     """
     return item
 
-def clean_answers(temp):
-    temp = temp.replace(u"...","")
+def clean_answers(answers):
 
-    index = "temp".find(" ")
-    if index > 5:
-        temp = temp[:index]
-    else:
-        temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp).strip()
+    temp = re.sub(ur"[\.]{3,10}$", "",answers)
+    if temp == answers or re.search(ur"[。！？]", temp):
+        temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp)
+    elif re.match(ur"^[\u4E00-\u9FA5]{20,1000}$", temp):
+        temp = ""
+    elif len(temp)>80 and not re.search("[a-zA-Z]{2,100}", temp):
+        index = temp.find(" ",80)
+        if index > 80:
+            temp = temp[:index]
+    elif len(temp)>120 :
+        temp = re.sub(ur"([，,])[^,，]*$",r"", temp)
+    temp = temp.strip()
     return temp
+
+    # index = "temp".find(" ")
+    # if index > 5:
+    #     temp = temp[:index]
+    # else:
+    #     temp = re.sub(ur"\(.?\)","", temp)
+    #     temp = re.sub(ur"([。！？])[^。！？]*$",r"\1", temp).strip()
+    # return temp

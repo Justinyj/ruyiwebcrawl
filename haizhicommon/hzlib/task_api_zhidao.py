@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+＃
+# 2016-07-01  测试 609 百科类问题
+# 543 最优   89%
+#	361 正确  59%正确
+#	67 错误   10%
+#	115 存疑，18%  不完整，应该落入其他领域服务  （对错各半）
+#21 问题敏感词 （3%）
+
 import urllib
 import os
 import sys
@@ -17,6 +25,7 @@ import libdata
 from api_zhidao import ZhidaoNlp
 from api_zhidao import ZhidaoFetch
 
+
 gcounter = collections.Counter()
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
@@ -26,8 +35,8 @@ def getLocalFile(filename):
 
 
 def fn_query_filter(line, api_obj, test_expect=None, test_data=None):
-    debug = {}
-    if api_obj.is_question_baike(line, query_filter=api_obj.query_filter, debug=debug):
+    debug_item = {}
+    if api_obj.is_question_baike(line, query_filter=api_obj.query_filter, debug_item=debug_item):
         actual = 1
     else:
         actual = 0
@@ -35,12 +44,27 @@ def fn_query_filter(line, api_obj, test_expect=None, test_data=None):
     if api_obj.debug:
         #print actual
         if 1 == test_expect and actual == 0:
-            for word in set(debug.get("words",set())):
+            for word in set(debug_item.get("words",set())):
                 api_obj.all_words[word] += 1
-            #print line, json.dumps(debug["words"], ensure_ascii=False)
-            print line, json.dumps([[word, flag] for word, flag in debug.get("words_pos",[])], ensure_ascii=False)
+            #print line, json.dumps(debug_item["words"], ensure_ascii=False)
+            print line, json.dumps([[word, flag] for word, flag in debug_item.get("words_pos",[])], ensure_ascii=False)
     return actual
 
+
+def load_good_qa():
+	EXCEL_FIELDS_ONE = ["note", "q","a"]
+
+    filenames = [
+    ""
+    ]
+
+	qa = {}
+	for filename in glob.glob(pathexpr):
+		print filename
+		tests = libfile.readExcel(EXCEL_FIELDS_ONE, filename, start_row=1).values()[0]
+		for row in tests.values()[0]:
+            rowid = u"{}###{}".format(row["q"],row["a"])
+			qa[rowid] = row["note"]
 
 
 def eval_filter(query_filters=[1,3,2], flag_debug=False):
@@ -54,17 +78,25 @@ def eval_filter(query_filters=[1,3,2], flag_debug=False):
 
         filenames = [
             (getLocalFile("baike/baike_questions_pos.human.txt"), 1),
-            (getLocalFile("baike/baike_questions_neg.human.txt"), 0)
+            (getLocalFile("baike/baike_questions_neg.human.txt"), 0),
+            (getLocalFile("baike/baike_questions_chat.human.txt"), 0),
+            (getTheFile("test/test_ask_baike_all.human.txt"), 1),
+            (getTheFile("test/test_ask_chat_all.human.txt"), 0),
         ]
         all_words = collections.Counter()
 
         tests = []
+        all_query = set()
         for filename, expect in filenames:
             print "=====", filename
             entry = {
                 "data":libfile.file2list(filename),
                 "expect": expect
             }
+            temp = set(entry["data"])
+            temp.difference_update(all_query)
+            entry["data"] = list(temp)
+            all_query.update(entry["data"])
             tests.append(entry)
             #gcounter["from_{}".format(os.path.basename(filename))] = len(entry["data"])
 

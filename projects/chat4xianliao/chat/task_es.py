@@ -398,7 +398,7 @@ class ZhidaoQa():
     def index_edit(self, option="question"):
         dataset_index = "zhidao_{}".format(option)
         gcounter[option] = 1
-        dirname = getLocalFile( "label0624/*{}*xls".format(option) )
+        dirname = getLocalFile( "label0627/*{}*xls*".format(option) )
         print dirname
         filenames = glob.glob(dirname)
 
@@ -414,7 +414,7 @@ class ZhidaoQa():
                     for item in items:
                         gcounter["items"]+=1
 
-                        qa = item["question"]+item["answers"]
+                        qa = u"{}{}".format(item["question"],item["answers"])
                         item["id"]= es_api.gen_es_id(qa)
                         if item["id"] in ids:
                             gcounter["items_skip_dup"]+=1
