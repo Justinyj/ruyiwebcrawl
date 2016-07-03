@@ -19,18 +19,20 @@ class RedisPool(object):
     >>> conn = RedisPool.instance().queue
     """
     def __init__(self, record_redis, queue_redis, cache_redis, poolsize=5):
-        regx_redis = re.compile('redis://(.+):(\d+)/(\d+)')
+        """ password is None means no password
+        """
+        regx_redis = re.compile('redis://(.+):(\d+)/(\d+)/?(.+)?')
 
-        host, port, db = regx_redis.search(record_redis).groups()
-        self.record = redis.StrictRedis(host=host, port=int(port), db=int(db))
+        host, port, db, password = regx_redis.search(record_redis).groups()
+        self.record = redis.StrictRedis(host=host, port=int(port), db=int(db), password=password)
 
-        host, port, db = regx_redis.search(queue_redis).groups()
-        self.queue = redis.StrictRedis(host=host, port=int(port), db=int(db))
+        host, port, db, password = regx_redis.search(queue_redis).groups()
+        self.queue = redis.StrictRedis(host=host, port=int(port), db=int(db), password=password)
 
         self.caches = []
         for one_cache_redis in cache_redis:
-            host, port, db = regx_redis.search(one_cache_redis).groups()
-            self.caches.append( redis.StrictRedis(host=host, port=int(port), db=int(db), max_connections=poolsize) )
+            host, port, db, password = regx_redis.search(one_cache_redis).groups()
+            self.caches.append( redis.StrictRedis(host=host, port=int(port), db=int(db), password=password, max_connections=poolsize) )
 
 
     @classmethod
