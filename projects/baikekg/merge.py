@@ -8,6 +8,7 @@ import hashlib
 import urllib
 import json
 import os
+import time
 from collections import defaultdict, Counter
 
 def merge_fudankg(bucketname):
@@ -15,9 +16,11 @@ def merge_fudankg(bucketname):
         or the old style url will cause lack of tags and info.
     """
     batch_id = 'fudankg-json-20160625'
+    saved_dir = 'fudankg_saved'
     data = defaultdict(dict)
     entities = set()
-    gcount = Counter()
+    gcounter = Counter()
+    start_time = time.time()
 
     def find_other_package(entity, original):
         if original not in [u'av path', u'Information', u'Tags']:
@@ -30,8 +33,8 @@ def merge_fudankg(bucketname):
             u'Tags': 'https://crl.ptopenlab.com:8800/cndbpedia/api/entityTag?entity={}',
         }
 
-        for k, v in urlapttern.iteritems():
-            gcounter[original] += 1
+        for k, v in urlpattern.iteritems():
+            gcounter[k] += 1
             if k == original:
                 continue
 
@@ -39,11 +42,12 @@ def merge_fudankg(bucketname):
             url_hash = hashlib.sha1(url).hexdigest()
             filename = '{}_{}'.format(batch_id, url_hash)
             fname = os.path.join(bucketname, filename[-1], filename)
+            if not os.path.exists(fname):
+                continue
             with open(fname) as fd:
                 js = json.load(fd)
             _, v = js.items()[0]
-            data[entity][original] = v[original]
-
+            data[entity][k] = v[k]
 
 
     for fdir in os.listdir(bucketname):
@@ -74,10 +78,19 @@ def merge_fudankg(bucketname):
 
             gcounter['count'] += 1
             if len(data) > 10000:
-                with open(gcounter['count'], 'w') as fd:
+                saved_filename = os.path.join(saved_dir, str(gcounter['count']))
+                print('10 thousand entities passed, {} /s'.format(gcounter['count'] / (time.time() - start_time)))
+                with open(saved_filename, 'w') as fd:
                     json.dump(data, fd)
                 data = defaultdict(dict)
 
     if len(data) >= 1:
-        with open(gcounter['count'], 'w') as fd:
+        saved_filename = os.path.join(saved_dir, str(gcounter['count']))
+        with open(saved_filename, 'w') as fd:
             json.dump(data, fd)
+
+    print(gcounter)
+
+
+if __name__ == '__main__':
+    merge_fudankg('fudankg-json')
