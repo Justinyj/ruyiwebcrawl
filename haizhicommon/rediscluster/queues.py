@@ -58,7 +58,7 @@ class Queue(object):
         self.timeout = timeout
         self.failure_times = failure_times
 
-        self.batch_size = 5000
+        self.batch_size = 2000
         self.conn = RedisPool.instance().queue
 
 
@@ -278,7 +278,7 @@ class HashQueue(object):
         self.timeout = timeout
         self.failure_times = failure_times
 
-        self.batch_size = 5000
+        self.batch_size = 2000
         self.conn = RedisPool.instance().queue
 
 

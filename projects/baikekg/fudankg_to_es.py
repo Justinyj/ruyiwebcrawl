@@ -11,7 +11,7 @@ from datetime import datetime
 
 from hzlib.libfile import read_file_iter, write_file
 from filter_lib import regdropbrackets
-from to_es import summary, sendto_es, fudan_ea_to_json
+from to_es import summary, sendto_es, fudan_ea_to_json, send_definition_to_es
 
 
 DIR = '/home/crawl/Downloads/fudankg_saved'
@@ -29,6 +29,8 @@ def load_fudankg_json_data():
             for entity, dic in json.load(fd).iteritems():
                 for label, value in dic.iteritems():
                     if label == u'Information':
+                        if value == []:
+                            continue
                         data_def[entity]['definition'] = value
                         data_def[entity]['category'] = dic[u'Tags'] if u'Tags' in dic else None
 
@@ -50,7 +52,7 @@ def load_fudankg_json_data():
 
                             data_attr[entity]['attribute'] = attr_values
 
-    send_fudan_definition_to_es(data_def, 'definition', fudan=True)
+    send_definition_to_es(data_def, 'definition', fudan=True)
     send_fudan_attribute_to_es(data_attr)
 
 
