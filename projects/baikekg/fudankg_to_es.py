@@ -14,7 +14,7 @@ from filter_lib import regdropbrackets
 from to_es import summary, sendto_es, fudan_ea_to_json
 
 
-DIR = ''
+DIR = '/home/crawl/Downloads/fudankg_saved'
 BATCH = 5000
 
 
@@ -22,7 +22,7 @@ def load_fudankg_json_data():
     data_def = defaultdict(dict)
     data_attr = defaultdict(dict)
 
-    for f in os.path.listdir(DIR):
+    for f in os.listdir(DIR):
         fname = os.path.join(DIR, f)
         with open(fname) as fd:
 
