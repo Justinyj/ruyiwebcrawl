@@ -11,12 +11,10 @@ from datetime import datetime
 
 from hzlib.libfile import read_file_iter, write_file
 from filter_lib import regdropbrackets
-from to_es import summary, sendto_es, fudan_ea_to_json, send_definition_to_es
+from to_es import summary, sendto_es, fudan_ea_to_json, send_definition_to_es, BATCH
 
 
 DIR = '/home/crawl/Downloads/fudankg_saved'
-BATCH = 5000
-
 
 def load_fudankg_json_data():
     data_def = defaultdict(dict)
@@ -49,11 +47,14 @@ def load_fudankg_json_data():
                                     data_attr[entity]['alias'] = [v]
                                     data_def[entity]['alias'] = [v]
                                 continue
+                            attr_values[a].append(v)
 
                             data_attr[entity]['attribute'] = attr_values
 
-    send_definition_to_es(data_def, 'definition', fudan=True)
-    send_fudan_attribute_to_es(data_attr)
+        send_definition_to_es(data_def, 'definition', fudan=True)
+        send_fudan_attribute_to_es(data_attr)
+        data_def = defaultdict(dict)
+        data_attr = defaultdict(dict)
 
 
 def send_fudan_attribute_to_es(data):
@@ -61,6 +62,8 @@ def send_fudan_attribute_to_es(data):
     count = 0
 
     for entity, info in data.iteritems():
+        if 'attribute' not in info:
+            continue
         for a, v in info['attribute'].iteritems():
             if 'alias' in info:
                 eavps.append( fudan_ea_to_json(entity, a.encode('utf-8'), a.encode('utf-8'), 'attribute', v, info['category'], info['alias']) )
@@ -68,8 +71,8 @@ def send_fudan_attribute_to_es(data):
                 eavps.append( fudan_ea_to_json(entity, a.encode('utf-8'), a.encode('utf-8'), 'attribute', v, info['category']) )
             count += 1
 
-        if len(avps) > BATCH:
-            sendto_es(pairs)
+        if len(eavps) > BATCH:
+            sendto_es(eavps)
             eavps = []
             print('{} process {} files.'.format(datetime.now().isoformat(), count))
 

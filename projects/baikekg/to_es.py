@@ -20,7 +20,7 @@ from filter_lib import regdropbrackets
 from load_alias import get_all_aliases
 
 DIR = '/Users/bishop/百度云同步盘/'
-BATCH = 2000
+BATCH = 5000
 ENV = 'local'
 # http://localhost:9200/fudankg0630/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
@@ -112,10 +112,11 @@ def send_definition_to_es(data, field='definition', fudan=False):
                 continue
             definition = info[field].strip()
 
-        definition_short = summary(definition, fudan=fudan)
         if fudan:
-            values = [definition] if definition == definition_short else [definition_short, definition.split(u'|||')]
+            values = definition.split(u'|||')
+            values = filter(lambda x: x != u'', values)
         else:
+            definition_short = summary(definition)
             values = [definition] if definition == definition_short else [definition_short, definition]
 
         if fudan:
@@ -159,7 +160,7 @@ def fudan_ea_to_json(entity, attribute, attribute_name, extra_tag, values, categ
         'entity_name': entity_name,
         'attribute': attribute,
         'attribute_name': attribute_name,
-        'value': values[0],
+        'value': values[0] if len(values) > 0 else '',
         'values': values,
         'tags': list(set(tags)),
     }
@@ -204,13 +205,7 @@ def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
     }
 
 
-def summary(text, fudan=False):
-    if fudan:
-        if u'|||' in text:
-            return text.split(u'|||', 1)[0]
-        else:
-            return text
-
+def summary(text):
     idx = text.find("。")
     if idx > 0:
         return text[:text.index("。")+1]
