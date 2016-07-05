@@ -11,12 +11,10 @@ from rediscluster.redispool import RedisPool
 from rediscluster.record import Record
 from rediscluster.queues import Queue
 
+from settings import RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS
 
 def init():
-    record = 'redis://172.31.19.253:6379/1'
-    queue = 'redis://172.31.19.253:6379/2'
-    cache = ['redis://172.31.19.253:6379/0',]
-    RedisPool.instance(record, queue, cache)
+    RedisPool.instance(RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS)
 
 
 def get_status(batch_id):
