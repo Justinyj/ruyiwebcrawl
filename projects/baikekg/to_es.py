@@ -22,10 +22,10 @@ from load_alias import get_all_aliases
 DIR = '/Users/bishop/百度云同步盘/'
 BATCH = 2000
 ENV = 'local'
-# http://localhost:9200/fudankg0623/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
+# http://localhost:9200/fudankg0630/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
-        "description": "复旦百科实体属性值0630",
-        "es_index": "fudankg0630",
+        "description": "复旦百科实体属性值0705",
+        "es_index": "fudankg0705",
         "es_type": "fudankg_faq",
         "filepath_mapping": os.path.abspath(os.path.dirname(__file__)) +"/"+"fudankg_es_schema.json"
 }
@@ -100,7 +100,7 @@ def parse_fudan_entity(entity, avps):
     return eavp
 
 
-def send_definition_to_es(data, field='definition'):
+def send_definition_to_es(data, field='definition', fudan=False):
     pairs = []
     count = 0
 
@@ -112,9 +112,19 @@ def send_definition_to_es(data, field='definition'):
                 continue
             definition = info[field].strip()
 
-        definition_short = summary(definition)
-        values = [definition] if definition == definition_short else [definition_short, definition]
-        pairs.append( ea_to_json(entity, '定义', '定义', 'definition', values) )
+        definition_short = summary(definition, fudan=fudan)
+        if fudan:
+            values = [definition] if definition == definition_short else [definition_short, definition.split(u'|||')]
+        else:
+            values = [definition] if definition == definition_short else [definition_short, definition]
+
+        if fudan:
+            if 'alias' in info:
+                pairs.append( fudan_ea_to_json(entity, '定义', '定义', 'definition', values, info['category'], info['alias']) )
+            else:
+                pairs.append( fudan_ea_to_json(entity, '定义', '定义', 'definition', values, info['category']) )
+        else:
+            pairs.append( ea_to_json(entity, '定义', '定义', 'definition', values) )
         count += 1
 
         if len(pairs) > BATCH:
@@ -124,6 +134,38 @@ def send_definition_to_es(data, field='definition'):
 
     if pairs:
         sendto_es(pairs)
+
+
+def fudan_ea_to_json(entity, attribute, attribute_name, extra_tag, values, category=None, alias=[]):
+    """
+    :param entity: type(entity) is unicode
+    """
+    tags = [entity, entity.lower(), entity.upper(), extra_tag]
+    entity_name = entity
+
+    tags.extend(alias)
+    m = regdropbrackets.match(entity)
+    if m:
+        entity_name = m.group(1)
+        tags.append(entity_name.lower())
+        tags.append(entity_name.upper())
+
+    eid = gen_es_id('{}__{}'.format(entity.encode('utf-8'), attribute))
+
+    # entity(index: yes) used for full text retrieval, tags(not_analyzed) used for exactly match
+    ret = {
+        'id': eid,
+        'entity': entity,
+        'entity_name': entity_name,
+        'attribute': attribute,
+        'attribute_name': attribute_name,
+        'value': values[0],
+        'values': values,
+        'tags': list(set(tags)),
+    }
+    if category:
+        ret.update({'category': category})
+    return ret
 
 
 def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
@@ -162,7 +204,13 @@ def ea_to_json(entity, attribute, attribute_name, extra_tag, values):
     }
 
 
-def summary(text):
+def summary(text, fudan=False):
+    if fudan:
+        if u'|||' in text:
+            return text.split(u'|||', 1)[0]
+        else:
+            return text
+
     idx = text.find("。")
     if idx > 0:
         return text[:text.index("。")+1]

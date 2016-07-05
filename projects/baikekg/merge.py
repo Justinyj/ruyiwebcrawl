@@ -17,6 +17,7 @@ def merge_fudankg(bucketname):
     """
     batch_id = 'fudankg-json-20160625'
     saved_dir = 'fudankg_saved'
+    os.mkdir(saved_dir)        
     data = defaultdict(dict)
     entities = set()
     gcounter = Counter()
