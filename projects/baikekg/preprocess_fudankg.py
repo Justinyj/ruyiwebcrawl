@@ -11,6 +11,7 @@ import os
 import time
 from collections import defaultdict, Counter
 
+from filter_lib import regdropbrackets
 from hzlib.libfile import read_file_iter, write_file
 
 def merge_fudankg(bucketname):
@@ -51,6 +52,7 @@ def merge_fudankg(bucketname):
             _, v = js.items()[0]
             data[entity][k] = v[k]
             gcounter[k] += 1
+            gcounter['count'] += 1
 
 
     for fdir in os.listdir(bucketname):
@@ -67,22 +69,24 @@ def merge_fudankg(bucketname):
                 if v[u'Tags'] != []:
                     data[entity][u'Tags'] = v[u'Tags']
                     gcounter[u'Tags'] += 1
+                    gcounter['count'] += 1
                 find_other_package(entity, u'Tags')
                 entities.add(entity)
             elif u'Information' in v:
                 if v[u'Information'] != []:
                     data[entity][u'Information'] = v[u'Information']
                     gcounter[u'Information'] += 1
+                    gcounter['count'] += 1
                 find_other_package(entity, u'Information')
                 entities.add(entity)
             elif u'av pair' in v:
                 if v[u'av pair'] != []:
                     data[entity][u'av pair'] = v[u'av pair']
                     gcounter[u'av pair'] += 1
+                    gcounter['count'] += 1
                 find_other_package(entity, u'av pair')
                 entities.add(entity)
 
-            gcounter['count'] += 1
             if len(data) > 10000:
                 saved_filename = os.path.join(saved_dir, str(gcounter['count']))
                 print('10 thousand entities passed, {} /s'.format(gcounter['count'] / (time.time() - start_time)))
@@ -106,8 +110,12 @@ def get_fudankg_entity():
         fname = os.path.join(saved_dir, f)
         with open(fname) as fd:
             for entity, dic in json.load(fd).iteritems():
-                entities.add(entity)
-    write_file('fudankg_entities.txt', list(entities))
+                m = regdropbrackets.match(entity)
+                if m:
+                    entities.add(m.group(1))
+                else:
+                    entities.add(entity)
+    write_file('fudankg_entities_dict.txt', list(entities))
 
 
 
