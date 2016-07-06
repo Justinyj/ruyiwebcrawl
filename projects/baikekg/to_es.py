@@ -144,7 +144,7 @@ def fudan_ea_to_json(entity, attribute, attribute_name, extra_tag, values, categ
     tags = [entity, entity.lower(), entity.upper(), extra_tag]
     entity_name = entity
 
-    tags.extend(alias)
+    aliases = alias
     m = regdropbrackets.match(entity)
     if m:
         entity_name = m.group(1)

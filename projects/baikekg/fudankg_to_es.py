@@ -79,5 +79,4 @@ def send_fudan_attribute_to_es(data):
     if eavps:
         sendto_es(eavps)
 
-
 load_fudankg_json_data()

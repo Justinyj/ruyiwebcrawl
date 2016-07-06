@@ -4,8 +4,12 @@
 
 from __future__ import print_function, division
 
-from collections import Counter
+import json
+from collections import Counter, defaultdict
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
 punctuation = '!@#$%^&*()-_+={}[]|\;:<>,./?~`，。、！？（）‘’《》｛｝＊…～★【】“” ｜”『』'
@@ -78,3 +82,24 @@ def statistics_length_by_word():
             else:
                 wfd8.write(line)
     print(counter)
+
+
+def random_pick_100_fudan_definition(fname):
+    data_def = defaultdict(dict)
+
+    with open(fname) as fd:
+
+        for entity, dic in json.load(fd).iteritems():
+            for label, value in dic.iteritems():
+                if label == u'Information':
+                    if value == []:
+                        continue
+                    data_def[entity]['definition'] = value
+                    data_def[entity]['category'] = dic[u'Tags'] if u'Tags' in dic else None
+            if len(data_def) > 100:
+                break
+    with open('random_fudankg_100.txt', 'w') as fd:
+        json.dump(data_def, fd, ensure_ascii=False, indent=4)
+
+
+random_pick_100_fudan_definition('/Users/bishop/百度云同步盘/10796')

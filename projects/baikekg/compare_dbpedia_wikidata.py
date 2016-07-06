@@ -28,6 +28,8 @@ def load_dbpedia():
 
 
 def load_wikidata():
+    """ this function cost too much memory
+    """
     data = {}
     for jsn in read_file_iter('wikidata_zh_simplified.json', jsn=True):
         m = regdisambiguation.match(jsn[u'chinese_label'])

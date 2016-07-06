@@ -11,6 +11,8 @@ import os
 import time
 from collections import defaultdict, Counter
 
+from hzlib.libfile import read_file_iter, write_file
+
 def merge_fudankg(bucketname):
     """ TODO need generate url from entities file.
         or the old style url will cause lack of tags and info.
@@ -35,7 +37,6 @@ def merge_fudankg(bucketname):
         }
 
         for k, v in urlpattern.iteritems():
-            gcounter[k] += 1
             if k == original:
                 continue
 
@@ -49,6 +50,7 @@ def merge_fudankg(bucketname):
                 js = json.load(fd)
             _, v = js.items()[0]
             data[entity][k] = v[k]
+            gcounter[k] += 1
 
 
     for fdir in os.listdir(bucketname):
@@ -64,16 +66,19 @@ def merge_fudankg(bucketname):
             if u'Tags' in v:
                 if v[u'Tags'] != []:
                     data[entity][u'Tags'] = v[u'Tags']
+                    gcounter[u'Tags'] += 1
                 find_other_package(entity, u'Tags')
                 entities.add(entity)
             elif u'Information' in v:
-                if v[u'Information'] != u'' and v[u'Information'] != []:
+                if v[u'Information'] != []:
                     data[entity][u'Information'] = v[u'Information']
+                    gcounter[u'Information'] += 1
                 find_other_package(entity, u'Information')
                 entities.add(entity)
             elif u'av pair' in v:
                 if v[u'av pair'] != []:
                     data[entity][u'av pair'] = v[u'av pair']
+                    gcounter[u'av pair'] += 1
                 find_other_package(entity, u'av pair')
                 entities.add(entity)
 
@@ -91,6 +96,19 @@ def merge_fudankg(bucketname):
             json.dump(data, fd)
 
     print(gcounter)
+
+
+def get_fudankg_entity():
+    saved_dir = '/home/crawl/Downloads/fudankg_saved'
+    entities = set()
+
+    for f in os.listdir(saved_dir):
+        fname = os.path.join(saved_dir, f)
+        with open(fname) as fd:
+            for entity, dic in json.load(fd).iteritems():
+                entities.add(entity)
+    write_file('fudankg_entities.txt', list(entities))
+
 
 
 if __name__ == '__main__':

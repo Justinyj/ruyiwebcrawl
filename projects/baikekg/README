@@ -16,3 +16,4 @@ fab deploy awscrawler of fudan
 
 
 ### get fudan data
+$ python fudankg_to_es.py

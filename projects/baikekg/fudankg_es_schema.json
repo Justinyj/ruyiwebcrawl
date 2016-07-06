@@ -37,6 +37,10 @@
         "category": {
             "type": "string",
             "index": "no"
+        },
+        "aliases": {
+            "type": "string",
+            "index": "not_analyzed"
         }
     }
 }
