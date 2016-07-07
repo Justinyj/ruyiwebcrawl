@@ -20,15 +20,15 @@ class KuwoPipeline(object):
         if isinstance(item, MusicCatItem):
             self.fmusicCat.write(item['content']+'\n')
         elif isinstance(item, PlaylistItem):
-        	self.fplaylist.write(item['content']+'\n')
+            self.fplaylist.write(item['content']+'\n')
         elif isinstance(item, MusicItem):
-        	self.fmusic.write(item['content']+'\n')
+            self.fmusic.write(item['content']+'\n')
         elif isinstance(item, AlbumItem):
-        	self.falbum.write(item['content']+'\n')
+            self.falbum.write(item['content']+'\n')
         elif isinstance(item, ArtistItem):
-        	self.fartist.write(item['content']+'\n')
+            self.fartist.write(item['content']+'\n')
         elif isinstance(item, MusicInfoItem):
-        	self.fmusicInfo.write(item['content']+'\n')
+            self.fmusicInfo.write(item['content']+'\n')
         elif isinstance(item, ArtistInfoItem):
-        	self.fartistInfo.write(item['content'] + '\n')
+            self.fartistInfo.write(item['content'] + '\n')
         return item

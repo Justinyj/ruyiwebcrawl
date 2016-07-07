@@ -32,7 +32,7 @@ class cate_spider(scrapy.Spider):
     def parseCategoryList(self, response):
         result = json.loads(response.body.decode('utf-8','ignore'))
         if not result or not 'data' in result or not 'list' in result['data'] or len(result['data']['list']) == 0 :
-        	return 
+            return 
 
         tags = response.meta['tags']
 
@@ -49,7 +49,7 @@ class cate_spider(scrapy.Spider):
 
 
     def parsePlaylist(self, response):
-    	result = json.loads(response.body.decode('utf-8','ignore'))
+        result = json.loads(response.body.decode('utf-8','ignore'))
         if not 'musiclist' in result or len(result['musiclist']) == 0:
             return 
 
@@ -60,12 +60,12 @@ class cate_spider(scrapy.Spider):
         catId = response.meta['catId']
         nexturl = "http://nplserver.kuwo.cn/pl.svc?op=getlistinfo&encode=utf-8&keyset=pl2012&identity=kuwo&pn={}&rn=100&pid={}&bdfrom=haizhi&c=1m496rxeda48".format(ppn, catId)
         yield scrapy.Request(nexturl, callback = self.parsePlaylist, meta={'tags':tags_cat, 'ppn': ppn, 'catId':catId}, dont_filter=True)    	
-    	
-    	tags = []
+        
+        tags = []
         ppn = ppn - 1
-    	tags.extend(tags_cat)
-    	muscicatIt = MusicCatItem()
-    	playlistIt = PlaylistItem()
+        tags.extend(tags_cat)
+        muscicatIt = MusicCatItem()
+        playlistIt = PlaylistItem()
 
         if ppn == 0:
             name = result.get('name')

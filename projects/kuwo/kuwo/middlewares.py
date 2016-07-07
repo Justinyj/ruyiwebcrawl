@@ -19,6 +19,6 @@ class MyMiddleWare(object):
                     url, encoding='utf-8', body=content)
             return response
         else:
-        	f.write(url)
-        	f.write('\n')
+            f.write(url)
+            f.write('\n')
         return

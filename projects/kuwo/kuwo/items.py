@@ -19,16 +19,16 @@ class PlaylistItem(scrapy.Item):
     content = scrapy.Field()
 
 class ArtistItem(scrapy.Item):
-	content = scrapy.Field()
+    content = scrapy.Field()
 
 class AlbumItem(scrapy.Item):
-	content = scrapy.Field()
+    content = scrapy.Field()
 
 class MusicItem(scrapy.Item):
-	content = scrapy.Field()
+    content = scrapy.Field()
 
 class MusicInfoItem(scrapy.Item):
-	content = scrapy.Field()
+    content = scrapy.Field()
 
 class ArtistInfoItem(scrapy.Item):
-	content = scrapy.Field()
+    content = scrapy.Field()
