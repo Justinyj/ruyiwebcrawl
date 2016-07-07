@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
 # gap  error rate
-# 0    14.2%
+# 0    8.2%-14.2%
 # 1    0.4-0.6%
 # 2    0.0%
 
@@ -16,7 +16,7 @@ import time
 import lxml.html
 from collections import Counter
 
-GAP = 0
+GAP = 1
 gcounter = Counter()
 
 HEADERS = {

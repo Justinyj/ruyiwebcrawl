@@ -27,6 +27,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
     if not hasattr(process, '_cache'):
         head, tail = batch_id.split('-')
+        print(batch_id)
         setattr(process, '_cache', CacheS3(head + '-json-' + tail))
 
     if not hasattr(process, '_regs'):
@@ -59,5 +60,5 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if kwargs and kwargs.get("debug"):
         get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
 
-    return process._cache.post(url, result)
+    return process._cache.post(url, json.dumps(result))
 

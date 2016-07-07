@@ -13,11 +13,11 @@
                 "priority": 2,
                 "crawl_timeout": 10,
                 "failure_times": 6,
-                "filename_urls": "/home/admin/search_zhidao.txt",
+                "filename_urls": "/home/admin/fudankg_entities.txt",
                 "url_pattern": "http://zhidao.baidu.com/search?word={}"
             }
         },
-        "aws_machine_number": 10,
+        "aws_machine_number": 100,
         "note": "搜索百度知道并返回第一页",
         "debug": false
     }
