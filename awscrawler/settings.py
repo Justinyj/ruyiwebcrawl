@@ -24,10 +24,10 @@ envs = {
     'PRODUCTION': {
         'CONCURRENT_NUM': 200,
 
-        'RECORD_REDIS': 'redis://172.31.19.253:6379/1',
-        'QUEUE_REDIS': 'redis://172.31.19.253:6379/2',
+        'RECORD_REDIS': 'redis://172.31.19.253:6379/1/dQm*s5wdtC)m2AuZ',
+        'QUEUE_REDIS': 'redis://172.31.19.253:6379/2/dQm*s5wdtC)m2AuZ',
         'CACHE_REDIS': [
-            'redis://172.31.19.253:6379/0',
+            'redis://172.31.19.253:6379/0/dQm*s5wdtC)m2AuZ',
         ],
 
         'CACHE_SERVER': 'http://172.31.19.253:8000',

@@ -10,8 +10,6 @@ import time
 import sys
 import re
 import os
-from .cache import Cache
-from .caches3 import CacheS3
 
 class Downloader(object):
 
@@ -23,8 +21,10 @@ class Downloader(object):
         self.RETRY = 2
 
         if cacheserver is None:
+            from .caches3 import CacheS3
             self.cache = CacheS3(batch_id, region_name)
         else:
+            from .cache import Cache
             self.cache = Cache(batch_id, cacheserver)
         self.batch_key_file = batch_id.rsplit('-', 1)[0].replace('-', '_')
         self.gap = gap
