@@ -13,12 +13,12 @@ from datetime import datetime
 from downloader.caches3 import CacheS3
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
+from parsers.zhidao_parser import parse_search_json_v0707
 
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
 SITE = 'http://zhidao.baidu.com'
-
 
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
@@ -46,10 +46,18 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         batch_id,
         gap,
         timeout=timeout,
-        encoding='utf-8')
+        encoding='gb18030')
 
     if content == '':
         return False
 
     if kwargs and kwargs.get("debug"):
         get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url')
+
+    result = parse_search_json_v0707(content)
+
+    if kwargs and kwargs.get("debug"):
+        get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
+
+    return process._cache.post(url, result)
+

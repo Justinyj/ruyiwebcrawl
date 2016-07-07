@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
+# gap  error rate
+# 0    14.2%
+# 1    0.4-0.6%
+# 2    0.0%
 
 from __future__ import print_function, division
 
 import os
+import re
 import requests
 import urlparse
 import time
@@ -35,10 +40,13 @@ def test_searchzhidao():
     for i in xrange(total):
         resp = session.get(url, timeout=10)
         print('\n', resp.headers['Content-Type'], len(resp.content)) # normally: 'text/html'
-        print(resp.status_code, resp.url)
         if resp.status_code != 200 or resp.url != url:
+            print(resp.status_code, resp.url)
             gcounter['error'] += 1
+        else:
+            encoding = re.compile('content="text/html;charset=(.+)"').search(resp.content).group(1)
+            print(encoding)
         time.sleep(GAP)
-        print('Error percentage: {}'.format(gcounter['error'] / total))
+    print('Error percentage: {}%'.format(gcounter['error'] / total * 100))
 
 test_searchzhidao()

@@ -206,7 +206,7 @@ def parse_search_json_v0707(content, start_result_index=0, use_recommend_only = 
     result = {"results":ret, "total":0}
     #print (type(content), len(content))
     if not isinstance(content, unicode):
-        content = content.decode("utf-8")
+        content = content.decode("gb18030")
 
     import lxml.html
     dom = lxml.html.fromstring(content)
