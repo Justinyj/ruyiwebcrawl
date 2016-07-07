@@ -55,7 +55,18 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if kwargs and kwargs.get("debug"):
         get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url')
 
-    result = parse_search_json_v0707(content)
+    try:
+        result = parse_search_json_v0707(content)
+    except:
+        content = process._downloader.downloader_wrapper(url,
+            batch_id,
+            gap,
+            timeout=timeout,
+            encoding='gb18030',
+            refresh=True)
+        if content == '':
+            return False
+        result = parse_search_json_v0707(content)
 
     if kwargs and kwargs.get("debug"):
         get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
