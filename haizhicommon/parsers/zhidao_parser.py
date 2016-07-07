@@ -189,12 +189,21 @@ def parse_search_get_best(content):
     return False
 
 
+
 def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = False):
     """
     :param content: content is unicode html string
     :return : a list consists of 1-2 question
     """
+    result = parse_search_json_v0707(content)
+    if result:
+        return result["results"]
+    else:
+        return []
+
+def parse_search_json_v0707(content, start_result_index=0, use_recommend_only = False):
     ret = []
+    result = {"results":ret, "total":0}
     #print (type(content), len(content))
     if not isinstance(content, unicode):
         content = content.decode("utf-8")
@@ -226,6 +235,17 @@ def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = 
             #print (json.dumps(item, ensure_ascii=False, indent=4))
             ret.append(item)
 
+    #print (len(content), content[0:1000])
+    list_text = dom.xpath('//div[@id="wgt-picker"]//span[contains(@class,"f-lighter")]//text()')
+    result_total = u"".join(list_text).strip()
+    #print ("result_total>>>>>", result_total)
+
+    if result_total:
+        result_total = re.sub(ur"[^0-9]","", result_total)
+        if re.search(ur"^[0-9]+$", result_total):
+            result["total"] = int(result_total)
+    #print ("result_total>>>>>", result_total, result.get("total"))
+
 
     recommend = dom.xpath('//div[@id="wgt-autoask"]')
     #print (len(recommend))
@@ -248,7 +268,7 @@ def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = 
                 item["result_index"] = start_result_index + len(ret)
 
     #print (len(ret))
-    return ret
+    return result
 
 URL_PATTERNS = [
     {

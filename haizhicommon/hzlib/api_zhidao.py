@@ -15,7 +15,7 @@ import difflib
 #import distance
 
 import libfile
-from parsers.zhidao_parser import parse_search_json_v0615
+from parsers.zhidao_parser import parse_search_json_v0707
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
@@ -483,7 +483,8 @@ class ZhidaoFetch():
 
         if select_best and content:
             ts_start = time.time()
-            search_result_json = parse_search_json_v0615(content)
+            search_result = parse_search_json_v0707(content)
+            search_result_json = search_result["results"]
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
             ret ["item_len"] = len(search_result_json)
 
@@ -491,6 +492,7 @@ class ZhidaoFetch():
             #print "select_best", len(answer_items)
             ret ["items"] = answer_items
             ret ["items_all"] = search_result_json
+            ret ["total"] = search_result["total"]
             # if answer_items:
             #     index = 0
             #     for item in answer_items:
@@ -649,7 +651,9 @@ class ZhidaoFetch():
 
         if content:
             ts_start = time.time()
-            search_result_json = parse_search_json_v0615(content)
+            search_result = parse_search_json_v0707(content)
+            search_result_json = search_result["results"]
+            ret ["total"] = search_result["total"]
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
             if self.debug:
                 ret["items_all"] = search_result_json
@@ -685,8 +689,10 @@ class ZhidaoFetch():
 
             if content:
                 ts_start = time.time()
-                search_result_json = parse_search_json_v0615(content)
-                ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
+                search_result = parse_search_json_v0707(content)
+                search_result_json = search_result["results"]
+                ret["total"] = search_result["total"]
+                ret["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
                 output["items"].extend( search_result_json )
                 output["metadata"].extend( ret )
 
@@ -743,7 +749,9 @@ class ZhidaoFetch():
 
         if content:
             ts_start = time.time()
-            search_result_json = parse_search_json_v0615(content)
+            search_result = parse_search_json_v0707(content)
+            search_result_json = search_result["results"]
+            ret ["total"] = search_result["total"]
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
 
             #deprecated

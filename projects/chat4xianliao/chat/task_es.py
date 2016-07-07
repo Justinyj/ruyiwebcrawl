@@ -72,6 +72,12 @@ ES_DATASET_CONFIG ={
         "es_type":"xianer7w_rewrite",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
+    "baike_qa":
+    {   "description":"知道百科问答 baike_qa",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
+        "es_type":"baike_qa_0707",
+        "filepath_mapping": getTheFile("faq_mappings.json"),
+    },
     "xianer12w_test":
         {   "description":"贤二短问答",
             "es_index":"ruyiwebcrawl_zhidaoqa_0626",
@@ -262,7 +268,7 @@ class ZhidaoQa():
 
     def index_chat(self, dataset_index = "chat8cmu6w", option="question"):
         filenames = self._filter_filenames(dataset_index, option)
-        self._index_chat(filenames, dataset_index)
+        self._index_qa(filenames, dataset_index)
 
 
 
@@ -285,16 +291,27 @@ class ZhidaoQa():
                 filenames.append(filename)
         return filenames
 
-    def filter_qa_by_label(self, cat, q, a):
-        if len(cat) == 1:
-            #keep human label
-            return cat
+    def filter_qa_by_label(self, cat, q, a, filter_option=0):
+        if filter_option == 1:
+            #有标记都不用
+            if len(cat) > 0:
+                return cat
+            else:
+                #无标记的过滤敏感词
+                return ""
         else:
-            #re-evaluate label
-            label = self.api_nlp.get_chat_label(q, a)
-            return label
+            #有标记的保持
+            if len(cat) > 0:
+                #keep human label
+                return cat
+            else:
+                #无标记的过滤敏感词
+                #re-evaluate label
+                label = self.api_nlp.get_chat_label(q, a)
+                return label
 
-    def _index_chat(self, filenames, dataset_index):
+
+    def _index_qa(self, filenames, dataset_index, filter_option=0):
         ids = set()
 
         for filename in filenames:
@@ -311,10 +328,12 @@ class ZhidaoQa():
                         if item["id"] in ids:
                             continue
 
-                        label = self.filter_qa_by_label(item["category"], item["question"], item["answers"])
+                        label = self.filter_qa_by_label(item["category"], item["question"], item["answers"], filter_option=filter_option)
                         if label:
                             print "SKIP", label, "\t---\t", item["question"], "\t---\t", item["answers"]
                             gcounter["esdata_label_{}".format(label)]+=1
+                            if filter_option in [1]:
+                                continue
 
                         ids.add(item["id"])
                         item_new = {}
@@ -438,6 +457,17 @@ class ZhidaoQa():
         self.upload(dataset_index)
         gcounter["esdata"] = len(ids)
 
+    def index_qa_simple(self, dataset_index):
+        dirname = getLocalFile( "{}/*.xls*".format(dataset_index) )
+        print dirname
+        filenames = []
+
+        for filename in glob.glob(dirname):
+            filenames.append(filename)
+        self._index_qa(filenames, dataset_index, filter_option=1)
+
+
+
     def index_xianer12w_test(self):
         dataset_index = "xianer12w_test"
         filename = getLocalFile("input/chat8xianer12w.txt")
@@ -541,6 +571,16 @@ def main():
             config_option = sys.argv[2]
             agt = ZhidaoQa(config_option=config_option, dryrun=False)
             agt.index_edit_xianer7w_rewrite()
+
+    elif "index_simple" == option:
+        """
+            python chat/task_es.py index_simple baike_qa local
+        """
+        if len(sys.argv)>3:
+            dataset_index = sys.argv[2]
+            config_option = sys.argv[3]
+            agt = ZhidaoQa(config_option=config_option, dryrun=False)
+            agt.index_qa_simple(dataset_index)
 
     elif "index_xianer12w_test" == option:
         """

@@ -178,7 +178,9 @@ def stat(batch):
         #     gcounter[key] = len(temp_company[key])
         # map_step[step]["company_list"] = sorted(list(temp_company[step+u"_公司"]))
 
-
+    filename = getLocalFile("server/company_index_all.{}.tsv".format(batch))
+    lines = libfile.file2list(filename)
+    gcounter[u"total_company"] = len(lines)
 
 
 ######################### search
@@ -1534,7 +1536,7 @@ def test():
     print "test"
     #hit http://www.qichacha.com/search?key=吴永同&index=14&p=1&province=
     #test_cache_get(u"吴文忠", 14, 0, "YN")
-    test_fetch(u"苏州远大投资有限公司","36a64ffac2863a8ae6a4edd0dc33b271")
+    #test_fetch(u"苏州远大投资有限公司","36a64ffac2863a8ae6a4edd0dc33b271")
 
 
 def test3():
@@ -1561,15 +1563,18 @@ def main():
     option= sys.argv[1]
     batch = sys.argv[2]
     #filename = sys.argv[3]
+    print "main params:", option, batch
+
+    ####################
+    # stat
     if "stat" == option:
-        print option
         stat(batch)
     elif "init_dir" == option:
-        print option
         init_dir(batch)
 
 
-
+    ######################
+    # 1 aws prefetch, search, distributed crawl
     elif "search" == option:
         if len(sys.argv)>3:
             path_expr = batch+ "/*{}*".format( sys.argv[3])
@@ -1585,21 +1590,11 @@ def main():
             print "search mono"
             crawl_search(batch, path_expr, refresh=False, cookie_index=COOKIE_INDEX_SEARCH)
 
-
-
-
-
-
-
-    # elif "search_count" == option:
-    #     search_count(batch, refresh=False)
-
-
-
+    # 2. mono, merge all search result into one list
     elif "fetch_prepare" == option:
-        print option
         fetch_prepare_all(batch)
 
+    # 3. fetch crawl result, distributed prefetch
     elif "fetch" == option:
         if len(sys.argv)>3:
             worker_id = int(sys.argv[3])
@@ -1610,12 +1605,11 @@ def main():
             print "fetch mono"
             fetch_detail(batch, None, cookie_index=COOKIE_INDEX_FETCH, expand=True)
     elif "fetch_output_putian" == option:
-
+        #第一种数据，一个大JSON
         fetch_output_putian(batch)
         #fetch_output(batch, "medical", expand=True)
-
     elif "fetch_output_all" == option:
-
+        #第二种数据，每行一个json.txt
         fetch_output_all(batch)
         #fetch_output(batch, "medical", expand=True)
 

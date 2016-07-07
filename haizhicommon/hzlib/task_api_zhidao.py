@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-＃
+
 # 2016-07-01  测试 609 百科类问题
 # 543 最优   89%
 #	361 正确  59%正确
@@ -51,20 +51,18 @@ def fn_query_filter(line, api_obj, test_expect=None, test_data=None):
     return actual
 
 
-def load_good_qa():
-	EXCEL_FIELDS_ONE = ["note", "q","a"]
-
-    filenames = [
-    ""
-    ]
-
-	qa = {}
-	for filename in glob.glob(pathexpr):
-		print filename
-		tests = libfile.readExcel(EXCEL_FIELDS_ONE, filename, start_row=1).values()[0]
-		for row in tests.values()[0]:
-            rowid = u"{}###{}".format(row["q"],row["a"])
-			qa[rowid] = row["note"]
+# def load_good_qa():
+# 	EXCEL_FIELDS_ONE = ["note", "q","a"]
+#
+#
+#
+# 	qa = {}
+# 	for filename in glob.glob(pathexpr):
+# 		print filename
+# 		tests = libfile.readExcel(EXCEL_FIELDS_ONE, filename, start_row=1).values()[0]
+# 		for row in tests.values()[0]:
+#             rowid = u"{}###{}".format(row["q"],row["a"])
+# 			qa[rowid] = row["note"]
 
 
 def eval_filter(query_filters=[1,3,2], flag_debug=False):

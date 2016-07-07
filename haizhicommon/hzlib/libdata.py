@@ -10,11 +10,19 @@ import re
 import time
 import random
 
+
 def extract_zh(text):
     if text:
         return re.sub(ur"[^\u4E00-\u9FA5]","", text).strip()
     else:
         return text
+
+def strip_good_answer(text):
+    m = re.search(ur"[^\u4E00-\u9FA5\\w\\s]", text)
+    if m:
+        return {"status": "fail", "msg": "skip non-chinese english {}".format(m) }
+
+    return {"status":"ok", "text": text}
 
 class Enum(set):
     def __getattr__(self, name):
@@ -53,7 +61,7 @@ def any2utf8(data):
     elif type(data) is unicode:
         ret = data.encode("utf-8")
     return ret
-    
+
 def print_json(data):
     print json.dumps(data, ensure_ascii=False, indent=4, sort_keys=True)
 
