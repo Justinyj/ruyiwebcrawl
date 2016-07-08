@@ -13,20 +13,20 @@ from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
 class Ec2Manager(object):
 
-        config = {
-            'us-west-1': {
-                'keypair': 'crawler-california',
-                'amiid': 'ami-6a3c790a',
-                'instancetype': 't2.nano',
-                'securitygroupid': ['sg-cdd863a9'],
-            },
-            'ap-northeast-1': {
-                'keypair': 'crawl-tokyo',
-                'amiid': 'ami-b743b1d6',
-                'instancetype': 't2.nano',
-                'securitygroupid': ['sg-fcbf0998'],
-            }
+    config = {
+        'us-west-1': {
+            'keypair': 'crawler-california',
+            'amiid': 'ami-6a3c790a',
+            'instancetype': 't2.nano',
+            'securitygroupid': ['sg-cdd863a9'],
+        },
+        'ap-northeast-1': {
+            'keypair': 'crawl-tokyo',
+            'amiid': 'ami-b743b1d6',
+            'instancetype': 't2.nano',
+            'securitygroupid': ['sg-fcbf0998'],
         }
+    }
 
     def __init__(self, region_name, tag='crawler'):
         if region_name not in self.config:
