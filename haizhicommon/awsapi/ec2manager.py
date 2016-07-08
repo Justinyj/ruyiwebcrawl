@@ -10,42 +10,48 @@ from collections import deque
 
 from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
-from settings import REGION_NAME
-
-if REGION_NAME == 'us-west-1':
-    KEYPAIR = 'crawler-california'
-    SECURITYGROUPID = 'sg-cdd863a9' # ssh
-    AMI_ID = 'ami-6a3c790a'
-elif REGION_NAME == 'ap-northeast-1':
-    KEYPAIR = 'crawl-tokyo'
-    SECURITYGROUPID = 'sg-fcbf0998'
-    AMI_ID = 'ami-b743b1d6'
-
-INSTANCE_TYPE = 't2.nano'
 
 class Ec2Manager(object):
 
-    def __init__(self, tag='crawler'):
+        config = {
+            'us-west-1': {
+                'keypair': 'crawler-california',
+                'amiid': 'ami-6a3c790a',
+                'instancetype': 't2.nano',
+                'securitygroupid': ['sg-cdd863a9'],
+            },
+            'ap-northeast-1': {
+                'keypair': 'crawl-tokyo',
+                'amiid': 'ami-b743b1d6',
+                'instancetype': 't2.nano',
+                'securitygroupid': ['sg-fcbf0998'],
+            }
+        }
+
+    def __init__(self, region_name, tag='crawler'):
+        if region_name not in self.config:
+            raise(Exception('aws region name illegal'))
+
+        self.region_name = region_name
         self.tag = tag
         self.id_instance = {}
         self.id_idx = {}
 
-        self.ec2 = boto3.resource('ec2', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
+        self.ec2 = boto3.resource('ec2', region_name=region_name, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
+
+    def get_keypair(self):
+        return self.config[self.region_name]['keypair']
 
     def create_instances(self,
-                         MachineNum=1,
-                         ImageId=AMI_ID,
-                         KeyName=KEYPAIR,
-                         InstanceType=INSTANCE_TYPE,
-                         SecurityGroupIds=[SECURITYGROUPID]):
+                         MachineNum=1):
         """ ec2.Instance(id='i-336303ac')
         """
-        ins = self.ec2.create_instances(ImageId=ImageId,
+        ins = self.ec2.create_instances(ImageId=self.config['amiid'],
                                         MinCount=MachineNum,
                                         MaxCount=MachineNum,
-                                        KeyName=KeyName,
-                                        InstanceType=InstanceType,
-                                        SecurityGroupIds=SecurityGroupIds)
+                                        KeyName=self.config['keypair'],
+                                        InstanceType=self.config['instancetype'],
+                                        SecurityGroupIds=self.config['securitygroupid'])
         time.sleep(60)
 
         for idx, i in enumerate(ins):

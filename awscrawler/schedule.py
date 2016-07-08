@@ -10,8 +10,8 @@ import paramiko
 from math import ceil
 from paramiko.ssh_exception import NoValidConnectionsError
 
-from ec2manager import Ec2Manager, KEYPAIR
-from settings import ENV
+from settings import REGION_NAME, ENV
+from awsapi.ec2manager import Ec2Manager
 
 class Schedule(object):
 
@@ -23,13 +23,14 @@ class Schedule(object):
 
         self.backoff_timeout = 30 * backoff_timeout / 2**3 # magic number because queue.get
 
-        self.ec2manager = Ec2Manager(tag)
+        self.ec2manager = Ec2Manager(REGION_NAME, tag)
         self.ids = self.ec2manager.create_instances(self.machine_num)
         self.id_cookie_dict = self._assign_cookies(kwargs.get('cookies', []))
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.pkey = paramiko.RSAKey.from_private_key_file('/home/admin/.ssh/{}.pem'.format(KEYPAIR))
+        keypair = self.ec2manager.get_keypair()
+        self.pkey = paramiko.RSAKey.from_private_key_file('/home/admin/.ssh/{}.pem'.format(keypair))
 
     def _assign_cookies(self, cookies):
         id_cookie_dict = {}
