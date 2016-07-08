@@ -68,7 +68,7 @@ class Controller(object):
         with open(fname) as fd:
             content = fd.read()
         cmd = base64.b64encode(zlib.compress( marshal.dumps(compile(content, '', 'exec')), 9 ))
-        base_cmd = 'python reducer.py -i {{}} -m {total} -p {cmd}'.format(total=self.machine_num, cmd=cmd)
+        base_cmd = 'cd /home/admin/reducer; source env.sh;  python reducer.py -i {{}} -m {total} -p {cmd}'.format(total=self.machine_num, cmd=cmd)
 
         for i in self.ids:
             self.run_command(i, base_cmd)
@@ -96,8 +96,8 @@ def parse_arg():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--batch_id', '-b', type=str, help='batch_id')
     parser.add_argument('--machine_num', '-m', type=str, help='number of all machines')
-    parser.add_argument('--region_name', '-r', type=str, help='region of s3')
     parser.add_argument('--program', '-p', type=str, help='file to transmit to client for executing')
+    parser.add_argument('--region_name', '-r', type=str, default='ap-northeast-1', help='region of s3')
     parser.add_argument('--dryrun', '-d', type=bool, help='not start instance, for local debug')
     return parser.parse_args(), parser
 
