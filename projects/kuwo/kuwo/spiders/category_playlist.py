@@ -98,15 +98,3 @@ class cate_spider(scrapy.Spider):
             item['tags'] = tags
             muscicatIt['content'] = json.dumps(item,ensure_ascii=False)
             yield muscicatIt
-
-        
-         
-
-            
-
-
-
-
-
-
-
