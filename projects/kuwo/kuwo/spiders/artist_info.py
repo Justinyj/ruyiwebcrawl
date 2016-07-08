@@ -11,7 +11,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-class artist_info_spider(scrapy.Spider):
+class artistInfo_spider(scrapy.Spider):
 	name = "artist_info"
 	start_urls = ["http://bd.kuwo.cn/mpage/api/artistList?pn=0&rn=1&bdfrom=haizhi&c=1m496rxeda48"]  #顶层歌手列表api
 
