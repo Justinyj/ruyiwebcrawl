@@ -1,3 +1,4 @@
+#encoding:utf-8
 import scrapy
 import sys
 
@@ -7,7 +8,7 @@ sys.setdefaultencoding('utf-8')
 BATCH_ID = 'kuwo-20160706'
 SERVER='http://192.168.1.179:8000/'
 m = DownloadWrapper(SERVER)
-f = open("/home/wl/lostpn.txt","a")
+f = open("/home/wl/lostpn.txt","a")  #记录缺失结果的url
 
 class MyMiddleWare(object):
     def process_request(self, request,  spider):

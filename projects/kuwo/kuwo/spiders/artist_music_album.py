@@ -1,3 +1,5 @@
+#encoding:utf-8
+'''根据歌手列表 爬取 每个歌手的 专辑 和 歌曲'''
 import scrapy
 import json
 from kuwo.items import MusicItem, AlbumItem, ArtistItem, MusicInfoItem

@@ -1,3 +1,7 @@
+#encoding:utf-8
+
+'''根据分类 爬取分类歌单， 再从 分类歌单 爬取 歌单中的歌曲'''
+
 import scrapy
 import json
 from kuwo.items import MusicCatItem, PlaylistItem
@@ -12,7 +16,7 @@ class cate_spider(scrapy.Spider):
     name = "cate_list"
     start_urls = ["http://bd.kuwo.cn/mpage/api/category?bdfrom=haizhi&c=1m496rxeda48"]
     
-    def parse(self, response):
+    def parse(self, response):   #分类
         result = json.loads(response.body.decode('utf-8','ignore'))
         
         for top1 in result['data']['list']:
@@ -29,7 +33,7 @@ class cate_spider(scrapy.Spider):
                 yield scrapy.Request(url=turl, callback=self.parseCategoryList, meta={"tags": tags, 'pn':pn, 'catId':child2['catId']})                                   
                 
 
-    def parseCategoryList(self, response):
+    def parseCategoryList(self, response):    #每类的歌单
         result = json.loads(response.body.decode('utf-8','ignore'))
         if not result or not 'data' in result or not 'list' in result['data'] or len(result['data']['list']) == 0 :
             return 
@@ -48,7 +52,7 @@ class cate_spider(scrapy.Spider):
                 yield scrapy.Request(turl, callback=self.parsePlaylist, meta={'tags':tags, 'ppn': ppn, 'catId':each['catId']}, dont_filter=True)
 
 
-    def parsePlaylist(self, response):
+    def parsePlaylist(self, response):  #每个歌单的歌曲
         result = json.loads(response.body.decode('utf-8','ignore'))
         if not 'musiclist' in result or len(result['musiclist']) == 0:
             return 
@@ -67,7 +71,7 @@ class cate_spider(scrapy.Spider):
         muscicatIt = MusicCatItem()
         playlistIt = PlaylistItem()
 
-        if ppn == 0:
+        if ppn == 0:   #写入歌单
             name = result.get('name')
             if name:
                 tags.append(u'PN:{}'.format( name ))
@@ -87,7 +91,7 @@ class cate_spider(scrapy.Spider):
             playlistIt['content'] = json.dumps(playlist,ensure_ascii=False)
             yield playlistIt
 
-        for item in result['musiclist']:
+        for item in result['musiclist']:    #写入歌单中的歌曲
             if 'musicid' in item:
                 item['id'] = item['musicid']
             item['playlistid'] = catId
