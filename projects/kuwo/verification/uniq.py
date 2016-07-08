@@ -1,5 +1,5 @@
 #encoding:utf-8
-#去除文件中的重复行
+'''去除文件中的重复行'''
 from __future__ import print_function
 
 import sys

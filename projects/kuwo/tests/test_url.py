@@ -1,6 +1,6 @@
 #encoding:utf-8
 
-#遍历一遍 api：歌手列表 的页数参数， 计算缺失率，（即500 internal server error）
+'''遍历一遍 api：歌手列表 的页数参数， 计算缺失率，（即500 internal server error）'''
 
 from __future__ import print_function, division
 

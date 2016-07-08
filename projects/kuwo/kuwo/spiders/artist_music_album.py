@@ -10,7 +10,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-class art_spider(scrapy.Spider):
+class artistMusicAlbum_spider(scrapy.Spider):
 	name = "artist_list"
 	start_urls = ["http://bd.kuwo.cn/mpage/api/artistList?pn=0&rn=1&bdfrom=haizhi&c=1m496rxeda48"]
 
