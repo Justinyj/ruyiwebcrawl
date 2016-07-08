@@ -16,7 +16,7 @@ class art_spider(scrapy.Spider):
 		pn = response.meta.get('pn',0)
 		result = json.loads(response.body.decode('utf-8','ignore')) 
 
-		if not result:
+		if not result or not 'total' in result:
 			pn += 1
 			nexturl = "http://bd.kuwo.cn/mpage/api/artistList?pn={}&rn=1&bdfrom=haizhi&c=1m496rxeda48".format(pn)
 			yield scrapy.Request(nexturl, callback = self.parse, meta = {'pn':pn}, dont_filter = True)
