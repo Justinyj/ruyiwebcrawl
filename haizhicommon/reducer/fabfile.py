@@ -14,7 +14,7 @@ def upload():
     prog = 'reducer'
     prog_dir = 'reducerraw'
     with lcd('..'):
-        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir {prog}$dirtime; cp -r {prog}/* {prog}$dirtime; cp -r haizhicommon/awsapi {prog}$dirtime; tar jcf {archive} --exclude='*.pyc' {prog}$dirtime; rm -r {prog}$dirtime".format(prog=prog, archive=archive))
+        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir {prog}$dirtime; cp -r {prog}/* {prog}$dirtime; cp -r awsapi {prog}$dirtime; tar jcf {archive} --exclude='*.pyc' {prog}$dirtime; rm -r {prog}$dirtime".format(prog=prog, archive=archive))
         put('{}'.format(archive), '/tmp/')
         put('~/.ssh/crawl-tokyo.pem', '/home/admin/.ssh/')
 
@@ -36,7 +36,7 @@ def runapp(flag_run=True, param=None):
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
             if flag_run:
-                run('dtach -n /tmp/{}.sock {}'.format(prog, 'python controller.py -b searchzhidao-json-20160707 -m 2 -p program.py'))
+                run('dtach -n /tmp/{}.sock {}'.format(prog, 'python controller.py -b searchzhidao-json-20160707 -m 20 -p program.py'))
 
 
 def deploy_worker():

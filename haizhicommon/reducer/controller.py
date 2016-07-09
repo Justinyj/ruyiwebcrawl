@@ -91,9 +91,10 @@ class Controller(object):
         with open(fname) as fd:
             content = fd.read()
         cmd = base64.b64encode(zlib.compress( marshal.dumps(compile(content, '', 'exec')), 9 ))
-        base_cmd = 'python reducer.py -i 3 -m {total} -p {cmd}'.format(total=total, cmd=cmd)
-        print(base_cmd)
-        os.system(base_cmd)
+        base_cmd = 'python reducer.py -i {{}} -m {total} -p {cmd}'.format(total=total, cmd=cmd)
+        command = base_cmd.format(3)
+        print(command)
+        os.system(command)
 
 
 
@@ -103,7 +104,7 @@ def parse_arg():
                                      description='server that control distributed client.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--batch_id', '-b', type=str, help='batch_id')
-    parser.add_argument('--machine_num', '-m', type=int, help='number of all machines')
+    parser.add_argument('--machine_num', '-m', type=int, default=10, help='number of all machines')
     parser.add_argument('--program', '-p', type=str, help='file to transmit to client for executing')
     parser.add_argument('--amiid', '-a', type=str, default='', help='worker amiid of ec2')
     parser.add_argument('--region_name', '-r', type=str, default='ap-northeast-1', help='region of s3')
@@ -118,7 +119,7 @@ def main():
         if not args.program:
             raise()
         if args.dryrun:
-            Controller.dryrun(args.program, 10)
+            Controller.dryrun(args.program, args.machine_num)
         else:
             app = Controller(args.batch_id, args.machine_num, args.region_name, args.amiid)
             app.start_instances()

@@ -28,7 +28,7 @@ def save_bucket(bucketname, savepath):
         os.makedirs(savepath)
 
     bucket = S3.Bucket(bucketname)
-    wfname = os.path.join(savepath, bucketname, index)
+    wfname = os.path.join(savepath, bucketname+str(index))
     with open(wfname, 'w') as fd:
 
         for i in bucket.objects.all():
@@ -45,7 +45,7 @@ def save_bucket(bucketname, savepath):
 
 def fake_save_bucket(bucketname, savepath):
     print('fake save_bucket works!')
-    print(index, machine_num)
+    print(type(index), index, machine_num)
 
 
 save_bucket(BUCKET, HOMEDIR)
