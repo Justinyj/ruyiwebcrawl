@@ -17,7 +17,7 @@
                 "url_pattern": "http://zhidao.baidu.com/search?word={}"
             }
         },
-        "aws_machine_number": 100,
+        "aws_machine_number": 900,
         "note": "搜索百度知道并返回第一页",
         "debug": false
     }

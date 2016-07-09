@@ -33,7 +33,7 @@ def build_env():
 def upload():
     archive = 'awscrawler.tar.bz2'
     with lcd('..'):
-        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir awscrawler$dirtime; cp -r awscrawler/* awscrawler$dirtime; cp -r haizhicommon/downloader haizhicommon/parsers haizhicommon/rediscluster haizhicommon/crawlerlog awscrawler$dirtime; tar jcf {} --exclude='*.pyc' awscrawler$dirtime; rm -r awscrawler$dirtime".format(archive))
+        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir awscrawler$dirtime; cp -r awscrawler/* awscrawler$dirtime; cp -r haizhicommon/awsapi haizhicommon/downloader haizhicommon/parsers haizhicommon/rediscluster haizhicommon/crawlerlog awscrawler$dirtime; tar jcf {} --exclude='*.pyc' awscrawler$dirtime; rm -r awscrawler$dirtime".format(archive))
         put('{}'.format(archive), '/tmp/')
         put('~/.ssh/crawl-tokyo.pem', '/home/admin/.ssh/')
 
@@ -53,6 +53,7 @@ def kill():
 
 def runapp(flag_run, job, param=None):
     with cd('/opt/service/awscrawler'):
+#        run('source /usr/local/bin/virtualenvwrapper.sh')
         run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
