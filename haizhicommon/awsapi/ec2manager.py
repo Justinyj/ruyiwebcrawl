@@ -22,7 +22,7 @@ class Ec2Manager(object):
         },
         'ap-northeast-1': {
             'keypair': 'crawl-tokyo',
-            'amiid': 'ami-0a23de6b',
+            'amiid': 'ami-0e1de06f',
             'instancetype': 't2.nano',
             'securitygroupid': ['sg-fcbf0998'],
         }
@@ -34,7 +34,7 @@ class Ec2Manager(object):
 
         self.region_name = region_name
         self.tag = tag
-        self.amiid = amiid if amiid else self.config['amiid']
+        self.amiid = amiid if amiid else self.config[self.region_name]['amiid']
         self.id_instance = {}
         self.id_idx = {}
 
@@ -43,16 +43,15 @@ class Ec2Manager(object):
     def get_keypair(self):
         return self.config[self.region_name]['keypair']
 
-    def create_instances(self,
-                         MachineNum=1):
+    def create_instances(self, MachineNum=1):
         """ ec2.Instance(id='i-336303ac')
         """
         ins = self.ec2.create_instances(ImageId=self.amiid,
                                         MinCount=MachineNum,
                                         MaxCount=MachineNum,
-                                        KeyName=self.config['keypair'],
-                                        InstanceType=self.config['instancetype'],
-                                        SecurityGroupIds=self.config['securitygroupid'])
+                                        KeyName=self.config[self.region_name]['keypair'],
+                                        InstanceType=self.config[self.region_name]['instancetype'],
+                                        SecurityGroupIds=self.config[self.region_name]['securitygroupid'])
         time.sleep(60)
 
         for idx, i in enumerate(ins):

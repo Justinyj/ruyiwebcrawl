@@ -19,8 +19,8 @@ def parse_arg():
                                      description='react commond from server.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--program', '-p', type=str, help='program to execute')
-    parser.add_argument('--index', '-i', type=str, help='number of this machine')
-    parser.add_argument('--machine_num', '-m', type=str, help='number of all machines')
+    parser.add_argument('--index', '-i', type=int, help='number of this machine')
+    parser.add_argument('--machine_num', '-m', type=int, help='number of all machines')
     return parser.parse_args(), parser
 
 
