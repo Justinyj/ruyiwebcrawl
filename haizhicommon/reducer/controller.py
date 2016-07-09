@@ -55,6 +55,7 @@ class Controller(object):
             try:
                 self.ssh.connect(ipaddr, username='admin', pkey=self.pkey)
                 ssh_stdin, ssh_stdout, ssh_stderr = self.ssh.exec_command(command)
+                print(command)
                 break
             except NoValidConnectionsError:
                 time.sleep(10)
@@ -75,7 +76,7 @@ class Controller(object):
         with open(fname) as fd:
             content = fd.read()
         cmd = base64.b64encode(zlib.compress( marshal.dumps(compile(content, '', 'exec')), 9 ))
-        base_cmd = 'cd /opt/service/reducer; source env.sh;  python reducer.py -i {{}} -m {total} -p {cmd}'.format(total=self.machine_num, cmd=cmd)
+        base_cmd = 'cd /opt/service/reducer; source env.sh;  dtach -n /tmp/reducer.sock python reducer.py -i {{}} -m {total} -p {cmd}'.format(total=self.machine_num, cmd=cmd)
 
         for i in self.ids:
             self.run_command(i, base_cmd)

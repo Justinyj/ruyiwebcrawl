@@ -201,9 +201,9 @@ def parse_search_json_v0615(content, start_result_index=0, use_recommend_only = 
     else:
         return []
 
-def parse_search_json_v0707(content, start_result_index=0, use_recommend_only = False):
+def parse_search_json_v0707(content, word=None, start_result_index=0, use_recommend_only=False):
     ret = []
-    result = {"results":ret, "total":0}
+    result = {"results": ret, "total": 0, "word": word}
     #print (type(content), len(content))
     if not isinstance(content, unicode):
         content = content.decode("gb18030")

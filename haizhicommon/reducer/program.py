@@ -6,8 +6,6 @@
 from __future__ import print_function, division
 
 import boto3
-import json
-import hashlib
 
 from awsapi.secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
@@ -19,12 +17,20 @@ S3 = boto3.resource('s3', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_
 
 
 def save_bucket(bucketname, savepath):
+    """ import must write in function to support this framework.
+    """
+    import os
+    import hashlib
+    global S3
+
     count = 0
     if not os.path.exists(savepath):
         os.makedirs(savepath)
 
     bucket = S3.Bucket(bucketname)
-    with open(os.path.join(savepath, bucketname), 'w') as fd:
+    wfname = os.path.join(savepath, bucketname, index)
+    with open(wfname, 'w') as fd:
+
         for i in bucket.objects.all():
             hashint = int(hashlib.sha1(i.key).hexdigest(), 16)
             if hashint % machine_num == index:
@@ -34,6 +40,8 @@ def save_bucket(bucketname, savepath):
                 count += 1
             if count & 4095 == 0:
                 print(count)
+    os.system('scp {} admin@172.31.19.253:/data/searchzhidao/'.format(wfname))
+
 
 def fake_save_bucket(bucketname, savepath):
     print('fake save_bucket works!')
