@@ -22,18 +22,19 @@ class Ec2Manager(object):
         },
         'ap-northeast-1': {
             'keypair': 'crawl-tokyo',
-            'amiid': 'ami-b743b1d6',
+            'amiid': 'ami-0a23de6b',
             'instancetype': 't2.nano',
             'securitygroupid': ['sg-fcbf0998'],
         }
     }
 
-    def __init__(self, region_name, tag='crawler'):
+    def __init__(self, region_name, tag='crawler', amiid=None):
         if region_name not in self.config:
             raise(Exception('aws region name illegal'))
 
         self.region_name = region_name
         self.tag = tag
+        self.amiid = amiid if amiid else self.config['amiid']
         self.id_instance = {}
         self.id_idx = {}
 
@@ -46,7 +47,7 @@ class Ec2Manager(object):
                          MachineNum=1):
         """ ec2.Instance(id='i-336303ac')
         """
-        ins = self.ec2.create_instances(ImageId=self.config['amiid'],
+        ins = self.ec2.create_instances(ImageId=self.amiid,
                                         MinCount=MachineNum,
                                         MaxCount=MachineNum,
                                         KeyName=self.config['keypair'],

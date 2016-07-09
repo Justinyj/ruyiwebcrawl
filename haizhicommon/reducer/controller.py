@@ -11,12 +11,18 @@ import paramiko
 from awsapi.ec2manager import Ec2Manager
 
 class Controller(object):
-    def __init__(self, batch_id, machine_num, region_name='ap-northeast-1'):
+
+    def __init__(self, batch_id, machine_num, region_name='ap-northeast-1', amiid=''):
+        """ self.batch_key equal to S3 bucket, but this is covered by program.py
+        """
         self.batch_id = batch_id
         self.batch_key = batch_id.rsplit('-', 1)[0]
         self.machine_num = machine_num
 
-        self.ec2manager = Ec2Manager(region_name, tag)
+        if amiid:
+            self.ec2manager = Ec2Manager(region_name, tag, amiid=amiid)
+        else:
+            self.ec2manager = Ec2Manager(region_name, tag)
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -97,6 +103,7 @@ def parse_arg():
     parser.add_argument('--batch_id', '-b', type=str, help='batch_id')
     parser.add_argument('--machine_num', '-m', type=str, help='number of all machines')
     parser.add_argument('--program', '-p', type=str, help='file to transmit to client for executing')
+    parser.add_argument('--amiid', '-a', type=str, default='', help='worker amiid of ec2')
     parser.add_argument('--region_name', '-r', type=str, default='ap-northeast-1', help='region of s3')
     parser.add_argument('--dryrun', '-d', type=bool, help='not start instance, for local debug')
     return parser.parse_args(), parser
@@ -111,7 +118,7 @@ def main():
         if args.dryrun:
             Controller.dryrun(args.program, 10)
         else:
-            app = Controller(args.batch_id, args.machine_num, args.region_name)
+            app = Controller(args.batch_id, args.machine_num, args.region_name, args.amiid)
             app.start_instances()
             app.run(args.program)
 

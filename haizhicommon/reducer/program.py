@@ -20,6 +20,8 @@ S3 = boto3.resource('s3', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_
 
 def save_bucket(bucketname, savepath, index, total):
     index = int(index)
+    total = int(total)
+    count = 0
     if not os.path.exists(savepath):
         os.makedirs(savepath)
 
@@ -31,9 +33,13 @@ def save_bucket(bucketname, savepath, index, total):
                 content = i.get()['Body'].read()
                 fd.write(content)
                 fd.write('\n')
+                count += 1
+            if count & 4095 == 0:
+                print(count)
 
 def fake_save_bucket(bucketname, savepath):
     print('fake save_bucket works!')
     print(index, machine_num)
+
 
 save_bucket(BUCKET, HOMEDIR)
