@@ -8,11 +8,12 @@ import sys
 import marshal
 import zlib
 import base64
+import os
 
 
 def action(cmd, index, machine_num):
     exec(marshal.loads(zlib.decompress(base64.b64decode(cmd))), {'index': index, 'machine_num': machine_num}, {})
-
+    os.system('sudo shutdown -h')
 
 def parse_arg():
     import argparse
