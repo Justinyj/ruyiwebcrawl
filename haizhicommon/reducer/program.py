@@ -40,7 +40,7 @@ def save_bucket(bucketname, savepath):
                 count += 1
             if count & 4095 == 0:
                 print(count)
-    os.system('scp {} admin@172.31.19.253:/data/searchzhidao/'.format(wfname))
+    os.system('eval `ssh-agent -s`; chmod 600 /home/admin/.ssh/crawl-tokyo.pem; ssh-add /home/admin/.ssh/crawl-tokyo.pem; scp -o StrictHostKeyChecking=no {} admin@172.31.19.253:/data/searchzhidao/'.format(wfname))
 
 
 def fake_save_bucket(bucketname, savepath):
