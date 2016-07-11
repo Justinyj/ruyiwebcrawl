@@ -10,7 +10,7 @@ sys.setdefaultencoding('utf-8')
 class MingluSpider(object):
 
     def __init__(self):
-        self.out = open('comany_name.txt', 'a')
+        self.out = open('company_name.txt', 'a')
         self.url_file = open('all_urls.txt', 'r')
         f = open('persistent_outtxt_lineno.txt', 'r')
         record = f.readline().strip()
