@@ -12,7 +12,6 @@ class MingluSpider(object):
     def __init__(self):
         self.out = open('comany_name.txt', 'a')
         self.url_file = open('all_urls.txt', 'r')
-        f = open('record.txt', 'r')
         f = open('persistent_outtxt_lineno.txt', 'r')
         record = f.readline().strip()
         f.close()
@@ -26,7 +25,7 @@ class MingluSpider(object):
         self.record+=1
         if self.record % 100==0:
             print self.record
-        f = open('record.txt', 'w')
+        f = open('persistent_outtxt_lineno.txt', 'w')
         f.write(str(self.record))
         f.close()
 
