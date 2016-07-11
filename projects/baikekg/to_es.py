@@ -24,8 +24,8 @@ BATCH = 5000
 ENV = 'local'
 # http://localhost:9200/fudankg0630/fudankg_faq/_search?q=entity:%E5%A4%8D%E6%97%A6
 ES_DATASET_CONFIG = {
-        "description": "复旦百科实体属性值0705",
-        "es_index": "fudankg0705",
+        "description": "复旦百科实体属性值0711",
+        "es_index": "fudankg0711",
         "es_type": "fudankg_faq",
         "filepath_mapping": os.path.abspath(os.path.dirname(__file__)) +"/"+"fudankg_es_schema.json"
 }
@@ -121,9 +121,9 @@ def send_definition_to_es(data, field='definition', fudan=False):
 
         if fudan:
             if 'alias' in info:
-                pairs.append( fudan_ea_to_json(entity, '定义', '定义', 'definition', values, info['category'], info['alias']) )
+                pairs.append( fudan_ea_to_json(entity, '定义', '定义', 'definition', values, info['category'], info['searchscore'], info['alias']) )
             else:
-                pairs.append( fudan_ea_to_json(entity, '定义', '定义', 'definition', values, info['category']) )
+                pairs.append( fudan_ea_to_json(entity, '定义', '定义', 'definition', values, info['category'], info['searchscore']) )
         else:
             pairs.append( ea_to_json(entity, '定义', '定义', 'definition', values) )
         count += 1
@@ -137,7 +137,7 @@ def send_definition_to_es(data, field='definition', fudan=False):
         sendto_es(pairs)
 
 
-def fudan_ea_to_json(entity, attribute, attribute_name, extra_tag, values, category=None, alias=[]):
+def fudan_ea_to_json(entity, attribute, attribute_name, extra_tag, values, category=None, searchscore=None, alias=[]):
     """
     :param entity: type(entity) is unicode
     """
@@ -166,6 +166,8 @@ def fudan_ea_to_json(entity, attribute, attribute_name, extra_tag, values, categ
     }
     if category:
         ret.update({'category': category})
+    if searchscore:
+        ret.update({'searchscore': searchscore})
     return ret
 
 

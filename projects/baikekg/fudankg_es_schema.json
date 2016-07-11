@@ -41,6 +41,10 @@
         "aliases": {
             "type": "string",
             "index": "not_analyzed"
+        },
+        "searchscore": {
+            "type": "long",
+            "index": "no"
         }
     }
 }
