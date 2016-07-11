@@ -53,7 +53,7 @@ class MingluSpider(object):
         while 1:
             url = self.url_file.readline().strip()
             if not url:
-                break
+                return
             try:
                 content = requests.get(url).text
             except:
