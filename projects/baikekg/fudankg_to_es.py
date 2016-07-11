@@ -19,6 +19,8 @@ DIR = '/home/crawl/Downloads/fudankg_saved'
 def load_fudankg_json_data():
 
     word_rank = load_search_zhidao()
+    with open('word_rank.txt', 'w') as fd:
+        json.dump(word_rank, fd)
 
     data_def = defaultdict(dict)
     data_attr = defaultdict(dict)
@@ -34,14 +36,22 @@ def load_fudankg_json_data():
                             continue
                         data_def[entity]['definition'] = value
                         data_def[entity]['category'] = dic[u'Tags'] if u'Tags' in dic else None
-                        data_def[entity]['searchscore'] = word_rank[entity]
+                        if entity in word_rank:
+                            data_def[entity]['searchscore'] = word_rank[entity]
+                        else:
+                            data_def[entity]['searchscore'] = None
+                            print(entity)
 
                     elif label == u'av pair':
                         data_attr[entity]['category'] = dic[u'Tags'] if u'Tags' in dic else None
-                        data_attr[entity]['searchscore'] = word_rank[entity]
+                        if entity in word_rank:
+                            data_attr[entity]['searchscore'] = word_rank[entity]
+                        else:
+                            data_attr[entity]['searchscore'] = None
+                            print(entity)
 
                         attr_values = defaultdict(list)
-                        for a, v in value:
+                        for a, v in value: # value sometimes is []
                             if a == u'中文名':
                                 continue
                             if a == u'别名' or a == u'又称':
@@ -90,10 +100,33 @@ def load_search_zhidao():
     word_rank = {}
     for d in os.listdir(zhidao_dir):
         with open(os.path.join(zhidao_dir, d)) as fd:
+            count = 0
             for line in fd:
-                js = json.loads(line.strip())
-                word_rank[js['word']] = int(js['total'])
+                count += 1
+                try:
+                    js = json.loads(line.strip())
+                    word_rank[js['word']] = int(js['total'])
+                except Exception as e:
+                    print(d, count, e)
     return word_rank
 
+def aliases():
+    alias = {}
+
+    for f in os.listdir(DIR):
+        fname = os.path.join(DIR, f)
+        with open(fname) as fd:
+
+            for entity, dic in json.load(fd).iteritems():
+                for label, value in dic.iteritems():
+                    if label == u'av pair':
+                        for a, v in value: # value sometimes is []
+                            if a == u'别名' or a == u'又称':
+                                if entity in alias:
+                                    alias[entity].append(v)
+                                else:
+                                    alias[entity] = [v]
+
+    return alias
 
 load_fudankg_json_data()

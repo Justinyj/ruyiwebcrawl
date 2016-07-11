@@ -163,6 +163,7 @@ def fudan_ea_to_json(entity, attribute, attribute_name, extra_tag, values, categ
         'value': values[0] if len(values) > 0 else '',
         'values': values,
         'tags': list(set(tags)),
+        'searchscore': searchscore,
     }
     if category:
         ret.update({'category': category})
