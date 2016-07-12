@@ -53,8 +53,8 @@ def kill():
 
 def runapp(flag_run, job, param=None):
     with cd('/opt/service/awscrawler'):
-#        run('source /usr/local/bin/virtualenvwrapper.sh')
-        run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
+        run('source /usr/local/bin/virtualenvwrapper.sh')
+#        run('source /usr/local/bin/virtualenvwrapper.sh; mkvirtualenv awscrawler')
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
             if flag_run:

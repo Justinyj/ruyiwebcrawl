@@ -12,7 +12,6 @@ import time
 from collections import defaultdict, Counter
 
 from filter_lib import regdropbrackets
-from hzlib.libfile import read_file_iter, write_file
 
 def merge_fudankg(bucketname):
     """ TODO need generate url from entities file.
@@ -20,7 +19,8 @@ def merge_fudankg(bucketname):
     """
     batch_id = 'fudankg-json-20160625'
     saved_dir = 'fudankg_saved'
-    os.mkdir(saved_dir)        
+    if not os.path.exists(saved_dir):
+        os.mkdir(saved_dir)
     data = defaultdict(dict)
     entities = set()
     gcounter = Counter()
@@ -103,6 +103,7 @@ def merge_fudankg(bucketname):
 
 
 def get_fudankg_entity():
+    from hzlib.libfile import write_file
     saved_dir = '/home/crawl/Downloads/fudankg_saved'
     entities = set()
 
@@ -120,4 +121,11 @@ def get_fudankg_entity():
 
 
 if __name__ == '__main__':
-    merge_fudankg('fudankg-json')
+    import sys
+    print(sys.argv)
+
+    if sys.argv[1] == 'merge':
+        merge_fudankg('fudankg-json')
+    elif sys.argv[1] == 'entity':
+        get_fudankg_entity()
+
