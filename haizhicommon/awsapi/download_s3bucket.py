@@ -47,26 +47,33 @@ def save_to_local(bucketname):
     total = 0
     bucket = S3.Bucket(bucketname)
     for i in bucket.objects.all():
-        fname = os.path.join(bucketname, i.key)
+        fdir = os.path.join(bucketname, i.key[-1])
+        if not os.path.exists(fdir):
+            os.makedirs(fdir)
+
+        fname = os.path.join(fdir, i.key)
         if os.path.exists(fname):
             continue
         try:
             content = i.get()['Body'].read()
-            with open(bucketname + '/' + i.key, 'w') as fd:
+            with open(fname, 'w') as fd:
                 fd.write(content)
         except Exception as e:
             print(e)
         finally:
             total += 1
 
+        if total & 8191 == 0:
+            print('{}: {}'.format(datetime.now().isoformat(), total))
+
 
 def down_fudankg(bucketname):
     bucket = S3.Bucket(bucketname)
     for i in bucket.objects.all():
-        content = i.get()['Body'].read()
         fdir = os.path.join(bucketname, i.key[-1])
         if not os.path.exists(fdir):
             os.makedirs(fdir)
+        content = i.get()['Body'].read()
         with open(os.path.join(fdir, i.key), 'w') as fd:
             fd.write(content)
 
@@ -74,4 +81,4 @@ def down_fudankg(bucketname):
 if __name__ == '__main__':
     bucketname = 'fudankg-json'
     compare_time = datetime(2016,7,1,2,0,0,).strftime('%Y%m%d%H%M%S') 
-    down_fudankg(bucketname)
+    save_to_local(bucketname)

@@ -31,6 +31,7 @@ class Schedule(object):
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         keypair = self.ec2manager.get_keypair()
         self.pkey = paramiko.RSAKey.from_private_key_file('/home/admin/.ssh/{}.pem'.format(keypair))
+        paramiko.util.log_to_file('awscrawler_paramiko.log')
 
     def _assign_cookies(self, cookies):
         id_cookie_dict = {}
