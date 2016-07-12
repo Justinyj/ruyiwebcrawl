@@ -66,4 +66,3 @@ class Cache(object):
                 ret = js[u'error']
                 continue
         return ret
-
