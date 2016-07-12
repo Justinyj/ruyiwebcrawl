@@ -10,10 +10,10 @@ import requests
 
 
 class Cache(object):
+
     def __init__(self, batch_id, server):
         self.server = server
         self.batch_id = batch_id
-
 
     def exists(self, url):
         b64url = base64.urlsafe_b64encode(url)
@@ -25,7 +25,6 @@ class Cache(object):
         if js[u'success'] is False:
             return u''
         return js[u'exists']
-
 
     def get(self, url):
         b64url = base64.urlsafe_b64encode(url)
@@ -39,7 +38,6 @@ class Cache(object):
             return u''
 
         return js[u'content']
-
 
     def post(self, url, content, groups=None, refresh=False):
         b64url = base64.urlsafe_b64encode(url)
