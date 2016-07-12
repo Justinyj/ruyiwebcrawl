@@ -103,7 +103,7 @@ def download_newest_backup(folder):
     else:
         return
 
-    output_name = '{}.tgz'.format(datetime.datetime.now().strftime('%Y%m%d'))
+    output_name = 'ucloud_udb_backup_{}.tgz'.format(datetime.datetime.now().strftime('%Y%m%d'))
     os.system(('wget -c  "{}" -O "./{}/{}"').format(backup_path, folder, output_name))
 
 
@@ -112,13 +112,13 @@ def check_folders():
     Also OK with './daily',  absolute path might be safer?
     """
     home = os.path.abspath('.')
-    path = os.path.join(home + '/daily')
+    path = os.path.join(home , 'daily')
     if not os.path.exists(path):
         os.makedirs(path)
-    path = os.path.join(home + '/weekly')
+    path = os.path.join(home , 'weekly')
     if not os.path.exists(path):
         os.makedirs(path)
-    path = os.path.join(home + '/monthly')
+    path = os.path.join(home , 'monthly')
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -135,7 +135,7 @@ def main():
     day_of_week = now.weekday()
     if day_of_week % 7 == 0:
         week_files = os.listdir(home + '/weekly')
-        if len(week_files) >=4:
+        if len(week_files) >= 4:
             sorted_files = sorted(week_files, key=lambda filename: os.stat(os.path.join(home, 'weekly', filename)).st_ctime)
             for i in range(0, len(week_files)-3):
                 os.remove(os.path.join(home, 'weekly', sorted_files[i]))
