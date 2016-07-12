@@ -3,7 +3,9 @@
 # 程序目的是从ucloud得到其每天更新的备份文件，按照一定的规则转存本地并抛弃旧备份。 
 # 每次下载备份时需要发送一个http request，成功后在response里则会得到备份文件的下载地址。此请求主要需要的是备份ID与DBId，后者是个常量。
 # 另外api的每次请求都要在URL里附上电子签名，其值由所有其他的参数与private_key共同确定后，还要再加到url里。
-# 备份ID有多个，每次取最新的。当每天的备份超过七个，则保留最新七个。每周的备份超过四个，则保留最新四个。（本程序采取先删到六个和三个再下载新备份的逻辑。）
+# 对于云端而言，可得到的备份ID有多个，每天运行程序取其创建日期最新的进行下载。
+# 对于本地文件，当daily中的备份超过七个，则保留最新七个。weekly中的备份超过四个，则保留最新四个。（本程序采取先删到六个和三个再下载新备份的逻辑。）
+# 备份的分类：每月15日的备份放入monthly文件夹中，每周一的备份放入weekly文件夹中，每天的备份放入daily文件夹中，发生冲突时优先级依次降低。
 # 注意：各个参数计算签名时不用url转码，而当其拼接起来生成最终url时需要转码。
 
 
@@ -109,7 +111,7 @@ def download_newest_backup(folder):
     else:
         return
 
-    output_name = 'ucloud_mongo_udb_backup_{}.tgz'.format(datetime.datetime.now().strftime('%Y%m%d'))
+    output_name = 'ucloud_mongon_udb_backup_{}.tgz'.format(datetime.datetime.now().strftime('%Y%m%d'))
     os.system(('wget -c  "{}" -O "./{}/{}"').format(backup_path, folder, output_name))
 
 
