@@ -56,8 +56,6 @@ class QuickSpider(scrapy.Spider):
         for i in food_node:
             url = urlparse.urljoin('http://www.mmbang.com', i.extract())
             yield scrapy.Request(url = url,headers = header, callback = self.parse_per_food)
-        #print response.body
-        pass
 
     def parse_per_food(self, response):
         item = Food()
@@ -112,8 +110,6 @@ class QuickSpider(scrapy.Spider):
         item['puerpera'] = puerpera
         item['baby']  =baby
         f= open('eg.txt','a+')
-
         f.write(json.dumps(dict(item),ensure_ascii = False)+'\n')
         f.close()
-        pass
 
