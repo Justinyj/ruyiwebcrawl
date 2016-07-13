@@ -8,8 +8,12 @@
 # 备份的分类：每月15日的备份放入monthly文件夹中，每周一的备份放入weekly文件夹中，每天的备份放入daily文件夹中，发生冲突时优先级依次降低。
 # 注意：各个参数计算签名时不用url转码，而当其拼接起来生成最终url时需要转码。
 
-
-from secret import PUBLIC_KEY, PRIVATE_KEY
+'''
+crontab config:
+# m h  dom mon dow   command
+* 4 * * * /usr/bin/python2.7 /data/baidu_dir/back/backup.py
+'''
+#from secret import PUBLIC_KEY, PRIVATE_KEY
 
 import requests
 import hashlib
@@ -112,14 +116,15 @@ def download_newest_backup(folder):
         return
 
     output_name = 'ucloud_mongon_udb_backup_{}.tgz'.format(datetime.datetime.now().strftime('%Y%m%d'))
-    os.system(('wget -c  "{}" -O "./{}/{}"').format(backup_path, folder, output_name))
+    os.system(('wget -c  "{}" -O "{}/{}/{}"').format(backup_path, '/data/baidu_dir/back', folder, output_name))
 
 
 def check_folders():
     """
     Also OK with './daily',  absolute path might be safer?
     """
-    home = os.path.abspath('.')
+    #home = os.path.abspath('.')
+    home = '/data/baidu_dir/back'
     path = os.path.join(home , 'daily')
     if not os.path.exists(path):
         os.makedirs(path)
@@ -139,7 +144,8 @@ def main():
         download_newest_backup('monthly')
         return
 
-    home = os.path.abspath('.')
+    #home = os.path.abspath('.')
+    home = '/data/baidu_dir/back'
     day_of_week = now.weekday()
     if day_of_week % 7 == 0:
         week_files = os.listdir(home + '/weekly')
@@ -159,10 +165,14 @@ def main():
     download_newest_backup('daily')
 
 if __name__ == '__main__':
-    main()
+    #main()
+    pass
 
+import re
 
+a=['1','2','3','4']
+print ''.join(a)
 
-
+#print encoding('，','utf-8')
 
 
