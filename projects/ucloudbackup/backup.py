@@ -13,7 +13,7 @@ crontab config:
 # m h  dom mon dow   command
 * 4 * * * /usr/bin/python2.7 /data/baidu_dir/back/backup.py
 '''
-#from secret import PUBLIC_KEY, PRIVATE_KEY
+from secret import PUBLIC_KEY, PRIVATE_KEY
 
 import requests
 import hashlib
