@@ -23,7 +23,7 @@ import datetime
 import json
 import os
 import re
-
+HOME = '/data/baidu_dir/back'
 
 class UcloudApiClient(object):
     '''
@@ -124,14 +124,13 @@ def check_folders():
     Also OK with './daily',  absolute path might be safer?
     """
     #home = os.path.abspath('.')
-    home = '/data/baidu_dir/back'
-    path = os.path.join(home , 'daily')
+    path = os.path.join(HOME , 'daily')
     if not os.path.exists(path):
         os.makedirs(path)
-    path = os.path.join(home , 'weekly')
+    path = os.path.join(HOME , 'weekly')
     if not os.path.exists(path):
         os.makedirs(path)
-    path = os.path.join(home , 'monthly')
+    path = os.path.join(HOME , 'monthly')
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -145,34 +144,26 @@ def main():
         return
 
     #home = os.path.abspath('.')
-    home = '/data/baidu_dir/back'
     day_of_week = now.weekday()
     if day_of_week % 7 == 0:
-        week_files = os.listdir(home + '/weekly')
+        week_files = os.listdir(HOME + '/weekly')
         if len(week_files) >= 4:
-            sorted_files = sorted(week_files, key=lambda filename: os.stat(os.path.join(home, 'weekly', filename)).st_ctime)
+            sorted_files = sorted(week_files, key=lambda filename: os.stat(os.path.join(HOME, 'weekly', filename)).st_ctime)
             for i in range(0, len(week_files)-3):
-                os.remove(os.path.join(home, 'weekly', sorted_files[i]))
+                os.remove(os.path.join(HOME, 'weekly', sorted_files[i]))
         download_newest_backup('weekly')
         return 
     
-    day_files = os.listdir(home + '/daily')
+    day_files = os.listdir(HOME + '/daily')
     if len(day_files) >= 7:
-        sorted_files = sorted(day_files, key=lambda filename: os.stat(os.path.join(home, 'daily', filename)).st_ctime)
+        sorted_files = sorted(day_files, key=lambda filename: os.stat(os.path.join(HOME, 'daily', filename)).st_ctime)
         for i in range(0,len(day_files)-6):
-            os.remove(os.path.join(home, 'daily', sorted_files[i]))
+            os.remove(os.path.join(HOME, 'daily', sorted_files[i]))
     
     download_newest_backup('daily')
 
 if __name__ == '__main__':
-    #main()
-    pass
+    main()
 
-import re
-
-a=['1','2','3','4']
-print ''.join(a)
-
-#print encoding('，','utf-8')
 
 

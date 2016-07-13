@@ -14,3 +14,8 @@ class Food(scrapy.Item):
     pregnant = scrapy.Field()
     puerpera = scrapy.Field() 
     baby = scrapy.Field()
+
+class Advice(scrapy.Item):
+
+    week = scrapy.Field()
+    content = scrapy.Field()
