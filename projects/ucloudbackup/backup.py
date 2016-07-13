@@ -8,7 +8,11 @@
 # 备份的分类：每月15日的备份放入monthly文件夹中，每周一的备份放入weekly文件夹中，每天的备份放入daily文件夹中，发生冲突时优先级依次降低。
 # 注意：各个参数计算签名时不用url转码，而当其拼接起来生成最终url时需要转码。
 
-
+'''
+crontab config:
+# m h  dom mon dow   command
+* 4 * * * /usr/bin/python2.7 /data/baidu_dir/back/backup.py
+'''
 from secret import PUBLIC_KEY, PRIVATE_KEY
 
 import requests
@@ -19,7 +23,7 @@ import datetime
 import json
 import os
 import re
-
+HOME = '/data/baidu_dir/back'
 
 class UcloudApiClient(object):
     '''
@@ -112,21 +116,21 @@ def download_newest_backup(folder):
         return
 
     output_name = 'ucloud_mongon_udb_backup_{}.tgz'.format(datetime.datetime.now().strftime('%Y%m%d'))
-    os.system(('wget -c  "{}" -O "./{}/{}"').format(backup_path, folder, output_name))
+    os.system(('wget -c  "{}" -O "{}/{}/{}"').format(backup_path, HOME, folder, output_name))
 
 
 def check_folders():
     """
     Also OK with './daily',  absolute path might be safer?
     """
-    home = os.path.abspath('.')
-    path = os.path.join(home , 'daily')
+    #home = os.path.abspath('.')
+    path = os.path.join(HOME , 'daily')
     if not os.path.exists(path):
         os.makedirs(path)
-    path = os.path.join(home , 'weekly')
+    path = os.path.join(HOME , 'weekly')
     if not os.path.exists(path):
         os.makedirs(path)
-    path = os.path.join(home , 'monthly')
+    path = os.path.join(HOME , 'monthly')
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -139,30 +143,27 @@ def main():
         download_newest_backup('monthly')
         return
 
-    home = os.path.abspath('.')
+    #home = os.path.abspath('.')
     day_of_week = now.weekday()
     if day_of_week % 7 == 0:
-        week_files = os.listdir(home + '/weekly')
+        week_files = os.listdir(HOME + '/weekly')
         if len(week_files) >= 4:
-            sorted_files = sorted(week_files, key=lambda filename: os.stat(os.path.join(home, 'weekly', filename)).st_ctime)
+            sorted_files = sorted(week_files, key=lambda filename: os.stat(os.path.join(HOME, 'weekly', filename)).st_ctime)
             for i in range(0, len(week_files)-3):
-                os.remove(os.path.join(home, 'weekly', sorted_files[i]))
+                os.remove(os.path.join(HOME, 'weekly', sorted_files[i]))
         download_newest_backup('weekly')
         return 
     
-    day_files = os.listdir(home + '/daily')
+    day_files = os.listdir(HOME + '/daily')
     if len(day_files) >= 7:
-        sorted_files = sorted(day_files, key=lambda filename: os.stat(os.path.join(home, 'daily', filename)).st_ctime)
+        sorted_files = sorted(day_files, key=lambda filename: os.stat(os.path.join(HOME, 'daily', filename)).st_ctime)
         for i in range(0,len(day_files)-6):
-            os.remove(os.path.join(home, 'daily', sorted_files[i]))
+            os.remove(os.path.join(HOME, 'daily', sorted_files[i]))
     
     download_newest_backup('daily')
 
 if __name__ == '__main__':
     main()
-
-
-
 
 
 
