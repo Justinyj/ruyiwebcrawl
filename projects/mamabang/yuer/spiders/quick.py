@@ -1,10 +1,21 @@
 # -*- coding: utf-8 -*-
+
+#从http://www.mmbang.com/app/nbnc进入，分析每个食物的说明页面。
+#分产妇，孕妇，婴儿 爬取食物能吃/不能吃/慎重 及其原因，因此每个‘人群对象’作为key都有两个值，ok和reason
+#表观上ok可以直接判断标签，chapter_content nbnc_(yes/no/notice)表示，然而人工观察后发现一部分的标签及其图片与文本是不一致矛盾的
+#由于排版格式不一致，尝试过多种提取方式，最后确定为：
+#情况1.网站上用br隔开正文，第一行为判断，后面的为原因，直接将其放入ok和reason  如：http://www.mmbang.com/app/nbnc/162
+#情况2.没有以br标签分开判断和正文，如http://www.mmbang.com/app/nbnc/325 （尝试过正则匹配到第一个标点符号，还是不能消灭所有情况）
+#那么判断就从 chapter_content nbnc标签中获取，原因就由所有文本构成
+#存在反爬机制，需要填写header相关信息，另外crawler_gap 设为2s，因在0s时出现过页面爬取失败
+
 import scrapy
 import urlparse
 from yuer.items import Food
 import json
 import sys
 import re
+
 reload(sys)
 sys.setdefaultencoding('utf-8')
 class QuickSpider(scrapy.Spider):

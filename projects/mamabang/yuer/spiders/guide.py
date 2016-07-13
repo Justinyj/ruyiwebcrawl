@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+
+#观察网站结构发现十个月分为40周，体现在 http://www.mmbang.com/yuer/(1~40) 上
+#对每个网页都爬取营养指导，较简单，通过xpath的节点列表可以实现先查找到营养指导，再取到与其同级且在其之后的正文标签，提取文本
+#每个网页产生的json格式为 {周数 ： 指导内容}
+
+
 import scrapy
 import json
 import urlparse

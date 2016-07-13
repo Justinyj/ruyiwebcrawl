@@ -116,7 +116,7 @@ def download_newest_backup(folder):
         return
 
     output_name = 'ucloud_mongon_udb_backup_{}.tgz'.format(datetime.datetime.now().strftime('%Y%m%d'))
-    os.system(('wget -c  "{}" -O "{}/{}/{}"').format(backup_path, '/data/baidu_dir/back', folder, output_name))
+    os.system(('wget -c  "{}" -O "{}/{}/{}"').format(backup_path, HOME, folder, output_name))
 
 
 def check_folders():
