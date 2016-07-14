@@ -6,7 +6,7 @@ from __future__ import print_function, division
 
 import json
 import os
-from collections import defaultdict
+from collections import defaultdict, Counter
 from datetime import datetime
 
 from hzlib.libfile import read_file_iter, write_file
@@ -14,7 +14,7 @@ from filter_lib import regdropbrackets
 from to_es import summary, sendto_es, fudan_ea_to_json, send_definition_to_es, BATCH
 
 
-DIR = '/home/crawl/Downloads/fudankg_saved'
+DIR = '/data/crawler_file_cache/fudankg_saved'
 
 def load_fudankg_json_data():
 
@@ -128,5 +128,26 @@ def aliases():
                                     alias[entity] = [v]
 
     return alias
+
+
+def class_attribute():
+    classes = defaultdict(dict)
+    attributes = Counter()
+
+    for f in os.listdir(DIR):
+        fname = os.path.join(DIR, f)
+        with open(fname) as fd:
+            for entity, dic in json.load(fd).iteritems():
+                for label, value in dic.iteritems():
+                    if label == u'Tags':
+                        classes[entity] = value
+                    elif label == u'av pair':
+                        for a, v in value: # value sometimes is []
+                            attributes[a] += 1
+    with open('fudankg_saved_classes.txt') as fd:
+        json.dump(classes, fd)
+    with open('fudankg_saved_attribute.txt') as fd:
+        json.dump(attributes, fd)
+
 
 load_fudankg_json_data()
