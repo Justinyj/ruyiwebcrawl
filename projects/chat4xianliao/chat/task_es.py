@@ -78,6 +78,12 @@ ES_DATASET_CONFIG ={
         "es_type":"baike_qa_0707",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
+    "qa0708chat10k":
+    {   "description":"知道10K qa0708chat10k",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
+        "es_type":"qa0708chat10k",
+        "filepath_mapping": getTheFile("faq_mappings.json"),
+    },
     "xianer12w_test":
         {   "description":"贤二短问答",
             "es_index":"ruyiwebcrawl_zhidaoqa_0626",
@@ -328,7 +334,7 @@ class ZhidaoQa():
                         if item["id"] in ids:
                             continue
 
-                        label = self.filter_qa_by_label(item["category"], item["question"], item["answers"], filter_option=filter_option)
+                        label = self.filter_qa_by_label("{}".format(item["category"]), item["question"], item["answers"], filter_option=filter_option)
                         if label:
                             print "SKIP", label, "\t---\t", item["question"], "\t---\t", item["answers"]
                             gcounter["esdata_label_{}".format(label)]+=1
@@ -386,7 +392,7 @@ class ZhidaoQa():
                 a = ""
 
             if not a:
-                print "SKIP no mapping", q, item["old_answers"]
+                #print "SKIP no mapping", q, item["old_answers"]
                 gcounter["items_no_mapping"]+=1
                 continue
 
@@ -504,30 +510,322 @@ class ZhidaoQa():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def init_from_json(self):
+        map_items = {}
+        dirname = getLocalFile( "raw/chat0708/*" )
+        for filename in glob.glob(dirname):
+            src = os.path.basename(filename).replace(".txt","")
+            for line in libfile.file2list(filename):
+                gcounter["total_"+src] +=1
+                item = json.loads(line)
+                item["source"] = src
+
+                item["answers"] = clean_answer(item["answers"])
+                item["question"] = clean_question(item["question"])
+                if len(item["answers"]) <2:
+                    gcounter["items_skip_empty_answer"]+=1
+                    continue
+
+                label = ""
+                if not label:
+                    label = self.api_nlp.detect_skip_words(item["answers"])
+                    if label:
+                        label = u"敏感词：{}".format( u",".join(label))
+                        print label, item["answers"]
+                        gcounter["minganci_answer"]+= 1
+                    else:
+                        label = ""
+                if not label:
+                    if re.search("^[0-9\-]$",item["answers"]):
+                        label = "number"
+                item["label"] = label
+
+                q = item["question"]
+                if q not in map_items:
+                    map_items[q] = item
+                    gcounter["from_"+src] +=1
+                else:
+                    map_items[q] = item
+                    gcounter["overwrite_"+src] +=1
+                    print "overwrite", q, src, map_items[q]["answers"], item["answers"]
+
+
+
+        gcounter["init_from_json"] = len(map_items)
+
+        filename = getLocalFile("temp/qa0708chat.xls")
+        items = sorted(map_items.values(), key= lambda x:x["question"])
+        libfile.writeExcel(items, ["label", "question", "answers", "source"], filename)
+
+
+
+    def init_xianer7w_rewrite(self):
+        dataset_index = "xianer7w_rewrite"
+        gcounter[dataset_index] = 1
+
+        ids = set()
+
+        filename = getLocalFile( "raw/rewrite/xianer7w_rewrite_map.xlsx" )
+        print filename
+
+        gcounter["files"]+=1
+        ret = libfile.readExcel(["question","old_answers", "answers"], filename, start_row=0)
+
+        #collect answer mapping
+        map_answers = {}
+        for item in ret.values()[0]:
+            if item.get("old_answers"):
+                a_old = item["old_answers"].strip()
+            if item.get("answers"):
+                a = item["answers"].strip()
+
+            if a and a_old:
+                map_answers[a_old] = a
+
+        print len(map_answers)
+
+
+
+        filename = getLocalFile( "raw/rewrite/xianer7w_rewrite.xlsx" )
+        print filename
+
+        gcounter["files"]+=1
+        ret = libfile.readExcel(["question","old_answers", "answers"], filename, start_row=0)
+
+        #use mapping
+        items = []
+        for item in ret.values()[0]:
+            gcounter["items"]+=1
+            q = item["question"]
+            if item["old_answers"]:
+                a = map_answers.get(item["old_answers"])
+            else:
+                a = ""
+
+            if not a:
+                #print "SKIP no mapping", q, item["old_answers"]
+                gcounter["items_no_mapping"]+=1
+                continue
+
+            qa = q + a
+            item["id"]= es_api.gen_es_id(q)
+            if item["id"] in ids:
+                gcounter["items_skip_dup"]+=1
+                continue
+
+            skip_words = self.api_nlp.detect_skip_words(qa, check_list=["skip_words_all"])
+            if skip_words:
+                print "SKIP", u"/".join(skip_words), "\t---\t", item["question"], "\t---\t", a
+                gcounter["items_skip_minganci"]+=1
+                continue
+
+            ids.add(item["id"])
+            item_new = {
+                "question": q,
+                "answers": a,
+                "id": item["id"] ,
+            }
+            items.append(item_new)
+
+        gcounter["qa0708rewrite"] = len(ids)
+
+        filename = getLocalFile("temp/qa0708rewrite.xls")
+        libfile.writeExcel(items, ["label", "question", "answers"], filename)
+
+
+    def init_zhidao_qa(self):
+        #clean rewrite
+
+        dataset_index_list = [
+            "qa0708query",
+            "qa0708question",
+        ]
+        for dataset_index in dataset_index_list:
+            dirname = getLocalFile("raw/{}/*".format(dataset_index))
+            map_items = {}
+            for filename in glob.glob(dirname):
+
+                gcounter["files"]+=1
+                ret = libfile.readExcel(["category","question","answers", "type"], filename, start_row=1)
+                if ret:
+                    for items in ret.values():
+                        for item in items:
+                            gcounter["items"]+=1
+
+                            qa = u"{}{}".format(item["question"],item["answers"])
+                            item["id"]= es_api.gen_es_id(qa)
+                            if item["id"] in map_items:
+                                gcounter["items_skip_dup"]+=1
+                                continue
+
+                            if not item["type"] in [1,"1"]:
+                                gcounter["items_skip_drop"]+=1
+                                continue
+
+                            item["answers"] = clean_answer(u"{}".format(item["answers"]))
+                            item["question"] = clean_question(u"{}".format(item["question"]))
+                            if len(item["answers"]) <2:
+                                gcounter["items_skip_empty_answer"]+=1
+                                continue
+
+                            skip_words = self.api_nlp.detect_skip_words(item["answers"], check_list=["skip_words_all","skip_words_zhidao"])
+                            if skip_words:
+                                print "SKIP", u"/".join(skip_words), "\t---\t", item["question"], "\t---\t", item["answers"]
+                                gcounter["items_skip_minganci"]+=1
+                                continue
+
+                            item_new = {"source": dataset_index}
+                            for p in ["question","answers","id"]:
+                                item_new[p] = item[p]
+                            map_items[item_new["question"]] = item_new
+
+            gcounter["init_from_{}".format(dataset_index)] = len(map_items)
+            print len(map_items)
+
+            filename = getLocalFile("temp/{}.xls".format(dataset_index))
+            items = sorted(map_items.values(), key= lambda x:x["question"])
+            libfile.writeExcel(items, ["label", "question", "answers", "source"], filename)
+
+def clean_question(text):
+    temp = text+" "
+    temp = clean_emoji(temp)
+    temp = re.sub(ur"@[\S]+\s+","", temp).strip()
+    temp = re.sub(ur"[～~，。？！,：\.!\?\-\s]+$","", temp)
+    return temp
+
+def clean_dupword(text):
+    if not text:
+        return ""
+
+    temp = u""
+    w_prev = ""
+    for w in text:
+        if w in "." or w not in w_prev :
+            temp += w
+            w_prev = w
+        else:
+            if len(w_prev)<=1:
+                temp += w
+            w_prev += w
+    if temp != text:
+        print "dupword", text, temp
+    return temp
+
+def clean_answer(text):
+    if not text:
+        return ""
+    temp = text
+    temp = clean_emoji(temp)
+    temp = re.sub(ur"\[[^\]]+\]","", temp)
+    temp = re.sub(ur"[╮\(╯_╰\)╭…～（）［］【】～~]+","", temp)
+    temp = re.sub(ur"[~，。？！,：\.!\?\-\s]+$","", temp)
+    if re.search(ur"[^\u4E00-\u9FA5，。？！,\d\w\.!\?\-\s]", temp):
+        temp = ""
+    temp = clean_dupword(temp)
+    return temp
+
+def clean_emoji(text):
+    text = text.encode("utf-8").decode("utf-8","ignore")
+
+    emoji_pattern_text = "[{}{}{}{}{}]".format(
+        u"\U0001F600-\U0001F64F",  # emoticons
+        u"\U0001F300-\U0001F5FF",  # symbols & pictographs
+        u"\U0001F680-\U0001F6FF",  # transport & map symbols
+        u"\U0001F1E0-\U0001F1FF",  # flags (iOS)
+        u'\u2600-\u26FF\u2700-\u27BF',
+        )
+    #print emoji_pattern_text
+    emoji_pattern = re.compile(emoji_pattern_text, flags=re.UNICODE)
+
+    return emoji_pattern.sub(r'', text)
+    #print(emoji_pattern.sub(r'', text)) # no emoji
+
 def main():
     #print sys.argv
 
     if len(sys.argv)<2:
+        print "unsupported"
         return
 
     config = {}
 
     option= sys.argv[1]
 
-    if "index_chat" == option:
+    if "test" == option:
+        agt = ZhidaoQa(config_option=config_option, dryrun=False)
+        #agt.test(option="query")
+
+    elif "init_rewrite" == option:
+        """
+            python chat/task_es.py clean_prod
+
+        """
+        agt = ZhidaoQa(config_option="local", dryrun=True)
+        agt.init_xianer7w_rewrite()
+
+
+    elif "init_from_json" == option:
+        """
+            python chat/task_es.py clean_prod
+
+        """
+        agt = ZhidaoQa(config_option="local", dryrun=True)
+        agt.init_from_json()
+
+
+    elif "init_zhidao_qa" == option:
+        """
+            python chat/task_es.py clean_prod
+
+        """
+        agt = ZhidaoQa(config_option="local", dryrun=True)
+        agt.init_zhidao_qa()
+
+
+
+
+
+
+
+    elif "clean_prod" == option:
+        """
+            python chat/task_es.py clean_prod
+
+        """
+        agt = ZhidaoQa(config_option="local", dryrun=True)
+        agt.clean_prod()
+
+
+    elif "index_chat" == option:
         """
             python chat/task_es.py index_chat chat8xianer12w
             python chat/task_es.py index_chat chat8cmu6w
             python chat/task_es.py index_xianer12w_test
         """
         dataset_index = "chat8cmu6w"
-        if len(sys.argv)>2:
-            dataset_index = sys.argv[2]
+        if len(sys.argv)>3:
+            dataset_index = sys.argv[3]
         dryrun = False
         if len(sys.argv)>3:
             dryrun = True
         agt = ZhidaoQa(config_option="prod", dryrun=dryrun)
         agt.index_chat(dataset_index)
+
+
     elif "merge_chat" == option:
         """
             python chat/task_es.py merge_chat question
@@ -551,18 +849,6 @@ def main():
 
 
 
-    elif "index_edit" == option:
-        """
-            python chat/task_es.py index_edit prod query
-            python chat/task_es.py index_edit prod question
-
-        """
-        if len(sys.argv)>3:
-            config_option = sys.argv[2]
-            option = sys.argv[3]
-            agt = ZhidaoQa(config_option=config_option, dryrun=False)
-            agt.index_edit(option)
-
     elif "index_edit_xianer7w_rewrite" == option:
         """
             python chat/task_es.py index_edit_xianer7w_rewrite prod
@@ -575,12 +861,16 @@ def main():
     elif "index_simple" == option:
         """
             python chat/task_es.py index_simple baike_qa local
+            python chat/task_es.py index_simple qa0708chat10k local
         """
         if len(sys.argv)>3:
             dataset_index = sys.argv[2]
             config_option = sys.argv[3]
             agt = ZhidaoQa(config_option=config_option, dryrun=False)
             agt.index_qa_simple(dataset_index)
+
+
+
 
     elif "index_xianer12w_test" == option:
         """
@@ -593,9 +883,6 @@ def main():
 
 
 
-    elif "test" == option:
-        agt = ZhidaoQa(config_option="prod", dryrun=False)
-        agt.test(option="query")
     else:
         print "unsupported"
 
