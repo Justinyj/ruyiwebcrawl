@@ -57,6 +57,16 @@ def run(config):
         url_length,
         config.get("debug",False)) )
 
+
+    if config.get("debug"):
+        print(datetime.datetime.now().isoformat(), 'start instances')
+    if not config.get("debug"):
+        schedule = Schedule(config["aws_machine_number"],
+                            tag=config["jobs"][mini_key]["batch_id"].split('-', 1)[0],
+                            backoff_timeout=config["jobs"][mini_key]["crawl_timeout"])
+
+        catch_terminate_instances_signal(schedule)
+
     print(datetime.datetime.now().isoformat(), 'start post_job')
 
     tasks = [
@@ -90,25 +100,16 @@ def run(config):
                                start_delay=200)
                     )
 
-    if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start instances')
-    if not config.get("debug"):
-        schedule = Schedule(config["aws_machine_number"],
-                            tag=config["jobs"][mini_key]["batch_id"].split('-', 1)[0],
-                            backoff_timeout=config["jobs"][mini_key]["crawl_timeout"])
-
-        catch_terminate_instances_signal(schedule)
 
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start spawn to run instances')
+        print(datetime.datetime.now().isoformat(), 'start spawn to run program in instances')
     if not config.get("debug"):
         t3 = gevent.spawn(schedule.run_forever)
 
     gevent.joinall(tasks)
 
 
-    if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'job done. start delete_distributed_queue')
+    print(datetime.datetime.now().isoformat(), 'job done. start delete_distributed_queue')
     for greenlet in tasks:
         ret = delete_distributed_queue(greenlet)
         print('{} return of delete {}'.format(ret, greenlet.value))

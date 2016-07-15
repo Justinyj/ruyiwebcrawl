@@ -36,11 +36,15 @@
         },
         "category": {
             "type": "string",
-            "index": "no"
+            "index": "not_analyzed"
         },
         "aliases": {
             "type": "string",
             "index": "not_analyzed"
+        },
+        "searchscore": {
+            "type": "long",
+            "index": "no"
         }
     }
 }

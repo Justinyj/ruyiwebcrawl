@@ -12,8 +12,27 @@ make sure the batch_id are right.
 make sure the url is unchanged(domain and the rest).
 make sure code change not effect to worker image.
 
-fab deploy awscrawler of fudan
+### crawl data
 
+$ fab deploy_run:'prefetch_tool.py config_fudankg.json indexes' --hosts 52.69.211.204
+
+### save data
+get fudankg-json
+$ reducer
+
+merge the same entity to one file
+$ python preprocess_fudankg.py merge
+
+generate entity dictory for redis
+$ python preprocess_fudankg.py entity
+
+### crawl ranking of entity
+prepare entity dictory for crawling
+$ fab deploy_run:'prefetch_tool.py config_searchzhidao.json indexes' --hosts 52.69.211.204
+
+get ranking
+$ reducer
 
 ### get fudan data
 $ python fudankg_to_es.py
+

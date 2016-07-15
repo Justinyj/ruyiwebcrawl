@@ -12,7 +12,6 @@ import time
 from collections import defaultdict, Counter
 
 from filter_lib import regdropbrackets
-from hzlib.libfile import read_file_iter, write_file
 
 def merge_fudankg(bucketname):
     """ TODO need generate url from entities file.
@@ -20,7 +19,8 @@ def merge_fudankg(bucketname):
     """
     batch_id = 'fudankg-json-20160625'
     saved_dir = 'fudankg_saved'
-    os.mkdir(saved_dir)        
+    if not os.path.exists(saved_dir):
+        os.mkdir(saved_dir)
     data = defaultdict(dict)
     entities = set()
     gcounter = Counter()
@@ -102,22 +102,36 @@ def merge_fudankg(bucketname):
     print(gcounter)
 
 
-def get_fudankg_entity():
-    saved_dir = '/home/crawl/Downloads/fudankg_saved'
+def get_fudankg_entity(entity_dict=False):
+    from hzlib.libfile import write_file
+    saved_dir = '/data/crawler_file_cache/fudankg_saved'
     entities = set()
 
     for f in os.listdir(saved_dir):
         fname = os.path.join(saved_dir, f)
         with open(fname) as fd:
             for entity, dic in json.load(fd).iteritems():
-                m = regdropbrackets.match(entity)
-                if m:
-                    entities.add(m.group(1))
+                if entity_dict:
+                    m = regdropbrackets.match(entity)
+                    if m:
+                        entities.add(m.group(1))
+                    else:
+                        entities.add(entity)
                 else:
                     entities.add(entity)
-    write_file('fudankg_entities_dict.txt', list(entities))
+    if entity_dict:
+        write_file('fudankg_entities_dict.txt', list(entities))
+    else:
+        write_file('fudankg_entities.txt', list(entities))
 
 
 
 if __name__ == '__main__':
-    merge_fudankg('fudankg-json')
+    import sys
+    print(sys.argv)
+
+    if sys.argv[1] == 'merge':
+        merge_fudankg('fudankg-json')
+    elif sys.argv[1] == 'entity':
+        get_fudankg_entity()
+
