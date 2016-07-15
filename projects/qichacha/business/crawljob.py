@@ -714,7 +714,7 @@ def expand_agent(batch, limit=5):
                 item[p] = front_agents[name][p]
         seed_agent.append(item)
     filename = getLocalFile("output/seed_agent.auto.xls".format(batch))
-    libfile.writeExcel(seed_agent, [u"name", u"rtype", u"company_cnt", u"company_list"],filename)
+    libfile.writeExcel(seed_agent, [u"name", u"rtype", u"company_cnt", u"company_list", "depth"],filename)
 
     seed_agent = []
     for name in sorted(list(front_agents.keys())):
@@ -801,7 +801,7 @@ def expand_agent_pass2(front_agents, company_raw, company_name_selected, depth):
             for r in related:
 
                 rtype = "xagent"
-                company_inuse = set(name)
+                company_inuse = set([name])
                 gcounter["related_depth_{}_{}".format(depth, rtype)] +=1
                 related_agents[r]={"depth":depth}
                 related_agents[r]["rtype"] = rtype
@@ -837,7 +837,7 @@ def expand_agent_pass1(front_agents, company_raw, company_name_selected, depth):
             front_all.add(name)
             company_controlled.add(name)
             rtype = "xcompany"
-            company_inuse = set(name)
+            company_inuse = set([name])
             gcounter["related_depth_{}_{}".format(depth, rtype)] +=1
             related_agents[name]={"depth":depth}
             related_agents[name]["rtype"] = rtype

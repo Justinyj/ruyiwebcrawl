@@ -209,6 +209,7 @@ def main():
 
         else:
             question = u"天空是什么颜色的？"
+            question = u"严重贫血怎么办"
             ret = api.search_baike_best(question)
             print question
             libdata.print_json(ret)

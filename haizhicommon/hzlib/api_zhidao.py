@@ -690,11 +690,10 @@ class ZhidaoFetch():
             if content:
                 ts_start = time.time()
                 search_result = parse_search_json_v0707(content)
-                search_result_json = search_result["results"]
-                ret["total"] = search_result["total"]
                 ret["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
-                output["items"].extend( search_result_json )
+                output["items"].extend( search_result["results"] )
                 output["metadata"].extend( ret )
+                output["total"] = search_result["total"]
 
         return output
 
