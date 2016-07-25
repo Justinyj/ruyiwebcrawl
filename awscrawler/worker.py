@@ -6,8 +6,7 @@
 from __future__ import print_function, division
 
 import time
-import sys
-sys.path.append('..')
+
 from rediscluster.record import Record
 from rediscluster.redismanager import RedisManager
 from settings import RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS

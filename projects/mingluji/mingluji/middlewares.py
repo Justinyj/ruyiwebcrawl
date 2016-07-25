@@ -18,11 +18,3 @@ class MyMiddleWare(object):
             response = scrapy.http.response.html.HtmlResponse(url, encoding='utf-8', body=content)
             return response
         return
-
-
-# SERVER = 'http://192.168.1.179:8000/'
-# url = "http://blog.csdn.net/studyrecord/article/details/7088996"
-# m = DownloadWrapper(SERVER)
-# content = m.downloader_wrapper(url, 'for_test', 2)
-
-# print content
