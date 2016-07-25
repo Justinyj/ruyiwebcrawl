@@ -3,7 +3,8 @@ import time,datetime
 from unpack import unpack
 from restore import restore
 
-
+#crontab : 
+#20 06 * * * /usr/bin/python2.7 /data/monitor/check/check.py  >> /data/monitor/check/cron_check.log
 
 STANDARD_COLLECTION_LIST = [u'intentScenario', u'appModel', u'socialMatch', u'infoCollection', u'system.indexes', u'system.users', u'col_cache', u'authorizerModel', u'wxUserModel', u'wxMsgModel', u'systemPropertyModel', u'developerModel', u'action_items', u'entityModel', u'col_log', u'col_developer', u'intentModel', u'multiMediaModel']
 def slack(msg):
@@ -12,10 +13,10 @@ def slack(msg):
         }
         return
         requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
-#***********
+
 unpack()
 restore()
-#*********
+
 client = MongoClient()
 db = client.today
 collection_list = db.collection_names()
@@ -47,4 +48,5 @@ def statistic():
 
 check_time()
 print statistic()
+os.system('mongo < /data/monitor/check/deleteDatabase.js')
 print "finished!"
