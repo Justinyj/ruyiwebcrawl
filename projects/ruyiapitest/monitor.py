@@ -1,12 +1,4 @@
 # -*- coding:utf-8 -*-
-# UlbPolicyClient : 为每条转发规则生成一个类，可以直接调用creat方法生成新规则，也可以通过find方法匹配到已存在的规则，再进行删除等操作
-# get_running_stat:测试服务器运行情况，根据其返回json中的process_milliseconds为指标确定运行情况，返回True/False
-# convert_backend_toanoter:封装好的转换参数，直接传入匹配规则如'api.ruyi.ai'便可进行转换，如果规则不存在则会新建一条。
-# backends内是两个ULB后台机器，其中private_ip的设置是无奈之举，只有描述ULB的‘大’json里存在短ID，描述转发规则group的小json里只有相应16进制长ID，唯一相通的字段是private_ip
-# 此程序中许多ID及规则名都直接写出字符串，否则全局太多，可以考虑在将来的进一步设计中新建config文件或者invoker，统一获取test_url,backend_id，ULBid等
-# UpdatePolicyGroupAttribute 的具体作用并不明显，现在写入函数，不是必要的。 
-# 更多细节注释参照函数体
-# attention：截止至2016年7月，creat_policy中所有ID的值都要填短ID！而不是官方文档中的16进制长ID！这一点已得到官方确认!
 from secret import PUBLIC_KEY, PRIVATE_KEY
 import hashlib
 import urlparse
@@ -20,17 +12,16 @@ import json
 
 
 
-
 backends = [
             {
-                'test_url'   : 'http://106.75.14.56/ruyi-api/v1/message?app_key=1ff01bac-219a-40bd-94d0-2364099f158c&user_id=123456&skip_log=ruyi123&q={}',
+                'test_url'   : '',
                 'backend_id' : u'backend-ws42eq',
                 'name'       : '01',
                 'private_ip' : u'10.10.166.86',
 
             },
             {
-                'test_url'   : 'http://106.75.13.236/ruyi-api/v1/message?app_key=1ff01bac-219a-40bd-94d0-2364099f158c&user_id=123456&skip_log=ruyi123&q={}',
+                'test_url'   : '',
                 'backend_id' : u'backend-vce245' ,
                 'name'       : '02'   ,
                 'private_ip' : u'10.10.177.183',
@@ -40,10 +31,11 @@ backends = [
 
 
 def slack(msg):
-        data={
+    return
+    data={
             "text": msg
-        }
-        requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+    }
+    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 class UlbPolicyClient(object):
     def __init__(self, match):
@@ -80,8 +72,8 @@ class UlbPolicyClient(object):
         url = self.domain + urllib.urlencode(paras) +'&Signature={}'.format(signature)
         req = requests.get(url)
         item = req.json()
-        #print item
-        for group in item['DataSet']:     #uglyyyyyyyy!
+        # print item
+        for group in item['DataSet']:     #uglyyyyyyyyyy!
             policy_set =  group['PolicySet']
             for policy in policy_set:
                 if policy[u'Match'] == self.match:
@@ -106,6 +98,7 @@ class UlbPolicyClient(object):
 
         url = self.domain + urllib.urlencode(paras) +'&Signature={}'.format(signature)
         req = requests.get(url)
+
         if req.json()['RetCode'] == 0:
             return True
         else:
@@ -116,9 +109,9 @@ class UlbPolicyClient(object):
             'Action'      : 'CreatePolicy',
             'Region'      : self.region, 
             'Match'       : self.match,                 
-            'ULBId'       : 'ulb-t0yimg',       #'ulb-b5ny4x' test的  ulb-t0yimg master
-            'VServerId'   : 'vserver-c0jmgd',   # vserver-c0jmgd master  vserver-wuudxm test
-            'GroupId'     : 'ulb-fr-2fw552',    #ulb-fr-2fw552 master  ulb-fr-qmwdgo test
+            'ULBId'       : 'ulb-t0yimg',#'ulb-b5ny4x' test的  ulb-t0yimg master
+            'VServerId'   : 'vserver-c0jmgd',  # vserver-c0jmgd master  vserver-wuudxm test
+            'GroupId'     : 'ulb-fr-2fw552',  #ulb-fr-2fw552 master  ulb-fr-qmwdgo test
             'BackendId.0' : backend[u'backend_id'], 
             'PublicKey'   : self.public_key, 
          }
@@ -145,7 +138,6 @@ class UlbPolicyClient(object):
             return self.policy[u'PolicyId']
         return
 
-
     def delete_policy(self):
         paras = {
             'Action' : 'DeletePolicy',
@@ -165,7 +157,32 @@ class UlbPolicyClient(object):
             return False
         return False
 
+    def update_policy(self, backend):
+        paras = {
+            'Action'      : 'UpdatePolicy',
+            'Region'      : self.region,
+            'PolicyId'    : self.get_policy_id(),
+            'Match'       : self.match,
+            'ULBId'       : 'ulb-t0yimg',
+            'VServerId'   : 'vserver-c0jmgd',
+            'BackendId.0' : backend[u'backend_id'], 
+            'PublicKey'   : self.public_key,
+            }
+        if not paras['PolicyId']:
+            return
 
+        signature = self.get_signature(paras)
+        url = self.domain + urllib.urlencode(paras) +'&Signature={}'.format(signature)
+        req = requests.get(url)
+        print url
+        print req.json()
+        if req.json()[u'RetCode'] != 0:
+            return False
+        return False
+
+# m = UlbPolicyClient('ttttt')
+# m.find_policy()
+# m. update_policy(backends[1])
 def random_url(url, length=4):
     chars = string.letters + string.digits
     s = ''.join(random.Random().sample(chars, length))
@@ -216,16 +233,21 @@ def convert_backend_toanoter(policy):
     return True
 
 
-
 def main(policy_name):
 
     ok1 = get_running_stat(backends[0])
     ok2 = get_running_stat(backends[1])
     if ok1 and ok2 :
         print 'all right'
+        # m = UlbPolicyClient(policy_name)
+        # m.find_policy()
+        # working_backend = m.get_working_backend_id()
+        # if working_backend['name'] == '02':
+        #     convert_backend_toanoter(policy_name)
+        # slack('NOTICE : 01 and 02 are both in ok working status,just convert from 02 to 01 for{}'.format(policy_name))
         return
     if not ok1 and not ok2 :
-        slack('both backends are in high process_milliseconds!')
+        slack('both 01 and 02 are in high process_milliseconds!Please check soon!')
         print 'I have sent a bad messageeeeee'
         return
     #按照此逻辑，如果上面的检测中出现了一台高延迟，即使这是ULB后端的主机，在下面的判断中，如果再次测试状态正常，那么也不会进行调换
@@ -241,15 +263,10 @@ def main(policy_name):
     else:
         convert_backend_toanoter(policy_name)
 
-    
 
-if __name__ == '__main__':
+if __name__ == '1__main__':
     while 1:
         main('apix.ruyi.ai')
         time.sleep(60)
         main('api.ruyi.ai')
         time.sleep(60)
-
-    
-
-
