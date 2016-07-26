@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yuande Liu <miraclecome (at) gmail.com>
-
+import requests
+import random
+import string
 import json
 import os
 import time
@@ -72,20 +74,22 @@ def get_running_stat(url_temlate):
         if response.status_code == 200:
             break
     else:
-        return False
+        slack('{} server conn: failed'.format(ENV))
+        return -1
     res = response.json()
     process_milliseconds = res['result']['meta_process_milliseconds']
 
-
+    if process_milliseconds > 500 :
+        slack('{} server high process_millisecons in 3 mins : {}'.format(ENV, process_milliseconds))
     return process_milliseconds
 
 def get_minimum_ms(url_temlate):
     min_ms = 9999
-    for _ in range(6):
+    for _ in range(1):
         process_ms = get_running_stat(url_temlate)
         if process_ms == False:
             slack('{} server conn: failed'.format(ENV))
-            return False
+            return -1
         min_ms = min(min_ms, process_ms)
         sleep(30)
     if min_ms > 500:
@@ -102,7 +106,7 @@ def main():
             line.append( connection() )
             line.append( jsvc_thread() )
             line.append( jsvc_fd() )
-            line.append( get_minimum_ms('http://api.ruyi.ai/v1/message?app_key=28b12c3d-fab6-4540-af27-460277aa1a58&user_id=123&q={}') )
+            line.append( str(get_running_stat('http://api.ruyi.ai/v1/message?app_key=28b12c3d-fab6-4540-af27-460277aa1a58&user_id=123&q={}') ))
             fd.write( '\t'.join(line) + '\n' )
             time.sleep(30)
 
