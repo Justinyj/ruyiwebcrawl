@@ -76,9 +76,23 @@ def get_running_stat(url_temlate):
     res = response.json()
     process_milliseconds = res['result']['meta_process_milliseconds']
 
-    if process_milliseconds > 1000:
-        return process_milliseconds
-    return True
+
+    return process_milliseconds
+
+def get_minimum_ms(url_temlate):
+    min_ms = 9999
+    for _ in range(6):
+        process_ms = get_running_stat(url_temlate)
+        if process_ms == False:
+            slack('{} server conn: failed'.format(ENV))
+            return False
+        min_ms = min(min_ms, process_ms)
+        sleep(30)
+    if min_ms > 500:
+        slack('{} server high process_millisecons in 3 mins : {}'.format(ENV, min_ms))
+    return min_ms
+
+
 
 def main():
     with open('monitor.log', 'w') as fd:
@@ -88,7 +102,7 @@ def main():
             line.append( connection() )
             line.append( jsvc_thread() )
             line.append( jsvc_fd() )
-            line.append( get_running_stat('http://api.ruyi.ai/v1/message?app_key=28b12c3d-fab6-4540-af27-460277aa1a58&user_id=123&q={}') )
+            line.append( get_minimum_ms('http://api.ruyi.ai/v1/message?app_key=28b12c3d-fab6-4540-af27-460277aa1a58&user_id=123&q={}') )
             fd.write( '\t'.join(line) + '\n' )
             time.sleep(30)
 

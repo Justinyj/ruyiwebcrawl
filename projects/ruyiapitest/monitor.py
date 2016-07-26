@@ -188,18 +188,17 @@ def random_url(url, length=4):
     s = ''.join(random.Random().sample(chars, length))
     return url.format(s)
 
-
-def get_running_stat(backend):
-    url = random_url(backend['test_url'])
+def get_running_stat(url_temlate):
+    url = random_url(url_temlate)
     for _ in range(3):
         response = requests.get(url)
         if response.status_code == 200:
             break
     else:
-        return 9999
+        return False
     res = response.json()
     process_milliseconds = res['result']['meta_process_milliseconds']
-    print process_milliseconds
+
     if process_milliseconds > 1000:
         return process_milliseconds
     return True
