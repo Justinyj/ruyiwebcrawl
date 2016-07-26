@@ -5,7 +5,7 @@ from __future__ import print_function, division
 import json
 import sys
 import os
-from parsers.zhidao_parser import *
+from hzlib.zhidao_parser import *
 reload(sys)
 sys.setdefaultencoding('utf-8')
 

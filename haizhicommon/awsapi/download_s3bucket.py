@@ -81,4 +81,4 @@ def down_fudankg(bucketname):
 if __name__ == '__main__':
     bucketname = 'fudankg-json'
     compare_time = datetime(2016,7,1,2,0,0,).strftime('%Y%m%d%H%M%S') 
-    save_to_local(bucketname)
+    count_bucket('dongcaigonggao-yy2')

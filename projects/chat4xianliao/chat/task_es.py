@@ -14,15 +14,12 @@ import time
 import re
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)) )
-# sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
-# sys.path.append(os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
-import downloader
 import json
 import random
 import glob
@@ -82,6 +79,18 @@ ES_DATASET_CONFIG ={
     {   "description":"知道10K qa0708chat10k",
         "es_index":"ruyiwebcrawl_zhidaoqa_0626",
         "es_type":"qa0708chat10k",
+        "filepath_mapping": getTheFile("faq_mappings.json"),
+    },
+    "qa0720baike":
+    {   "description":"百科2K",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
+        "es_type":"qa0720baike",
+        "filepath_mapping": getTheFile("faq_mappings.json"),
+    },
+    "qa0720chat":
+    {   "description":"闲聊13k",
+        "es_index":"ruyiwebcrawl_zhidaoqa_0626",
+        "es_type":"qa0720chat",
         "filepath_mapping": getTheFile("faq_mappings.json"),
     },
     "xianer12w_test":
@@ -472,6 +481,14 @@ class ZhidaoQa():
             filenames.append(filename)
         self._index_qa(filenames, dataset_index, filter_option=1)
 
+    def index_qa_prod(self, dataset_index):
+        dirname = getLocalFile( "prod/{}/*.xls*".format(dataset_index) )
+        print dirname
+        filenames = []
+
+        for filename in glob.glob(dirname):
+            filenames.append(filename)
+        self._index_qa(filenames, dataset_index, filter_option=1)
 
 
     def index_xianer12w_test(self):
@@ -870,6 +887,17 @@ def main():
             agt.index_qa_simple(dataset_index)
 
 
+
+    elif "index_prod" == option:
+        """
+            python chat/task_es.py index_prod qa0720baike local
+            python chat/task_es.py index_prod qa0720chat local
+        """
+        if len(sys.argv)>3:
+            dataset_index = sys.argv[2]
+            config_option = sys.argv[3]
+            agt = ZhidaoQa(config_option=config_option, dryrun=False)
+            agt.index_qa_prod(dataset_index)
 
 
     elif "index_xianer12w_test" == option:

@@ -15,7 +15,7 @@ import difflib
 #import distance
 
 import libfile
-from parsers.zhidao_parser import parse_search_json_v0707
+from zhidao_parser import parse_search_json_v0707
 
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
