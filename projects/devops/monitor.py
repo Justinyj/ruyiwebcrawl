@@ -82,7 +82,7 @@ def get_running_stat(url_temlate):
         if response.status_code == 200:
             break
     else:
-        slack
+        slack('{} cannot connect server!'.format(ENV))
         return False
     res = response.json()
     process_milliseconds = res['result']['meta_process_milliseconds']
