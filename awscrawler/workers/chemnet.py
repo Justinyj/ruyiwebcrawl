@@ -10,7 +10,6 @@ import urllib
 import re
 import urlparse
 from datetime import datetime
-sys.path.append('..')
 from downloader.caches3 import CacheS3
 from lxml import etree
 from downloader.cache import Cache
@@ -24,7 +23,6 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 # SITE = 'http://kw.fudan.edu.cn'
 SITE = 'http://china.chemnet.com/'
-SERVER = 'http://192.168.1.179:8000'
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
