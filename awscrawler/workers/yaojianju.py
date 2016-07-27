@@ -111,10 +111,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 item[k] = v[0]
             else :
                 item[k] = None
-        with open('drug.txt', 'a+') as f:
-            line = json.dumps(item, ensure_ascii = False)
-            f.write(line.encode('utf-8'))
-            f.write('\n')
 
         return process._cache.post(url, line)
     return True
