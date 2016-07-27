@@ -54,7 +54,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         batch_id,
         gap,
         timeout=timeout,
-        encoding='gb18030'
+        encoding='utf-8'
         )
     # print (content)
     if content == '':
@@ -74,7 +74,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         # entity = urllib.unquote(m.group(1))
         if label == 'main':
             print("add company")
-            page = etree.HTML(content.decode('gb18030','ignore'))
+            page = etree.HTML(content)
             # nodes = page.xpath("//*[@id=\"main\"]/div[1]/div/div[2]/dl/dt/a/text()")
             links = page.xpath("//*[@id=\"main\"]/div[1]/div/div[2]/dl/dt/a/@href")
             manager.put_urls_enqueue(batch_id, links)
