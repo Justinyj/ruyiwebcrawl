@@ -101,7 +101,7 @@ def main():
         line.append( jsvc_thread() )
         line.append( jsvc_fd() )
         process_ms = get_running_stat('http://api.ruyi.ai/v1/message?app_key=28b12c3d-fab6-4540-af27-460277aa1a58&user_id=123&q={}')
-        if process_ms：
+        if isinstance(process_ms, int)：
             line.append( str(process_ms) )
         fd = open('monitor.log', 'a')
         fd.write( '\t'.join(line) + '\n' )
