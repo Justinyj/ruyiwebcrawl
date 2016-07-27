@@ -195,7 +195,7 @@ def get_running_stat(url_temlate):
         if response.status_code == 200:
             break
     else:
-        return False
+        return -1
     res = response.json()
     process_milliseconds = res['result']['meta_process_milliseconds']
 
@@ -224,7 +224,7 @@ def convert_backend_toanoter(policy, working_ms):
         u'backend-ws42eq' : '01',
         u'backend-vce245' : '02',
     }
-    msg = ('{} is in high process_milliseconds:{} ,the program just converted it into another').format(id_for_human[working_backend], working_ms)
+    msg = ('{} has high process_milliseconds:{} ,the program just converted it into another').format(id_for_human[working_backend], working_ms)
     print msg
     slack(msg)
     return True
@@ -234,16 +234,16 @@ def main(policy_name):
 
     ms1 = get_running_stat(backends[0])
     ms2 = get_running_stat(backends[1])
-    if ms1 == False :
+    if ms1 == -1 :
         slack('Can not connect OK1!')
         return
-    if ms2 == False :
+    if ms2 == -1 :
         slack('Can not connect OK2!')
         return
 
     ok1 = ms1 < 500
     ok2 = ms2 < 500
-    if ok1  and ok2 :
+    if ok1 and ok2:
         print 'all right'
         # m = UlbPolicyClient(policy_name)
         # m.find_policy()
@@ -252,8 +252,8 @@ def main(policy_name):
         #     convert_backend_toanoter(policy_name)
         # slack('NOTICE : 01 and 02 are both in ok working status,just convert from 02 to 01 for{}'.format(policy_name))
         return
-    if not ok1  and not ok2 :
-        slack('both 01 and 02 are in high process_milliseconds:{};{}!Please check soon!'.format(ms1, ms2))
+    if not ok1 and not ok2:
+        slack('both 01 and 02 have high process_milliseconds:{};{}!Please check soon!'.format(ms1, ms2))
         print 'I have sent a bad messageeeeee'
         return
     #按照此逻辑，如果上面的检测中出现了一台高延迟，即使这是ULB后端的主机，在下面的判断中，如果再次测试状态正常，那么也不会进行调换
