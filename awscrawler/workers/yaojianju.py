@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Author: Yuande Liu <miraclecome (at) gmail.com>
+# Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
 
 from __future__ import print_function, division
 
@@ -17,8 +17,6 @@ from downloader.downloader_wrapper import DownloadWrapper
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
-#SITE = 'http://kw.fudan.edu.cn'
-SITE = 'https://crl.ptopenlab.com:8800'
 
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     home_page = 'http://app1.sfda.gov.cn/datasearch/face3/base.jsp?tableId=25&tableName=TABLE25&title=%B9%FA%B2%FA%D2%A9%C6%B7&bcId=124356560303886909015737447882'
@@ -69,6 +67,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             if page == 3:
                 return
             ids = re.findall(u'国产药品&Id=(\d+)', content)
+            if not ids:
+                break
             url_pattern = 'http://app1.sfda.gov.cn/datasearch/face3/content.jsp?tableId=25&tableName=TABLE25&tableView=%B9%FA%B2%FA%D2%A9%C6%B7&Id={}'
             urls = []
             for drug_id in ids:
@@ -76,10 +76,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 urls.append(url)
             manager.put_urls_enqueue(batch_id, urls)
             page += 1
-            if len(ids) < 15 :  #说明到了最后一页
-                break
 
-    if url != home_page and process._reg['detail'].match(url):
+    elif process._reg['detail'].match(url):
         content = process._downloader.downloader_wrapper(
             url,
             batch_id,
@@ -92,24 +90,24 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         table = dom.xpath('//tr')
 
         item = {
-            'license_number':    table[1].xpath('./td')[1].xpath('./text()'),       #[u'批准文号'],
-            'product_name_chs':  table[2].xpath('./td')[1].xpath('./text()'),         #[u'产品名称'],
-            'product_name_eng':  table[3].xpath('./td')[1].xpath('./text()'),           #[u'英文名称'],
-            'commodity_name_chs': table[4].xpath('./td')[1].xpath('./text()'),          #[u'商品名'],
-            'drug_form':          table[5].xpath('./td')[1].xpath('./text()'),  #[u'剂型'],
-            'specification':      table[6].xpath('./td')[1].xpath('./text()'),      #[u'规格'],
-            'manufacturer_chs':   table[7].xpath('./td')[1].xpath('./text()'),          #[u'生产单位'],
-            'manuf_address_chs':   table[8].xpath('./td')[1].xpath('./text()'),         #[u'生产地址'],
-            'category':            table[9].xpath('./td')[1].xpath('./text()'), #[u'产品类别'],
-            'license_data':        table[11].xpath('./td')[1].xpath('./text()'), #[u'批准日期'],
-            'standard_code':       table[12].xpath('./td')[1].xpath('./text()'),     #[u'药品本位码'],
-            'standard_code_remark': table[13].xpath('./td')[1].xpath('./text()'),            #[u'药品本位码备注'],
+            'license_number':       table[1].xpath('./td')[1].xpath('./text()'),  #[u'批准文号'],
+            'product_name_chs':     table[2].xpath('./td')[1].xpath('./text()'),  #[u'产品名称'],
+            'product_name_eng':     table[3].xpath('./td')[1].xpath('./text()'),  #[u'英文名称'],
+            'commodity_name_chs':   table[4].xpath('./td')[1].xpath('./text()'),  #[u'商品名'],
+            'drug_form':            table[5].xpath('./td')[1].xpath('./text()'),  #[u'剂型'],
+            'specification':        table[6].xpath('./td')[1].xpath('./text()'),  #[u'规格'],
+            'manufacturer_chs':     table[7].xpath('./td')[1].xpath('./text()'),  #[u'生产单位'],
+            'manuf_address_chs':    table[8].xpath('./td')[1].xpath('./text()'),  #[u'生产地址'],
+            'category':             table[9].xpath('./td')[1].xpath('./text()'),  #[u'产品类别'],
+            'license_data':         table[11].xpath('./td')[1].xpath('./text()'), #[u'批准日期'],
+            'standard_code':        table[12].xpath('./td')[1].xpath('./text()'), #[u'药品本位码'],
+            'standard_code_remark': table[13].xpath('./td')[1].xpath('./text()'), #[u'药品本位码备注'],
         }
         for k,v in item.iteritems():
             if len(v) > 0:
                 item[k] = v[0]
             else :
-                item [k] = None
+                item[k] = None
         with open('drug.txt', 'a+') as f:
             line = json.dumps(item, ensure_ascii = False)
             f.write(line.encode('utf-8'))

@@ -199,9 +199,7 @@ def get_running_stat(url_temlate):
     res = response.json()
     process_milliseconds = res['result']['meta_process_milliseconds']
 
-    if process_milliseconds > 1000:
-        return process_milliseconds
-    return True
+    return process_milliseconds
 
 def get_another_backend(backend_id):
     for backend in backends:
@@ -236,6 +234,13 @@ def main(policy_name):
 
     ok1 = get_running_stat(backends[0])
     ok2 = get_running_stat(backends[1])
+    if ok1 == False :
+        slack('Can not connect OK1!')
+        return
+    if ok2 == False :
+        slack('Can not connect OK2!')
+        return
+
     if ok1 == True and ok2 == True :
         print 'all right'
         # m = UlbPolicyClient(policy_name)
