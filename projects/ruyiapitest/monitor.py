@@ -206,7 +206,7 @@ def get_another_backend(backend_id):
         if backend['backend_id'] != backend_id:
             return backend
 
-def convert_backend_toanoter(policy, ok_working):
+def convert_backend_toanoter(policy, working_ms):
     '''
     policy : 即转发策略,如api.ruyi.ao，在json里表示为Match
     有了转发策略的内容，还要通过一次find_policy定位到具体的某条策略上
@@ -224,7 +224,7 @@ def convert_backend_toanoter(policy, ok_working):
         u'backend-ws42eq' : '01',
         u'backend-vce245' : '02',
     }
-    msg = ('{} is in high process_milliseconds:{} ,the program just converted it into another').format(id_for_human[working_backend], ok_working)
+    msg = ('{} is in high process_milliseconds:{} ,the program just converted it into another').format(id_for_human[working_backend], working_ms)
     print msg
     slack(msg)
     return True
@@ -232,16 +232,18 @@ def convert_backend_toanoter(policy, ok_working):
 
 def main(policy_name):
 
-    ok1 = get_running_stat(backends[0])
-    ok2 = get_running_stat(backends[1])
-    if ok1 == False :
+    ms1 = get_running_stat(backends[0])
+    ms2 = get_running_stat(backends[1])
+    if ms1 == False :
         slack('Can not connect OK1!')
         return
-    if ok2 == False :
+    if ms2 == False :
         slack('Can not connect OK2!')
         return
 
-    if ok1 == True and ok2 == True :
+    ok1 = ms1 < 500
+    ok2 = ms2 < 500
+    if ok1  and ok2 :
         print 'all right'
         # m = UlbPolicyClient(policy_name)
         # m.find_policy()
@@ -250,8 +252,8 @@ def main(policy_name):
         #     convert_backend_toanoter(policy_name)
         # slack('NOTICE : 01 and 02 are both in ok working status,just convert from 02 to 01 for{}'.format(policy_name))
         return
-    if ok1 != True and ok2 != True :
-        slack('both 01 and 02 are in high process_milliseconds:{};{}!Please check soon!'.format(ok1, ok2))
+    if not ok1  and not ok2 :
+        slack('both 01 and 02 are in high process_milliseconds:{};{}!Please check soon!'.format(ms1, ms2))
         print 'I have sent a bad messageeeeee'
         return
     #按照此逻辑，如果上面的检测中出现了一台高延迟，即使这是ULB后端的主机，在下面的判断中，如果再次测试状态正常，那么也不会进行调换
@@ -262,11 +264,11 @@ def main(policy_name):
         return
     working_backend = rule.get_working_backend_id()
 
-    ok_working = get_running_stat(working_backend)
-    if ok_working == True:
+    working_ms = get_running_stat(working_backend)
+    if working_ms < 500:
         print 'ok'   
     else:
-        convert_backend_toanoter(policy_name, ok_working)
+        convert_backend_toanoter(policy_name, working_ms)
 
 
 if __name__ == '1__main__':
