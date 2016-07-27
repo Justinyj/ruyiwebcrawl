@@ -234,10 +234,10 @@ def main(policy_name):
 
     ms1 = get_running_stat(backends[0])
     ms2 = get_running_stat(backends[1])
-    if ms1 == -1 :
+    if ms1 == -1:
         slack('Can not connect OK1!')
         return
-    if ms2 == -1 :
+    if ms2 == -1:
         slack('Can not connect OK2!')
         return
 
