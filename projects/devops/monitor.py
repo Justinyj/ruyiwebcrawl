@@ -91,7 +91,7 @@ def get_running_stat(url_temlate):
     return process_milliseconds
 
 def main():
-    #min_ms的判断：为了增强健壮性，只有当一个时间区间内的延迟最小值超过500ms才会报错，而不是一次判断超出500就报错。
+    #min_ms的判断：为了增强健壮性，只有当一个区间内所有测试都超时才会报错，而不是一次判断超出500ms就报错。
     counter = 0
     min_ms = 999
     while 1:
