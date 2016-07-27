@@ -64,8 +64,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 refresh = True,
                 data = data
             )
-            if page == 3:
-                return
+            # if page == 3:
+            #     return
             ids = re.findall(u'国产药品&Id=(\d+)', content)
             if not ids:
                 break
