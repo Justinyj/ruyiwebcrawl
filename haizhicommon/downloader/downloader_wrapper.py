@@ -16,7 +16,7 @@ class DownloadWrapper(object):
         self.region_name = region_name
 
 
-    def download_with_cache(self, url, batch_id, gap, method, timeout, encoding, redirect_check, error_check, refresh):
+    def download_with_cache(self, url, batch_id, gap, method, timeout, encoding, redirect_check, error_check, data, refresh):
         if batch_id not in self._batches:
             downloader = Downloader(batch_id, self.cacheserver, True, gap, timeout, region_name=self.region_name)
             if self.headers:
@@ -29,6 +29,7 @@ class DownloadWrapper(object):
                                                          encoding=encoding,
                                                          redirect_check=True,
                                                          error_check=error_check,
+                                                         data=data,
                                                          refresh=refresh)
 
 
@@ -41,6 +42,7 @@ class DownloadWrapper(object):
                            encoding=None,
                            redirect_check=True,
                            error_check=False,
+                           data=None,
                            refresh=False,
                            cache_retry=2):
         for _ in range(cache_retry):
@@ -52,6 +54,7 @@ class DownloadWrapper(object):
                                                encoding,
                                                redirect_check,
                                                error_check,
+                                               data,
                                                refresh)
             if content != u'':
                 return content
