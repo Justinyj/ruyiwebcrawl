@@ -79,6 +79,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 urls.append(url)
             manager.put_urls_enqueue(batch_id, urls)
             page += 1
+        return
 
     elif process._reg['detail'].match(url):
         content = process._downloader.downloader_wrapper(
@@ -112,7 +113,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             else :
                 item[k] = None
 
-        return process._cache.post(url, line)
-    return True
+        return process._cache.post(url, json.dumps(item, ensure_ascii = False))
+
 
 
