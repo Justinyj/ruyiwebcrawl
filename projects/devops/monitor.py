@@ -21,6 +21,8 @@ def slack(msg):
 def mongo_connection():
     cmd = 'netstat -antp | grep 27017 | wc -l'
     ret = run(cmd).split('\n')[-1]
+    if not ret:
+        ret = '-1'
     result = int(ret)
     if result > 4096:
         slack('{} server mongo conn: {}'.format(ENV, result))
@@ -30,6 +32,8 @@ def mongo_connection():
 def connection():
     cmd = 'netstat -antp | wc -l'
     ret = run(cmd).split('\n')[-1]
+    if not ret:
+	ret = '-1'
     result = int(ret)
     if result > 4096:
         slack('{} server conn: {}'.format(ENV, result))
@@ -39,6 +43,8 @@ def connection():
 def jsvc_thread():
     cmd = "pstree | grep jsvc | awk -F'-' {'print $NF'}"
     ret = run(cmd)
+    if not ret:
+	ret = '-1'
     result = int( ret[:ret.find('*')] )
     if result > 2048:
         slack('{} server jsvc thread: {}'.format(ENV, result))
@@ -48,6 +54,8 @@ def jsvc_thread():
 def jsvc_fd():
     cmd = "ls -al /proc/`ps aux | grep jsvc | grep -v grep | awk {'print $2'} | sort -r | head -n 1`/fd | wc -l"
     ret = run(cmd)
+    if not ret:
+	ret = '-1'	
     result = int(ret)
     if result > 2048:
         slack('{} server jsvc fd: {}'.format(ENV, result))
@@ -81,20 +89,6 @@ def get_running_stat(url_temlate):
 
     return process_milliseconds
 
-def get_minimum_ms(url_temlate):
-    min_ms = 9999
-    for _ in range(1):
-        process_ms = get_running_stat(url_temlate)
-        if process_ms == False:
-            slack('{} server conn: failed'.format(ENV))
-            return -1
-        min_ms = min(min_ms, process_ms)
-    if min_ms > 500:
-        slack('{} server in high process_millisecons : {}'.format(ENV, min_ms))
-    return min_ms
-
-
-
 def main():
     counter = 0
     min_ms = 999
@@ -104,10 +98,8 @@ def main():
         line.append( connection() )
         line.append( jsvc_thread() )
         line.append( jsvc_fd() )
-
         process_ms = get_running_stat('http://api.ruyi.ai/v1/message?app_key=28b12c3d-fab6-4540-af27-460277aa1a58&user_id=123&q={}')
         line.append( str(process_ms) )
-        print line
         fd = open('monitor.log', 'a')
         fd.write( '\t'.join(line) + '\n' )
         fd.close()
@@ -117,7 +109,7 @@ def main():
         if counter == 6:
             if min_ms >  500:
                 slack('{} server high process_millisecons in 3 mins : {}'.format(ENV, min_ms))
-                print 'send a message'
+                #print 'send a message'
             counter = 0
             min_ms = 999
 
