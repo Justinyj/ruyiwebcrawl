@@ -82,6 +82,7 @@ def get_running_stat(url_temlate):
         if response.status_code == 200:
             break
     else:
+        slack
         return False
     res = response.json()
     process_milliseconds = res['result']['meta_process_milliseconds']
@@ -90,6 +91,7 @@ def get_running_stat(url_temlate):
     return process_milliseconds
 
 def main():
+    #min_ms的判断：为了增强健壮性，只有当一个时间区间内的延迟最小值超过500ms才会报错，而不是一次判断超出500就报错。
     counter = 0
     min_ms = 999
     while 1:
@@ -99,7 +101,8 @@ def main():
         line.append( jsvc_thread() )
         line.append( jsvc_fd() )
         process_ms = get_running_stat('http://api.ruyi.ai/v1/message?app_key=28b12c3d-fab6-4540-af27-460277aa1a58&user_id=123&q={}')
-        line.append( str(process_ms) )
+        if process_ms：
+            line.append( str(process_ms) )
         fd = open('monitor.log', 'a')
         fd.write( '\t'.join(line) + '\n' )
         fd.close()
