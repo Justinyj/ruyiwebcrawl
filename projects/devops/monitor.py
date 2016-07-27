@@ -21,8 +21,8 @@ def slack(msg):
 def mongo_connection():
     cmd = 'netstat -antp | grep 27017 | wc -l'
     ret = run(cmd).split('\n')[-1]
-    if not ret:
-        ret = '-1'
+    if ret == '':
+            ret = '-1'
     result = int(ret)
     if result > 4096:
         slack('{} server mongo conn: {}'.format(ENV, result))
@@ -32,8 +32,8 @@ def mongo_connection():
 def connection():
     cmd = 'netstat -antp | wc -l'
     ret = run(cmd).split('\n')[-1]
-    if not ret:
-	ret = '-1'
+    if ret == '':
+	   ret = '-1'
     result = int(ret)
     if result > 4096:
         slack('{} server conn: {}'.format(ENV, result))
@@ -43,8 +43,8 @@ def connection():
 def jsvc_thread():
     cmd = "pstree | grep jsvc | awk -F'-' {'print $NF'}"
     ret = run(cmd)
-    if not ret:
-	ret = '-1'
+    if ret == '':
+	   ret = '-1'
     result = int( ret[:ret.find('*')] )
     if result > 2048:
         slack('{} server jsvc thread: {}'.format(ENV, result))
@@ -54,8 +54,8 @@ def jsvc_thread():
 def jsvc_fd():
     cmd = "ls -al /proc/`ps aux | grep jsvc | grep -v grep | awk {'print $2'} | sort -r | head -n 1`/fd | wc -l"
     ret = run(cmd)
-    if not ret:
-	ret = '-1'	
+    if ret == '':
+	   ret = '-1'	
     result = int(ret)
     if result > 2048:
         slack('{} server jsvc fd: {}'.format(ENV, result))
