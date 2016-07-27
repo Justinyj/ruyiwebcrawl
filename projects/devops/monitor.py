@@ -22,7 +22,7 @@ def mongo_connection():
     cmd = 'netstat -antp | grep 27017 | wc -l'
     ret = run(cmd).split('\n')[-1]
     if ret == '':
-            ret = '-1'
+        ret = '-1'
     result = int(ret)
     if result > 4096:
         slack('{} server mongo conn: {}'.format(ENV, result))
