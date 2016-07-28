@@ -1,0 +1,24 @@
+{
+    "batch_ids": {
+        "entity": "chemnet-20160726"
+    },
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "chemnet-20160726",
+                "crawl_http_method": "get",
+                "crawl_gap": 0,
+                "crawl_use_js_engine": false,
+                "length": 11,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 6,
+                "filename_urls": "/home/yingqi/ruyi/ruyiwebcrawl-master/awscrawlerd/pages_for_search.txt",
+                "url_pattern": "http://china.chemnet.com/company/supplier.cgi?f=;t=company;terms=%B9%AB%CB%BE;search=company;property=;regional=;submit.x=25;submit.y=16;submit=%BB%AF%B9%A4%CB%D1%CB%F7;p={}"
+            }
+        },
+        "aws_machine_number": 2,
+        "note": "中国化工网",
+        "debug": false
+    }
+}
