@@ -10,7 +10,7 @@ import boto3
 from awsapi.secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
 REGION_NAME = 'ap-northeast-1'
-BUCKET = 'searchzhidao-json'
+BUCKET = 'searchzhidao2-json'
 HOMEDIR = '/home/admin/'
 
 S3 = boto3.resource('s3', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
@@ -40,7 +40,7 @@ def save_bucket(bucketname, savepath):
                 count += 1
             if count & 4095 == 0:
                 print(count)
-    os.system('eval `ssh-agent -s`; chmod 600 /home/admin/.ssh/crawl-tokyo.pem; ssh-add /home/admin/.ssh/crawl-tokyo.pem; scp -o StrictHostKeyChecking=no {} admin@172.31.19.253:/data/searchzhidao/'.format(wfname))
+    os.system('eval `ssh-agent -s`; chmod 600 /home/admin/.ssh/crawl-tokyo.pem; ssh-add /home/admin/.ssh/crawl-tokyo.pem; scp -o StrictHostKeyChecking=no {} admin@172.31.19.253:/data/searchzhidao2/'.format(wfname))
 
 
 def fake_save_bucket(bucketname, savepath):
