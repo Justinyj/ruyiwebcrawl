@@ -195,7 +195,7 @@ def main():
 
 
     elif "test_baike_realtime" == option:
-        # python hzlib/task_api_zhidao.py test
+        # python hzlib/task_api_zhidao.py test_baike_realtime
         api = ZhidaoFetch()
         if len(sys.argv)>2:
             question = sys.argv[2]
@@ -208,9 +208,9 @@ def main():
             libdata.print_json(ret)
 
         else:
-            question = u"天空是什么颜色的？"
             question = u"严重贫血怎么办"
-            ret = api.search_baike_best(question)
+            question = u"天空是什么颜色的？"
+            ret = api.search_baike_best(question, keep_result=True)
             print question
             libdata.print_json(ret)
 
