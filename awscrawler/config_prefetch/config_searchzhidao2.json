@@ -13,7 +13,7 @@
                 "priority": 2,
                 "crawl_timeout": 10,
                 "failure_times": 6,
-                "filename_urls": "/home/admin/question.txt",
+                "filename_urls": "/home/admin/question_2.txt",
                 "url_pattern": "http://zhidao.baidu.com/search?word={}"
             }
         },

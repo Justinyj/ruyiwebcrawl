@@ -51,7 +51,7 @@ def run(config):
     url_pattern = job["url_pattern"] if "url_pattern" in job else None
     urls_func = partial(load_urls, job["filename_urls"], url_pattern)
 
-    if config.get("debug"):
+    if not config.get("debug"):
         slack( u"run {} batch_id: {}, urls length: {} debug: {}".format(
             config["note"],
             job["batch_id"],
@@ -128,7 +128,7 @@ def run(config):
         print(datetime.datetime.now().isoformat(), 'all done.  --- work mode')
 
     seconds = int(time.time() - ts_start)
-    if config.get("debug"):
+    if not config.get("debug"):
         slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"], seconds) )
 
 
