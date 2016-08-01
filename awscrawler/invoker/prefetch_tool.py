@@ -11,6 +11,7 @@ import datetime
 import time
 import os
 import sys
+sys.path.append('..')
 import requests
 import json
 import signal
@@ -30,11 +31,11 @@ def catch_terminate_instances_signal(schedule):
 def getTheFile(filename):
     return os.path.abspath(os.path.dirname(__file__)) +"/"+filename
 
-def slack(msg):
-    data={
-        "text": msg
-    }
-    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+# def slack(msg):
+#     data={
+#         "text": msg
+#     }
+#     requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 def run(config):
     ts_start = time.time()
@@ -50,13 +51,13 @@ def run(config):
 
     url_pattern = job["url_pattern"] if "url_pattern" in job else None
     urls_func = partial(load_urls, job["filename_urls"], url_pattern)
-
-    if config.get("debug"):
-        slack( u"run {} batch_id: {}, urls length: {} debug: {}".format(
-            config["note"],
-            job["batch_id"],
-            url_length,
-            config.get("debug", False)) )
+    print("url pattern--",url_pattern)
+    # if config.get("debug"):
+    #     slack( u"run {} batch_id: {}, urls length: {} debug: {}".format(
+    #         config["note"],
+    #         job["batch_id"],
+    #         url_length,
+    #         config.get("debug", False)) )
 
 
     if config.get("debug"):
@@ -128,8 +129,8 @@ def run(config):
         print(datetime.datetime.now().isoformat(), 'all done.  --- work mode')
 
     seconds = int(time.time() - ts_start)
-    if config.get("debug"):
-        slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"], seconds) )
+    # if config.get("debug"):
+    #     slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"], seconds) )
 
 
 def get_urls_length(fname):
