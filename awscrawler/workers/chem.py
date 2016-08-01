@@ -81,7 +81,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             return True
 
         elif label == 'prd':
-            chem_name = m.group(1)
+            chem_name = page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[1]/td[2]/text()")[0]
             print(chem_name, " main page")
             
             comps = page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form/table/tr[1]/td[2]/a[1]")
