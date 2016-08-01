@@ -75,7 +75,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             
             # nodes = page.xpath("//*[@id=\"main\"]/div[1]/div/div[2]/dl/dt/a/text()")
             chems = page.xpath("//*[@id=\"main\"]/div[1]/div[2]/dl/dd/ul/li/p[2]/a/@href")  # links for chems in main page
-            chems = [ SITE + chem for chem in chems]
+            chems = [ urlparse.urljoin(SITE, chem) for chem in chems]
             get_logger(batch_id, today_str, '/opt/service/log/').info('adding chems urls into queue')
             manager.put_urls_enqueue(batch_id, chems)
 
@@ -83,18 +83,18 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
         elif label == 'prd':
             chem_name = page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[1]/td[2]/text()")[0]
-            print(chem_name, " main page")
+            get_logger(batch_id, today_str, '/opt/service/log/').info(chem_name + " main page")
             
             comps = page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form/table/tr[1]/td[2]/a[1]")
             pagetext = page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/h6/div/text()[1]")
-            print(pagetext[0])
+            # print(pagetext[0])
             total = int(re.compile(r'共有(\d+)条记录').search(pagetext[0].encode('utf-8')).group(1))
-            total = total // 10 + 1 if total % 10 !=0 else total // 10
+            total = total // 10 + 1 if total % 10 != 0 else total // 10
             data = json.dumps({'name':chem_name,'url':url,'body': content})
             new_urls = []
             for t in range(total):
                 new_url = compspat.format(chem_name,str(t))
-                print("new url",new_url)
+                get_logger(batch_id, today_str, '/opt/service/log/').info("new url" + new_url)
                 new_urls.append(new_url)
             manager.put_urls_enqueue(batch_id,new_urls)
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting prd page to cache')
