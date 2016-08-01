@@ -19,6 +19,6 @@
         },
         "aws_machine_number": 2,
         "note": "中国化工网",
-        "debug": true
+        "debug": false
     }
 }
