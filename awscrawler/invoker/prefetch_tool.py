@@ -50,7 +50,6 @@ def run(config):
 
     url_pattern = job["url_pattern"] if "url_pattern" in job else None
     urls_func = partial(load_urls, job["filename_urls"], url_pattern)
-    
     if config.get("debug"):
         slack( u"run {} batch_id: {}, urls length: {} debug: {}".format(
             config["note"],
