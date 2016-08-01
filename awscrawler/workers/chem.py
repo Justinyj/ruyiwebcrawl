@@ -53,6 +53,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         gap,
         timeout=timeout,
         # encoding='gb18030',
+        refresh=True
         )
     # print(content)
     if content == '':
