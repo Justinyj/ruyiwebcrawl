@@ -57,7 +57,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         )
     # print(content)
     if content == '':
-        print('no content')
+        get_logger(batch_id, today_str, '/opt/service/log/').info(url + ' no content')
         return False
     
 
@@ -69,16 +69,12 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         if not m:
             continue
         page = etree.HTML(content)
-        # entity = urllib.unquote(m.group(1))
         if label == 'main':
             # print("add chems")
-            
-            # nodes = page.xpath("//*[@id=\"main\"]/div[1]/div/div[2]/dl/dt/a/text()")
             chems = page.xpath("//*[@id=\"main\"]/div[1]/div[2]/dl/dd/ul/li/p[2]/a/@href")  # links for chems in main page
             chems = [ urlparse.urljoin(SITE, chem) for chem in chems]
             get_logger(batch_id, today_str, '/opt/service/log/').info('adding chems urls into queue')
             manager.put_urls_enqueue(batch_id, chems)
-
             return True
 
         elif label == 'prd':
