@@ -87,13 +87,13 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             # print(pagetext[0])
             total = int(re.compile(r'共有(\d+)条记录').search(pagetext[0].encode('utf-8')).group(1))
             total = total // 10 + 1 if total % 10 != 0 else total // 10
-            data = json.dumps({'name':chem_name,'url':url,'body': content})
+            data = json.dumps({'name':chem_name, 'url':url, 'body': content})
             new_urls = []
             for t in range(total):
-                new_url = compspat.format(chem_uri,str(t))
+                new_url = compspat.format(chem_uri, str(t))
                 get_logger(batch_id, today_str, '/opt/service/log/').info("new url" + new_url)
                 new_urls.append(new_url)
-            manager.put_urls_enqueue(batch_id,new_urls)
+            manager.put_urls_enqueue(batch_id, new_urls)
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting prd page to cache')
             return process._cache.post(url, data)
 
