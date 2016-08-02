@@ -8,7 +8,7 @@ import datetime
 import redis
 import requests
 
-file_name = '/Users/johnson/my/cacnhe_city_list.txt'
+file_name = '/Users/johnson/my/cache_city_list.txt'
 KEY = 'ruyi-action-heweather-cache'
 ip_179 = '192.168.1.179'
 ip_10 ='10.10.84.141'
@@ -17,26 +17,27 @@ r = redis.Redis(host = ip_179, port=6379, db=0)
 
 f = open(file_name, 'r')
 citys = []
-for line in f.readlines():
+for line in f:
     try:
-        city, url = line.strip().split('\t')[0], line.strip().split('\t')[1]
+        city, url = line.strip().split('\t', 1)
     except:
         print ('Invalid format for  {}'.format(line))
         continue
+
     citys.append((city, url))
 f.close()
 
 now =  datetime.datetime.now()
 date = now.strftime("%Y-%m-%d")
 
-# url = 'http://api.ruyi.ai/ruyi-action/weather2?location=上海&date='
-# content = requests.get(url+date).text
+#url = 'http://api.ruyi.ai/ruyi-action/weather2?location=上海&date='
+#content = requests.get(url+date).text
 
 count = 0
 for item in citys:
-    city, url = item[0],item[1]
-    field = date+'_'+city
-    content = f.requests.get(url+date)
+    city, url = item[0], item[1]
+    field = '{}_{}'.format(date, city)
+    content = requests.get(url+date)
     r.hset(KEY, field, content)
 
 r.expire(KEY, 82800)  #3600*21
