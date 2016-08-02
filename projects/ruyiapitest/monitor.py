@@ -271,7 +271,7 @@ def main(policy_name):
         convert_backend_toanoter(policy_name, working_ms)
 
 
-if __name__ == '__main__':
+if __name__ == '    __main__':
     while 1:
         main('apix.ruyi.ai')
         time.sleep(60)

@@ -38,6 +38,14 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     gap = int(gap)
     timeout= int(timeout)
 
+    today_str = datetime.now().strftime('%Y%m%d')
+
+    if kwargs and kwargs.get("debug"):
+        get_logger(batch_id, today_str, '/opt/service/log/').info('start download')
+
+
+
+
     data = {
         'tableId' : '25',
         'State' : '1',
@@ -56,6 +64,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     }
 
     if url == home_page:
+        if kwargs and kwargs.get("debug"):
+            get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url')
         page = 1
         while 1 :
             data['curstart'] = page
@@ -79,9 +89,13 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 urls.append(url)
             manager.put_urls_enqueue(batch_id, urls)
             page += 1
+            if kwargs and kwargs.get("debug"):
+                get_logger(batch_id, today_str, '/opt/service/log/').info('going to page{}'.format(page))
+            
         return
 
     elif process._reg['detail'].match(url):
+
         content = process._downloader.downloader_wrapper(
             url,
             batch_id,
@@ -90,6 +104,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             )
         if content == '':
             return False
+        if kwargs and kwargs.get("debug"):
+            get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url')
         dom = lxml.html.fromstring(content)
         table = dom.xpath('//tr')
 
