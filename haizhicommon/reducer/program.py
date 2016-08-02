@@ -10,8 +10,8 @@ import boto3
 from awsapi.secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
 REGION_NAME = 'ap-northeast-1'
-BUCKET = 'searchzhidao-json'
-HOMEDIR = '/home/admin/'
+BUCKET = 'chem-json'
+HOMEDIR = '/home/admin/chemnet'
 
 S3 = boto3.resource('s3', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
