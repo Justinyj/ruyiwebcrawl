@@ -78,6 +78,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             return True
 
         elif label == 'prd':
+            chem_uri = m.group(1)
             chem_name = page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[1]/td[2]/text()")[0]
             get_logger(batch_id, today_str, '/opt/service/log/').info(chem_name + " main page")
             
@@ -89,7 +90,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             data = json.dumps({'name':chem_name,'url':url,'body': content})
             new_urls = []
             for t in range(total):
-                new_url = compspat.format(chem_name,str(t))
+                new_url = compspat.format(chem_uri,str(t))
                 get_logger(batch_id, today_str, '/opt/service/log/').info("new url" + new_url)
                 new_urls.append(new_url)
             manager.put_urls_enqueue(batch_id,new_urls)
