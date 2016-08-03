@@ -67,9 +67,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             continue
         page = etree.HTML(content)
         if label == 'main':
-            print("adding Chinese Meds")
+            get_logger(batch_id, today_str, '/opt/service/log/').info("adding Chinese Meds")
             meds = page.xpath("//*[@id=\"list\"]/ul/li/a/@href")  # links for meds in main page
-            meds = [ urlparse.urljoin(SITE, med) for med in meds]
+            meds = [ urlparse.urljoin(SITE, med) for med in meds ]
             # print(meds[:5])
             get_logger(batch_id, today_str, '/opt/service/log/').info('adding Meds urls into queue')
             manager.put_urls_enqueue(batch_id, meds)
@@ -80,10 +80,10 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             get_logger(batch_id, today_str, '/opt/service/log/').info(med_name + " main page")
             print(med_name,"main page")
             dics = ''
-            books = content.split('<hr />')
-            if len(books) == 2:
+            books = content.split('<hr />')     # 用来分开不同的药典
+            if len(books) == 2:                 # 只有一个药典的情况
                 books = [ books[0] ]
-            else:
+            else:                               # 有多个药典的情况
                 books = books[1:-1]
             for book in books:
                 page = etree.HTML(book.replace('<strong>', '').replace('</strong>', '').replace('<sub>', '').replace('</sub>', ''))
@@ -99,7 +99,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                         data[prop] = cleaned
                     else:
                         data[prop] += '\n' + info.encode('utf-8')
-                dics += json.dumps(data) + '\n'
+                dics += json.dumps(data) + '\n'    # 一行是一个药典json，不同药典间用换行符分开
             print(dics)
 
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting prd page to cache')
