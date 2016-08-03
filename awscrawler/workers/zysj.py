@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
-
+# 数据存储格式：{ '摘录'：'中华药典', '药品名称':'当归'...}   
+#               { '摘录'：'中华本草', '药品名称':'当归'...}     ...
 
 from __future__ import print_function, division
 import sys
@@ -43,7 +44,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     gap = float(gap)
     timeout= int(timeout)
     today_str = datetime.now().strftime('%Y%m%d')
-    print(url)
     # if kwargs and kwargs.get("debug"):
     #     get_logger(batch_id, today_str, '/opt/service/log/').info('start download')
     content = process._downloader.downloader_wrapper(url,
@@ -78,7 +78,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         elif label == 'prd':
             med_name = page.xpath("//*[@id=\"article\"]/h1/text()")[0]
             get_logger(batch_id, today_str, '/opt/service/log/').info(med_name + " main page")
-            print(med_name,"main page")
+            # print(med_name,"main page")
             dics = ''
             books = content.split('<hr />')     # 用来分开不同的药典
             if len(books) == 2:                 # 只有一个药典的情况
@@ -100,7 +100,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                     else:
                         data[prop] += '\n' + info.encode('utf-8')
                 dics += json.dumps(data) + '\n'    # 一行是一个药典json，不同药典间用换行符分开
-            print(dics)
 
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting prd page to cache')
             return process._cache.post(url, dics)
