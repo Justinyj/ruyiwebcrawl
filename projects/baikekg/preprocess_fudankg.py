@@ -27,21 +27,21 @@ def merge_fudankg(bucketname):
     start_time = time.time()
 
     def find_other_package(entity, original):
-        if original not in [u'av path', u'Information', u'Tags']:
+        if original not in [u'av pair', u'Information', u'Tags']:
             return
 
         ent = urllib.quote(entity.encode('utf-8'))
         urlpattern = {
-            u'av pair': 'https://crl.ptopenlab.com:8800/cndbpedia/api/entityAVP?entity={}',
+            u'av pair':     'https://crl.ptopenlab.com:8800/cndbpedia/api/entityAVP?entity={}',
             u'Information': 'https://crl.ptopenlab.com:8800/cndbpedia/api/entityInformation?entity={}',
-            u'Tags': 'https://crl.ptopenlab.com:8800/cndbpedia/api/entityTag?entity={}',
+            u'Tags':        'https://crl.ptopenlab.com:8800/cndbpedia/api/entityTag?entity={}',
         }
 
-        for k, v in urlpattern.iteritems():
+        for k, val in urlpattern.iteritems():
             if k == original:
                 continue
 
-            url = v.format(ent)
+            url = val.format(ent)
             url_hash = hashlib.sha1(url).hexdigest()
             filename = '{}_{}'.format(batch_id, url_hash)
             fname = os.path.join(bucketname, filename[-1], filename)
