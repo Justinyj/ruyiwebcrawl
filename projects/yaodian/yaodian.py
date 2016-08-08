@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
 # 此脚本用于爬取蒲标网上的中国药典一部文字内容，存入当前路径下的'yaodian2015.json'文件
+# 药典文件在179服务器上的路径：/home/ruyi/Downloads/yaodian/yaodian2015.json
 import requests
 from lxml import etree
 import re
