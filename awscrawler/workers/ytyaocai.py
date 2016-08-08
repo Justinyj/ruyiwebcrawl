@@ -91,8 +91,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 batch_id,
                 gap,
                 timeout = timeout,
-                encoding = 'utf-8'
-                )
+                encoding = 'utf-8')
+                
             if sidebar_content == '':
                 return False
 
@@ -119,8 +119,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 batch_id,
                 gap,
                 timeout = timeout,
-                encoding = 'utf-8',
-                )
+                encoding = 'utf-8',)
+                
             if history_content == '':
                 return False
 
