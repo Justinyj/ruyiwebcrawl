@@ -83,10 +83,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                     if label == 'home':
                         urls.append(process._next_patterns[label].format(code))
                     else: # label == 'kind'
-                        name =  str(rel.split(',')[-1])
+                        name = str(rel.split(',')[-1])
                         urls.append(process._next_patterns[label].format(code, urllib.quote(name)))
-                    break
-                break
             manager.put_urls_enqueue(batch_id, urls)
 
 
@@ -107,9 +105,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             if not isinstance(sidebar_label, list) or len(sidebar_label) != 19:
                 get_logger(batch_id, today_str, '/opt/service/log/').info('not legal list!')
                 return False
-            print ('111')
+
             sidebar_item = {} # 边栏信息
-            for index in range(1,16): 
+            for index in range(1, 16): 
                 line_content = sidebar_label[index].xpath('./td/text()') #line content格式为 权重比：0.0278、市净率：2.00...  
                 parts = line_content[0].split('：')      # chinese colon :left part as key,right part as value
                 sidebar_item[parts[0]] = parts[1]
@@ -117,7 +115,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             line_content = sidebar_label[16].xpath('./th/text()')  #最后更新时间的样式与其他不同，为th
             parts = line_content[0].split('：') 
             sidebar_item[parts[0]] = parts[1]
-            print ('121')
+
             history_content = process._downloader.downloader_wrapper(
                 url,
                 batch_id,
@@ -125,7 +123,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 timeout = timeout,
                 encoding = 'utf-8',
                 refresh = True)
-            print ('129')
+
             if history_content == '':
                 return False
             get_logger(batch_id, today_str, '/opt/service/log/').info('history downloading finished')
@@ -136,13 +134,12 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 date = raw_daily_data[u'Date_time']
                 price = raw_daily_data[u'DayCapilization']
                 price_history[date] = price
-            print ('140')
 
             result_item = {}
             result_item['name'] = name
             result_item['info'] = sidebar_item
             result_item['price_history'] = price_history
-            f = open('jiage.txt','a')
+            f = open('jiage.txt', 'a')
             f.write(json.dumps(result_item, ensure_ascii = False))
             f.close()
-            return process._cache.post(url, json.dumps(result_item, ensure_ascii = False),refresh = True)
+            return process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True)
