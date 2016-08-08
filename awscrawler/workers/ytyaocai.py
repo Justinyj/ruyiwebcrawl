@@ -12,7 +12,6 @@ import lxml.html
 from datetime import datetime
 import sys
 import time
-sys.path.append('..')
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
