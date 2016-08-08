@@ -26,6 +26,8 @@ from settings import REGION_NAME
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     # 药材的详情页涉及2个部分：价格历史history和边栏sidebar，以下的ytw/second/是价格历史的url，返回一个大的json；
     # 所以在最后处理的时候还要额外向另一个url发送一次请求，以获得边栏信息,由于要储存到同一个result.json中，因此不再放入队列，而是直接在process里完成
+    
+
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info('process {}'.format(url))
     if not hasattr(process, '_downloader'):
@@ -37,7 +39,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         setattr(process, '_regs', {
             'home': re.compile('http://www.yt1998.com/variteyIndexInfo.html'),
             'kind': re.compile('http://www.yt1998.com/issueIndexInfo.html\?code='),
-            'history':re.compile('http://www.yt1998.com/ytw/second/indexMgr/getIndexInfo.jsp\?code=(\d+)&type=1') #这是价格历史的url
+            'history':re.compile('http://www.yt1998.com/ytw/second/indexMgr/getIndexInfo.jsp\?code=(\d+)&type=1&varitey_name=(.*)') #这是价格历史的url
         })
 
     if not hasattr(process, '_cache'):
@@ -47,7 +49,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process,'_next_patterns'):
         setattr(process, '_next_patterns', {
             'home': 'http://www.yt1998.com/issueIndexInfo.html?code={}',                         #the format of kind
-            'kind':'http://www.yt1998.com/ytw/second/indexMgr/getIndexInfo.jsp?code={}&type=1',  #the format of history
+            'kind':'http://www.yt1998.com/ytw/second/indexMgr/getIndexInfo.jsp?code={}&type=1&varitey_name={}',  #the format of history
             'history':'http://www.yt1998.com/variteyIndexInfo.html?varitey_code={}'              #the format of sidebar
         })
 
@@ -66,73 +68,79 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 batch_id,
                 gap,
                 timeout = timeout,
-                encoding = 'utf-8')
+                encoding = 'utf-8',
+                refresh = True)
+
             dom = lxml.html.fromstring(content)
             dd_labels = dom.xpath('//dd')
             urls = []
             for single_dd in dd_labels:
                 rels = single_dd.xpath('.//@rel')
+                if not rels:
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('wrong rels content : {}'.format(rels))
+                    continue
                 for rel in rels:
-                    try:
-                        code = (rel.split(','))[-2]  #在home页面，rel的格式为 'Z,家种类' code为Z；在kind页面，rel格式为'Z,家种类,000001,枸杞'，code为000001
-                    except:
-                        get_logger(batch_id, today_str, '/opt/service/log/').info('wrong rel content : {}'.format(rel))
-                        return False
-                    urls.append(process._next_patterns[label].format(code))
-
+                    code = rel.split(',')[-2]  #在home页面，rel的格式为 'Z,家种类' code为Z；在kind页面，rel格式为'Z,家种类,000001,枸杞'，code为000001
+                    if label == 'home':
+                        urls.append(process._next_patterns[label].format(code))
+                    else: # label == 'kind'
+                        name =  str(rel.split(',')[-1])
+                        urls.append(process._next_patterns[label].format(code, urllib.quote(name)))
+                    break
+                break
             manager.put_urls_enqueue(batch_id, urls)
 
 
         elif label == 'history': #开始提取单种药品数据
             code = m.group(1)
+            name = urllib.unquote(m.group(2))
             sidebar_url = process._next_patterns[label].format(code)
             sidebar_content = process._downloader.downloader_wrapper(
                 sidebar_url,
                 batch_id,
                 gap,
                 timeout = timeout,
-                encoding = 'utf-8')
-                
-            if sidebar_content == '':
-                return False
+                encoding = 'utf-8',
+                refresh = True)
 
             sidebar_dom = lxml.html.fromstring(sidebar_content)
             sidebar_label = sidebar_dom.xpath('//div[@class="box-con-r fr"]/table//tr')
             if not isinstance(sidebar_label, list) or len(sidebar_label) != 19:
-                get_logger(batch_id, today_str, '/opt/service/log/').info('not legal list.It might be a special page!:{}'.format(sidebar_label))
+                get_logger(batch_id, today_str, '/opt/service/log/').info('not legal list!')
                 return False
             
-            sidebar_item = {}  #边栏的信息存于此字典
-            for index in range(1,16):
+            sidebar_item = {} # 边栏信息
+            for index in range(1,16): 
                 line_content = sidebar_label[index].xpath('./td/text()') #line content格式为 权重比：0.0278、市净率：2.00...  
                 parts = line_content[0].split('：')      # chinese colon :left part as key,right part as value
                 sidebar_item[parts[0]] = parts[1]
 
-            line_content = sidebar_label[16].xpath('./th/text()')  #最后更新时间的样式与其他不同，为th，在循环外处理
+            line_content = sidebar_label[16].xpath('./th/text()')  #最后更新时间的样式与其他不同，为th
             parts = line_content[0].split('：') 
             sidebar_item[parts[0]] = parts[1]
 
-
-            get_logger(batch_id, today_str, '/opt/service/log/').info('history begin')
             history_content = process._downloader.downloader_wrapper(
                 url,
                 batch_id,
                 gap,
                 timeout = timeout,
-                encoding = 'utf-8',)
-                
+                encoding = 'utf-8',
+                refresh = True)
+
             if history_content == '':
                 return False
-
+            get_logger(batch_id, today_str, '/opt/service/log/').info('history downloading finished')
+            
             history_item = json.loads(history_content)[u'DayMonthData']   #从结果中提取每天数据
-            price_list = {}  #历史价格的信息存于此字典
+            price_history = {} #价格历史
             for raw_daily_data in history_item:
                 date = raw_daily_data[u'Date_time']
                 price = raw_daily_data[u'DayCapilization']
-                price_list[date] = price
+                price_history[date] = price
 
             result_item = {}
+            result_item['name'] = name
             result_item['info'] = sidebar_item
-            result_item['price_history'] = price_list
+            result_item['price_history'] = price_history
 
-            return process._cache.post(url, json.dumps(result_item, ensure_ascii = False))
+            return process._cache.post(url, json.dumps(result_item, ensure_ascii = False),refresh = True)
