@@ -27,7 +27,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     # 药材的详情页涉及2个部分：价格历史history和边栏sidebar，以下的ytw/second/是价格历史的url，返回一个大的json；
     # 所以在最后处理的时候还要额外向另一个url发送一次请求，以获得边栏信息,由于要储存到同一个result.json中，因此不再放入队列，而是直接在process里完成
     
-
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info('process {}'.format(url))
     if not hasattr(process, '_downloader'):
@@ -100,22 +99,15 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 batch_id,
                 gap,
                 timeout = timeout,
-<<<<<<< HEAD
                 encoding = 'utf-8',
                 refresh = True)
-=======
-                encoding = 'utf-8')
-                
-            if sidebar_content == '':
-                return False
->>>>>>> 519f98db4428252adc0df38a92fb42556ac26a05
 
             sidebar_dom = lxml.html.fromstring(sidebar_content)
             sidebar_label = sidebar_dom.xpath('//div[@class="box-con-r fr"]/table//tr')
             if not isinstance(sidebar_label, list) or len(sidebar_label) != 19:
                 get_logger(batch_id, today_str, '/opt/service/log/').info('not legal list!')
                 return False
-            
+            print ('111')
             sidebar_item = {} # 边栏信息
             for index in range(1,16): 
                 line_content = sidebar_label[index].xpath('./td/text()') #line content格式为 权重比：0.0278、市净率：2.00...  
@@ -125,20 +117,15 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             line_content = sidebar_label[16].xpath('./th/text()')  #最后更新时间的样式与其他不同，为th
             parts = line_content[0].split('：') 
             sidebar_item[parts[0]] = parts[1]
-
+            print ('121')
             history_content = process._downloader.downloader_wrapper(
                 url,
                 batch_id,
                 gap,
                 timeout = timeout,
-<<<<<<< HEAD
                 encoding = 'utf-8',
                 refresh = True)
-
-=======
-                encoding = 'utf-8',)
-                
->>>>>>> 519f98db4428252adc0df38a92fb42556ac26a05
+            print ('129')
             if history_content == '':
                 return False
             get_logger(batch_id, today_str, '/opt/service/log/').info('history downloading finished')
@@ -149,14 +136,13 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 date = raw_daily_data[u'Date_time']
                 price = raw_daily_data[u'DayCapilization']
                 price_history[date] = price
+            print ('140')
 
             result_item = {}
             result_item['name'] = name
             result_item['info'] = sidebar_item
             result_item['price_history'] = price_history
-
-<<<<<<< HEAD
+            f = open('jiage.txt','a')
+            f.write(json.dumps(result_item, ensure_ascii = False))
+            f.close()
             return process._cache.post(url, json.dumps(result_item, ensure_ascii = False),refresh = True)
-=======
-            return process._cache.post(url, json.dumps(result_item, ensure_ascii = False))
->>>>>>> 519f98db4428252adc0df38a92fb42556ac26a05
