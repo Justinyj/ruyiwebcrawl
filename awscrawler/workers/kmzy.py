@@ -72,9 +72,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             continue
         
         if label == 'main':
-            total_page = 56 # total_page是在主网页上观察得出的总页数，当前为55
+            total_page = 10 # 初始化为一个较小的数，之后在获取页面内容后会更新此总页数
             page_num = 1
-            while page_num < total_page:
+            while page_num < total_page + 1:
 
                 post_form['pagecode'] = page_num 
                 # print(page_num)
@@ -88,6 +88,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 )
                 # print(content)
                 data = json.loads(content)
+                total_page = data['page']   # 从json中读出总页数
                 drugs = []
                 drug_url = 'http://www.kmzyw.com.cn/bzjsp/Biz_price_history/price_history_search.jsp?name={}'
                 for row in data['rows']:
