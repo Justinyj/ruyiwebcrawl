@@ -49,6 +49,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     def timestamp2datetime(timestamp):
         if isinstance(timestamp, (int, long, float)):
             dt = datetime.utcfromtimestamp(timestamp)
+        else:
+            return "Not a valid timestamp"
         mid = '-0' if dt.month < 10 else '-'
         return str(dt.year) + mid + str(dt.month) 
 
@@ -70,13 +72,12 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             continue
         
         if label == 'main':
-            
+            total_page = 56 # total_page是在主网页上观察得出的总页数，当前为55
             page_num = 1
-            while page_num < 56:
+            while page_num < total_page:
 
                 post_form['pagecode'] = page_num 
                 # print(page_num)
-                time.sleep(0.5)
                 content = process._downloader.downloader_wrapper(url,
                 batch_id,
                 gap,
