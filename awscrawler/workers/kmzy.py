@@ -3,7 +3,9 @@
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
 # json format:
 # {"data": [["2016-01", 11.0], ["2016-02", 11.0], ["2016-03", 11.0], ["2016-04", 10.0], ["2016-05", 9.5], ["2016-06", 9.5], 
-#  ["2016-07", 9.4]], "specs": "\u7edf/\u6cb3\u5357", "name": "\u767d\u82b1\u86c7\u820c\u8349"}
+#  ["2016-07", 9.4]], "specs": "统/河南", "name": "白花蛇舌草"}
+# {"data": [["2016-01", 11.0], ["2016-02", 11.0], ["2016-03", 11.0], ["2016-04", 10.0], ["2016-05", 9.5], ["2016-06", 9.5], 
+#  ["2016-07", 9.4]], "specs": "统/甘肃", "name": "白花蛇舌草"}
 
 from __future__ import print_function, division
 import sys
@@ -44,7 +46,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             'prd': re.compile(r'http://www.kmzyw.com.cn/bzjsp/Biz_price_history/price_history_search.jsp\?name=(.*?)')
         })
 
-    def timestamp2datetime(timestamp, convert_to_local=False):
+    def timestamp2datetime(timestamp):
         if isinstance(timestamp, (int, long, float)):
             dt = datetime.utcfromtimestamp(timestamp)
         mid = '-0' if dt.month < 10 else '-'
