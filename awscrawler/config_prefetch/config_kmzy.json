@@ -1,0 +1,23 @@
+{
+    "batch_ids": {
+        "entity": "kmzy-20160808"
+    },
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "kmzy-20160808",
+                "crawl_http_method": "get",
+                "crawl_gap": 0.5,
+                "crawl_use_js_engine": false,
+                "length": 21,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 6,
+                "filename_urls": "/home/admin/kmzy_pages.txt"
+            }
+        },
+        "aws_machine_number": 20,
+        "note": "康美中药",
+        "debug": false
+    }
+}
