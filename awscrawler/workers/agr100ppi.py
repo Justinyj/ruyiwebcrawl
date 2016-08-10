@@ -86,7 +86,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             return True
 
         else:
-
+            data = {}
             data['name'] = page.xpath("/html/body/div[8]/div[1]/span[2]/text()")[0]
             print(data['name'], 'prd page')
             # data['prd_header'] = page.xpath("//div[@class=\"mb20\"]/table/tr/th/text()")
@@ -118,7 +118,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             data[u'联系方式'] = contact
 
             print(json.dumps(data, encoding='utf-8', ensure_ascii=False))
-            return process._cache.post(url, data)
+            dics = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+            return process._cache.post(url, dics)
 
 
 
