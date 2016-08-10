@@ -36,7 +36,8 @@ def runapp(flag_run=True, param=None):
         with prefix('source env.sh {}'.format(DEPLOY_ENV)):
             run('pip install -r requirements.txt')
             if flag_run:
-                run('dtach -n /tmp/{}.sock {}'.format(prog, 'python controller.py -b searchzhidao-json-20160707 -m 120 -p program.py'))
+#                run('dtach -n /tmp/{}.sock {}'.format(prog, 'python controller.py -b searchzhidao2-json-20160728 -m 100 -p program.py'))
+                run('dtach -n /tmp/{}.sock {}'.format(prog, 'python controller.py -b chem-json-20160728 -m 50 -p chem_program.py'))
 
 
 def deploy_worker():

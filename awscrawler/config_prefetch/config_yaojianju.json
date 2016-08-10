@@ -13,11 +13,11 @@
                 "priority": 1,
                 "crawl_timeout": 10,
                 "failure_times": 5,
-                "filename_urls": "/tmp/drug_url.txt",
+                "filename_urls": "/tmp/drug_url.txt"
             }
         },
         "aws_machine_number": 2,
         "note": "药监局药品爬取",
-        "debug": true
+        "debug": false
     }
 }

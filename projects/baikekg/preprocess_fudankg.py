@@ -27,21 +27,21 @@ def merge_fudankg(bucketname):
     start_time = time.time()
 
     def find_other_package(entity, original):
-        if original not in [u'av path', u'Information', u'Tags']:
+        if original not in [u'av pair', u'Information', u'Tags']:
             return
 
         ent = urllib.quote(entity.encode('utf-8'))
         urlpattern = {
-            u'av pair': 'https://crl.ptopenlab.com:8800/cndbpedia/api/entityAVP?entity={}',
+            u'av pair':     'https://crl.ptopenlab.com:8800/cndbpedia/api/entityAVP?entity={}',
             u'Information': 'https://crl.ptopenlab.com:8800/cndbpedia/api/entityInformation?entity={}',
-            u'Tags': 'https://crl.ptopenlab.com:8800/cndbpedia/api/entityTag?entity={}',
+            u'Tags':        'https://crl.ptopenlab.com:8800/cndbpedia/api/entityTag?entity={}',
         }
 
-        for k, v in urlpattern.iteritems():
+        for k, val in urlpattern.iteritems():
             if k == original:
                 continue
 
-            url = v.format(ent)
+            url = val.format(ent)
             url_hash = hashlib.sha1(url).hexdigest()
             filename = '{}_{}'.format(batch_id, url_hash)
             fname = os.path.join(bucketname, filename[-1], filename)
@@ -65,27 +65,27 @@ def merge_fudankg(bucketname):
                 if entity in entities:
                     continue
 
-            if u'Tags' in v:
-                if v[u'Tags'] != []:
-                    data[entity][u'Tags'] = v[u'Tags']
-                    gcounter[u'Tags'] += 1
-                    gcounter['count'] += 1
-                find_other_package(entity, u'Tags')
-                entities.add(entity)
-            elif u'Information' in v:
-                if v[u'Information'] != []:
-                    data[entity][u'Information'] = v[u'Information']
-                    gcounter[u'Information'] += 1
-                    gcounter['count'] += 1
-                find_other_package(entity, u'Information')
-                entities.add(entity)
-            elif u'av pair' in v:
-                if v[u'av pair'] != []:
-                    data[entity][u'av pair'] = v[u'av pair']
-                    gcounter[u'av pair'] += 1
-                    gcounter['count'] += 1
-                find_other_package(entity, u'av pair')
-                entities.add(entity)
+                if u'Tags' in v:
+                    if v[u'Tags'] != []:
+                        data[entity][u'Tags'] = v[u'Tags']
+                        gcounter[u'Tags'] += 1
+                        gcounter['count'] += 1
+                    find_other_package(entity, u'Tags')
+                    entities.add(entity)
+                elif u'Information' in v:
+                    if v[u'Information'] != []:
+                        data[entity][u'Information'] = v[u'Information']
+                        gcounter[u'Information'] += 1
+                        gcounter['count'] += 1
+                    find_other_package(entity, u'Information')
+                    entities.add(entity)
+                elif u'av pair' in v:
+                    if v[u'av pair'] != []:
+                        data[entity][u'av pair'] = v[u'av pair']
+                        gcounter[u'av pair'] += 1
+                        gcounter['count'] += 1
+                    find_other_package(entity, u'av pair')
+                    entities.add(entity)
 
             if len(data) > 10000:
                 saved_filename = os.path.join(saved_dir, str(gcounter['count']))
@@ -126,6 +126,27 @@ def get_fudankg_entity(entity_dict=False):
 
 
 
+def information_exist_proportion():
+    from hzlib.libfile import write_file
+    saved_dir = '/data/crawler_file_cache/fudankg_saved'
+    gcounter = Counter()
+    entities_info_not_exist = set()
+
+    for f in os.listdir(saved_dir):
+        fname = os.path.join(saved_dir, f)
+        with open(fname) as fd:
+            for entity, dic in json.load(fd).iteritems():
+                if u'Information' in dic:
+                    gcounter['exist'] += 1
+                else:
+                    entities_info_not_exist.add(entity)
+                gcounter['total'] += 1
+
+    print(gcounter['exist'] / gcounter['total'])
+    write_file('fudankg_entities_info_not_exist.txt', list(entities_info_not_exist))
+
+
+
 if __name__ == '__main__':
     import sys
     print(sys.argv)
@@ -134,4 +155,6 @@ if __name__ == '__main__':
         merge_fudankg('fudankg-json')
     elif sys.argv[1] == 'entity':
         get_fudankg_entity()
+    elif sys.argv[1] == 'proportion':
+        information_exist_proportion()
 

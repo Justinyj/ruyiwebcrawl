@@ -1,0 +1,24 @@
+{
+    "batch_ids": {
+        "entity": "zysj-20160803"
+    },
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "zysj-20160803",
+                "crawl_http_method": "get",
+                "crawl_gap": 0.5,
+                "crawl_use_js_engine": false,
+                "length": 500,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 6,
+                "filename_urls": "/home/admin/zysj_pages.txt",
+                "url_pattern": "http://www.zysj.com.cn/zhongyaocai/index__{}.html"
+            }
+        },
+        "aws_machine_number": 50,
+        "note": "中医世家",
+        "debug": false
+    }
+}
