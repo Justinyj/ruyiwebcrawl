@@ -77,18 +77,21 @@ def batch_init(esconfig, datasets):
             print "init index",  dataset["es_index"]
 
             ret = run_es_search(esconfig,  dataset["es_index"],"" , {})
-            print ret
+            #print ret
             if ret is None:
                 run_es_create_index(esconfig, dataset["es_index"])
                 es_index_all.add(dataset["es_index"])
+                print "batch_init run_es_create_index"
 
     for dataset in datasets:
         with open(dataset["filepath_mapping"],'r') as f:
             mappings = json.load(f)
         ret = run_es_get_mapping(esconfig,  dataset["es_index"], dataset["es_type"] )
-        print ret
+        #print ret
         if not ret:
             run_es_create_mapping(esconfig, dataset["es_index"], dataset["es_type"], mappings)
+            print "batch_init run_es_create_mapping"
+
 
 def batch_upload(esconfig, datasets, suffix_esdata, esbulk_size=1000):
     #es_api.do_test('test')
