@@ -18,6 +18,6 @@
         },
         "aws_machine_number": 10,
         "note": "中华粮网爬取农副产品信息",
-        "debug": true
+        "debug": false
     }
 }
