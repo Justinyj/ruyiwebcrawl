@@ -35,10 +35,12 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
-            'prd': re.compile(r'http://agr.100ppi.com/price/plist-(\d+)(-{1,3})(\d+).html')
+            'main': re.compile(r'http://agr.100ppi.com/price/plist-(\d+)(-{1,3})(\d+).html'),
+            'prd': re.compile(r'http://www.100ppi.com/price/detail-(\d+).html')
         })
 
-
+    def safe_state(statement):
+        return statement[0] if statement else ''
     method, gap, js, timeout, data = parameter.split(':')
     gap = float(gap)
     timeout= int(timeout)
@@ -54,8 +56,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         )
     # print(content)
     if content == '':
-        # print("no content")
-        get_logger(batch_id, today_str, '/opt/service/log/').info(url + ' no content')
+        print("no content")
+        # get_logger(batch_id, today_str, '/opt/service/log/').info(url + ' no content')
         return False
     
     # content.encoding='gb18030'
@@ -68,32 +70,56 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             continue
         page = etree.HTML(content)
 
-        if label == 'prd':
-            prd_name = page.xpath('/html/body/div[1]/div[2]/a[3]/span/text()')[0]
-            data = {}
-            dics = ''
-            for i in range(2,50): # i 为 table 的行数，第一行为header，不同商品表中行数可能不同，但均小于50，设置循环上限为50在获取不到信息时break
-                data[u'商品名称'] = prd_name
-                data[u'报价机构'] = page.xpath("//table/tr[{}]/td[1]/div/a/text()".format(str(i)))[0].strip() if  page.xpath("//table/tr[{}]/td[1]/div/a/text()".format(str(i))) else ''
-                data[u'报价类型'] = page.xpath("//table/tr[{}]/td[2]/text()".format(str(i)))[0].strip() if page.xpath("//table/tr[{}]/td[2]/text()".format(str(i))) else ''
-                data[u'报价'] = page.xpath("//table/tr[{}]/td[3]/text()".format(str(i)))[0].strip() if page.xpath("//table/tr[{}]/td[3]/text()".format(str(i))) else ''
-                data[u'规格'] = page.xpath("//table/tr[{}]/td[4]/text()".format(str(i)))[0].strip() if page.xpath("//table/tr[{}]/td[4]/text()".format(str(i))) else ''
-                data[u'产地'] = page.xpath("//table/tr[{}]/td[5]/div/text()".format(str(i)))[0].strip() if page.xpath("//table/tr[{}]/td[5]/div/text()".format(str(i))) else ''
-                data[u'发布时间'] = page.xpath("//table/tr[{}]/td[6]/text()".format(str(i)))[0].strip() if page.xpath("//table/tr[{}]/td[6]/text()".format(str(i))) else ''
-                
-                if not data[u'报价机构']:
-                    break
-                dics += json.dumps(data, encoding='utf-8', ensure_ascii=False) + '\n'
-            urls = page.xpath('//div[@class=\"page-inc magt10\"]/a[11]/@href')
-            if not urls:
-                urls = page.xpath('//div[@class=\"page-inc magt10\"]/a[10]/@href')
-            # print(dics)
-            # print(urls)
-            get_logger(batch_id, today_str, '/opt/service/log/').info(urls[0] + ' added to queue')
-            if not dics:
+        if label == 'main':
+            print("adding agricultural prds")
+            prd_links = page.xpath('//table/tr/td[1]/div/a/@href')
+
+            next_page = page.xpath('//div[@class=\"page-inc magt10\"]/a[11]/@href')
+            if not next_page:
+                next_page = page.xpath('//div[@class=\"page-inc magt10\"]/a[10]/@href')
+            if not next_page:
                 return True
-            urls = [ urlparse.urljoin(SITE, url) for url in urls ]
-            manager.put_urls_enqueue(batch_id, urls)
-            return process._cache.post(url, dics)
+            prd_links.append(urlparse.urljoin(SITE, next_page[0]))
+            print(prd_links)
+            # get_logger(batch_id, today_str, '/opt/service/log/').info(urls[0] + ' added to queue')
+            manager.put_urls_enqueue(batch_id, prd_links)
+            return True
+
+        else:
+
+            data['name'] = page.xpath("/html/body/div[8]/div[1]/span[2]/text()")[0]
+            print(data['name'], 'prd page')
+            # data['prd_header'] = page.xpath("//div[@class=\"mb20\"]/table/tr/th/text()")
+            # data['prd_infos'] = page.xpath("//div[@class=\"mb20\"]/table/tr/td/text()")
+            data[u'报价机构'] = page.xpath("/html/body/div[8]/div[2]/div[2]/div[2]/table/tr[1]/td/h3/text()")[0].strip()
+            data[u'商品报价'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[1]/td[1]/text()"))
+            data[u'发布时间'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[1]/td[2]/text()"))
+            data[u'出产地'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[2]/td[1]/text()"))
+            data[u'有效期'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[2]/td[2]/text()"))
+            data[u'仓储地'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[3]/td[1]/text()"))
+            data[u'包装说明'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[3]/td[2]/text()"))
+            data[u'生产厂家'] = safe_state(page.xpath("/html/body/div[8]/div[2]/div[1]/div[2]/div/div[2]/text()"))
+
+            info = {}
+            table_header = page.xpath("//table[@class=\"mb20 st2-table tac\"]/tr/th/text()")
+            table_content = page.xpath("//table[@class=\"mb20 st2-table tac\"]/tr/td/text()")
+            for header, cont in zip(table_header, table_content):
+                info[header] = cont
+            data[u'详细信息'] = info
+
+            contact = {}
+            contact[u'联系人'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[2]/td[2]/text()"))
+            contact[u'电话'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[3]/td[2]/text()"))
+            contact[u'传真'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[4]/td[2]/text()"))
+            contact[u'邮件'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[5]/td[2]/text()"))
+            contact[u'手机'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[6]/td[2]/text()"))
+            contact[u'地址'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[7]/td[2]/text()"))
+            contact[u'网址'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[8]/td[2]/text()"))
+            data[u'联系方式'] = contact
+
+            print(json.dumps(data, encoding='utf-8', ensure_ascii=False))
+            return process._cache.post(url, data)
+
+
 
 
