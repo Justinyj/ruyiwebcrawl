@@ -51,13 +51,11 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     content = process._downloader.downloader_wrapper(url,
         batch_id,
         gap,
-        timeout=timeout,
-        refresh=True
+        timeout=timeout
         )
     # print(content)
     if content == '':
-        print("no content")
-        # get_logger(batch_id, today_str, '/opt/service/log/').info(url + ' no content')
+        get_logger(batch_id, today_str, '/opt/service/log/').info(url + ' no content')
         return False
     
     # content.encoding='gb18030'
@@ -71,26 +69,33 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         page = etree.HTML(content)
 
         if label == 'main':
-            print("adding agricultural prds")
+            # print("adding agricultural prds")
             prd_links = page.xpath('//table/tr/td[1]/div/a/@href')
-
-            next_page = page.xpath('//div[@class=\"page-inc magt10\"]/a[11]/@href')
-            if not next_page:
-                next_page = page.xpath('//div[@class=\"page-inc magt10\"]/a[10]/@href')
-            if not next_page:
+            if not prd_links:
+                # print('end of pages')
+                get_logger(batch_id, today_str, '/opt/service/log/').info('end of pages')
                 return True
-            prd_links.append(urlparse.urljoin(SITE, next_page[0]))
-            print(prd_links)
-            # get_logger(batch_id, today_str, '/opt/service/log/').info(urls[0] + ' added to queue')
+
+            next_pat = re.compile(r'plist-(\d+)(-{1,3})(\d+).html')
+            current = next_pat.search(url)
+            current = str(int(current.group(3)) + 1)
+            next_page = url[:url.rfind('-') + 1] + current + '.html'
+
+            prd_links.append(urlparse.urljoin(SITE, next_page))
+            get_logger(batch_id, today_str, '/opt/service/log/').info('||'.join(prd_links) + ' added to queue')
             manager.put_urls_enqueue(batch_id, prd_links)
             return True
 
         else:
             data = {}
             data['name'] = page.xpath("/html/body/div[8]/div[1]/span[2]/text()")[0]
-            print(data['name'], 'prd page')
+            data['url'] = url
+            # print(data['name'], 'prd page')
             # data['prd_header'] = page.xpath("//div[@class=\"mb20\"]/table/tr/th/text()")
             # data['prd_infos'] = page.xpath("//div[@class=\"mb20\"]/table/tr/td/text()")
+            prd_header = page.xpath("/html/body/div[8]/div[2]/div[1]/div[1]/h3/text()")[0]
+            idx_left, idx_right = prd_header.find(u'('), prd_header.find(u')')
+            data[u'报价类型'] = prd_header[idx_left+1: idx_right]
             data[u'报价机构'] = page.xpath("/html/body/div[8]/div[2]/div[2]/div[2]/table/tr[1]/td/h3/text()")[0].strip()
             data[u'商品报价'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[1]/td[1]/text()"))
             data[u'发布时间'] = safe_state(page.xpath("//div[@class=\"mb20\"]/table/tr[1]/td[2]/text()"))
@@ -117,8 +122,9 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             contact[u'网址'] = safe_state(page.xpath("//div[@class=\"connect\"]/table/tr[8]/td[2]/text()"))
             data[u'联系方式'] = contact
 
-            print(json.dumps(data, encoding='utf-8', ensure_ascii=False))
+            # print(json.dumps(data, encoding='utf-8', ensure_ascii=False))
             dics = json.dumps(data, encoding='utf-8', ensure_ascii=False)
+            get_logger(batch_id, today_str, '/opt/service/log/').info(dics + ' saved to S3')
             return process._cache.post(url, dics)
 
 
