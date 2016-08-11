@@ -14,7 +14,7 @@ def set_ok():  #只针对test_ok的setup代码
     pass
 
 @with_setup(set_ok)
-def test_():
+def test_strip_answer():
     text = u'きみは可爱ね。'
     ret = libdata.strip_good_answer(text)
     if ret["status"] == "ok":

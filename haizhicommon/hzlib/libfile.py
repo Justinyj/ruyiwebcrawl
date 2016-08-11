@@ -52,11 +52,15 @@ def writeExcel(items, keys, filename, page_size=60000):
     wb.save(filename)
 
 
-def readExcel(headers, filename, start_row=0, non_empty_col=-1):
+def readExcel(headers, filename, start_row=0, non_empty_col=-1, file_contents=None):
     # http://www.lexicon.net/sjmachin/xlrd.html
     import xlrd
     counter = collections.Counter()
-    workbook = xlrd.open_workbook(filename)
+    if file_contents:
+        workbook = xlrd.open_workbook(file_contents=file_contents)
+    else:
+        workbook = xlrd.open_workbook(filename)
+
     ret = defaultdict(list)
     for name in workbook.sheet_names():
         sh = workbook.sheet_by_name(name)
