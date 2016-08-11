@@ -88,21 +88,13 @@ def run(config):
     for i, v in jobs:
         if i == mini_key:
             continue
-        if "filename_urls" in v:
-            v_url_length = get_urls_length(v["filename_urls"])
-            v_url_pattern = v["url_pattern"] if "url_pattern" in v else None
-            v_urls_func = partial(load_urls, v["filename_urls"], v_url_pattern)
-        else:
-            v_url_length = url_length
-            v_urls_func = None
-
         print(datetime.datetime.now().isoformat(), 'start post_job with delay')
         tasks.append( post_job(v["batch_id"],
                                v["crawl_http_method"],
                                v["crawl_gap"],
                                v["crawl_use_js_engine"],
-                               int(v_url_length * v["length"]),
-                               urls_func=v_urls_func,
+                               int(url_length * v["length"]),
+                               urls_func=None,
                                priority=v["priority"],
                                queue_timeout=v["crawl_timeout"],
                                failure_times=v.get('failure_times', 3),
