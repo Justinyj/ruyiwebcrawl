@@ -45,7 +45,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     gap = float(gap)
     timeout= int(timeout)
     today_str = datetime.now().strftime('%Y%m%d')
-    print(url)
+    # print(url)
     # if kwargs and kwargs.get("debug"):
     #     get_logger(batch_id, today_str, '/opt/service/log/').info('start download')
     content = process._downloader.downloader_wrapper(url,
