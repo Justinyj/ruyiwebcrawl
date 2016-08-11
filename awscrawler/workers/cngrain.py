@@ -32,15 +32,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
     if not hasattr(process, '_downloader'):
         headers = {
-                    'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'Accept-Encoding':'gzip, deflate, sdch',
-                    'Accept-Language':'zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4',
-                    'Cache-Control':'max-age=0',
-                    'Connection':'keep-alive',
                     'Cookie':'AJSTAT_ok_times=1; ant_stream_5762b612883d9=1470748235/1519574204; ASP.NET_SessionId=rpdjsrnmq3ybp0f4cnbdewm1; __utmt=1; bow_stream_5762b612883d9=13; __utma=240343830.1666180114.1470705813.1470719553.1470752966.3; __utmb=240343830.6.10.1470752966; __utmc=240343830; __utmz=240343830.1470705813.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)',
                     'Host':'datacenter.cngrain.com',
-                    'Upgrade-Insecure-Requests':'1',
-                    'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36',
             }
         setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
 
@@ -84,7 +77,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             if content == '':
                 return False
             while 1:
-                time.sleep(gap)
                 dom = lxml.html.fromstring(content) #开始解析当前页
                 market_suffixes = dom.xpath('//a[contains(@href,"MarketId")]/@href')
                 if not market_suffixes:
