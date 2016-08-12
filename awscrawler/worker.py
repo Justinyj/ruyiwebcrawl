@@ -125,6 +125,7 @@ class GetWorker(Worker):
         except:
             module = __import__('workers.prefetch', fromlist=['process'])
 
+        today_str = datetime.now().strftime('%Y%m%d')
         if kwargs and kwargs.get("debug"):
             get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
 
@@ -145,7 +146,7 @@ class GetWorker(Worker):
         except Exception as e:
             Record.instance().add_exception(batch_id, url, repr(e))
             queue_dict['queue'].task_done(url_id)
-            continue
+            return
 
         if process_status:
             if kwargs and kwargs.get("debug"):
