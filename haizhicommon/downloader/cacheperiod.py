@@ -16,7 +16,7 @@ class CachePeriod(object):
 
 
     def exists(self, url):
-        url_hash = hashlib.sha1(url)
+        url_hash = hashlib.sha1(url).hexdigest()
         api_url = 'v1/cache/{}/{}'.format(url_hash, self.batch_id)
         get_api_url = urlparse.urljoin(self.server, api_url)
         response = requests.get(get_api_url, data={'exists': True})
@@ -28,10 +28,9 @@ class CachePeriod(object):
 
 
     def get(self, url):
-        url_hash = hashlib.sha1(url)
+        url_hash = hashlib.sha1(url).hexdigest()
         api_url = 'v1/cache/{}/{}'.format(url_hash, self.batch_id)
         get_api_url = urlparse.urljoin(self.server, api_url)
-
         response = requests.get(get_api_url)
 
         js = response.json()
@@ -42,10 +41,9 @@ class CachePeriod(object):
 
 
     def post(self, url, content, groups=None, refresh=False):
-        url_hash = hashlib.sha1(url)
+        url_hash = hashlib.sha1(url).hexdigest()
         api_url = 'v1/cache/{}/{}'.format(url_hash, self.batch_id)
         post_api_url = urlparse.urljoin(self.server, api_url)
-
         data = {
             'groups': groups,
             'content': content,
