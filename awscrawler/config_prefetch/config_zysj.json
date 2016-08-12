@@ -1,11 +1,11 @@
 {
     "batch_ids": {
-        "entity": "zysj"
+        "entity": "zysj-20160803"
     },
     "indexes": {
         "jobs": {
             "0": {
-                "batch_id": "zysj",
+                "batch_id": "zysj-20160803",
                 "crawl_http_method": "get",
                 "crawl_gap": 0.5,
                 "crawl_use_js_engine": false,
