@@ -38,6 +38,7 @@ def slack(msg):
 
 def run(config):
     ts_start = time.time()
+    today_str = datetime.datetime.now().strftime('-%Y%m%d')
 
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start finding first job --- dryrun mode')
@@ -54,7 +55,7 @@ def run(config):
     if not config.get("debug"):
         slack( u"run {} batch_id: {}, urls length: {} debug: {}".format(
             config["note"],
-            job["batch_id"],
+            job["batch_id"] + today_str,
             url_length,
             config.get("debug", False)) )
 
@@ -63,7 +64,7 @@ def run(config):
         print(datetime.datetime.now().isoformat(), 'start instances')
     if not config.get("debug"):
         schedule = Schedule(config["aws_machine_number"],
-                            tag=config["jobs"][mini_key]["batch_id"].split('-', 1)[0],
+                            tag=config["jobs"][mini_key]["batch_id"],
                             backoff_timeout=config["jobs"][mini_key]["crawl_timeout"])
 
         catch_terminate_instances_signal(schedule)
@@ -71,7 +72,7 @@ def run(config):
     print(datetime.datetime.now().isoformat(), 'start post_job')
 
     tasks = [
-        post_job(job["batch_id"],
+        post_job(job["batch_id"] + today_str,
                  job["crawl_http_method"],
                  job["crawl_gap"],
                  job["crawl_use_js_engine"],
@@ -88,13 +89,21 @@ def run(config):
     for i, v in jobs:
         if i == mini_key:
             continue
+        if "filename_urls" in v:
+            v_url_length = get_urls_length(v["filename_urls"])
+            v_url_pattern = v["url_pattern"] if "url_pattern" in v else None
+            v_urls_func = partial(load_urls, v["filename_urls"], v_url_pattern)
+        else:
+            v_url_length = url_length
+            v_urls_func = None
+
         print(datetime.datetime.now().isoformat(), 'start post_job with delay')
-        tasks.append( post_job(v["batch_id"],
+        tasks.append( post_job(v["batch_id"] + today_str,
                                v["crawl_http_method"],
                                v["crawl_gap"],
                                v["crawl_use_js_engine"],
-                               int(url_length * v["length"]),
-                               urls_func=None,
+                               int(v_url_length * v["length"]),
+                               urls_func=v_urls_func,
                                priority=v["priority"],
                                queue_timeout=v["crawl_timeout"],
                                failure_times=v.get('failure_times', 3),
@@ -129,7 +138,7 @@ def run(config):
 
     seconds = int(time.time() - ts_start)
     if not config.get("debug"):
-        slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"], seconds) )
+        slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"] + today_str, seconds) )
 
 
 def get_urls_length(fname):
