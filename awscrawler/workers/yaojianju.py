@@ -123,6 +123,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             'license_data':         table[11].xpath('./td')[1].xpath('./text()'), #[u'批准日期'],
             'standard_code':        table[12].xpath('./td')[1].xpath('./text()'), #[u'药品本位码'],
             'standard_code_remark': table[13].xpath('./td')[1].xpath('./text()'), #[u'药品本位码备注'],
+            'url'                 : [url],
         }
         for k,v in item.iteritems():
             if len(v) > 0:
