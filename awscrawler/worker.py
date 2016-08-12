@@ -67,6 +67,7 @@ class GetWorker(Worker):
 
          None,   0,                    finish cleaning then exception
         """
+        checkout_cache = {}
         for batch_id, queue_dict in self.manager.get_queue_with_priority():
             queue = queue_dict['queue']
             if Record.instance().is_finished(batch_id) is True:
@@ -78,13 +79,19 @@ class GetWorker(Worker):
                 continue
 
             background = queue.get_background_cleaning_status()
-            if background is None:
-                self.work(batch_id, queue_dict, *args, **kwargs)
-            elif background == '1':
-                self.work(batch_id, queue_dict, *args, **kwargs)
 
-            elif background == '0':
+            if background == '0':
                 pass
+            elif background is None or background == '1':
+                checkout_cache[batch_id] = queue_dict
+
+        while len(checkout_cache) > 0:
+            removes = []
+            for batch_id, queue_dict in checkout_cache.iteritems():
+                if self.work(batch_id, queue_dict, *args, **kwargs) is False:
+                    removes.append(batch_id)
+            [checkout_cache.pop(i) for i in removes]
+
 
 
     def work(self, batch_id, queue_dict, *args, **kwargs):
@@ -94,51 +101,51 @@ class GetWorker(Worker):
         except:
             module = __import__('workers.prefetch', fromlist=['process'])
 
-        while 1:
-            today_str = datetime.now().strftime('%Y%m%d')
+        today_str = datetime.now().strftime('%Y%m%d')
+
+        if kwargs and kwargs.get("debug"):
+            get_logger(batch_id, today_str, '/opt/service/log/').info('begin get items from queue')
+
+        results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
+
+        if kwargs and kwargs.get("debug"):
+            get_logger(batch_id, today_str, '/opt/service/log/').info('finish get items from queue')
+
+        if not results:
+            return False
+
+        for url_id in results:
+            if kwargs and kwargs.get("debug"):
+                get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
+
+            # TODO change to hmget
+            url = queue_dict['thinhash'].hget(url_id)
 
             if kwargs and kwargs.get("debug"):
-                get_logger(batch_id, today_str, '/opt/service/log/').info('begin get items from queue')
+                get_logger(batch_id, today_str, '/opt/service/log/').info('end get url from thinhash redis')
 
-            results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
+            try:
+                process_status = module.process(url,
+                                                batch_id,
+                                                self._batch_param[batch_id],
+                                                self.manager,
+                                                *args,
+                                                **kwargs)
+            except Exception as e:
+                Record.instance().add_exception(batch_id, url, repr(e))
+                queue_dict['queue'].task_done(url_id)
+                continue
 
-            if kwargs and kwargs.get("debug"):
-                get_logger(batch_id, today_str, '/opt/service/log/').info('finish get items from queue')
-
-            if not results:
-                break
-
-            for url_id in results:
+            if process_status:
                 if kwargs and kwargs.get("debug"):
-                    get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('begin task done for record redis')
 
-                # TODO change to hmget
-                url = queue_dict['thinhash'].hget(url_id)
+                queue_dict['queue'].task_done(url_id)
+                Record.instance().increase_success(batch_id)
 
                 if kwargs and kwargs.get("debug"):
-                    get_logger(batch_id, today_str, '/opt/service/log/').info('end get url from thinhash redis')
-
-                try:
-                    process_status = module.process(url,
-                                                    batch_id,
-                                                    self._batch_param[batch_id],
-                                                    self.manager,
-                                                    *args,
-                                                    **kwargs)
-                except Exception as e:
-                    Record.instance().add_exception(batch_id, url, repr(e))
-                    queue_dict['queue'].task_done(url_id)
-                    continue
-
-                if process_status:
-                    if kwargs and kwargs.get("debug"):
-                        get_logger(batch_id, today_str, '/opt/service/log/').info('begin task done for record redis')
-
-                    queue_dict['queue'].task_done(url_id)
-                    Record.instance().increase_success(batch_id)
-
-                    if kwargs and kwargs.get("debug"):
-                        get_logger(batch_id, today_str, '/opt/service/log/').info('end task done for record redis')
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('end task done for record redis')
+        return False
 
 
 def main():
