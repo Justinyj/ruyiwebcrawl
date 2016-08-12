@@ -104,7 +104,7 @@ class Downloader(object):
 
     def request_download(self, url, method='get', encoding=None, redirect_check=False, error_check=False, data=None):
         for i in range(self.RETRY):
-
+            sleep_flag = False
             try:
                 if method == 'post':
                     response = self.driver.post(url, timeout=self.TIMEOUT, data=data)
@@ -113,16 +113,22 @@ class Downloader(object):
 
                 if response.status_code == 200:
                     if redirect_check and response.url != url:
+                        sleep_flag = True
                         continue
                     if error_check:
                         if __import__('downloader.error_checker.{}'.format(self.batch_key_file), fromlist=['error_checker']).error_checker(response):
+                            sleep_flag = True
                             continue
                     response.encoding = encoding
                     return response.text # text is unicode
+                else:
+                    sleep_flag = True
             except Exception as e: # requests.exceptions.ProxyError, requests.ConnectionError, requests.ConnectTimeout
                                    # requests.exceptions.MissingSchema
                 print('requests failed: {}, detail: {}'.format(sys.exc_info()[0], e))
             finally:
+                if sleep_flag is True:
+                    time.sleep(2)
                 time.sleep(self._get_sleep_period())
         else:
             return u''
