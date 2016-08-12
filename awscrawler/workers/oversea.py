@@ -23,7 +23,7 @@ from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
 
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info(url)
     home_page = 'http://app1.sfda.gov.cn/datasearch/face3/base.jsp?tableId=36&tableName=TABLE36&title=%BD%F8%BF%DA%D2%A9%C6%B7&bcId=124356651564146415214424405468'
@@ -44,6 +44,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
+    gap = max(gap - other_batch_process_time, 0)
 
     
     #if kwargs and kwargs.get("debug"):

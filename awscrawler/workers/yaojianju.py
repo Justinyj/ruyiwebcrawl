@@ -18,7 +18,7 @@ from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
 
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     home_page = 'http://app1.sfda.gov.cn/datasearch/face3/base.jsp?tableId=25&tableName=TABLE25&title=%B9%FA%B2%FA%D2%A9%C6%B7&bcId=124356560303886909015737447882'
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
@@ -37,6 +37,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
+    gap = max(gap - other_batch_process_time, 0)
 
     today_str = datetime.now().strftime('%Y%m%d')
 

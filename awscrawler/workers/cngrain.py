@@ -22,7 +22,7 @@ from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
 
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info('process {}'.format(url))
 
@@ -52,7 +52,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
-    
+    gap = max(gap - other_batch_process_time, 0)
+
     for label, reg in process._regs.iteritems():
         m = reg.match(url)
         if not m:
