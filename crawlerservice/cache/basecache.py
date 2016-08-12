@@ -9,7 +9,7 @@ import hashlib
 
 from settings import CACHEPAGE
 from .fscache import fs_get_cache, fs_set_cache
-from .pdcache import pd_get_cache, pd_set_cache
+from .periodcache import period_get_cache, period_set_cache
 from .dbcache import db_get_cache, db_set_cache, db_get_all_cache
 from .ufilecache import ufile_get_cache, ufile_set_cache
 from .s3cache import s3_get_cache, s3_put_cache
@@ -22,8 +22,8 @@ class BaseCache(object):
 
     @staticmethod
     def get_cache(b64url, batch_id, exists=False): 
-        if CACHEPAGE == 'pd':
-            return pd_get_cache(b64url, batch_id)
+        if CACHEPAGE == 'period':
+            return period_get_cache(b64url, batch_id)
         url = base64.urlsafe_b64decode(b64url)
         url_hash = hashlib.sha1(url).hexdigest()
 
@@ -41,8 +41,8 @@ class BaseCache(object):
 
     @staticmethod
     def set_cache(b64url, batch_id, groups, content, refresh):
-        if CACHEPAGE == 'pd':
-            return pd_set_cache(b64url, batch_id, groups, content, refresh)
+        if CACHEPAGE == 'period':
+            return period_set_cache(b64url, batch_id, groups, content, refresh)
         url = base64.urlsafe_b64decode(b64url)
         url_hash = hashlib.sha1(url).hexdigest()
 
