@@ -86,58 +86,9 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 timeout=timeout,
                 refresh=True
                 )
-                # print(content)
                 data = json.loads(content)
-                total_page = data['page']   # 从json中读出总页数
-                drugs = []
-                drug_url = 'http://www.kmzyw.com.cn/bzjsp/Biz_price_history/price_history_search.jsp?name={}'
-                for row in data['rows']:
-                    # print(row['drug_name'])
-                    drugs.append(drug_url.format(urllib.quote(str(row['drug_name'])).replace('%', '%25')))
-                manager.put_urls_enqueue(batch_id, drugs)
-                page_num += 1
+                total_page = data['page']
+                # print(content)
+                status = process._cache.post(url, content)
             
             return True
-
-        elif label == 'prd':
-
-            content = process._downloader.downloader_wrapper(
-            url,
-            batch_id,
-            gap,
-            timeout=timeout,
-            refresh=True
-            )
-            page = etree.HTML(content)
-            prd = page.xpath("/html/body/section[2]/h1/text()")[0]
-            idx = prd.index(u'品种')
-            prd = prd[:idx]
-            get_logger(batch_id, today_str, '/opt/service/log/').info(prd + " main page")
-            price_hist  = page.xpath("/html/head/script[12]/text()")[0]
-            # print(price_hist)
-            data_pat = re.compile(r'series : \[(.*),marker')
-            m = data_pat.findall(price_hist)
-            dics = ''
-            if m:
-                # print(m[0])
-                data = m[0].split(',marker : { enabled : false ,radius : 3 } ,tooltip : { valueDecimals : 2 }},')
-                for d in data:
-                    name = 'name'
-                    data = 'data'
-                    dic = eval(d + '}')
-                    # print(dic)
-                    cleaned = {}
-                    cleaned['source'] = url
-                    cleaned['specs'] = dic['name']
-                    cleaned['name'] = prd
-                    cleaned['data'] = [ (timestamp2datetime(int(price[0]) // 1000), price[1]) for price in dic['data'] ]
-                    dics += json.dumps(cleaned, encoding='utf-8') + '\n'
-
-                
-            else:
-                get_logger(batch_id, today_str, '/opt/service/log/').info('not match')
-            
-            get_logger(batch_id, today_str, '/opt/service/log/').info('start posting prd page to cache')
-            return process._cache.post(url, dics)
-
-

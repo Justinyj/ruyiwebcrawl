@@ -71,6 +71,9 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         if label == 'main':
             # print("adding agricultural prds")
             prd_links = page.xpath('//table/tr/td[1]/div/a/@href')
+            newest = page.xpath("//table/tr[2]/td[6]/text()")[0]
+            if newest.replace(u'-','') != today_str:
+                return True 
             if not prd_links:
                 # print('end of pages')
                 get_logger(batch_id, today_str, '/opt/service/log/').info('end of pages')
@@ -123,6 +126,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             data[u'联系方式'] = contact
 
             # print(json.dumps(data, encoding='utf-8', ensure_ascii=False))
+            if data[u'发布时间'].replace(u'-','') != today_str:
+                return True 
             dics = json.dumps(data, encoding='utf-8', ensure_ascii=False)
             get_logger(batch_id, today_str, '/opt/service/log/').info(dics + ' saved to S3')
             return process._cache.post(url, dics)
