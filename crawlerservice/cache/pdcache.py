@@ -14,8 +14,6 @@ import base64
 import hashlib
 import json
 import os
-import sys
-sys.path.append('..')
 from datetime import date
 from crawlerlog import path, cachelog
 
