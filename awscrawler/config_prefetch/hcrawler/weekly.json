@@ -7,7 +7,7 @@
                 "crawl_gap": 1,
                 "crawl_use_js_engine": false,
                 "length": 15,
-                "priority": 1,
+                "priority": 2,
                 "crawl_timeout": 10,
                 "failure_times": 5,
                 "filename_urls": "/home/admin/hcrawler/drug_url.txt"
