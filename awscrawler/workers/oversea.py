@@ -70,7 +70,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         #if kwargs and kwargs.get("debug"):
         page = 1
         while 1 :
-            time.sleep(2)
+            time.sleep(gap)
             get_logger(batch_id, today_str, '/opt/service/log/').info('start parsing url at page {}'.format(page))
             data['curstart'] = page
             content = process._downloader.downloader_wrapper('http://app1.sfda.gov.cn/datasearch/face3/search.jsp',
