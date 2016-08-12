@@ -13,7 +13,7 @@
                 "priority": 2,
                 "crawl_timeout": 10,
                 "failure_times": 6,
-                "filename_urls": "/home/admin/zysj_pages.txt",
+                "filename_urls": "/home/admin/hcrawler/zysj_pages.txt",
                 "url_pattern": "http://www.zysj.com.cn/zhongyaocai/index__{}.html"
             }
         },
