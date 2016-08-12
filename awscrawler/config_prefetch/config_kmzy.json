@@ -13,7 +13,7 @@
                 "priority": 2,
                 "crawl_timeout": 10,
                 "failure_times": 6,
-                "filename_urls": "/home/admin/kmzy_pages.txt"
+                "filename_urls": "/home/admin/hcrawler/kmzy_pages.txt"
             }
         },
         "aws_machine_number": 20,
