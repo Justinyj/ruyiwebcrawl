@@ -52,11 +52,15 @@ def writeExcel(items, keys, filename, page_size=60000):
     wb.save(filename)
 
 
-def readExcel(headers, filename, start_row=0, non_empty_col=-1):
+def readExcel(headers, filename, start_row=0, non_empty_col=-1, file_contents=None):
     # http://www.lexicon.net/sjmachin/xlrd.html
     import xlrd
     counter = collections.Counter()
-    workbook = xlrd.open_workbook(filename)
+    if file_contents:
+        workbook = xlrd.open_workbook(file_contents=file_contents)
+    else:
+        workbook = xlrd.open_workbook(filename)
+
     ret = defaultdict(list)
     for name in workbook.sheet_names():
         sh = workbook.sheet_by_name(name)
@@ -118,7 +122,7 @@ def lines2file(lines, filename, encoding='utf-8'):
 
 def json2file(data, filename,encoding ='utf-8'):
     with codecs.open(filename, "w", encoding=encoding) as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+        json.dump(data, f, ensure_ascii=False, indent=4, sort_keys=True)
 
 def items2file(items, filename,encoding ='utf-8', modifier='w'):
     with codecs.open(filename, modifier, encoding=encoding) as f:
@@ -152,4 +156,3 @@ def write_file(fname, lines, jsn=False):
             json.dump(lines, fd, ensure_ascii=False, indent=4)
         else:
             fd.write('\n'.join(lines))
-

@@ -22,7 +22,7 @@ class Ec2Manager(object):
         },
         'ap-northeast-1': {
             'keypair': 'crawl-tokyo',
-            'amiid': 'ami-b231ced3',
+            'amiid': 'ami-c9fe3ba8',
             'instancetype': 't2.nano',
             'securitygroupid': ['sg-fcbf0998'],
         }

@@ -491,7 +491,7 @@ class ZhidaoFetch():
             answer_items = self.select_top_n_chat_0622(query_unicode, search_result_json, num_answers_needed)
             #print "select_best", len(answer_items)
             ret ["items"] = answer_items
-            ret ["items_all"] = search_result_json
+            ret ["results"] = search_result_json
             ret ["total"] = search_result["total"]
             # if answer_items:
             #     index = 0
@@ -627,7 +627,7 @@ class ZhidaoFetch():
 
         return best_item
 
-    def search_baike_best(self,query, query_filter=2, query_parser=0, debug_item=None):
+    def search_baike_best(self,query, query_filter=2, query_parser=0, debug_item=None, keep_result=False):
         query_unicode = query
         if not isinstance(query, unicode):
             query_unicode = query.decode("utf-8")
@@ -655,8 +655,8 @@ class ZhidaoFetch():
             search_result_json = search_result["results"]
             ret ["total"] = search_result["total"]
             ret ["milliseconds_parse"] = int( (time.time() - ts_start) * 1000 )
-            if self.debug:
-                ret["items_all"] = search_result_json
+            if keep_result or self.debug:
+                ret["results"] = search_result_json
 
             best_item = self.select_best_qapair_0630(query_unicode, search_result_json)
             if best_item:

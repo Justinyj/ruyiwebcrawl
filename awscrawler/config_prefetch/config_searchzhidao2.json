@@ -1,0 +1,24 @@
+{
+    "batch_ids": {
+        "entity": "searchzhidao2-20160728"
+    },
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "searchzhidao2-20160728",
+                "crawl_http_method": "get",
+                "crawl_gap": 1,
+                "crawl_use_js_engine": false,
+                "length": 1,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 6,
+                "filename_urls": "/home/admin/question_2.txt",
+                "url_pattern": "http://zhidao.baidu.com/search?word={}"
+            }
+        },
+        "aws_machine_number": 900,
+        "note": "搜索百度知道并返回第一页",
+        "debug": false
+    }
+}

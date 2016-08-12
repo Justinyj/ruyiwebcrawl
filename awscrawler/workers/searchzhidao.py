@@ -45,7 +45,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
 
     refresh = False
-    for _ in in range(5):
+    for _ in range(5):
         try:
             content = process._downloader.downloader_wrapper(url,
                 batch_id,
@@ -71,4 +71,3 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         get_logger(batch_id, today_str, '/opt/service/log/').info('start post json')
 
     return process._cache.post(url, json.dumps(result))
-

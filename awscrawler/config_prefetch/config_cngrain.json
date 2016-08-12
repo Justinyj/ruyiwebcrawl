@@ -1,23 +1,23 @@
 {
     "batch_ids": {
-        "entity": "yaojianju-201607"
+        "entity": "cngrain-20160809"
     },
     "indexes": {
         "jobs": {
             "0": {
-                "batch_id": "yaojianju-201607",
+                "batch_id": "cngrain-20160809",
                 "crawl_http_method": "get",
-                "crawl_gap": 1,
+                "crawl_gap": 10,
                 "crawl_use_js_engine": false,
-                "length": 15,
+                "length": 20,
                 "priority": 1,
                 "crawl_timeout": 10,
                 "failure_times": 5,
-                "filename_urls": "/tmp/drug_url.txt"
+                "filename_urls": "/tmp/cngrain_url.txt"
             }
         },
-        "aws_machine_number": 2,
-        "note": "药监局药品爬取",
+        "aws_machine_number": 10,
+        "note": "中华粮网爬取农副产品信息",
         "debug": false
     }
 }
