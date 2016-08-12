@@ -14,6 +14,8 @@ import base64
 import hashlib
 import json
 import os
+import sys
+sys.path.append('..')
 from datetime import date
 from crawlerlog import path, cachelog
 
@@ -45,7 +47,6 @@ def pd_set_cache(url_hash, batch_id, groups, content, refresh=False):
         assert len(batch_id) > 0
 
         absdir = os.path.join(HPCACHEDIR, yy, batch_id + '-' + yy + mm + dd)
-        path.makedir(os.path.join(HPCACHEDIR, yy))
 
         cache_file = os.path.join(absdir, url_hash)
 
