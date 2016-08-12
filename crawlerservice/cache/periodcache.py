@@ -18,17 +18,15 @@ from datetime import date
 from crawlerlog import path, cachelog
 
 HPCACHEDIR = '/data/Hproject/'
-today = date.today()
-yy = str(today.year)
-mm = '0' + str(today.month) if today.month < 10 else str(today.month)
-dd = '0' + str(today.day) if today.day < 10 else str(today.day)
+
 
 
 def period_get_cache(url_hash, batch_id):
     try:
         assert len(batch_id) > 0
-
-        absdir = os.path.join(HPCACHEDIR, yy, batch_id + '-' + yy + mm + dd)
+        today = date.today()
+        yy = str(today.year)
+        absdir = os.path.join(HPCACHEDIR, yy, batch_id)
         cache_file = os.path.join(absdir, url_hash)
         if os.path.isfile(cache_file):
             with open(cache_file) as fd:
@@ -43,8 +41,9 @@ def period_get_cache(url_hash, batch_id):
 def period_set_cache(url_hash, batch_id, groups, content, refresh=False):
     try:
         assert len(batch_id) > 0
-
-        absdir = os.path.join(HPCACHEDIR, yy, batch_id + '-' + yy + mm + dd)
+        today = date.today()
+        yy = str(today.year)
+        absdir = os.path.join(HPCACHEDIR, yy, batch_id)
 
         cache_file = os.path.join(absdir, url_hash)
 

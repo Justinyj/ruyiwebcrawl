@@ -1,11 +1,11 @@
 {
     "batch_ids": {
-        "entity": "chem-20160728"
+        "entity": "chem"
     },
     "indexes": {
         "jobs": {
             "0": {
-                "batch_id": "chem-20160728",
+                "batch_id": "chem",
                 "crawl_http_method": "get",
                 "crawl_gap": 1,
                 "crawl_use_js_engine": false,
@@ -13,7 +13,7 @@
                 "priority": 2,
                 "crawl_timeout": 10,
                 "failure_times": 6,
-                "filename_urls": "/home/admin/alphas_for_search.txt",
+                "filename_urls": "/home/admin/hcrawler/alphas_for_search.txt",
                 "url_pattern": "http://china.chemnet.com/hot-product/{}.html"
             }
         },

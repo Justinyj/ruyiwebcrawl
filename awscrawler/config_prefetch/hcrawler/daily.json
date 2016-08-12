@@ -24,7 +24,7 @@
                 "filename_urls": "/home/admin/hcrawler/kmzy_pages.txt"
             },
             "2": {
-                "batch_id": "agr100ppi",
+                "batch_id": "agriculture",
                 "crawl_http_method": "get",
                 "crawl_gap": 0.5,
                 "crawl_use_js_engine": false,
