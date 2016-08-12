@@ -104,7 +104,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
                 for _ in range(0,3): #开始对下一页发请求，绝大多数失败都发生在这一步，慎重
                     try:
-                        time.sleep(5)
                         content = process._downloader.downloader_wrapper(url,
                                             batch_id,
                                             gap,
@@ -186,5 +185,5 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                     'price_history': history_dic,
                 }
                 result['product_list'].append(product_item)
-
+                result['url'] = url
             return process._cache.post(url, json.dumps(result, ensure_ascii = False))

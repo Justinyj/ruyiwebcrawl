@@ -138,5 +138,5 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             result_item['name'] = name
             result_item['info'] = sidebar_item
             result_item['price_history'] = price_history
-
+            result_item['url']  = sidebar_url
             return process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True)
