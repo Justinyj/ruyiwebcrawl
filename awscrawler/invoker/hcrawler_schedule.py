@@ -1,52 +1,49 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# from __future__ import print_function, division
 
-from multitask import run
+from __future__ import print_function, division
 
 import os
-import datetime
 import multiprocessing
 import time
 import json
 
-
-def get_aws_file():
-    return os.path.abspath(os.path.dirname(__file__)+'/..')
-
-def fake_run(filename_config):
-    with open(filename_config) as f:
-        config_all = json.load(f)
-        print config_all['indexes']
-        #run(config_all['indexes'])
-
-def set_jobs(job_list):
-    file_path = get_aws_file() + '/config_prefetch/hcrawler'
-    now = datetime.datetime.now()
-
-    if now.day:# == 1:
-        p = multiprocessing.Process(target=fake_run, args=(file_path + "/monthly.json",))
-        job_list.append(p)
-        p.start()
-
-    if now.weekday():# % 7 == 0:
-        p = multiprocessing.Process(target=fake_run, args=(file_path + "/weekly.json",))
-        job_list.append(p)
-        p.start()
-
-    p = multiprocessing.Process(target=fake_run, args=(file_path + "/daily.json",))
-    job_list.append(p)
-    p.start()
-    for job in job_list:
-        job.join()
+from datetime import datetime
+from multitask import run
 
 
+def get_hcrawler_conf_dir():
+    confong_dir = os.path.abspath(os.path.dirname(__file__) + '/..')
+    return os.path.join(config_dir, 'config_prefetch/hcrawler')
+
+def run_crawler(config_file):
+    with open(config_file) as fd:
+        config_all = json.load(fd)
+        run(config_all['indexes'])
+
+def split_crawl_jobs():
+    now = datetime.now()
+    conf_file = get_hcrawler_conf_dir()
+
+    cpu_count = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(processes=cpu_count * 10)
+
+    if now.day == 1:
+        pool.apply_async(run_crawler, (os.path.join(conf_file, 'monthly.json'), ))
+    if now.weekday() == 6: # Sunday
+        pool.apply_async(run_crawler, (os.path.join(conf_file, 'weekly.json'), ))
+    pool.apply_async(run_crawler, (os.path.join(conf_file, 'daily.json'), ))
+
+    pool.close()
+    pool.join()
+
+def cleansing():
+    pass
 
 def main():
-    job_list = [] 
-    set_jobs(job_list)
-    
+    split_crawl_jobs()
+    cleansing()
+
+
 if __name__ == '__main__':
     main()
-
-
