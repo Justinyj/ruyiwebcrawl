@@ -128,7 +128,7 @@ class Downloader(object):
                 print('requests failed: {}, detail: {}'.format(sys.exc_info()[0], e))
             finally:
                 if sleep_flag is True:
-                    time.sleep(2)
+                    time.sleep(2 ** (i+1))
                 time.sleep(self._get_sleep_period())
         else:
             return u''
