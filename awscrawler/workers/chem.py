@@ -23,7 +23,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 SITE = 'http://china.chemnet.com'
 # SERVER = 'http://192.168.1.179:8000'
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
@@ -41,7 +41,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
 
     method, gap, js, timeout, data = parameter.split(':')
-    gap = int(gap)
+    gap = float(max(0, gap - other_batch_process_time))
     timeout= int(timeout)
     compspat = 'http://china.chemnet.com/product/search.cgi?skey={};use_cas=0;f=pclist;p={}'
     today_str = datetime.now().strftime('%Y%m%d')
@@ -88,6 +88,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             total = int(re.compile(r'共有(\d+)条记录').search(pagetext[0].encode('utf-8')).group(1))
             total = total // 10 + 1 if total % 10 != 0 else total // 10
             dic = {
+                            u'source': url,
                             u'中文名称': page.xpath(xpath_string(1))[0] if page.xpath(xpath_string(1)) else '',
                             u'英文名称': page.xpath(xpath_string(2))[0] if page.xpath(xpath_string(2)) else '',
                             u'中文别名': page.xpath(xpath_string(3))[0] if page.xpath(xpath_string(3)) else '',
@@ -117,7 +118,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             chem_name = page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[1]/td[2]/text()")[0]
             comps = page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form/table/tr[1]/td[2]/a[1]/text()")
             comps = [c for c in comps]
-            data = json.dumps({'name':chem_name, 'companies': comps})
+            data = json.dumps({'name':chem_name, 'companies': comps, 'source': url})
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting companies to cache')
             return process._cache.post(url, data)
 

@@ -24,7 +24,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 SITE = 'http://www.zysj.com.cn'
 # SERVER = 'http://192.168.1.179:8000'
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
@@ -41,7 +41,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
 
     method, gap, js, timeout, data = parameter.split(':')
-    gap = float(gap)
+    gap = float(max(0, gap - other_batch_process_time))
     timeout= int(timeout)
     today_str = datetime.now().strftime('%Y%m%d')
     # if kwargs and kwargs.get("debug"):
@@ -90,6 +90,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
                 med_info = page.xpath("//p/text()")
                 data = {}
+                data['source'] = url
 
                 for info in med_info:
                     m = re.compile(r'【.+?】').match(info.encode('utf-8'))
