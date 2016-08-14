@@ -40,9 +40,13 @@ def split_crawl_jobs():
 def cleansing():
     pass
 
+def insert_to_es():
+    pass
+
 def main():
     split_crawl_jobs()
     cleansing()
+    insert_to_es()
 
 
 if __name__ == '__main__':
