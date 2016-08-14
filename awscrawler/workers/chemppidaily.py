@@ -22,7 +22,7 @@ from settings import REGION_NAME
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
-SITE = 'http://agr.100ppi.com/price/'
+SITE = 'http://chem.100ppi.com/price/'
 # SERVER = 'http://192.168.1.179:8000'
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     if not hasattr(process, '_downloader'):
@@ -35,7 +35,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
-            'main': re.compile(r'http://agr.100ppi.com/price/plist-(\d+)(-{1,3})(\d+).html'),
+            'main': re.compile(r'http://chem.100ppi.com/price/plist-(\d+)(-{1,3})(\d+).html'),
             'prd': re.compile(r'http://www.100ppi.com/price/detail-(\d+).html')
         })
 
@@ -69,8 +69,11 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         page = etree.HTML(content)
 
         if label == 'main':
-            # print("adding agricultural prds")
+            # print("adding chem prds")
             prd_links = page.xpath('//table/tr/td[1]/div/a/@href')
+            newest = page.xpath("//table/tr[2]/td[6]/text()")[0]
+            if newest.replace(u'-','') != today_str:
+                return True 
             if not prd_links:
                 # print('end of pages')
                 get_logger(batch_id, today_str, '/opt/service/log/').info('end of pages')
@@ -89,8 +92,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         else:
             data = {}
             data['name'] = page.xpath("/html/body/div[8]/div[1]/span[2]/text()")[0]
-            data['source'] = url
             # print(data['name'], 'prd page')
+            data['source'] = url
             # data['prd_header'] = page.xpath("//div[@class=\"mb20\"]/table/tr/th/text()")
             # data['prd_infos'] = page.xpath("//div[@class=\"mb20\"]/table/tr/td/text()")
             prd_header = page.xpath("/html/body/div[8]/div[2]/div[1]/div[1]/h3/text()")[0]
@@ -123,6 +126,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             data[u'联系方式'] = contact
 
             # print(json.dumps(data, encoding='utf-8', ensure_ascii=False))
+            if data[u'发布时间'].replace(u'-','') != today_str:
+                return True 
             dics = json.dumps(data, encoding='utf-8', ensure_ascii=False)
             get_logger(batch_id, today_str, '/opt/service/log/').info(dics + ' saved to S3')
             return process._cache.post(url, dics)
