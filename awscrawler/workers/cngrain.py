@@ -189,5 +189,5 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     'price_history': history_dic,
                 }
                 result['product_list'].append(product_item)
-                result['url'] = url
+                result['source'] = url
             return process._cache.post(url, json.dumps(result, ensure_ascii = False))

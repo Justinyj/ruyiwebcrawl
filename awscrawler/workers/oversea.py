@@ -141,7 +141,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             'packaging_company_address':        table[27].xpath('./td')[1].xpath('./text()'),          # [u'分包装企业地址']
             'category':                         table[31].xpath('./td')[1].xpath('./text()'),          # [u'产品类别']
             'standard_code':                    table[32].xpath('./td')[1].xpath('./text()'),          # [u'药品本位码']
-            'url' :                             [url],
+            'source' :                             [url], #设为list格式与之前字段统一，在下面的循环里一并取出
         }
 
         for k,v in item.iteritems():
