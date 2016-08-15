@@ -28,7 +28,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
-        setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
+        setattr(process, '_downloader', DownloadWrapper(None, headers))
     if not hasattr(process, '_cache'):
         head, tail = batch_id.split('-')
         setattr(process, '_cache', CacheS3(head + '-json-' + tail))
