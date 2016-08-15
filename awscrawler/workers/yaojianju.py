@@ -16,8 +16,7 @@ from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
 from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
-
+from settings import REGION_NAME, CACHE_SERVER
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     home_page = 'http://app1.sfda.gov.cn/datasearch/face3/base.jsp?tableId=25&tableName=TABLE25&title=%B9%FA%B2%FA%D2%A9%C6%B7&bcId=124356560303886909015737447882'

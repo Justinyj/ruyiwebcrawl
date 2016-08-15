@@ -20,7 +20,7 @@ from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
 from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
+from settings import REGION_NAME, CACHE_SERVER
 
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
