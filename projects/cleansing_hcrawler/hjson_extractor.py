@@ -34,8 +34,9 @@ class hjson_extractor(object):
                 self.jsons.append(item_suit_schema)
                 self.counter += 1
                 if self.counter == 1000:
-                    # sendto_es(jsona)
+                    # sendto_es(jsons)
                     self.counter = 0
+                    self.jsons = []
 
     def parse_single_item(self, item):
             # 时间关系，这里暂时设成父类方法为分析药通网，未来可以调整优化
