@@ -23,7 +23,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 SITE = 'http://china.chemnet.com'
 # SERVER = 'http://192.168.1.179:8000'
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
@@ -34,14 +34,14 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
-            'main': re.compile(r'http://china.chemnet.com/hot-product/\w.html'),
+            'main': re.compile(r'http://china.chemnet.com/hot-product/(\w|\d+).html'),
             'prd': re.compile(r'http://china.chemnet.com/product/pclist--(.+?)--0.html'),
             'comps': re.compile(r'http://china.chemnet.com/product/search.cgi')
         })
 
 
     method, gap, js, timeout, data = parameter.split(':')
-    gap = int(gap)
+    gap = float(max(0, gap - other_batch_process_time))
     timeout= int(timeout)
     compspat = 'http://china.chemnet.com/product/search.cgi?skey={};use_cas=0;f=pclist;p={}'
     today_str = datetime.now().strftime('%Y%m%d')
@@ -68,7 +68,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
         m = reg.match(url)
         if not m:
             continue
-        page = etree.HTML(content)
+        page = etree.HTML(content.replace('<sub>', '').replace('</sub>', ''))
         if label == 'main':
             # print("add chems")
             chems = page.xpath("//*[@id=\"main\"]/div[1]/div[2]/dl/dd/ul/li/p[2]/a/@href")  # links for chems in main page
@@ -87,7 +87,24 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             # print(pagetext[0])
             total = int(re.compile(r'共有(\d+)条记录').search(pagetext[0].encode('utf-8')).group(1))
             total = total // 10 + 1 if total % 10 != 0 else total // 10
-            data = json.dumps({'name':chem_name, 'url':url, 'body': content})
+            dic = {
+                            u'source': url,
+                            u'中文名称': page.xpath(xpath_string(1))[0] if page.xpath(xpath_string(1)) else '',
+                            u'英文名称': page.xpath(xpath_string(2))[0] if page.xpath(xpath_string(2)) else '',
+                            u'中文别名': page.xpath(xpath_string(3))[0] if page.xpath(xpath_string(3)) else '',
+                            u'CAS_RN': page.xpath(xpath_string(4))[0] if page.xpath(xpath_string(4)) else '',
+                            u'EINECS': page.xpath(xpath_string(5))[0] if page.xpath(xpath_string(5)) else '',
+                            u'分子式': page.xpath(xpath_string(6))[0] if page.xpath(xpath_string(6)) else '',
+                            u'分子量': page.xpath(xpath_string(7))[0] if page.xpath(xpath_string(7)) else '',
+                            u'危险品标志': page.xpath(xpath_string(8))[0].strip() if page.xpath(xpath_string(8)) else '',
+                            u'风险术语': page.xpath(xpath_string(9))[0].strip() if page.xpath(xpath_string(9)) else '',
+                            u'安全术语': page.xpath(xpath_string(10))[0].strip() if page.xpath(xpath_string(10)) else '',
+                            u'物化性质': page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[11]/td[2]/p/text()") if page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[11]/td[2]/p/text()") else [],
+                            u'用途': page.xpath(xpath_string(12))[0]  if page.xpath(xpath_string(12)) else '',
+                            u'上游原料': page.xpath('//*[@id=\"main\"]/div[1]/div[1]/table/tr[14]/td[2]/a/text()') if page.xpath('//*[@id=\"main\"]/div[1]/div[1]/table/tr[14]/td[2]/a/text()') else [],
+                            u'下游产品': page.xpath('//*[@id=\"main\"]/div[1]/div[1]/table/tr[15]/td[2]/a/text()') if page.xpath('//*[@id=\"main\"]/div[1]/div[1]/table/tr[15]/td[2]/a/text()') else [],
+                }
+            data = json.dumps(dic, encoding='utf-8', ensure_ascii=False)
             new_urls = []
             for t in range(total):
                 new_url = compspat.format(chem_uri, str(t))
@@ -101,7 +118,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             chem_name = page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[1]/td[2]/text()")[0]
             comps = page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form/table/tr[1]/td[2]/a[1]/text()")
             comps = [c for c in comps]
-            data = json.dumps({'name':chem_name, 'companies':' '.join(comps)})
+            data = json.dumps({'name':chem_name, 'companies': comps, 'source': url})
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting companies to cache')
             return process._cache.post(url, data)
 

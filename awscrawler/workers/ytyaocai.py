@@ -22,7 +22,7 @@ from downloader.downloader_wrapper import DownloadWrapper
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     # 药材的详情页涉及2个部分：价格历史history和边栏sidebar，以下的ytw/second/是价格历史的url，返回一个大的json；
     # 所以在最后处理的时候还要额外向另一个url发送一次请求，以获得边栏信息,由于要储存到同一个result.json中，因此不再放入队列，而是直接在process里完成
     
@@ -54,6 +54,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
+    gap = max(gap - other_batch_process_time, 0)
 
     for label, reg in process._regs.iteritems():
         m = reg.match(url)
@@ -138,5 +139,5 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             result_item['name'] = name
             result_item['info'] = sidebar_item
             result_item['price_history'] = price_history
-
+            result_item['source']  = sidebar_url
             return process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True)

@@ -1,0 +1,66 @@
+{
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "ytyaocaidaily",
+                "crawl_http_method": "get",
+                "crawl_gap": 0,
+                "crawl_use_js_engine": false,
+                "length": 130,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 5,
+                "filename_urls": "/home/admin/hcrawler/ytyaocai_url.txt"
+            },
+            "1": {
+                "batch_id": "kmzydaily",
+                "crawl_http_method": "get",
+                "crawl_gap": 0.5,
+                "crawl_use_js_engine": false,
+                "length": 21,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 6,
+                "filename_urls": "/home/admin/hcrawler/kmzy_pages.txt"
+            },
+            "2": {
+                "batch_id": "agriculdaily",
+                "crawl_http_method": "get",
+                "crawl_gap": 0.5,
+                "crawl_use_js_engine": false,
+                "length": 100,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 6,
+                "filename_urls": "/home/admin/hcrawler/agr_prds.txt",
+                "url_pattern": "http://agr.100ppi.com/price/{}"
+            },
+            "3": {
+                "batch_id": "cngraindaily",
+                "crawl_http_method": "get",
+                "crawl_gap": 10,
+                "crawl_use_js_engine": false,
+                "length": 20,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 5,
+                "filename_urls": "/home/admin/hcrawler/cngrain_url.txt"
+            },
+            "4": {
+                "batch_id": "chemppidaily",
+                "crawl_http_method": "get",
+                "crawl_gap": 4,
+                "crawl_use_js_engine": false,
+                "length": 300,
+                "priority": 2,
+                "crawl_timeout": 10,
+                "failure_times": 6,
+                "filename_urls": "/home/admin/hcrawler/chem_prds.txt",
+                "url_pattern": "http://chem.100ppi.com/price/{}"
+            }
+        },
+        "aws_machine_number": 20,
+        "note": "daily",
+        "debug": false
+    }
+}

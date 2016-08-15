@@ -30,6 +30,7 @@ class GetWorker(Worker):
         super(GetWorker, self).__init__()
         self.index = index
         self._batch_param = {}
+        self.process_time = {}
         self.manager = RedisManager(RECORD_REDIS, QUEUE_REDIS, CACHE_REDIS)
 
         for batch_id in Record.instance().get_unfinished_batch():
@@ -39,6 +40,7 @@ class GetWorker(Worker):
                 continue
             self.manager.worker_init_distributed_queue(batch_id, int(total_count))
             self._batch_param[batch_id] = parameter
+            self.process_time[batch_id] = 0, 0
 
     def schedule(self, *args, **kwargs):
         """ I believe the third time sleep 4 minutes, all the queues will be fill enough data.
@@ -67,6 +69,7 @@ class GetWorker(Worker):
 
          None,   0,                    finish cleaning then exception
         """
+        checkout_cache = {}
         for batch_id, queue_dict in self.manager.get_queue_with_priority():
             queue = queue_dict['queue']
             if Record.instance().is_finished(batch_id) is True:
@@ -78,67 +81,100 @@ class GetWorker(Worker):
                 continue
 
             background = queue.get_background_cleaning_status()
-            if background is None:
-                self.work(batch_id, queue_dict, *args, **kwargs)
-            elif background == '1':
-                self.work(batch_id, queue_dict, *args, **kwargs)
 
-            elif background == '0':
+            if background == '0':
                 pass
+            elif background is None or background == '1':
+                checkout_cache[batch_id] = queue_dict
 
 
-    def work(self, batch_id, queue_dict, *args, **kwargs):
-        batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
+        today_str = datetime.now().strftime('%Y%m%d')
+        while len(checkout_cache) > 0:
+            removes = []
+            batch_urlid = {}
+
+            for batch_id, queue_dict in checkout_cache.iteritems(): # get url_ids from queue
+                get_logger(batch_id, today_str, '/opt/service/log/').info('begin get items from queue')
+                results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
+                get_logger(batch_id, today_str, '/opt/service/log/').info('finish get items from queue')
+
+                if not results:
+                    removes.append(batch_id)
+                    continue
+                batch_urlid[batch_id] = results
+            [checkout_cache.pop(i) for i in removes]
+            doing_queues = batch_urlid.keys()
+
+            while len(doing_queues) > 0:
+                for batch_id, results in batch_urlid.iteritems(): # download and process
+                    if len(results) > 0:
+                        url_id = results.pop()
+                        other_batch_process_time = self.get_other_batch_process_time( set(doing_queues) - set([batch_id]) )
+                        start = time.time()
+
+                        self.work(batch_id, checkout_cache[batch_id], url_id, other_batch_process_time, *args, **kwargs)
+                        self.update_process_time_of_this_batch(batch_id, start)
+                    else:
+                        doing_queues.remove(batch_id)
+
+
+    def work(self, batch_id, queue_dict, url_id, other_batch_process_time, *args, **kwargs):
         try:
+            batch_key_filename = batch_id.rsplit('-', 1)[0].replace('-', '_')
             module = __import__('workers.{}'.format(batch_key_filename), fromlist=['process'])
         except:
             module = __import__('workers.prefetch', fromlist=['process'])
 
-        while 1:
-            today_str = datetime.now().strftime('%Y%m%d')
+        today_str = datetime.now().strftime('%Y%m%d')
+        if kwargs and kwargs.get("debug"):
+            get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
+
+        # TODO change to hmget
+        url = queue_dict['thinhash'].hget(url_id)
+
+        if kwargs and kwargs.get("debug"):
+            get_logger(batch_id, today_str, '/opt/service/log/').info('end get url from thinhash redis')
+
+        try:
+            process_status = module.process(url,
+                                            batch_id,
+                                            self._batch_param[batch_id],
+                                            self.manager,
+                                            other_batch_process_time,
+                                            *args,
+                                            **kwargs)
+        except Exception as e:
+            Record.instance().add_exception(batch_id, url, repr(e))
+            queue_dict['queue'].task_done(url_id)
+            return
+
+        if process_status:
+            if kwargs and kwargs.get("debug"):
+                get_logger(batch_id, today_str, '/opt/service/log/').info('begin task done for record redis')
+
+            queue_dict['queue'].task_done(url_id)
+            Record.instance().increase_success(batch_id)
 
             if kwargs and kwargs.get("debug"):
-                get_logger(batch_id, today_str, '/opt/service/log/').info('begin get items from queue')
+                get_logger(batch_id, today_str, '/opt/service/log/').info('end task done for record redis')
 
-            results = queue_dict['queue'].get(block=True, timeout=3, interval=1)
 
-            if kwargs and kwargs.get("debug"):
-                get_logger(batch_id, today_str, '/opt/service/log/').info('finish get items from queue')
+    def get_other_batch_process_time(self, other_batches):
+        """ For every batch, everage process time is duration divideed by times,
+            add all the average process time
+        """
+        other_batch_process_time = 0
 
-            if not results:
-                break
+        for batch in other_batches:
+            duration, times = self.process_time[batch]
+            other_batch_process_time += (0 if times == 0 else duration / times)
+        return other_batch_process_time
 
-            for url_id in results:
-                if kwargs and kwargs.get("debug"):
-                    get_logger(batch_id, today_str, '/opt/service/log/').info('begin get url from thinhash redis')
 
-                # TODO change to hmget
-                url = queue_dict['thinhash'].hget(url_id)
-
-                if kwargs and kwargs.get("debug"):
-                    get_logger(batch_id, today_str, '/opt/service/log/').info('end get url from thinhash redis')
-
-                try:
-                    process_status = module.process(url,
-                                                    batch_id,
-                                                    self._batch_param[batch_id],
-                                                    self.manager,
-                                                    *args,
-                                                    **kwargs)
-                except Exception as e:
-                    Record.instance().add_exception(batch_id, url, repr(e))
-                    queue_dict['queue'].task_done(url_id)
-                    continue
-
-                if process_status:
-                    if kwargs and kwargs.get("debug"):
-                        get_logger(batch_id, today_str, '/opt/service/log/').info('begin task done for record redis')
-
-                    queue_dict['queue'].task_done(url_id)
-                    Record.instance().increase_success(batch_id)
-
-                    if kwargs and kwargs.get("debug"):
-                        get_logger(batch_id, today_str, '/opt/service/log/').info('end task done for record redis')
+    def update_process_time_of_this_batch(self, batch_id, start):
+        duration = time.time() - start
+        total_duration, times = self.process_time[batch_id]
+        self.process_time[batch_id] = total_duration + duration, times + 1
 
 
 def main():

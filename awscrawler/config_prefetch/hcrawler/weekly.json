@@ -1,23 +1,20 @@
 {
-    "batch_ids": {
-        "entity": "yaojianju-201607"
-    },
     "indexes": {
         "jobs": {
             "0": {
-                "batch_id": "yaojianju-201607",
+                "batch_id": "yaojianju",
                 "crawl_http_method": "get",
                 "crawl_gap": 1,
                 "crawl_use_js_engine": false,
                 "length": 15,
-                "priority": 1,
+                "priority": 2,
                 "crawl_timeout": 10,
                 "failure_times": 5,
                 "filename_urls": "/home/admin/hcrawler/drug_url.txt"
             }
         },
-        "aws_machine_number": 2,
-        "note": "药监局药品爬取",
+        "aws_machine_number": 20,
+        "note": "weekly",
         "debug": false
     }
 }

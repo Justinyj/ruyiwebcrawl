@@ -1,23 +1,23 @@
 {
     "batch_ids": {
-        "entity": "ytyaocai-20160808"
+        "entity": "cngrain-20160809"
     },
     "indexes": {
         "jobs": {
             "0": {
-                "batch_id": "ytyaocai-20160808",
+                "batch_id": "cngrain-20160809",
                 "crawl_http_method": "get",
-                "crawl_gap": 0,
+                "crawl_gap": 10,
                 "crawl_use_js_engine": false,
-                "length": 130,
+                "length": 20,
                 "priority": 1,
                 "crawl_timeout": 10,
                 "failure_times": 5,
-                "filename_urls": "/home/admin/hcrawler/ytyaocai_url.txt"
+                "filename_urls": "/home/admin/hcrawler/cngrain_url.txt"
             }
         },
         "aws_machine_number": 10,
-        "note": "药通网价格历史爬取",
-        "debug": true
+        "note": "中华粮网爬取农副产品信息",
+        "debug": false
     }
 }
