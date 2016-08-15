@@ -22,7 +22,7 @@ from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
 
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info('process {}'.format(url))
 
@@ -52,7 +52,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
-    
+    gap = max(gap - other_batch_process_time, 0)
+
     for label, reg in process._regs.iteritems():
         m = reg.match(url)
         if not m:
@@ -89,9 +90,12 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 manager.put_urls_enqueue(batch_id, market_url_list) #完成本页的处理，将市场名入队，接下去的操作全是为了翻页
 
                 page_label = dom.xpath('//td[@colspan="10"]//span')[0]  #在所有页数里，只有当前页的标签是span，定位到当前页
+                page = page_label.xpath('.//text()')
+                if page == ['40']:
+                    return True
                 next_sibling_list = (page_label.xpath('./following-sibling::a')) #定位下一页，下一页不存在时则结束，（即使是网页上的...按钮，在此种判断里也会算存在下一页）
                 if not next_sibling_list:
-                    return
+                    return True
 
                 next_sibling = next_sibling_list[0]
                 next_raw_js = next_sibling.xpath('./@href')[0]  # 其形式为 :   "javascript:__doPostBack('ctl00$ContentPlaceHolder1$DG_FullLatestPrice$ctl24$ctl01','')" 
@@ -185,5 +189,5 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                     'price_history': history_dic,
                 }
                 result['product_list'].append(product_item)
-                result['url'] = url
+                result['source'] = url
             return process._cache.post(url, json.dumps(result, ensure_ascii = False))

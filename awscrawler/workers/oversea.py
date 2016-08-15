@@ -23,7 +23,7 @@ from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME
 
 
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info(url)
     home_page = 'http://app1.sfda.gov.cn/datasearch/face3/base.jsp?tableId=36&tableName=TABLE36&title=%BD%F8%BF%DA%D2%A9%C6%B7&bcId=124356651564146415214424405468'
@@ -44,6 +44,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
+    gap = max(gap - other_batch_process_time, 0)
 
     
     #if kwargs and kwargs.get("debug"):
@@ -140,7 +141,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             'packaging_company_address':        table[27].xpath('./td')[1].xpath('./text()'),          # [u'分包装企业地址']
             'category':                         table[31].xpath('./td')[1].xpath('./text()'),          # [u'产品类别']
             'standard_code':                    table[32].xpath('./td')[1].xpath('./text()'),          # [u'药品本位码']
-            'url' :                             [url],
+            'source' :                             [url], #设为list格式与之前字段统一，在下面的循环里一并取出
         }
 
         for k,v in item.iteritems():
