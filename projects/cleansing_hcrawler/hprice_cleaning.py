@@ -17,7 +17,7 @@ class HpriceCleansing(object):
         self.jsons = []
 
     def set_source_files_path(self):
-        dir_path =  '/data' + '/' + self.dir_name
+        dir_path =  '/data/hproject/2016' + '/' + self.dir_name
         
         if os.path.isdir(dir_path):  
             file_list = os.listdir(dir_path)
@@ -29,8 +29,9 @@ class HpriceCleansing(object):
     def parse_single_file(self, file_path):
         with open(file_path, 'r') as file:
             for line in file:
-                item = json.loads(line)
-                item_suit_schema = self.parse_single_item(item)
+                if line.strip():
+                    item = json.loads(line.strip())
+                    self.parse_single_item(item)
 
 
 
@@ -76,6 +77,6 @@ class HpriceCleansing(object):
 # class HpriceCleansingOfCngarin(HpriceCleansing):
 #     #中华粮网每个json是一个市场，里面有若干种品种
 #     def parse_single_item(self, item):
-
-m = HpriceCleansing('ytyaocai')
-m.run()
+if __name__ == '__main__':
+    m = HpriceCleansing('ytyaocai-20160815')
+    m.run()
