@@ -62,15 +62,13 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
         get_logger(batch_id, today_str, '/opt/service/log/').info('label : {}'.format(label))
         if label in ['home', 'kind']:  #I handle home-page and kind-page in one code block cuz they are in same web format
-            # content = process._downloader.downloader_wrapper(
-            #     url,
-            #     batch_id,
-            #     gap,
-            #     timeout = timeout,
-            #     encoding = 'utf-8',
-            #     refresh = True)
-            import requests
-            content = requests.get(url).text
+            content = process._downloader.downloader_wrapper(
+                url,
+                batch_id,
+                gap,
+                timeout = timeout,
+                encoding = 'utf-8',
+                refresh = True)
             dom = lxml.html.fromstring(content)
             dd_labels = dom.xpath('//dd')
             urls = []
@@ -124,6 +122,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
             result_item['today_price'] = today_price
             result_item['name'] = name
             result_item['url']  = sidebar_url
-            # print (result_item)
-            return True
+
+            return True # 之后更改为新的cache
             # return process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True)
