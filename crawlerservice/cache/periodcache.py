@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
 
-# 1. directory hierarchy: /data/Hproject/yy/batch_id/
+# 1. directory hierarchy: /data/hproject/yy/batch_id/
 # 2. log name: ip+date.log
 #    purpose: tornado setup on different machine, rsync log merge.
 # 3. log content: date, batch_id, group, URL, remote_ip.
@@ -17,7 +17,7 @@ import os
 from datetime import date
 from crawlerlog import path, cachelog
 
-HPCACHEDIR = '/data/Hproject/'
+HPCACHEDIR = '/data/hproject/'
 
 
 

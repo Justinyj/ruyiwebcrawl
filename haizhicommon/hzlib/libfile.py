@@ -85,6 +85,45 @@ def readExcel(headers, filename, start_row=0, non_empty_col=-1, file_contents=No
         print "loaded",filename, len(ret[name])
     return ret
 
+def readExcel2(filename, non_empty_col=0, file_contents=None):
+    # http://www.lexicon.net/sjmachin/xlrd.html
+    import xlrd
+    counter = collections.Counter()
+    if file_contents:
+        workbook = xlrd.open_workbook(file_contents=file_contents)
+    else:
+        workbook = xlrd.open_workbook(filename)
+
+    start_row = 0
+    ret = defaultdict(list)
+    for name in workbook.sheet_names():
+        sh = workbook.sheet_by_name(name)
+        headers = []
+        for col in range(len(sh.row(start_row))):
+            headers.append(sh.cell(start_row,col).value)
+        print headers
+
+        for row in range(start_row+1, sh.nrows):
+            item={}
+            rowdata = sh.row(row)
+            if len(rowdata)< len(headers):
+                print "WARNING: skip mismatched row",rowdata
+                continue
+
+            for col in range(len(headers)):
+                value = sh.cell(row,col).value
+                if type(value) in [unicode, basestring]:
+                    value = value.strip()
+                item[headers[col]]= value
+
+            if non_empty_col>=0 and not item[headers[non_empty_col]]:
+                #print "skip empty cell"
+                continue
+
+            ret[name].append(item)
+        print "loaded",filename, len(ret[name])
+    return ret
+
 
 def file2list(filename, encoding='utf-8'):
     ret = list()

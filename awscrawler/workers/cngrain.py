@@ -14,34 +14,37 @@ import sys
 import time
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from downloader.caches3 import CacheS3
+
+from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
 from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
+from settings import REGION_NAME, CACHE_SERVER
 
 
-def process(url, batch_id, parameter, manager, *args, **kwargs):
+def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info('process {}'.format(url))
 
-    if not hasattr(process, '_cache'):
-        head, tail = batch_id.split('-')
-        setattr(process, '_cache', CacheS3(head + '-json-' + tail))
 
     if not hasattr(process, '_downloader'):
         headers = {
                     'Cookie':'AJSTAT_ok_times=1; ant_stream_5762b612883d9=1470748235/1519574204; ASP.NET_SessionId=rpdjsrnmq3ybp0f4cnbdewm1; __utmt=1; bow_stream_5762b612883d9=13; __utma=240343830.1666180114.1470705813.1470719553.1470752966.3; __utmb=240343830.6.10.1470752966; __utmc=240343830; __utmz=240343830.1470705813.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)',
                     'Host':'datacenter.cngrain.com',
             }
-        setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
+        setattr(process, '_downloader', DownloadWrapper(None, headers))
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
                 'home' : re.compile('http://datacenter.cngrain.com/NewPrice.aspx'),
                 'market': re.compile('http://datacenter.cngrain.com/PriceMainMark.aspx\?MarketId=(.*)')
             })
+
+    if not hasattr(process, '_cache'):
+        head, tail = batch_id.split('-')
+        setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
+        
     if not hasattr(process, '_pattern'):
         setattr(process, '_pattern', {
             'market'    : 'http://datacenter.cngrain.com/PriceMainMark.aspx',
@@ -52,7 +55,8 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
     timeout= int(timeout)
-    
+    gap = max(gap - other_batch_process_time, 0)
+
     for label, reg in process._regs.iteritems():
         m = reg.match(url)
         if not m:
@@ -89,9 +93,12 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                 manager.put_urls_enqueue(batch_id, market_url_list) #完成本页的处理，将市场名入队，接下去的操作全是为了翻页
 
                 page_label = dom.xpath('//td[@colspan="10"]//span')[0]  #在所有页数里，只有当前页的标签是span，定位到当前页
+                page = page_label.xpath('.//text()')
+                if page == ['40']:
+                    return True
                 next_sibling_list = (page_label.xpath('./following-sibling::a')) #定位下一页，下一页不存在时则结束，（即使是网页上的...按钮，在此种判断里也会算存在下一页）
                 if not next_sibling_list:
-                    return
+                    return True
 
                 next_sibling = next_sibling_list[0]
                 next_raw_js = next_sibling.xpath('./@href')[0]  # 其形式为 :   "javascript:__doPostBack('ctl00$ContentPlaceHolder1$DG_FullLatestPrice$ctl24$ctl01','')" 
@@ -104,7 +111,6 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
 
                 for _ in range(0,3): #开始对下一页发请求，绝大多数失败都发生在这一步，慎重
                     try:
-                        time.sleep(5)
                         content = process._downloader.downloader_wrapper(url,
                                             batch_id,
                                             gap,
@@ -186,5 +192,5 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
                     'price_history': history_dic,
                 }
                 result['product_list'].append(product_item)
-
+                result['source'] = url
             return process._cache.post(url, json.dumps(result, ensure_ascii = False))
