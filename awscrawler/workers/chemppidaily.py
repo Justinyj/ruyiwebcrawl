@@ -11,9 +11,8 @@ import re
 import urlparse
 # sys.path.append('..')
 from datetime import datetime
-from downloader.caches3 import CacheS3
 from lxml import etree
-from downloader.cache import Cache
+from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
