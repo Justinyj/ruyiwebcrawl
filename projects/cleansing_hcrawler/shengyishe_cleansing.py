@@ -7,9 +7,9 @@ from hprice_cleaning import HpriceCleansing
 class Syscleansing(HpriceCleansing):
     def parse_single_item(self, item):
         item_suit_schema = {
-                    'name' : item[u'name'],                         # 品种
+                    'name' : item[u'报价类型'] + '-' + item[u'报价机构'],                         # 品种
                     'productGrade' : item[u'详细信息'][u'等级'],                            # 产品等级
-                    'price' : item[u'商品报价'],                        # 价格历史
+                    'price' : ''.join([i for i in item[u'商品报价'] if i.isdigit()]),                        # 价格历史
                     'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
                     'validDate' : item[u'发布时间'],                               # 爬取日期
                     'productPlaceOfOrigin' : item[u'出产地'],        # 原产地
@@ -18,8 +18,8 @@ class Syscleansing(HpriceCleansing):
                     'source' : item[u'url'],                        # 数据源url
                     'tags' : '',                                    # 标签   
                     'productionYear' : '',                          # 生产年限
-                    'unitText' : item[u'info'][u'规格'],              # 单位，规格
-                    'mainEntityOfPage' : '',                        # 
+                    'unitText' : ''.join([i for i in item[u'商品报价'] if not i.isdigit()]),              # 单位，规格
+                    'mainEntityOfPage' : item[u'name'],                        # 
                     'sellerMarket' : item[u'报价机构'],                            # 报送单位(在中华粮网里出现，是各地市场)
                     'minPrice' : '',                                # 最低价
                     'productSpecification' : '',                    # 产品说明
