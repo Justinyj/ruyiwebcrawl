@@ -18,6 +18,7 @@ class HpriceCleansing(object):
 
     def set_source_files_path(self):
         dir_path =  '/data' + '/' + self.dir_name
+        
         if os.path.isdir(dir_path):  
             file_list = os.listdir(dir_path)
             self.source_files_path = [dir_path + '/' + file for file in file_list]
@@ -31,12 +32,7 @@ class HpriceCleansing(object):
                 item = json.loads(line)
                 item_suit_schema = self.parse_single_item(item)
 
-                self.jsons.append(item_suit_schema)
-                self.counter += 1
-                if self.counter == 1000:
-                    # sendto_es(self.jsons)
-                    self.counter = 0
-                    self.jsons = []
+
 
     def parse_single_item(self, item):
             # 时间关系，这里暂时设成父类方法为分析药通网，未来可以调整优化
@@ -62,16 +58,24 @@ class HpriceCleansing(object):
                     'description' : '',                             # 产品描述
             }
 
-            return item_suit_schema
+            for k,v in item[u'price_history'].iteritems():
+                item_suit_schema['validDate'] = k   #日期
+                item_suit_schema['price']     = v   #价格
+                self.jsons.append(item_suit_schema)
+                self.counter += 1
+                if self.counter >= 2000:
+                    sendto_es(self.jsons)
+                    self.counter = 0
+                    self.jsons = []
 
     def run(self):
         self.set_source_files_path()
         for file_path in self.source_files_path:
             self.parse_single_file(file_path)
 
-# class HpriceCleansing(HpriceCleansing):
+# class HpriceCleansingOfCngarin(HpriceCleansing):
+#     #中华粮网每个json是一个市场，里面有若干种品种
 #     def parse_single_item(self, item):
-#         ......
-    
+
 m = HpriceCleansing('ytyaocai')
 m.run()
