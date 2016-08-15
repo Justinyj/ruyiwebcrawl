@@ -13,11 +13,11 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['52.196.166.54']
+    env.hosts = ['52.196.135.33']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
-DEPLOY_ENV = 'PRODUCTION'
+DEPLOY_ENV = 'HCRAWLER'
 
 def _aws():
     sudo('mkfs -t ext4 /dev/xvdb')
@@ -63,8 +63,8 @@ def upload():
         run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
 
-    with cd('/opt/service/crawlerservice'):
-        run('psql -U postgres < cache/crawlercache.sql')
+    # with cd('/opt/service/crawlerservice'):
+    #     run('psql -U postgres < cache/crawlercache.sql')
 
 
 def kill():

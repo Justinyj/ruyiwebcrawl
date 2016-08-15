@@ -10,14 +10,13 @@ import urllib
 import re
 import urlparse
 from datetime import datetime
-from downloader.caches3 import CacheS3
 from lxml import etree
-from downloader.cache import Cache
+from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
 from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
+from settings import REGION_NAME, CACHE_SERVER
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -27,10 +26,10 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
-        setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
+        setattr(process, '_downloader', DownloadWrapper(None, headers))
     if not hasattr(process, '_cache'):
         head, tail = batch_id.split('-')
-        setattr(process, '_cache', CacheS3(head + '-json-' + tail))
+        setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
