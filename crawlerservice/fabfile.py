@@ -51,7 +51,7 @@ def build_env():
 def upload():
     archive = 'crawlerservice.tar.bz2'
     with lcd('..'):
-        local('tar jcf {} --exclude *.pyc crawlerservice'.format(archive))
+        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir crawlerservice$dirtime; cp -r crawlerservice/* crawlerservice$dirtime; cp -r haizhicommon/rediscluster haizhicommon/crawlerlog crawlerservice$dirtime; tar jcf {} --exclude='*.pyc' crawlerservice$dirtime; rm -r crawlerservice$dirtime".format(archive))
         put('{}'.format(archive), '/tmp/')
 
     with cd('/tmp'):
