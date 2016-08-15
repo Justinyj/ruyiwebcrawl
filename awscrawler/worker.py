@@ -104,8 +104,8 @@ class GetWorker(Worker):
                 batch_urlid[batch_id] = results
             [checkout_cache.pop(i) for i in removes]
 
-            removes = []
             while len(batch_urlid) > 0:
+                removes = []
                 for batch_id, results in batch_urlid.iteritems(): # download and process
                     if len(results) > 0:
                         url_id = results.pop()
