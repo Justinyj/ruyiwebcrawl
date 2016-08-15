@@ -8,7 +8,6 @@ from gevent import monkey; monkey.patch_all()
 import gevent
 import time
 import datetime
-import time
 import os
 import sys
 import requests
