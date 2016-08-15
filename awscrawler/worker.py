@@ -103,19 +103,20 @@ class GetWorker(Worker):
                     continue
                 batch_urlid[batch_id] = results
             [checkout_cache.pop(i) for i in removes]
-            doing_queues = batch_urlid.keys()
 
-            while len(doing_queues) > 0:
+            removes = []
+            while len(batch_urlid) > 0:
                 for batch_id, results in batch_urlid.iteritems(): # download and process
                     if len(results) > 0:
                         url_id = results.pop()
-                        other_batch_process_time = self.get_other_batch_process_time( set(doing_queues) - set([batch_id]) )
+                        other_batch_process_time = self.get_other_batch_process_time( set(batch_urlid.keys()) - set([batch_id]) )
                         start = time.time()
 
                         self.work(batch_id, checkout_cache[batch_id], url_id, other_batch_process_time, *args, **kwargs)
                         self.update_process_time_of_this_batch(batch_id, start)
                     else:
-                        doing_queues.remove(batch_id)
+                        removes.append(batch_id)
+                [batch_urlid.pop(i) for i in removes]
 
 
     def work(self, batch_id, queue_dict, url_id, other_batch_process_time, *args, **kwargs):
