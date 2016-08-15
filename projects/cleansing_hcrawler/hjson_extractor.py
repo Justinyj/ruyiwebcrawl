@@ -34,7 +34,7 @@ class hjson_extractor(object):
                 self.jsons.append(item_suit_schema)
                 self.counter += 1
                 if self.counter == 1000:
-                    # sendto_es(jsons)
+                    # sendto_es(self.jsons)
                     self.counter = 0
                     self.jsons = []
 
