@@ -20,9 +20,11 @@ class Downloader(object):
         self.TIMEOUT = timeout
         self.RETRY = 2
 
-        if cacheserver is None:
+        if cacheserver is 's3':
             from .caches3 import CacheS3
             self.cache = CacheS3(batch_id, region_name)
+        elif cacheserver == None:
+            self.cache = None
         else:
             from .cache import Cache
             self.cache = Cache(batch_id, cacheserver)
@@ -161,19 +163,15 @@ class Downloader(object):
             refresh = self.refresh if refresh is None else refresh
             groups = self.groups if groups is None else groups
             ret = self.cache.post(url, source, groups, refresh)
-            #print ("sa", ret, url, self.cache.server)
             if ret not in [True, False]:
                 print('request with cache save_cach return: ', ret)
                 return False
             return ret
 
-        #print ("access", refresh, url, self.cache.server, self.cache.batch_id)
-        if refresh is False:
+        if refresh is False and self.cache is not None:
             content = self.cache.get(url)
             if content != u'':
-                #print ("hit", refresh, url, self.cache.server, self.cache.batch_id)
                 return content
-        #print ("miss", refresh, url, self.cache.server, self.cache.batch_id)
 
         if self.request is True:
             source = self.request_download(url, method, encoding, redirect_check, error_check, data)
@@ -182,6 +180,8 @@ class Downloader(object):
 
         if source == u'':
             return source
-        save_cache(url, source, groups, refresh)
+
+        if self.cache is not None:
+            save_cache(url, source, groups, refresh)
 
         return source
