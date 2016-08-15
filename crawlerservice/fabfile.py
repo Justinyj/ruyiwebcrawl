@@ -57,7 +57,7 @@ def upload():
     with cd('/tmp'):
         run('tar jxf /tmp/{}'.format(archive))
         sudo('mkdir -p /opt/service/raw; chown -R {user}:{user} /opt/service'.format(user=env.user))
-        run('mv /tmp/crawlerservice /opt/service/raw/crawlerservice`date +%Y%m%d%H%M%S`')
+        run('tar jxf /tmp/{} -C /opt/service/raw/'.format(archive))
 
     with cd('/opt/service/'):
         run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
