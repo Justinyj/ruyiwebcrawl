@@ -13,11 +13,11 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['52.196.166.54']
+    env.hosts = ['52.196.135.33']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
-DEPLOY_ENV = 'PRODUCTION'
+DEPLOY_ENV = 'HCRAWLER'
 
 def _aws():
     sudo('mkfs -t ext4 /dev/xvdb')
@@ -51,20 +51,20 @@ def build_env():
 def upload():
     archive = 'crawlerservice.tar.bz2'
     with lcd('..'):
-        local('tar jcf {} --exclude *.pyc crawlerservice'.format(archive))
+        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir crawlerservice$dirtime; cp -r crawlerservice/* crawlerservice$dirtime; rm crawlerservice$dirtime/rediscluster crawlerservice$dirtime/crawlerlog; cp -r haizhicommon/rediscluster haizhicommon/crawlerlog crawlerservice$dirtime; tar jcf {} --exclude='*.pyc' crawlerservice$dirtime; rm -r crawlerservice$dirtime".format(archive))
         put('{}'.format(archive), '/tmp/')
 
     with cd('/tmp'):
         run('tar jxf /tmp/{}'.format(archive))
         sudo('mkdir -p /opt/service/raw; chown -R {user}:{user} /opt/service'.format(user=env.user))
-        run('mv /tmp/crawlerservice /opt/service/raw/crawlerservice`date +%Y%m%d%H%M%S`')
+        run('tar jxf /tmp/{} -C /opt/service/raw/'.format(archive))
 
     with cd('/opt/service/'):
         run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
 
-    with cd('/opt/service/crawlerservice'):
-        run('psql -U postgres < cache/crawlercache.sql')
+    # with cd('/opt/service/crawlerservice'):
+    #     run('psql -U postgres < cache/crawlercache.sql')
 
 
 def kill():
