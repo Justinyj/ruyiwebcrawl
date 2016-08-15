@@ -47,13 +47,13 @@ class HpriceCleansing(object):
                     'price' : item[u'price_history'],               # 价格历史
                     'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
                     'validDate' : '',                               # 爬取日期
-                    'productPlaceOfOrigin' : item['info'][u'产地'],  # 原产地
+                    'productPlaceOfOrigin' : item[u'info'][u'产地'],  # 原产地
                     'maxPrice' : '',                                # 最高价
                     'seller' : '',                                  # 销售
-                    'source' : '',                                  # 数据源url
+                    'source' : item[u'source'],                      # 数据源url
                     'tags' : '',                                    # 标签   
                     'productionYear' : '',                          # 生产年限
-                    'unitText' : item['info'][u'规格'],              # 单位，规格
+                    'unitText' : item[u'info'][u'规格'],              # 单位，规格
                     'mainEntityOfPage' : '',                        # 
                     'sellerMarket' : '',                            # 报送单位(在中华粮网里出现，是各地市场)
                     'minPrice' : '',                                # 最低价
