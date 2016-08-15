@@ -6,7 +6,7 @@ import json
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-#from to_es import sendto_es
+from to_es import sendto_es
 
 
 class hjson_extractor(object):
@@ -18,8 +18,7 @@ class hjson_extractor(object):
 
     def set_source_files_path(self):
         dir_path =  '/data' + '/' + self.dir_name
-        if os.path.isdir(dir_path): 
-            print 'is'  
+        if os.path.isdir(dir_path):  
             file_list = os.listdir(dir_path)
             self.source_files_path = [dir_path + '/' + file for file in file_list]
         else:
@@ -30,10 +29,16 @@ class hjson_extractor(object):
         with open(file_path, 'r') as file:
             for line in file:
                 item = json.loads(line)
-                self.parse_single_item(item)
+                item_suit_schema = self.parse_single_item(item)
+
+                self.jsons.append(item_suit_schema)
+                self.counter += 1
+                if self.counter == 1000:
+                    # sendto_es(jsona)
+                    self.counter = 0
 
     def parse_single_item(self, item):
-            #时间关系，这里暂时设成父类方法为分析药通网，未来可以调整优化
+            # 时间关系，这里暂时设成父类方法为分析药通网，未来可以调整优化
             # 药通网的price_history是一个字典，key为日期，value为价格
             item_suit_schema = {
                     'name' : item[u'name'],                         # 品种
@@ -55,17 +60,17 @@ class hjson_extractor(object):
                     'priceType' : '',                               # 价格类型
                     'description' : '',                             # 产品描述
             }
-            self.jsons.append(item_suit_schema)
-            self.counter += 1
-            if self.counter == 1000:
-                # sendto_es(jsona)
-                self.counter = 0
 
+            return item_suit_schema
 
     def run(self):
         self.set_source_files_path()
-        print self.source_files_path
         for file_path in self.source_files_path:
             self.parse_single_file(file_path)
+
+# class hjson_extractor_for_cngarin(hjson_extractor):
+#     def parse_single_item(self, item):
+#         ......
+    
 m = hjson_extractor('ytyaocai')
 m.run()

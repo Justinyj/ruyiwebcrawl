@@ -4,6 +4,7 @@
 
 from __future__ import print_function, division
 
+import os
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows
 
 ENV = 'local'
