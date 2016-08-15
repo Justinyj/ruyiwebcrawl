@@ -31,7 +31,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         setattr(process, '_downloader', DownloadWrapper(None, headers))
     if not hasattr(process, '_cache'):
         head, tail = batch_id.split('-')
-        setattr(process, '_cache', CacheS3(head + '-json-' + tail))
+        setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
