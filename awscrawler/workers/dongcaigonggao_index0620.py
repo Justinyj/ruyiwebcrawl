@@ -28,7 +28,7 @@ def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
-        setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
+        setattr(process, '_downloader', DownloadWrapper('s3', headers, REGION_NAME))
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
