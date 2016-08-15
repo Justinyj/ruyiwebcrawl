@@ -73,5 +73,5 @@ class HpriceCleansing(object):
 #     def parse_single_item(self, item):
 #         ......
     
-m = hjson_extractor('ytyaocai')
+m = HpriceCleansing('ytyaocai')
 m.run()
