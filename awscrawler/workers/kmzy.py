@@ -20,7 +20,7 @@ from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 import time
 from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
+from settings import REGION_NAME, CACHE_SERVER
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
