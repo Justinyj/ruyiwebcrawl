@@ -14,34 +14,37 @@ import sys
 import time
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from downloader.caches3 import CacheS3
+
+from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
 from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
+from settings import REGION_NAME, CACHE_SERVER
 
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info('process {}'.format(url))
 
-    if not hasattr(process, '_cache'):
-        head, tail = batch_id.split('-')
-        setattr(process, '_cache', CacheS3(head + '-json-' + tail))
 
     if not hasattr(process, '_downloader'):
         headers = {
                     'Cookie':'AJSTAT_ok_times=1; ant_stream_5762b612883d9=1470748235/1519574204; ASP.NET_SessionId=rpdjsrnmq3ybp0f4cnbdewm1; __utmt=1; bow_stream_5762b612883d9=13; __utma=240343830.1666180114.1470705813.1470719553.1470752966.3; __utmb=240343830.6.10.1470752966; __utmc=240343830; __utmz=240343830.1470705813.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)',
                     'Host':'datacenter.cngrain.com',
             }
-        setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
+        setattr(process, '_downloader', DownloadWrapper(None, headers))
 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
                 'home' : re.compile('http://datacenter.cngrain.com/NewPrice.aspx'),
                 'market': re.compile('http://datacenter.cngrain.com/PriceMainMark.aspx\?MarketId=(.*)')
             })
+
+    if not hasattr(process, '_cache'):
+        head, tail = batch_id.split('-')
+        setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
+        
     if not hasattr(process, '_pattern'):
         setattr(process, '_pattern', {
             'market'    : 'http://datacenter.cngrain.com/PriceMainMark.aspx',

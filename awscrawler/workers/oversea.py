@@ -15,12 +15,12 @@ import time
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from downloader.caches3 import CacheS3
+from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
 
 from crawlerlog.cachelog import get_logger
-from settings import REGION_NAME
+from settings import REGION_NAME, CACHE_SERVER
 
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
@@ -30,7 +30,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
         headers = {'Host': domain_name}
-        setattr(process, '_downloader', DownloadWrapper(None, headers, REGION_NAME))
+        setattr(process, '_downloader', DownloadWrapper(None, headers))
 
     if not hasattr(process,'_reg'):
         setattr(process, '_reg', {
@@ -39,7 +39,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
     if not hasattr(process, '_cache'):
         head, tail = batch_id.split('-')
-        setattr(process, '_cache', CacheS3(head + '-json-' + tail))
+        setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = int(gap)
