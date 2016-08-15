@@ -22,7 +22,7 @@ def get_answer_url(q_id, r_id):
 
 def process(url, batch_id, parameter, manager, *args, **kwargs):
     if not hasattr(process, '_downloader'):
-        setattr(process, '_downloader', DownloadWrapper(None, {'Host': 'zhidao.baidu.com'}, REGION_NAME))
+        setattr(process, '_downloader', DownloadWrapper('s3', {'Host': 'zhidao.baidu.com'}, REGION_NAME))
     if not hasattr(process, '_cache'):
         setattr(process, '_cache', CacheS3(BATCH_ID['json'])
 
