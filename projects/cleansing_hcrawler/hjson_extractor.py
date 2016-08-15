@@ -9,7 +9,7 @@ sys.setdefaultencoding('utf-8')
 from to_es import sendto_es
 
 
-class hjson_extractor(object):
+class HpriceCleansing(object):
     def __init__(self, dir_name):
         self.dir_name = dir_name
         self.source_files_path = None
@@ -45,8 +45,8 @@ class hjson_extractor(object):
                     'name' : item[u'name'],                         # 品种
                     'productGrade' : '',                            # 产品等级
                     'price' : item[u'price_history'],               # 价格历史
-                    'priceCurrency' : 'CNY',                           # 价格货币，命名规则使用iso-4217
-                    'validDate' : '',                               # 有效日期
+                    'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
+                    'validDate' : '',                               # 爬取日期
                     'productPlaceOfOrigin' : item['info'][u'产地'],  # 原产地
                     'maxPrice' : '',                                # 最高价
                     'seller' : '',                                  # 销售
@@ -69,7 +69,7 @@ class hjson_extractor(object):
         for file_path in self.source_files_path:
             self.parse_single_file(file_path)
 
-# class hjson_extractor_for_cngarin(hjson_extractor):
+# class HpriceCleansing(HpriceCleansing):
 #     def parse_single_item(self, item):
 #         ......
     
