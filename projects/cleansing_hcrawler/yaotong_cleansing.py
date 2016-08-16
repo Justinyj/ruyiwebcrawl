@@ -1,47 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
-import json
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 from to_es import sendto_es
 
+from hprice_cleaning import HpriceCleansing
 
-class HpriceCleansing(object):
-    def __init__(self, dir_name):
-        self.dir_name = dir_name
-        self.source_files_path = None
-        self.counter = 0
-        self.jsons = []
-
-    def set_source_files_path(self):
-        dir_path =  '/data/hproject/2016/' + self.dir_name
-        
-        if os.path.isdir(dir_path):  
-            file_list = os.listdir(dir_path)
-            self.source_files_path = [dir_path + '/' + file for file in file_list]
-        else:
-            raise IOError('no such directory: {}'.format(dir_path))
-
-
-    def parse_single_file(self, file_path):
-        with open(file_path, 'r') as file:
-            for line in file:
-                if line.strip():
-                    item = json.loads(line.strip())
-                    self.parse_single_item(item)
-        sendto_es(self.jsons)
-        self.counter = 0
-        self.jsons = []
-
-
+class YaotongCleansing(object):
     def parse_single_item(self, item):
-<<<<<<< HEAD
             # 时间关系，这里暂时设成父类方法为分析药通网，未来可以调整优化
             # 药通网的price_history是一个字典，key为日期，value为价格
-            item_suit_schema = {
+
+            for k,v in item[u'price_history'].iteritems():
+                item_suit_schema = {
                         'name' : item[u'name'],                         # 品种
                         'productGrade' : '',                            # 产品等级
                         'price' : item[u'price_history'],               # 价格历史
@@ -59,10 +32,7 @@ class HpriceCleansing(object):
                         'productSpecification' : '',                    # 产品说明
                         'priceType' : '',                               # 价格类型
                         'description' : '',                             # 产品描述
-            }
-            
-            for k,v in item[u'price_history'].iteritems():
-
+                }
 
                 item_suit_schema['validDate'] = k   #日期
                 item_suit_schema['price']     = v   #价格
@@ -73,11 +43,11 @@ class HpriceCleansing(object):
                     sendto_es(self.jsons)
                     self.counter = 0
                     self.jsons = []
-=======
-        pass
->>>>>>> bd056bf95dafca08eb1d8a03b90840521b438b34
 
-    def run(self):
-        self.set_source_files_path()
-        for file_path in self.source_files_path:
-            self.parse_single_file(file_path)
+
+# class HpriceCleansingOfCngarin(HpriceCleansing):
+#     #中华粮网每个json是一个市场，里面有若干种品种
+#     def parse_single_item(self, item):
+if __name__ == '__main__':
+    m = YaotongCleansing('ytyaocai-20160815')
+    m.run()
