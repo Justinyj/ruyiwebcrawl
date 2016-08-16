@@ -80,6 +80,6 @@ class HpriceCleansing(object):
 # class HpriceCleansingOfCngarin(HpriceCleansing):
 #     #中华粮网每个json是一个市场，里面有若干种品种
 #     def parse_single_item(self, item):
-
-m = HpriceCleansing('ytyaocai-20160815')
-m.run()
+if __name__ == '__main__':
+    m = HpriceCleansing('ytyaocai-20160815')
+    m.run()
