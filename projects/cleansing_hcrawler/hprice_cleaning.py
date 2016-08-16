@@ -40,9 +40,7 @@ class HpriceCleansing(object):
     def parse_single_item(self, item):
             # 时间关系，这里暂时设成父类方法为分析药通网，未来可以调整优化
             # 药通网的price_history是一个字典，key为日期，value为价格
-
-            for k,v in item[u'price_history'].iteritems():
-                item_suit_schema = {
+            item_suit_schema = {
                         'name' : item[u'name'],                         # 品种
                         'productGrade' : '',                            # 产品等级
                         'price' : item[u'price_history'],               # 价格历史
@@ -60,7 +58,10 @@ class HpriceCleansing(object):
                         'productSpecification' : '',                    # 产品说明
                         'priceType' : '',                               # 价格类型
                         'description' : '',                             # 产品描述
-                }
+            }
+            
+            for k,v in item[u'price_history'].iteritems():
+
 
                 item_suit_schema['validDate'] = k   #日期
                 item_suit_schema['price']     = v   #价格
