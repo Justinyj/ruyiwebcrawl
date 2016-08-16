@@ -17,6 +17,12 @@
         "property": {
             "type": "string",
             "index": "no"
+        },
+        "createdTime": {
+            "type": "date"
+        },
+        "confidence": {
+            "type": "string"
         }
     }
 }
