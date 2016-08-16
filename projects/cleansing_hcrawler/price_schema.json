@@ -1,7 +1,7 @@
 {
     "properties": {
         "name": {
-            "type": "string"
+            "type": "string",
         },
         "mainEntityOfPage": {
             "type": "string"
@@ -32,13 +32,13 @@
         },
         "priceType": {
             "type": "string",
-            "index": "no"
+            "index": "not_analyzed"
         },
         "productionYear": {
             "type": "string"
         },
         "validDate": {
-            "type": "string",
+            "type": "date",
             "index": "not_analyzed"
         },
         "seller": {
@@ -47,7 +47,7 @@
         },
         "productGrade": {
             "type": "string",
-            "index": "no"
+            "index": "not_analyzed"
         },
         "productSpecification": {
             "type": "string",
@@ -55,11 +55,11 @@
         },
         "productPlaceOfOrigin": {
             "type": "string",
-            "index": "no"
+            "index": "not_analyzed"
         },
         "sellerMarket": {
             "type": "string",
-            "index": "no"
+            "index": "not_analyzed"
         },
         "source": {
             "type": "string",
