@@ -13,7 +13,7 @@ from multitask import run
 
 
 def get_hcrawler_conf_dir():
-    config_dir = os.path.abspath(os.path.dirname(__file__) + '/..')
+    config_dir = os.path.dirname(os.path.join(os.path.abspath(__file__) ,'..'))
     return os.path.join(config_dir, 'config_prefetch/hcrawler')
 
 def run_crawler(config_file):
@@ -25,17 +25,21 @@ def split_crawl_jobs():
     now = datetime.now()
     conf_file = get_hcrawler_conf_dir()
 
-    cpu_count = multiprocessing.cpu_count()
-    pool = multiprocessing.Pool(processes=cpu_count * 10)
-
+    jobs = []
     if now.day == 1:
-        pool.apply_async(run_crawler, (os.path.join(conf_file, 'monthly.json'), ))
+        p = multiprocessing.Process(target=run_crawler, args=(conf_file + "/monthly.json",))
+        jobs.append(p)
+        p.start()
     if now.weekday() == 6: # Sunday
-        pool.apply_async(run_crawler, (os.path.join(conf_file, 'weekly.json'), ))
-    pool.apply_async(run_crawler, (os.path.join(conf_file, 'daily.json'), ))
+        p = multiprocessing.Process(target=run_crawler, args=(conf_file + "/weekly.json",))
+        jobs.append(p)
+        p.start()
 
-    pool.close()
-    pool.join()
+    p = multiprocessing.Process(target=run_crawler, args=(conf_file + "/daily.json",))
+    jobs.append(p)
+    p.start()
+    for job in jobs:
+        job.join()
 
 def cleansing():
     pass
