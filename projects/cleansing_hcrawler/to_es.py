@@ -16,7 +16,14 @@ CONFIG = {
 ES_DATASET_CONFIG = {
         'description': 'hprice',
         'es_index': 'hprice',
-        'es_type': 'metrialprice',
+        'es_type': 'materialprice',
+        'filepath_mapping': os.path.abspath(os.path.dirname(__file__)) + '/' + 'price_schema.json'
+}
+
+ES_DATASET_CONFIG_M = {
+        'description': 'hprice',
+        'es_index': 'hprice',
+        'es_type': 'metrialproperty',
         'filepath_mapping': os.path.abspath(os.path.dirname(__file__)) + '/' + 'price_schema.json'
 }
 
