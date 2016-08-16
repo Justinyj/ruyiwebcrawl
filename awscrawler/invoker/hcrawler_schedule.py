@@ -27,11 +27,11 @@ def split_crawl_jobs():
 
     jobs = []
     if now.day == 1:
-        p = multiprocessing.Process(target=run_crawler, args=(conf_file + "/daily.json",))
+        p = multiprocessing.Process(target=run_crawler, args=(conf_file + "/monthly.json",))
         jobs.append(p)
         p.start()
     if now.weekday() == 6: # Sunday
-        p = multiprocessing.Process(target=run_crawler, args=(conf_file + "/daily.json",))
+        p = multiprocessing.Process(target=run_crawler, args=(conf_file + "/weekly.json",))
         jobs.append(p)
         p.start()
 
