@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
+# cleaning codes for agricul and chemppi
 
 from hprice_cleaning import HpriceCleansing
 
 class Syscleansing(HpriceCleansing):
     def parse_single_item(self, item):
         item_suit_schema = {
+                    'id' : item[u'报价类型'] + '-' + item[u'报价机构'] + item[u'发布时间'],
                     'name' : item[u'报价类型'] + '-' + item[u'报价机构'],                         # 品种
                     'productGrade' : item[u'详细信息'][u'等级'],                            # 产品等级
                     'price' : ''.join([i for i in item[u'商品报价'] if i.isdigit()]),                        # 价格历史
