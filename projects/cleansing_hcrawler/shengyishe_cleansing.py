@@ -4,15 +4,18 @@
 # cleaning codes for agricul and chemppi
 
 from hprice_cleaning import HpriceCleansing
+from datetime import datetime
 
 class Syscleansing(HpriceCleansing):
     def parse_single_item(self, item):
         item_suit_schema = {
-                    'id' : item[u'报价类型'] + '-' + item[u'报价机构'] + item[u'发布时间'],
-                    'name' : item[u'报价类型'] + '-' + item[u'报价机构'],                         # 品种
-                    'productGrade' : item[u'详细信息'][u'等级'],                            # 产品等级
+                    'id' : item[u'报价类型'] + '-' + item[u'报价机构'] + '_' + item[u'发布时间'],
+                    'name' : item[u'name'] + '-' + item[u'报价类型'] + '-' + item[u'报价机构'],                         # 品种
+                    'productGrade' : item[u'详细信息'][u'等级'] if u'等级' in item[u'详细信息'] else '',
                     'price' : ''.join([i for i in item[u'商品报价'] if i.isdigit()]),                        # 价格历史
                     'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
+                    'createdTime' : datetime.today().isoformat(),
+                    'confidence' : 0.7,
                     'validDate' : item[u'发布时间'],                               # 爬取日期
                     'productPlaceOfOrigin' : item[u'出产地'],        # 原产地
                     'maxPrice' : '',                                # 最高价
@@ -35,3 +38,6 @@ class Syscleansing(HpriceCleansing):
             self.counter = 0
             self.jsons = []
 
+if __name__ == '__main__':
+    s = Syscleansing('agricul')
+    s.run()
