@@ -1,0 +1,22 @@
+{
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "description": {
+            "type": "string",
+            "index": "no"
+        },
+        "sameAs": {
+            "type": "string"
+        },
+        "source": {
+            "type": "string",
+            "index": "no"
+        },
+        "property": {
+            "type": "string",
+            "index": "no"
+        }
+    }
+}
