@@ -9,8 +9,8 @@ from datetime import datetime
 class Shengyishecleansing(HpriceCleansing):
     def parse_single_item(self, item):
         item_suit_schema = {
-                    'id' : item[u'name'] + '_' + item[u'报价类型'] + '_' + item[u'报价机构'] + '_' + item[u'发布时间'],
-                    'name' : item[u'name'] + '-' + item[u'报价类型'] + '-' + item[u'报价机构'],                         # 品种
+                    'id' : item[u'name'] + '_' + item[u'报价类型'] + '_' + item[u'报价机构'] + '_' + item[u'详细信息'][u'等级'] if u'等级' in item[u'详细信息'] else '' + '_' + item[u'发布时间'],
+                    'name' : item[u'name'] + '_' + item[u'报价类型'] + '_' + item[u'报价机构'] + '_' + item[u'详细信息'][u'等级'] if u'等级' in item[u'详细信息'] else '',                         # 品种
                     'productGrade' : item[u'详细信息'][u'等级'] if u'等级' in item[u'详细信息'] else '',
                     'price' : ''.join([i for i in item[u'商品报价'] if i.isdigit() or i == '.']),                        # 价格历史
                     'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217

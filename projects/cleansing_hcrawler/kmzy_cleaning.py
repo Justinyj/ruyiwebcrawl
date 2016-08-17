@@ -10,9 +10,9 @@ class Kmzycleansing(HpriceCleansing):
     def parse_single_item(self, item):
         for mon, price in item['data']:
             item_suit_schema = {
-                        'id' : item[u'name'] + '_' + item[u'specs'] + '_' + mon,
-                        'name' : item[u'name'] + '-' + item[u'specs'] + '-' + mon,                         # 品种
-                        'productGrade' : '',                            # 产品等级
+                        'id' : item[u'name'] + '_' + item[u'specs'].split('/')[1] + '_' + item[u'specs'].split('/')[0] + '_' + mon,
+                        'name' : item[u'name'] + '_' + item[u'specs'].split('/')[1] + '_' + item[u'specs'].split('/')[0],                         # 品种
+                        'productGrade' : item[u'specs'].split('/')[0],                            # 产品等级
                         'price' : price,                        # 价格历史
                         'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
                         'validDate' : mon,                               # 爬取日期
@@ -28,7 +28,7 @@ class Kmzycleansing(HpriceCleansing):
                         'mainEntityOfPage' : item[u'name'],                        # 
                         'sellerMarket' : '',                            # 报送单位(在中华粮网里出现，是各地市场)
                         'minPrice' : '',                                # 最低价
-                        'productSpecification' : item[u'specs'].split('/')[0],                    # 产品说明
+                        'productSpecification' : '',                    # 产品说明
                         'priceType' : '',                               # 价格类型
                         'description' : '',                             # 产品描述
                 }
