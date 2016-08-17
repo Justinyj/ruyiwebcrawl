@@ -12,7 +12,6 @@ class Syscleansing(HpriceCleansing):
 
         for product in item['product_list']:
             item_suit_schema = {
-                'name' : product[u'variety'] + '_' + product[u'price_type'] + '_' + item[u'market'] + '_' + product[u'level'],                         # 品种
                 'productGrade' : product[u'level'] ,
                 'price' : '',
                 'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
@@ -33,18 +32,19 @@ class Syscleansing(HpriceCleansing):
                 'priceType' : product[u'price_type'],                               # 价格类型
                 'description' : '',                             # 产品描述
             }
+            item_suit_schema[u'name'] = ('{}_{}_{}_{}').format(item_suit_schema['mainEntityOfPage'], item_suit_schema['priceType'], item_suit_schema['sellerMarket'], item_suit_schema['productGrade'])
             if not product[u'price_history']: #由于部分数据没有价格历史，因此先在上面将其赋值为空，再在后面for循环里覆盖
                 result_item = item_suit_schema.copy()
-                result_item['id']  = item_suit_schema['name']
+                result_item['id']  = item_suit_schema['name'] + '_'
                 self.jsons.append(result_item)
                 self.counter += 1
                 return
 
             for k,v in product[u'price_history'].iteritems():
                 result_item = item_suit_schema.copy()
-                result_item['validDate'] = k   #日期
-                result_item['price']     = v   #价格
-                result_item['id']  = result_item['name'] + '_' + result_item['validDate']
+                result_item[u'validDate'] = k   #日期
+                result_item[u'price']     = v   #价格
+                result_item[u'id']  = result_item[u'name'] + '_' + result_item[u'validDate']
                 self.jsons.append(result_item)
                 self.counter += 1
                 if self.counter >= 2000:
