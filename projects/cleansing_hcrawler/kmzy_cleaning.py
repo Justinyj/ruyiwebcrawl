@@ -19,18 +19,18 @@ class Kmzycleansing(HpriceCleansing):
                         'createdTime' : datetime.today().isoformat(),
                         'confidence' : 0.7,
                         'productPlaceOfOrigin' : item[u'specs'].split('/')[1],        # 原产地
-                        'maxPrice' : '',                                # 最高价
-                        'seller' : '',                                  # 销售
+                        'maxPrice' : None,                                # 最高价
+                        'seller' : None,                                  # 销售
                         'source' : item[u'source'],                        # 数据源url
-                        'tags' : '',                                    # 标签   
-                        'productionYear' : '',                          # 生产年限
-                        'unitText' : '',              # 单位，规格
+                        'tags' : None,                                    # 标签   
+                        'productionYear' : None,                          # 生产年限
+                        'unitText' : None,              # 单位，规格
                         'mainEntityOfPage' : item[u'name'],                        # 
-                        'sellerMarket' : '',                            # 报送单位(在中华粮网里出现，是各地市场)
-                        'minPrice' : '',                                # 最低价
-                        'productSpecification' : '',                    # 产品说明
-                        'priceType' : '',                               # 价格类型
-                        'description' : '',                             # 产品描述
+                        'sellerMarket' : None,                            # 报送单位(在中华粮网里出现，是各地市场)
+                        'minPrice' : None,                                # 最低价
+                        'productSpecification' : None,                    # 产品说明
+                        'priceType' : None,                               # 价格类型
+                        'description' : None,                             # 产品描述
                 }
             self.jsons.append(item_suit_schema)
             self.counter += 1
