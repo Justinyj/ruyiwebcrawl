@@ -6,7 +6,7 @@
 from hprice_cleaning import HpriceCleansing
 from datetime import datetime
 from to_es import sendto_es
-
+import re
 class CngrainCleansing(HpriceCleansing):
     def parse_single_item(self, item):
 
@@ -30,20 +30,22 @@ class CngrainCleansing(HpriceCleansing):
                     'priceType' :               None,   # 价格类型
                     'description' :             None,   # 产品描述
                 }
-            item_suit_schema['createdTime'] = datetime.today().isoformat(),
-            item_suit_schema['productGrade'] = product[u'level'] ,
-            item_suit_schema['priceCurrency'] = 'CNY',                        # 价格货币，命名规则使用iso-4217
-            item_suit_schema['createdTime'] = datetime.today().isoformat(),
-            item_suit_schema['confidence'] = 0.7,
-            item_suit_schema['productPlaceOfOrigin'] = product['produce_area'],        # 原产地
-            item_suit_schema['source'] = item[u'source'],                        # 数据源url
-            item_suit_schema['productionYear'] = product[u'produce_year'],                          # 生产年限
-            item_suit_schema['unitText'] = u'元/kg',              # 
-            item_suit_schema['mainEntityOfPage'] = product[u'variety'] ,                        # 
-            item_suit_schema['sellerMarket'] = item[u'market'],                            # 报送单位
-            item_suit_schema['priceType'] = product[u'price_type'],                               # 价格类型
+            item_suit_schema['createdTime'] = datetime.today().isoformat()
+            item_suit_schema['productGrade'] = product[u'level'] 
+            item_suit_schema['priceCurrency'] = 'CNY'                        # 价格货币，命名规则使用iso-4217
+            item_suit_schema['createdTime'] = datetime.today().isoformat()
+            item_suit_schema['confidence'] = 0.7
+            item_suit_schema['productPlaceOfOrigin'] = product['produce_area']        # 原产地
+            item_suit_schema['source'] = item[u'source']                        # 数据源url
+            item_suit_schema['productionYear'] = product[u'produce_year']                          # 生产年限
+            item_suit_schema['unitText'] = u'元/kg'              # 
+            item_suit_schema['mainEntityOfPage'] = product[u'variety']                         # 
+            item_suit_schema['sellerMarket'] = item[u'market']                            # 报送单位
+            item_suit_schema['priceType'] = product[u'price_type']
 
             item_suit_schema['name'] = ('{}_{}_{}_{}').format(item_suit_schema['mainEntityOfPage'], item_suit_schema['priceType'], item_suit_schema['sellerMarket'], item_suit_schema['productGrade'])
+            domin = re.findall('http://(.*?)/', item_suit_schema['source'])[0]
+            self.myset.add( domin + ',' +item_suit_schema['name'])
             if not product[u'price_history']: #由于部分数据没有价格历史，因此先在上面将其赋值为空，再在后面for循环里覆盖
                 result_item = item_suit_schema.copy()
                 result_item['id']  = item_suit_schema['name'] + '_'
