@@ -32,7 +32,7 @@ class Syscleansing(HpriceCleansing):
                 'priceType' : product[u'price_type'],                               # 价格类型
                 'description' : '',                             # 产品描述
             }
-            item_suit_schema[u'name'] = ('{}_{}_{}_{}').format(item_suit_schema['mainEntityOfPage'], item_suit_schema['priceType'], item_suit_schema['sellerMarket'], item_suit_schema['productGrade'])
+            item_suit_schema['name'] = ('{}_{}_{}_{}').format(item_suit_schema['mainEntityOfPage'], item_suit_schema['priceType'], item_suit_schema['sellerMarket'], item_suit_schema['productGrade'])
             if not product[u'price_history']: #由于部分数据没有价格历史，因此先在上面将其赋值为空，再在后面for循环里覆盖
                 result_item = item_suit_schema.copy()
                 result_item['id']  = item_suit_schema['name'] + '_'
