@@ -19,6 +19,7 @@ class QiParser(object):
 
     def parse_basic_info(self, html):
         info = {
+            'unified_social_credit_code': None,
             'registration_id': None,
             'organization_code': None,
             'status': None,
@@ -40,8 +41,8 @@ class QiParser(object):
                 if not info['registration_id']:
                     info['registration_id'] = text
             elif label == u'统一社会信用代码：':
-                if not info['registration_id']:
-                    info['registration_id'] = text
+                if not info['unified_social_credit_code']:
+                    info['unified_social_credit_code'] = text
             elif label == u'组织机构代码：':
                info['organization_code'] = text
             elif label == u'经营状态：':

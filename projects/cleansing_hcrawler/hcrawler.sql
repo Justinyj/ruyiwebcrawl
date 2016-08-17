@@ -31,3 +31,5 @@ create tabel hmaterial (
   createdTime timestamp default now() not null,
   confidence varchar(8)
 );
+
+
