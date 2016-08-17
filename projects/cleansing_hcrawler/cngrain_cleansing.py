@@ -12,7 +12,7 @@ class Syscleansing(HpriceCleansing):
 
         for product in item['product_list']:
             item_suit_schema = {
-                'name' : product[u'level'] + product[u'variety'],                         # 品种
+                'name' : product[u'variety'] + '_' + product[u'price_type'] + '_' + item[u'market'] + '_' + product[u'level'],                         # 品种
                 'productGrade' : product[u'level'] ,
                 'price' : '',
                 'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217

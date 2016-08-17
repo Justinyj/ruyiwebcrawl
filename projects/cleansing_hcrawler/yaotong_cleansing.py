@@ -15,7 +15,7 @@ class YaotongCleansing(HpriceCleansing):
 
             for k,v in item[u'price_history'].iteritems():
                 item_suit_schema = {
-                        'name' : item[u'name'],                         # 品种
+                        'name' : item[u'name']                         # 名称，没有市场等信息
                         'productGrade' : '',                            # 产品等级
                         'priceCurrency' : 'CNY',
                         'createdTime' : datetime.today().isoformat(),
@@ -37,7 +37,7 @@ class YaotongCleansing(HpriceCleansing):
 
                 item_suit_schema['validDate'] = k   #日期
                 item_suit_schema['price']     = v   #价格
-                item_suit_schema['id']  = item_suit_schema['name'] + item_suit_schema['validDate']
+                item_suit_schema['id']  = item_suit_schema['name'] + '_' + item_suit_schema['validDate']
                 self.jsons.append(item_suit_schema)
                 self.counter += 1
                 if self.counter >= 2000:
