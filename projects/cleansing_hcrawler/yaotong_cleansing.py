@@ -33,11 +33,11 @@ class YaotongCleansing(HpriceCleansing):
                         'priceType' : '',                               # 价格类型
                         'description' : '',                             # 产品描述
                 }
-                item_suit_schema[u'name'] = ('{}_{}_{}_{}').format(item_suit_schema[u'mainEntityOfPage'], item_suit_schema[u'priceType'], item_suit_schema[u'sellerMarket'], item_suit_schema[u'productGrade'])
+                item_suit_schema['name'] = ('{}_{}_{}_{}').format(item_suit_schema['mainEntityOfPage'], item_suit_schema['priceType'], item_suit_schema['sellerMarket'], item_suit_schema['productGrade'])
 
-                item_suit_schema[u'validDate'] = k   #日期
-                item_suit_schema[u'price']     = v   #价格
-                item_suit_schema[u'id']  = item_suit_schema[u'name'] + '_' + item_suit_schema[u'validDate']
+                item_suit_schema['validDate'] = k   #日期
+                item_suit_schema['price']     = v   #价格
+                item_suit_schema['id']  = item_suit_schema['name'] + '_' + item_suit_schema['validDate']
                 self.jsons.append(item_suit_schema)
                 self.counter += 1
                 if self.counter >= 2000:
