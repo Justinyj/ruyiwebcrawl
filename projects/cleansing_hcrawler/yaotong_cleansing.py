@@ -15,7 +15,7 @@ class YaotongCleansing(HpriceCleansing):
 
             for k,v in item[u'price_history'].iteritems():
                 item_suit_schema = {
-                        'name' : item[u'name']                         # 名称，没有市场等信息
+                        'name' : item[u'name'] ,                       # 名称，没有市场等信息
                         'productGrade' : '',                            # 产品等级
                         'priceCurrency' : 'CNY',
                         'createdTime' : datetime.today().isoformat(),
