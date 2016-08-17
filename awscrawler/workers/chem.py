@@ -40,7 +40,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
 
     method, gap, js, timeout, data = parameter.split(':')
-    gap = float(max(0, gap - other_batch_process_time))
+    gap = float(max(0, float(gap) - other_batch_process_time))
     timeout= int(timeout)
     compspat = 'http://china.chemnet.com/product/search.cgi?skey={};use_cas=0;f=pclist;p={}'
     today_str = datetime.now().strftime('%Y%m%d')
