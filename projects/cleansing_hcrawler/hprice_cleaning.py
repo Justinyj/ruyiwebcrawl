@@ -6,6 +6,7 @@ import json
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
+from to_es import sendto_es
 
 
 class HpriceCleansing(object):
