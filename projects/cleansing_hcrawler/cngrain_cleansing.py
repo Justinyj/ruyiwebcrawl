@@ -7,7 +7,7 @@ from hprice_cleaning import HpriceCleansing
 from datetime import datetime
 from to_es import sendto_es
 
-class Syscleansing(HpriceCleansing):
+class CngrainCleansing(HpriceCleansing):
     def parse_single_item(self, item):
 
         for product in item['product_list']:
@@ -64,5 +64,5 @@ class Syscleansing(HpriceCleansing):
                     self.jsons = []
 
 if __name__ == '__main__':
-    s = Syscleansing('cngrain-20160817')
+    s = CngrainCleansing('cngrain-20160817')
     s.run()
