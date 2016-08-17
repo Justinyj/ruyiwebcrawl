@@ -12,26 +12,37 @@ class Syscleansing(HpriceCleansing):
 
         for product in item['product_list']:
             item_suit_schema = {
-                'productGrade' : product[u'level'] ,
-                'price' : '',
-                'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
-                'createdTime' : datetime.today().isoformat(),
-                'confidence' : 0.7,
-                'validDate' : '',
-                'productPlaceOfOrigin' : product['produce_area'],        # 原产地
-                'maxPrice' : '',                                # 最高价
-                'seller' : '',                                  # 销售
-                'source' : item[u'source'],                        # 数据源url
-                'tags' : '',                                    # 标签   
-                'productionYear' : product[u'produce_year'],                          # 生产年限
-                'unitText' : u'元/kg',              # 
-                'mainEntityOfPage' : product[u'variety'] ,                        # 
-                'sellerMarket' : item[u'market'],                            # 报送单位
-                'minPrice' : '',                                # 最低价
-                'productSpecification' : '',                    # 产品规格
-                'priceType' : product[u'price_type'],                               # 价格类型
-                'description' : '',                             # 产品描述
-            }
+                    'productGrade' :            None,   # 产品等级
+                    'priceCurrency' :           None,   # 价格货币，命名规则使用iso-4217
+                    'createdTime' :             None,   # 生成时间
+                    'confidence' :              None,   # 
+                    'productPlaceOfOrigin' :    None,   # 原产地
+                    'maxPrice' :                None,   # 最高价
+                    'seller' :                  None,   # 销售
+                    'source' :                  None,   # 数据源url
+                    'tags' :                    None,   # 标签   
+                    'productionYear' :          None,   # 生产年限
+                    'unitText' :                None,   # 价格单位
+                    'mainEntityOfPage' :        None,   # 
+                    'sellerMarket' :            None,   # 报送单位(在中华粮网里出现，是各地市场)
+                    'minPrice' :                None,   # 最低价
+                    'productSpecification' :    None,   # 产品规格
+                    'priceType' :               None,   # 价格类型
+                    'description' :             None,   # 产品描述
+                }
+            item_suit_schema['createdTime'] = datetime.today().isoformat(),
+            item_suit_schema['productGrade'] = product[u'level'] ,
+            item_suit_schema['priceCurrency'] = 'CNY',                        # 价格货币，命名规则使用iso-4217
+            item_suit_schema['createdTime'] = datetime.today().isoformat(),
+            item_suit_schema['confidence'] = 0.7,
+            item_suit_schema['productPlaceOfOrigin'] = product['produce_area'],        # 原产地
+            item_suit_schema['source'] = item[u'source'],                        # 数据源url
+            item_suit_schema['productionYear'] = product[u'produce_year'],                          # 生产年限
+            item_suit_schema['unitText'] = u'元/kg',              # 
+            item_suit_schema['mainEntityOfPage'] = product[u'variety'] ,                        # 
+            item_suit_schema['sellerMarket'] = item[u'market'],                            # 报送单位
+            item_suit_schema['priceType'] = product[u'price_type'],                               # 价格类型
+
             item_suit_schema['name'] = ('{}_{}_{}_{}').format(item_suit_schema['mainEntityOfPage'], item_suit_schema['priceType'], item_suit_schema['sellerMarket'], item_suit_schema['productGrade'])
             if not product[u'price_history']: #由于部分数据没有价格历史，因此先在上面将其赋值为空，再在后面for循环里覆盖
                 result_item = item_suit_schema.copy()

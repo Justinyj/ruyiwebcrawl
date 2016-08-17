@@ -15,24 +15,31 @@ class YaotongCleansing(HpriceCleansing):
 
             for k,v in item[u'price_history'].iteritems():
                 item_suit_schema = {
-                        'productGrade' : '',                            # 产品等级
-                        'priceCurrency' : 'CNY',
-                        'createdTime' : datetime.today().isoformat(),
-                        'confidence' : 0.7,                        # 价格货币，命名规则使用iso-4217
-                        'productPlaceOfOrigin' : item[u'info'][u'产地'],  # 原产地
-                        'maxPrice' : '',                                # 最高价
-                        'seller' : '',                                  # 销售
-                        'source' : item[u'source'],                      # 数据源url
-                        'tags' : '',                                    # 标签   
-                        'productionYear' : '',                          # 生产年限
-                        'unitText' : u'元/kg',             # 单位
-                        'mainEntityOfPage' : '',                        # 
-                        'sellerMarket' : '',                            # 报送单位(在中华粮网里出现，是各地市场)
-                        'minPrice' : '',                                # 最低价
-                        'productSpecification' : item[u'info'][u'规格'],                    # 产品规格
-                        'priceType' : '',                               # 价格类型
-                        'description' : '',                             # 产品描述
+                        'productGrade' :            None,   # 产品等级
+                        'priceCurrency' :           None,   # 价格货币，命名规则使用iso-4217
+                        'createdTime' :             None,   # 生成时间
+                        'confidence' :              None,   # 
+                        'productPlaceOfOrigin' :    None,   # 原产地
+                        'maxPrice' :                None,   # 最高价
+                        'seller' :                  None,   # 销售
+                        'source' :                  None,   # 数据源url
+                        'tags' :                    None,   # 标签   
+                        'productionYear' :          None,   # 生产年限
+                        'unitText' :                None,   # 价格单位
+                        'mainEntityOfPage' :        None,   # 
+                        'sellerMarket' :            None,   # 报送单位(在中华粮网里出现，是各地市场)
+                        'minPrice' :                None,   # 最低价
+                        'productSpecification' :    None,   # 产品规格
+                        'priceType' :               None,   # 价格类型
+                        'description' :             None,   # 产品描述
                 }
+                item_suit_schema['createdTime'] = datetime.today().isoformat()
+                item_suit_schema['priceCurrency'] = 'CNY'
+                item_suit_schema['confidence']    = 0.7
+                item_suit_schema['productPlaceOfOrigin'] = item[u'info'][u'产地']
+                item_suit_schema['source']  = item[u'source']
+                item_suit_schema['unitText'] = u'元/公斤'
+                item_suit_schema['productSpecification'] = item[u'info'][u'规格'], 
                 item_suit_schema['name'] = ('{}_{}_{}_{}').format(item_suit_schema['mainEntityOfPage'], item_suit_schema['priceType'], item_suit_schema['sellerMarket'], item_suit_schema['productGrade'])
 
                 item_suit_schema['validDate'] = k   #日期
