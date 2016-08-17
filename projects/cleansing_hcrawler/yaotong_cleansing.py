@@ -8,7 +8,7 @@ from to_es import sendto_es
 from hprice_cleaning import HpriceCleansing
 from datetime import datetime
 
-class YaotongCleansing(HpriceCleansing):
+class Syscleansing(HpriceCleansing):
     def parse_single_item(self, item):
             # 时间关系，这里暂时设成父类方法为分析药通网，未来可以调整优化
             # 药通网的price_history是一个字典，key为日期，value为价格
@@ -57,5 +57,5 @@ class YaotongCleansing(HpriceCleansing):
 #     #中华粮网每个json是一个市场，里面有若干种品种
 #     def parse_single_item(self, item):
 if __name__ == '__main__':
-    m = YaotongCleansing('ytyaocai-20160815')
+    m = Syscleansing('ytyaocai-20160815')
     m.run()
