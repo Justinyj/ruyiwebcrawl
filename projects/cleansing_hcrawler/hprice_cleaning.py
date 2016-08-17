@@ -6,8 +6,6 @@ import json
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from hprice_cleaning import HpriceCleansing
-from datetime import datetime
 
 
 class HpriceCleansing(object):
