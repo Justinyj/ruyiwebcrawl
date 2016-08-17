@@ -38,6 +38,7 @@ class Syscleansing(HpriceCleansing):
                 result_item['id']  = item_suit_schema['name']
                 self.jsons.append(result_item)
                 self.counter += 1
+                return
 
             for k,v in product[u'price_history'].iteritems():
                 result_item = item_suit_schema.copy()
