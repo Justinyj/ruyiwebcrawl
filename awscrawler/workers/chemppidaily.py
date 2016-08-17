@@ -41,7 +41,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     def safe_state(statement):
         return statement[0] if statement else ''
     method, gap, js, timeout, data = parameter.split(':')
-    gap = float(max(0, gap - other_batch_process_time))
+    gap = float(max(0, float(gap) - other_batch_process_time))
     timeout= int(timeout)
     today_str = datetime.now().strftime('%Y%m%d')
     # print(url)
