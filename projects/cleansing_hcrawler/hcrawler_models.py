@@ -17,9 +17,14 @@ class Hentity(Document):
     sameas = ListField(StringField()) # 实体链接
     alias = ListField(StringField()) # 别名
 
+    meta = {
+        'indexes': ['nid', 's_label'],
+    }
 
 class Hmaterial(Document):
-    name = StringField() # 名字
+    nid = ReferenceField(Hentity)
+    name = StringField() # 名字，爬到的名字
+    mainEntityOfPage = StringField() # 实体
     description = StringField() # 描述
     category = StringField() # 分类
     drug_form = StringField() # 剂型
@@ -30,8 +35,12 @@ class Hmaterial(Document):
     source = StringField()
     confidence = StringField()
 
+    meta = {
+        'indexes': ['name'],
+    }
 
 class Hprice(Document):
+    nid = ReferenceField(Hentity)
     name = StringField()
     mainEntityOfPage = StringField() # 实体
     description = StringField()
@@ -54,7 +63,12 @@ class Hprice(Document):
     confidence = StringField()
 
 
+    meta = {
+        'indexes': ['mainEntityOfPage', ('name', 'validDate', 'productGrade', 'sellerMarket')],
+    }
+
 class Supplier(Document):
+    company_name = StringField()
     unified_social_credit_code = StringField()
     registration_id = StringField()
     organization_code = StringField()
@@ -83,6 +97,9 @@ class Supplier(Document):
     changes = ListField(EmbeddedDocumentField(Changes))
     abnormals = ListField(EmbeddedDocumentField(Abnormals))
 
+    meta = {
+        'indexes': ['legal_person', 'company_name']
+    }
 
 
 class CompanyInfo(EmbeddedDocument):
@@ -166,13 +183,22 @@ class Purchase(Document):
     source = StringField()
     confidence = StringField()
 
+    meta = {
+        'indexes': ['mainEntityOfPage', 'name')],
+    }
+
 
 class News(Document):
     title = StringField()  # 标题
     content = StringField() # 内容
+    pubdate = DateTimeField()
     source = StringField()
     createdTime = DateTimeField(default=datetime.now)
     confidence = StringField()
+
+    meta = {
+        'indexes': ['title', 'pubdate')],
+    }
 
 
 class Confidence(Document):
@@ -181,7 +207,7 @@ class Confidence(Document):
 
 
 class ProductionCapacity(Document):
-    Supplier = Reference()
+    supplier = ReferenceField(Supplier)
     productPlaceOfOrigin = StringField() # 商品产地
     turnout = StringField() # 产量
     plant_area = StringField() # 种植面积
