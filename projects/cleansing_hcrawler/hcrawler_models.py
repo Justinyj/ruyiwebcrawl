@@ -180,13 +180,22 @@ class Purchase(Document):
     source = StringField()
     confidence = StringField()
 
+    meta = {
+        'indexes': ['mainEntityOfPage', 'name')],
+    }
+
 
 class News(Document):
     title = StringField()  # 标题
     content = StringField() # 内容
+    pubdate = DateTimeField()
     source = StringField()
     createdTime = DateTimeField(default=datetime.now)
     confidence = StringField()
+
+    meta = {
+        'indexes': ['title', 'pubdate')],
+    }
 
 
 class Confidence(Document):
