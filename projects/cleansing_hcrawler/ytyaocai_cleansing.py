@@ -15,7 +15,7 @@ class YtyaocaiCleansing(HpriceCleansing):
         item_suit_schema = self.init_item_schema()
         item_suit_schema['productPlaceOfOrigin'] = item[u'info'][u'产地']
         item_suit_schema['source']  = item[u'source']
-        item_suit_schema['unitText'] = u'元/公斤'
+        item_suit_schema['unitText'] = u'元/千克'
         item_suit_schema['productSpecification'] = item[u'info'][u'规格'], 
         self.clean_item_schema(item_suit_schema)
 

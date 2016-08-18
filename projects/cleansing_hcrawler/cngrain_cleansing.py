@@ -19,7 +19,7 @@ class CngrainCleansing(HpriceCleansing):
             item_suit_schema['productPlaceOfOrigin'] = product['produce_area']       
             item_suit_schema['source'] = item[u'source']        
             item_suit_schema['productionYear'] = product[u'produce_year']                         
-            item_suit_schema['unitText'] = u'元/kg'   
+            item_suit_schema['unitText'] = u'元/吨'   
             item_suit_schema['mainEntityOfPage_raw'] = product[u'variety']  
             item_suit_schema['sellerMarket'] = item[u'market']  
             item_suit_schema['priceType'] = product[u'price_type']

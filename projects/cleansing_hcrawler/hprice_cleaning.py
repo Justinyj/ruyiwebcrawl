@@ -72,6 +72,7 @@ class HpriceCleansing(object):
                     'priceType' :               None,   # 价格类型
                     'description' :             None,   # 产品描述
                     'validMonth'  :             None,
+                    'validDate'    :            None,
                 }
         
         return item_suit_schema
@@ -89,12 +90,14 @@ class HpriceCleansing(object):
         schema['sourceDomainName'] = re.findall('http://(.*?)/', v)[0]
         schema['tags'] = [ schema['sourceDomainName'] , schema['mainEntityOfPage'] ]
         schema['name'] = ('{}_{}_{}_{}').format(schema['mainEntityOfPage_raw'], schema['priceType'], schema['sellerMarket'], schema['productGrade'])
-        self.myset.add( '{},{},{}'.format(schema['sourceDomainName'], schema, schema['name']))
+        if 'kmzy' in v:
+            return
+        self.myset.add( '"{}","{}","{}"'.format(schema['sourceDomainName'], schema['mainEntityOfPage'], schema['name']))
 
     def clean_item_data(self, schema):
         #负责清洗时间，并加上处理时间数据
         v = schema['validDate']
-        if len(v) == 7:
+        if v and len(v) == 7:
             schema['validMonth'] = v
         schema['createdTime'] = datetime.today().isoformat()
 

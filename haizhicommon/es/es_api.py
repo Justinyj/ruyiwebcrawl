@@ -237,7 +237,7 @@ def run_esbulk(index_option, esconfig, es_index, es_type, filename_esdata, cnt=N
             esindex = {index_option: {"_index": es_index, "_type": es_type, "_id": esrow["id"]}}
 
             if esrow['id'] in ids:
-                print "skip duplicate", json.dumps(esrow, ensure_ascii=False).encode('utf-8')
+                print "skip duplicate", json.dumps(esrow, ensure_ascii=False)
             ids.add(esrow['id'])
 
             esbulk.append(json.dumps(esindex))

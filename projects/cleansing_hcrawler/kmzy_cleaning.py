@@ -22,7 +22,8 @@ class Kmzycleansing(HpriceCleansing):
 
         self.clean_item_schema(item_suit_schema)
         item_suit_schema['name'] = item[u'name'] +'_' + item[u'specs'].split('/')[1] + '_' + item[u'specs'].split('/')[0]                 
-
+        self.myset.add( '{},{},{}'.format(item_suit_schema['sourceDomainName'], item_suit_schema['mainEntityOfPage'], item_suit_schema['name']))
+        
         for mon, price in item['data']:
             result_item = item_suit_schema.copy()
             result_item['price'] = price
