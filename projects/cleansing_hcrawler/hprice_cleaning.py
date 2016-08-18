@@ -4,17 +4,26 @@
 import os
 import json
 import sys
+import collections
+from datetime import datetime
+import re
 reload(sys)
 sys.setdefaultencoding('utf-8')
 from to_es import sendto_es
 
 
 class HpriceCleansing(object):
-    def __init__(self, dir_name):
+    def __init__(self, dir_name, debug = False):
         self.dir_name = dir_name
         self.source_files_path = None
         self.counter = 0
         self.jsons = []
+        self.myset  = set()
+        self.debug = debug
+
+        with open ('map.json', 'r')  as f:
+            self.nameMapper = json.load(f)
+
 
     def set_source_files_path(self):
         dir_path =  '/data/hproject/2016/' + self.dir_name
@@ -30,6 +39,7 @@ class HpriceCleansing(object):
         with open(file_path, 'r') as file:
             for line in file:
                 if line.strip():
+
                     item = json.loads(line.strip())
                     self.parse_single_item(item)
         sendto_es(self.jsons)
@@ -40,7 +50,54 @@ class HpriceCleansing(object):
     def parse_single_item(self, item):
         pass
 
+
+    def init_item_schema(self):
+        item_suit_schema = {
+                    'productGrade' :            None,   # 产品等级
+                    'priceCurrency' :           None,   # 价格货币，命名规则使用iso-4217
+                    'createdTime' :             None,   # 生成时间
+                    'confidence' :              None,   # 
+                    'productPlaceOfOrigin' :    None,   # 原产地
+                    'maxPrice' :                None,   # 最高价
+                    'seller' :                  None,   # 销售
+                    'source' :                  None,   # 数据源url
+                    'tags' :                    None,   # 标签   
+                    'productionYear' :          None,   # 生产年限
+                    'unitText' :                None,   # 价格单位
+                    'mainEntityOfPage' :        None,   # 
+                    'mainEntityOfPage_raw' :    None,   # 
+                    'sellerMarket' :            None,   # 报送单位(在中华粮网里出现，是各地市场)
+                    'minPrice' :                None,   # 最低价
+                    'productSpecification' :    None,   # 产品规格
+                    'priceType' :               None,   # 价格类型
+                    'description' :             None,   # 产品描述
+                    'validMonth'  :             None,
+                }
+        
+        return item_suit_schema
+
+    def clean_item_schema(self, schema):
+        v = schema['mainEntityOfPage_raw']
+        schema['mainEntityOfPage'] = self.nameMapper.get(v, v)
+        if self.debug and schema['mainEntityOfPage'] != v:
+           print (schema['mainEntityOfPage'].encode('utf-8'))
+
+        v = schema['source']
+        schema['sourceDomainName'] = re.findall('http://(.*?)/', v)[0]
+        schema['tags'] = [ schema['sourceDomainName'] , schema['mainEntityOfPage'] ]
+        schema['name'] = ('{}_{}_{}_{}').format(schema['mainEntityOfPage_raw'], schema['priceType'], schema['sellerMarket'], schema['productGrade'])
+        self.myset.add( '{},{},{}'.format(schema['sourceDomainName'], schema, schema['name']))
+
+    def clean_item_data(self, schema):
+        v = schema['validDate']
+        if len(v) == 7:
+            schema['validMonth'] = v
+        schema['createdTime'] = datetime.today().isoformat()
+
     def run(self):
         self.set_source_files_path()
         for file_path in self.source_files_path:
             self.parse_single_file(file_path)
+        with open('out.txt','a') as f:
+            for i in self.myset:
+                f.write(i+'\n')
