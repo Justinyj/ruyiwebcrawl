@@ -89,9 +89,10 @@ class HpriceCleansing(object):
         v = schema['source']
         schema['sourceDomainName'] = re.findall('http://(.*?)/', v)[0]
         schema['tags'] = [ schema['sourceDomainName'] , schema['mainEntityOfPage'] ]
-        schema['name'] = ('{}_{}_{}_{}').format(schema['mainEntityOfPage_raw'], schema['priceType'], schema['sellerMarket'], schema['productGrade'])
-        if 'kmzy' in v:
+        if 'kmzy' in v:  #kmzy的格式不同，为了交统计数据暂时没有更好的方法采用权宜之计——在子类的方法里声明name及使用add，父类这边跳过
             return
+            
+        schema['name'] = ('{}_{}_{}_{}').format(schema['mainEntityOfPage_raw'], schema['priceType'], schema['sellerMarket'], schema['productGrade'])
         self.myset.add( '"{}","{}","{}"'.format(schema['sourceDomainName'], schema['mainEntityOfPage'], schema['name']))
 
     def clean_item_data(self, schema):
