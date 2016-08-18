@@ -76,7 +76,10 @@ class HpriceCleansing(object):
         
         return item_suit_schema
 
-    def clean_item_schema(self, schema):
+    def clean_item_schema(self, schema):  
+    #主要负责实体映射，抽取domain，生成tags,name，以及加入统计字段到set中
+    #换言之，所有需要组合，二次生成的字段，都在这个方法里完成。原则上子类的方法中填写的都是直接可以从原数据直接获得。
+    #由于kmzy的name结构不一样，所以在这生成后的是错误类型，要在子类里覆盖一下。
         v = schema['mainEntityOfPage_raw']
         schema['mainEntityOfPage'] = self.nameMapper.get(v, v)
         if self.debug and schema['mainEntityOfPage'] != v:
@@ -89,6 +92,7 @@ class HpriceCleansing(object):
         self.myset.add( '{},{},{}'.format(schema['sourceDomainName'], schema, schema['name']))
 
     def clean_item_data(self, schema):
+        #负责清洗时间，并加上处理时间数据
         v = schema['validDate']
         if len(v) == 7:
             schema['validMonth'] = v
