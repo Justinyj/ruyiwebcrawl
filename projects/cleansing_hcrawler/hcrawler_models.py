@@ -17,6 +17,9 @@ class Hentity(Document):
     sameas = ListField(StringField()) # 实体链接
     alias = ListField(StringField()) # 别名
 
+    meta = {
+        'indexes': ['nid', 's_label'],
+    }
 
 class Hmaterial(Document):
     name = StringField() # 名字
@@ -30,6 +33,9 @@ class Hmaterial(Document):
     source = StringField()
     confidence = StringField()
 
+    meta = {
+        'indexes': ['name'],
+    }
 
 class Hprice(Document):
     name = StringField()
@@ -54,7 +60,12 @@ class Hprice(Document):
     confidence = StringField()
 
 
+    meta = {
+        'indexes': ['mainEntityOfPage', ('name', 'validDate', 'productGrade', 'sellerMarket')],
+    }
+
 class Supplier(Document):
+    company_name = StringField()
     unified_social_credit_code = StringField()
     registration_id = StringField()
     organization_code = StringField()
@@ -83,6 +94,9 @@ class Supplier(Document):
     changes = ListField(EmbeddedDocumentField(Changes))
     abnormals = ListField(EmbeddedDocumentField(Abnormals))
 
+    meta = {
+        'indexes': ['legal_person', 'company_name']
+    }
 
 
 class CompanyInfo(EmbeddedDocument):
@@ -181,7 +195,7 @@ class Confidence(Document):
 
 
 class ProductionCapacity(Document):
-    Supplier = Reference()
+    supplier = ReferenceField(Supplier)
     productPlaceOfOrigin = StringField() # 商品产地
     turnout = StringField() # 产量
     plant_area = StringField() # 种植面积
