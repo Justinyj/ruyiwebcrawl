@@ -22,7 +22,9 @@ class Hentity(Document):
     }
 
 class Hmaterial(Document):
-    name = StringField() # 名字
+    nid = ReferenceField(Hentity)
+    name = StringField() # 名字，爬到的名字
+    mainEntityOfPage = StringField() # 实体
     description = StringField() # 描述
     category = StringField() # 分类
     drug_form = StringField() # 剂型
@@ -38,6 +40,7 @@ class Hmaterial(Document):
     }
 
 class Hprice(Document):
+    nid = ReferenceField(Hentity)
     name = StringField()
     mainEntityOfPage = StringField() # 实体
     description = StringField()
