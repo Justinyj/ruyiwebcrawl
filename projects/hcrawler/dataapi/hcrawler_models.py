@@ -21,7 +21,7 @@ class Hentity(Document):
     }
 
 class Hmaterial(Document):
-    nid = ReferenceField(Hentity)
+    nid = StringField()
     name = StringField() # 名字，爬到的名字
     mainEntityOfPage = StringField() # 实体
     description = StringField() # 描述
@@ -40,7 +40,7 @@ class Hmaterial(Document):
     }
 
 class Hprice(Document):
-    nid = ReferenceField(Hentity)
+    nid = StringField()
     name = StringField()
     mainEntityOfPage = StringField() # 实体
     description = StringField()
