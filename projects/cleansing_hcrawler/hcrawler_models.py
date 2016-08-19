@@ -33,6 +33,7 @@ class Hmaterial(Document):
     downstream_material = ListField(StringField()) # 下游产品
     createdTime = DateTimeField(default=datetime.now)
     source = StringField()
+    site = StringField()
     confidence = StringField()
 
     meta = {
@@ -60,6 +61,7 @@ class Hprice(Document):
     properties = DictField() # 属性
     createdTime = DateTimeField(default=datetime.now)
     source = StringField()
+    site = StringField()
     confidence = StringField()
 
 
@@ -85,6 +87,7 @@ class Supplier(Document):
     business_scope = StringField()
     createdTime = DateTimeField(default=datetime.now)
     source = StringField()
+    site = StringField()
     confidence = StringField()
 
     company_info = EmbeddedDocumentField()
@@ -181,6 +184,7 @@ class Purchase(Document):
 
     createdTime = DateTimeField(default=datetime.now)
     source = StringField()
+    site = StringField()
     confidence = StringField()
 
     meta = {
@@ -193,6 +197,7 @@ class News(Document):
     content = StringField() # 内容
     pubdate = DateTimeField()
     source = StringField()
+    site = StringField()
     createdTime = DateTimeField(default=datetime.now)
     confidence = StringField()
 
