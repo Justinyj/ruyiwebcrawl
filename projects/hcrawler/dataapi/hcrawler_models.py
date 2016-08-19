@@ -17,7 +17,7 @@ class Hentity(Document):
     alias_editor = ListField(StringField()) # 人工编辑别名
 
     meta = {
-        'indexes': ['nid', 's_label', 'sameas', 'alias', 'alias_editor'],
+        'indexes': ['nid', 's_label', 'alias', 'alias_editor'],
     }
 
 class Hmaterial(Document):
