@@ -34,26 +34,81 @@
 * input: /api/v1/updownstream/(?P<name>.+)
 * output: 
 
-    {
-    }
+      {
+      'nid': '',
+      'name': '',
+      'mainEntityOfPage': '',
+      'description': '',
+      'category': '',
+      'drug_form': '',
+      'properties': '',
+      'upstream_material': '',
+      'downstream_material': '',
+      'createdTime': '',
+      'source': '',
+      'site': '',
+      'confidence': '',
+      }
 
 ## 3.商品描述
 * input: /api/v1/desc/(?P<name>.+)
 * output: 
 
-    {
-    }
+      {
+      'nid': '',
+      'name': '',
+      'mainEntityOfPage': '',
+      'description': '',
+      'category': '',
+      'drug_form': '',
+      'properties': '',
+      'createdTime': '',
+      'source': '',
+      'site': '',
+      'confidence': '',
+      }
 
 ## 4.药监局
 * input: /api/v1/manufacturer/(?P<drug>.+)
 * output: 
 
-    {
-    }
+      {
+      'company_name': '',
+
+      'gmp_info': [''],
+      'medicines_info': [''],
+      '': '',
+      '': '',
+      }
 
 ## 5.企业（工商注册）
 * input: /api/v1/companyinfo/(?P<company>.+)
 * output: 
 
-    {
-    }
+      {
+      'company_name': '',
+      'unified_social_credit_code': '',
+      'registration_id': '',
+      'organization_code': '',
+      'status': '',
+      'business_type': '',
+      'establish_date': '',
+      'legal_person': '',
+      'registered_capital': '',
+      'begin': '',
+      'end': '',
+      'registration_authority': '',
+      'approval_date': '',
+      'address': '',
+      'business_scope': '',
+      'createdTime': '',
+      'source': '',
+      'site': '',
+      'confidence': '',
+
+      'shareholders': [''],
+      'executives': [''],
+      'branches': [''],
+      'changes': [''],
+      'abnormals': [''],
+      }

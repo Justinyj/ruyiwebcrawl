@@ -126,6 +126,8 @@ class Abnormals(EmbeddedDocument):
     reason = StringField()
     end_date = StringField()
     end_reason = StringField()
+
+
 class Supplier(Document):
     company_name = StringField()
     unified_social_credit_code = StringField()
