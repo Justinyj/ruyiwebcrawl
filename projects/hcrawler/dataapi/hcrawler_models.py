@@ -17,7 +17,7 @@ class Hentity(Document):
     alias_editor = ListField(StringField()) # 人工编辑别名
 
     meta = {
-        'indexes': ['nid', 's_label'],
+        'indexes': ['nid', 's_label', 'sameas', 'alias', 'alias_editor'],
     }
 
 class Hmaterial(Document):
@@ -36,7 +36,7 @@ class Hmaterial(Document):
     confidence = StringField()
 
     meta = {
-        'indexes': ['name'],
+        'indexes': ['nid', 'name', 'mainEntityOfPage', 'properties'],
     }
 
 class Hprice(Document):
@@ -65,7 +65,7 @@ class Hprice(Document):
 
 
     meta = {
-        'indexes': ['mainEntityOfPage', ('name', 'validDate', 'productGrade', 'sellerMarket')],
+        'indexes': ['nid', 'name', 'mainEntityOfPage', ('name', 'validDate', 'productGrade', 'sellerMarket')],
     }
 
 
