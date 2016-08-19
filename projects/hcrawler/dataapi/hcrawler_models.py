@@ -12,6 +12,7 @@ class Hentity(Document):
     ns = StringField() # namespace
     s_label = StringField() # name
     s_rank = StringField() # 搜索结果数
+    description = StringField()
     sameas = ListField(StringField()) # 实体链接
     alias = ListField(StringField()) # 别名
     alias_editor = ListField(StringField()) # 人工编辑别名
