@@ -1,9 +1,13 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 
-from hcrawler_models import Hentity 
+from hcrawler_models import Hentity, Hprice
 
 def hprice(request, name):
-    Hentity.objects(name=name)
-    return HttpResponse("Hello, world. You're at the polls index.")
+    ret = Hentity.objects(alias__all=name)
+    if not ret:
+        ret = Hprice.objects(name=name)
+    else:
+        ret = Hprice.objects(nid=ret['nid'])
+    return HttpResponse(ret)
 
