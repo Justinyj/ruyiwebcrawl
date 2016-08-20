@@ -31,7 +31,7 @@ class ShengyisheCleansing(HpriceCleansing):
         mongo_item.confidence = "0.7"
         mongo_item.validDate = item[u'发布时间']                               # 爬取日期
         mongo_item.productPlaceOfOrigin = item[u'出产地']        # 原产地
-        mongo_item.source. = item[u'url']                        # 数据源url
+        mongo_item.source = item[u'url']                        # 数据源url
         mongo_item.unitText = ''.join([i for i in item[u'商品报价'] if not i.isdigit() and not i == '.'])              # 单位，规格                       # 
         mongo_item.sellerMarket = item[u'报价机构']                            # 报送单位
         mongo_item.priceType = item[u'报价类型']                               # 价格类型
