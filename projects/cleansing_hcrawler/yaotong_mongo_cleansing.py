@@ -21,16 +21,16 @@ class YtyaocaiCleansing(HpriceCleansing):
         item_suit_schema['productGrade'] = item[u'info'][u'规格'] #这部分为了快捷，从mongo那边复制过来
         #product的命名逻辑：如果数据没有等级字段，那么productgrade代表规格;如果有等级字段，那么productgrade代表等级，specific代表规格!
         # self.clean_item_schema(item_suit_schema) 这个函数里大多数字段生成都对mongo数据没用，所以只复制一句实体映射的过来
-        item_suit_schema['mainEntityOfPage'] = self.nameMapper.get(v, v)
+
 
         name_raw = item_suit_schema['mainEntityOfPage_raw'] #这里的name不同于es的name
+        item_suit_schema['mainEntityOfPage'] = self.nameMapper.get(name_raw, name_raw)
         item_suit_schema['nid'] = self.nids.get(name_raw, self.get_nid(name_raw))#从数据库得到nid，放在循环外并利用缓存以减少查询速度
 
         for k,v in item[u'price_history'].iteritems():
             result_item = item_suit_schema.copy()
             result_item['validDate'] = k   #日期
             result_item['price']     = v   #价格
-            result_item['id']  = result_item['name'] + '_' + result_item['validDate']
 
             mongo_result = self.get_mongo_item(result_item)
 
@@ -66,12 +66,12 @@ class YtyaocaiCleansing(HpriceCleansing):
 
         mongo_result.name = es_item['mainEntityOfPage_raw']
         mongo_result.site = self.url2domain(mongo_result.source)
-        mongo_result.confidence = str(mongo_result.confidence)
+        mongo_result.confidence = str(mongo_result.confidence) #es里的confidence字段为数字，mongo里的为字符
 
         return mongo_result
 
     def get_nid(self, name):
-        ret_list = Hentity.objects(alias__in=[u'\u5c71\u8331\u8438'])
+        ret_list = Hentity.objects(alias__in=name)
         max_length = -1
         longest_ret = None
         for ret in ret_list:
