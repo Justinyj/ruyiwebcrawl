@@ -43,7 +43,6 @@ class YtyaocaiCleansing(HpriceCleansing):
                     u"生长周期" : item[u'info'][u"生长周期"] ,
                     u"浮动市值" : item[u'info'][u"浮动市值"] ,
                     u"关注度" : item[u'info'][u"关注度"] ,
-                    u"当前价格" : item[u'info'][u"当前价格"] ,
                     u"三个月盈利比例" : item[u'info'][u"三个月盈利比例"] ,
                     u"权重比" : item[u'info'][u"权重比"] ,
                     u"生长环境" : item[u'info'][u"生长环境"] ,
