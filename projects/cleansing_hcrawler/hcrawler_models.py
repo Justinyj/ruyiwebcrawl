@@ -185,7 +185,7 @@ class Purchase(Document):
     confidence = StringField()
 
     meta = {
-        'indexes': ['mainEntityOfPage', 'name'],
+        'indexes': ['mainEntityOfPage', 'name')],
     }
 
 
@@ -198,7 +198,7 @@ class News(Document):
     confidence = StringField()
 
     meta = {
-        'indexes': ['title', 'pubdate'],
+        'indexes': ['title', 'pubdate')],
     }
 
 

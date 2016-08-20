@@ -33,9 +33,9 @@ def build_env():
 def upload():
     archive = 'awscrawler.tar.bz2'
     with lcd('..'):
-        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir awscrawler$dirtime; cp -r awscrawler/* awscrawler$dirtime; cp -r haizhicommon/awsapi haizhicommon/downloader haizhicommon/parsers haizhicommon/rediscluster haizhicommon/crawlerlog awscrawler$dirtime; tar jcf {} --exclude='*.pyc' awscrawler$dirtime; rm -r awscrawler$dirtime".format(archive))
+        local("dirtime=`date +%Y%m%d%H%M%S`; mkdir awscrawler$dirtime; cp -r awscrawler/* awscrawler$dirtime; rm awscrawler$dirtime/awsapi awscrawler$dirtime/downloader awscrawler$dirtime/parsers awscrawler$dirtime/rediscluster awscrawler$dirtime/crawlerlog; cp -r haizhicommon/awsapi haizhicommon/downloader haizhicommon/parsers haizhicommon/rediscluster haizhicommon/crawlerlog awscrawler$dirtime; tar jcf {} --exclude='*.pyc' awscrawler$dirtime; rm -r awscrawler$dirtime".format(archive))
         put('{}'.format(archive), '/tmp/')
-        put('~/.ssh/crawl-tokyo.pem', '/home/admin/.ssh/')
+        put('~/crawl-tokyo.pem', '/home/admin/.ssh/')
 
     with cd('/tmp'):
         sudo('mkdir -p /opt/service/awsframe; chown -R {user}:{user} /opt/service'.format(user=env.user))
