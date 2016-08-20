@@ -70,7 +70,7 @@ class YtyaocaiCleansing(HpriceCleansing):
         return mongo_result
 
     def get_nid(self, name):
-        ret_list = Hentity.objects(alias__in=name)
+        ret_list = Hentity.objects(alias__in = [name])
         max_length = -1
         longest_ret = None
         for ret in ret_list:
