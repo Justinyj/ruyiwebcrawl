@@ -8,31 +8,29 @@ from datetime import datetime
 
 class Kmzycleansing(HpriceCleansing):
     def parse_single_item(self, item):
+        item_suit_schema = self.init_item_schema()
+        item_suit_schema['productGrade'] = item[u'specs'].split('/')[0]                            # 产品等级
+        item_suit_schema['priceCurrency'] = 'CNY'                        # 价格货币，命名规则使用iso-4217
+        item_suit_schema['confidence'] = 0.7
+        item_suit_schema['productPlaceOfOrigin'] = item[u'specs'].split('/')[1]        # 原产地
+        item_suit_schema['source'] = item[u'source']                        # 数据源url
+        item_suit_schema['unitText'] = None              # 单位，规格
+        item_suit_schema['mainEntityOfPage_raw'] = item[u'name']     
+        item_suit_schema['priceType']= None   
+        item_suit_schema['sellerMarket']=None                # 
+
+
+        self.clean_item_schema(item_suit_schema)
+        item_suit_schema['name'] = item[u'name'] +'_' + item[u'specs'].split('/')[1] + '_' + item[u'specs'].split('/')[0]                 
+        self.myset.add( '{},{},{}'.format(item_suit_schema['sourceDomainName'], item_suit_schema['mainEntityOfPage'], item_suit_schema['name']))
+        
         for mon, price in item['data']:
-            item_suit_schema = {
-                        'id' : item[u'name'] + '_' + item[u'specs'].split('/')[1] + '_' + item[u'specs'].split('/')[0] + '_' + mon,
-                        'name' : item[u'name'] + '_' + item[u'specs'].split('/')[1] + '_' + item[u'specs'].split('/')[0],                         # 品种
-                        'productGrade' : item[u'specs'].split('/')[0],                            # 产品等级
-                        'price' : price,                        # 价格历史
-                        'priceCurrency' : 'CNY',                        # 价格货币，命名规则使用iso-4217
-                        'validDate' : mon,                               # 爬取日期
-                        'createdTime' : datetime.today().isoformat(),
-                        'confidence' : 0.7,
-                        'productPlaceOfOrigin' : item[u'specs'].split('/')[1],        # 原产地
-                        'maxPrice' : None,                                # 最高价
-                        'seller' : None,                                  # 销售
-                        'source' : item[u'source'],                        # 数据源url
-                        'tags' : None,                                    # 标签   
-                        'productionYear' : None,                          # 生产年限
-                        'unitText' : None,              # 单位，规格
-                        'mainEntityOfPage' : item[u'name'],                        # 
-                        'sellerMarket' : None,                            # 报送单位(在中华粮网里出现，是各地市场)
-                        'minPrice' : None,                                # 最低价
-                        'productSpecification' : None,                    # 产品说明
-                        'priceType' : None,                               # 价格类型
-                        'description' : None,                             # 产品描述
-                }
-            self.jsons.append(item_suit_schema)
+            result_item = item_suit_schema.copy()
+            result_item['price'] = price
+            result_item['validDate'] = mon
+            result_item[u'id']  = result_item[u'name'] + '_' + result_item[u'validDate']
+            self.clean_item_data(result_item)
+            self.jsons.append(result_item)
             self.counter += 1
             if self.counter == 2000:
                 sendto_es(self.jsons)
