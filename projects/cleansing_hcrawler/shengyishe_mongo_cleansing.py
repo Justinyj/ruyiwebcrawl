@@ -45,7 +45,7 @@ class ShengyisheCleansing(HpriceCleansing):
         # print json.dumps(item[u'详细信息'], encoding='utf-8', ensure_ascii=False)
         properties = {}
         for info in item[u'详细信息']:
-            properties[info.replace('.', '_')] = item[u'详细信息'][info]
+            properties[info.replace('.', '．')] = item[u'详细信息'][info]
         if properties:
             mongo_item.properties = properties
         self.counter +=1
