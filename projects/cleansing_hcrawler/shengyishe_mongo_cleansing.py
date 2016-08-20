@@ -59,8 +59,8 @@ class ShengyisheCleansing(HpriceCleansing):
         return longest_ret['nid']
 
 if __name__ == '__main__':
-    s = Shengyishecleansing('agricul')
-    c = Shengyishecleansing('chemppi')
+    s = ShengyisheCleansing('agricul')
+    c = ShengyisheCleansing('chemppi')
     s.run()
     c.run()
                          
