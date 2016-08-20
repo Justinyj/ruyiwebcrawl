@@ -119,8 +119,9 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
         else:
             chem_name = page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[1]/td[2]/text()")[0]
+            total = len(page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form"))   # total num of suppliers
             dic = ''
-            for i in range(1, 11): # 10 companies per page
+            for i in range(1, total + 1):
                 c = safe_state(page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form[{}]".format(str(i))))
                 if c is '':
                     break
