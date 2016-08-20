@@ -2,37 +2,33 @@
 # # -*- coding: utf-8 -*-
 from mongoengine import *
 from hcrawler_models import Hprice, Hentity
+from hprice_cleaning import HpriceCleansing
+
 import sys
+import datetime
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from hprice_cleaning import HpriceCleansing
-DB = 'hcrawler'
-connect(db = DB, host='localhost:27017')#, username = 'hcrawer', password = 'f#d1P9c')
 
-print ('connect finished')
+DB = 'hcrawler'
+connect(db = DB, host='localhost:27017', username = 'hcrawler', password = 'f#d1p9c')
+
 class YtyaocaiCleansing(HpriceCleansing):
     def parse_single_item(self, item):
-        item_suit_schema = self.init_item_schema()
-        item_suit_schema['productPlaceOfOrigin'] = item[u'info'][u'产地']
-        item_suit_schema['source']  = item[u'source']
-        item_suit_schema['unitText'] = u'元/千克'
-        item_suit_schema['confidence'] = 0.7
-        item_suit_schema['mainEntityOfPage_raw'] = item['name']
-        item_suit_schema['productGrade'] = item[u'info'][u'规格'] #这部分为了快捷，从mongo那边复制过来
-        #product的命名逻辑：如果数据没有等级字段，那么productgrade代表规格;如果有等级字段，那么productgrade代表等级，specific代表规格!
-        # self.clean_item_schema(item_suit_schema) 这个函数里大多数字段生成都对mongo数据没用，所以只复制一句实体映射的过来
-
-
-        name_raw = item_suit_schema['mainEntityOfPage_raw'] #这里的name不同于es的name
-        item_suit_schema['mainEntityOfPage'] = self.nameMapper.get(name_raw, name_raw)
-        item_suit_schema['nid'] = self.nids.get(name_raw, self.get_nid(name_raw))#从数据库得到nid，放在循环外并利用缓存以减少查询速度
-
         for k,v in item[u'price_history'].iteritems():
-            result_item = item_suit_schema.copy()
-            result_item['validDate'] = k   #日期
-            result_item['price']     = v   #价格
-
-            mongo_result = self.get_mongo_item(result_item)
+            mongo_item = Hprice()
+            mongo_item.productPlaceOfOrigin = item[u'info'][u'产地']
+            mongo_item.unitText = u'元/千克'
+            mongo_item.confidence = '0.7'
+            mongo_item.name = item['name']
+            mongo_item.productGrade = item[u'info'][u'规格']
+            #product的命名逻辑：如果数据没有等级字段，那么productgrade代表规格;如果有等级字段，那么productgrade代表等级，specific代表规格!
+    
+            name = mongo_item.name 
+            mongo_item.mainEntityOfPage = self.nameMapper.get(name, name)
+            mongo_item.nid = self.nids.get(name, self.get_nid(name))#从数据库得到nid，放在循环外并利用缓存以减少查询速度
+            mongo_item.validDate = k   #日期
+            mongo_item.price     = v   #价格
+            mongo_item.site = self.url2domain(item[u'source'])
 
             properties = {
                     u"十二个月盈利比例" : item[u'info'][u"十二个月盈利比例"] ,
@@ -48,36 +44,24 @@ class YtyaocaiCleansing(HpriceCleansing):
                     u"生长环境" : item[u'info'][u"生长环境"] ,
                     u"六个月盈利比例" : item[u'info'][u"六个月盈利比例"] ,
             }
-            mongo_result.properties = properties
+            mongo_item.properties = properties
             self.counter +=1
             if not self.counter%100:
                 print self.counter
-            mongo_result.save()
-
-    def get_mongo_item(self,es_item):
-        mongo_result = Hprice()
-        for k,v in es_item.iteritems():
-            if v and k != 'id':
-                try:
-                    mongo_result.__setitem__(k, v)
-                except:
-                    pass
-
-        mongo_result.name = es_item['mainEntityOfPage_raw']
-        mongo_result.site = self.url2domain(mongo_result.source)
-        mongo_result.confidence = str(mongo_result.confidence) #es里的confidence字段为数字，mongo里的为字符
-
-        return mongo_result
+            mongo_item.save()
 
     def get_nid(self, name):
         ret_list = Hentity.objects(alias__in = [name])
+        if not ret_list:
+            self.nids[name] = name
+            return name
         max_length = -1
         longest_ret = None
         for ret in ret_list:
             if len(ret['alias']) > max_length:
                 max_length = len(ret['alias'])
                 longest_ret = ret
-        self.nids[name] = longest_ret['nid']
+        self.nids[name] = longest_ret['nid']#加入缓存，下次对于相同的name访问直接从nids里取
         return longest_ret['nid']
 
 if __name__ == '__main__':
