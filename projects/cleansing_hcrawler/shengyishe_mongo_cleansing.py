@@ -4,11 +4,12 @@ from mongoengine import *
 from hcrawler_models import Hprice, Hentity
 import sys
 import re
+import json
 reload(sys)
 sys.setdefaultencoding('utf-8')
 from hprice_cleaning import HpriceCleansing
 DB = 'hcrawler'
-connect(db = DB, host='localhost:27017')#, username = 'hcrawer', password = 'f#d1P9c')
+connect(db = DB, host='localhost:27017', username = 'hcrawler', password = 'f#d1p9c')
 
 print ('connect finished')
 
@@ -41,7 +42,12 @@ class ShengyisheCleansing(HpriceCleansing):
         mongo_item.mainEntityOfPage = self.nameMapper.get(name_raw, name_raw)
         mongo_item.nid = self.get_nid(name_raw)         
         mongo_item.site = url2domain(mongo_item.source) 
-
+        # print json.dumps(item[u'详细信息'], encoding='utf-8', ensure_ascii=False)
+        properties = {}
+        for info in item[u'详细信息']:
+            properties[info.replace('.', '_')] = item[u'详细信息'][info]
+        if properties:
+            mongo_item.properties = properties
         self.counter +=1
         if not self.counter%100:
             print self.counter
