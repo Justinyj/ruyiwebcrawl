@@ -22,7 +22,6 @@ class HpriceCleansing(object):
         self.myset  = set()
         self.debug = debug
         self.nids = {}
-        self.total = 0
         with open ('map.json', 'r')  as f:
             self.nameMapper = json.load(f)
 
@@ -112,11 +111,11 @@ class HpriceCleansing(object):
         with open('out.txt','a') as f:
             for i in self.myset:
                 f.write(i+'\n')
-                
+
     def url2domain(self,url):
         #url = 'http://user:pass@example.com:8080'
         parsed_uri = urlparse(url)
         domain = '{uri.netloc}'.format(uri=parsed_uri)
         domain = re.sub("^.+@","",domain)
         domain = re.sub(":.+$","",domain)
-        # return domain
+        return domain
