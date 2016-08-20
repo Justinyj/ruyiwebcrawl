@@ -10,4 +10,3 @@ def hprice(request, name):
     else:
         ret = Hprice.objects(nid=ret['nid'])
     return HttpResponse(ret)
-
