@@ -25,7 +25,9 @@ class YtyaocaiCleansing(HpriceCleansing):
     
             name = mongo_item.name 
             mongo_item.mainEntityOfPage = self.nameMapper.get(name, name)
-            mongo_item.nid = self.nids.get(name, self.get_nid(name))#从数据库得到nid，放在循环外并利用缓存以减少查询速度
+            mongo_item.nid = self.nids.get(name, None)
+            if not mongo_item.nid:
+                mongo_item.nid = self.get_nid(name)
             mongo_item.validDate = k   #日期
             mongo_item.price     = v   #价格
             mongo_item.site = self.url2domain(item[u'source'])
