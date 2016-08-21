@@ -5,6 +5,7 @@ import os
 import json
 import sys
 import collections
+from urlparse import urlparse
 from datetime import datetime
 import re
 reload(sys)
@@ -20,7 +21,7 @@ class HpriceCleansing(object):
         self.jsons = []
         self.myset  = set()
         self.debug = debug
-
+        self.nids = {}
         with open ('map.json', 'r')  as f:
             self.nameMapper = json.load(f)
 
@@ -42,9 +43,10 @@ class HpriceCleansing(object):
 
                     item = json.loads(line.strip())
                     self.parse_single_item(item)
-        sendto_es(self.jsons)
-        self.counter = 0
-        self.jsons = []
+        if self.jsons:
+            sendto_es(self.jsons)
+            self.counter = 0
+            self.jsons = []
 
 
     def parse_single_item(self, item):
@@ -91,7 +93,7 @@ class HpriceCleansing(object):
         schema['tags'] = [ schema['sourceDomainName'] , schema['mainEntityOfPage'] ]
         if 'kmzy' in v:  #kmzy的格式不同，为了交统计数据暂时没有更好的方法采用权宜之计——在子类的方法里声明name及使用add，父类这边跳过
             return
-            
+                
         schema['name'] = ('{}_{}_{}_{}').format(schema['mainEntityOfPage_raw'], schema['priceType'], schema['sellerMarket'], schema['productGrade'])
         self.myset.add( '"{}","{}","{}"'.format(schema['sourceDomainName'], schema['mainEntityOfPage'], schema['name']))
 
@@ -109,3 +111,11 @@ class HpriceCleansing(object):
         with open('out.txt','a') as f:
             for i in self.myset:
                 f.write(i+'\n')
+
+    def url2domain(self,url):
+        #url = 'http://user:pass@example.com:8080'
+        parsed_uri = urlparse(url)
+        domain = '{uri.netloc}'.format(uri=parsed_uri)
+        domain = re.sub("^.+@","",domain)
+        domain = re.sub(":.+$","",domain)
+        return domain

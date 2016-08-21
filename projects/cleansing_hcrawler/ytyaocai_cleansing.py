@@ -16,9 +16,8 @@ class YtyaocaiCleansing(HpriceCleansing):
         item_suit_schema['productPlaceOfOrigin'] = item[u'info'][u'产地']
         item_suit_schema['source']  = item[u'source']
         item_suit_schema['unitText'] = u'元/千克'
-        item_suit_schema['productSpecification'] = item[u'info'][u'规格'], 
+        item_suit_schema['productSpecification'] = item[u'info'][u'规格'],         
         self.clean_item_schema(item_suit_schema)
-
         for k,v in item[u'price_history'].iteritems():
             result_item = item_suit_schema.copy()
             result_item['validDate'] = k   #日期
