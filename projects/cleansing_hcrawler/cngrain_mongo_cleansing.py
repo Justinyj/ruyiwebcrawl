@@ -7,7 +7,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-DB = 'admin'
+DB = 'hcrawler'
 connect(db = DB, host='localhost:27017', username = 'hcrawler', password = 'f#d1p9c')
 
 print ('connect finished')
