@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# # -*- coding: utf-8 -*-
+from mongoengine import *
+from hcrawler_models import Hprice, Hentity
+import sys
 import re
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -56,3 +61,4 @@ class KmzyCleansing(HpriceCleansing):
 if __name__ == '__main__':
     c = KmzyCleansing('kmzy-20160808')
     c.run()
+                   
