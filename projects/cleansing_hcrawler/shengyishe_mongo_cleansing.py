@@ -4,11 +4,12 @@ from mongoengine import *
 from hcrawler_models import Hprice, Hentity
 import sys
 import re
+import json
 reload(sys)
 sys.setdefaultencoding('utf-8')
 from hprice_cleaning import HpriceCleansing
 DB = 'hcrawler'
-connect(db = DB, host='localhost:27017')#, username = 'hcrawer', password = 'f#d1P9c')
+connect(db = DB, host='localhost:27017', username = 'hcrawler', password = 'f#d1p9c')
 
 print ('connect finished')
 
@@ -31,7 +32,7 @@ class ShengyisheCleansing(HpriceCleansing):
         mongo_item.confidence = "0.7"
         mongo_item.validDate = item[u'发布时间']                               # 爬取日期
         mongo_item.productPlaceOfOrigin = item[u'出产地']        # 原产地
-        mongo_item.source. = item[u'url']                        # 数据源url
+        mongo_item.source = item[u'url']                        # 数据源url
         mongo_item.unitText = ''.join([i for i in item[u'商品报价'] if not i.isdigit() and not i == '.'])              # 单位，规格                       # 
         mongo_item.sellerMarket = item[u'报价机构']                            # 报送单位
         mongo_item.priceType = item[u'报价类型']                               # 价格类型
@@ -41,7 +42,12 @@ class ShengyisheCleansing(HpriceCleansing):
         mongo_item.mainEntityOfPage = self.nameMapper.get(name_raw, name_raw)
         mongo_item.nid = self.get_nid(name_raw)         
         mongo_item.site = url2domain(mongo_item.source) 
-
+        # print json.dumps(item[u'详细信息'], encoding='utf-8', ensure_ascii=False)
+        properties = {}
+        for info in item[u'详细信息']:
+            properties[info.replace('.', '．')] = item[u'详细信息'][info]
+        if properties:
+            mongo_item.properties = properties
         self.counter +=1
         if not self.counter%100:
             print self.counter
@@ -59,8 +65,8 @@ class ShengyisheCleansing(HpriceCleansing):
         return longest_ret['nid']
 
 if __name__ == '__main__':
-    s = Shengyishecleansing('agricul')
-    c = Shengyishecleansing('chemppi')
+    s = ShengyisheCleansing('agricul')
+    c = ShengyisheCleansing('chemppi')
     s.run()
     c.run()
                          

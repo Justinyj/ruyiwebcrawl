@@ -74,14 +74,13 @@ class CompanyInfo(EmbeddedDocument):
     fax = StringField()
     telephone = StringField()
     cellphone = StringField()
-    contacts = StringField()
+    contects = StringField()
     website = StringField()
     email = StringField()
     paymentMethod = StringField() # 付款方式
     shippingFee = StringField() # 运输费用
     supplierGrade = StringField() # 供应商评级
     cooperationIntention = StringField() # 合作意向
-    productList = ListField(StringField())
 
 class GmpInfo(EmbeddedDocument):
     province = StringField()

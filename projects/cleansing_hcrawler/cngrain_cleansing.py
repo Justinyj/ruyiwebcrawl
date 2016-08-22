@@ -50,3 +50,4 @@ class CngrainCleansing(HpriceCleansing):
 if __name__ == '__main__':
     s = CngrainCleansing('cngrain-20160817')
     s.run()
+    
