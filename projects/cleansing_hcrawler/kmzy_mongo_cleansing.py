@@ -13,7 +13,7 @@ connect(db = DB, host='localhost:27017', username = 'hcrawler', password = 'f#d1
 print ('connect finished')
 
 def url2domain(url):
-    from urlparse import urlparse00
+    from urlparse import urlparse
     #url = 'http://user:pass@example.com:8080'
     parsed_uri = urlparse(url)
     domain = '{uri.netloc}'.format(uri=parsed_uri)
@@ -25,23 +25,23 @@ class KmzyCleansing(HpriceCleansing):
     def parse_single_item(self, item):
         mongo_item = Hprice()
         mongo_item.productGrade = item[u'specs'].split('/')[0]
-        mongo_item.price = ''.join([i for i in item[u'商品报价'] if i.isdigit() or i == '.'])                        # 价格历史
         mongo_item.priceCurrency = 'CNY'                        # 价格货币，命名规则使用iso-4217
-        mongo_item.confidence = "0.7"
-        mongo_item.validDate = item[u'发布时间']                               # 爬取日期
+        mongo_item.confidence = "0.7"                            # 爬取日期
         mongo_item.productPlaceOfOrigin = item[u'specs'].split('/')[1]        # 原产地
-        mongo_item.source. = item[u'source']                       # 数据源url
+        mongo_item.source = item[u'source']                       # 数据源url
 
         mongo_item.name = item[u'name']
         name_raw = item[u'name'] 
         mongo_item.mainEntityOfPage = self.nameMapper.get(name_raw, name_raw)
         mongo_item.nid = self.get_nid(name_raw)         
         mongo_item.site = url2domain(mongo_item.source)
-        mongo_item.properties = item[u'详细信息']
+        # del mongo_item.properties
+        # print mongo_item.properties
+        
 
         for mon, price in item['data']:
             mongo_item.validDate = mon
-            mongo_item.price = price
+            mongo_item.price = str(price)
             self.counter +=1
             if not self.counter%100:
                 print self.counter
@@ -61,4 +61,4 @@ class KmzyCleansing(HpriceCleansing):
 if __name__ == '__main__':
     c = KmzyCleansing('kmzy-20160808')
     c.run()
-                         
+                   
