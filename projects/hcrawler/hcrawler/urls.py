@@ -15,10 +15,13 @@ Including another URLconf
 """
 from django.conf.urls import url
 from django.contrib import admin
-
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 from dataapi import views
 
 urlpatterns = [
     url(r'^api/v1/hprice/(?P<name>.+)', views.hprice, name='hprice'),
+    url(r'^api/v1/updownstream/(?P<name>.+)', views.updownstream, name='updownstream')
 #    url(r'^admin/', admin.site.urls),
 ]

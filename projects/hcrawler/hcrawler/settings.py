@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+
 ]
 
 MIDDLEWARE = [
@@ -121,10 +123,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-_MONGODB_HOST = '127.0.0.1'
+_MONGODB_HOST = 'localhost:27017'
 _MONGODB_NAME = 'hcrawler'
+_MONGODB_USER = 'hcrawler'
+_MONGODB_PW = 'f#d1p9c'
 _MONGODB_DATABASE_HOST = 'mongodb://{}/{}'.format(_MONGODB_HOST, _MONGODB_NAME)
-mongoengine.connect(_MONGODB_NAME, host=_MONGODB_DATABASE_HOST)
+mongoengine.connect(_MONGODB_NAME, host=_MONGODB_HOST,username= _MONGODB_USER, password= _MONGODB_PW)
+
 
 AUTHENTICATION_BACKENDS = (
     'mongoengine.django.auth.MongoEngineBackend',
