@@ -1,7 +1,7 @@
 # coding: utf-8
 
 
-# 脚本介绍：根据names.txt 进行统计分类，之后依靠人工标注，通过另一个脚本file_to_json调用以生成映射json
+# 脚本介绍：根据names.txt 进行统计分类，生成若干个csv文件。（为了之后依靠人工标注）
 import csv
 import json
 from mongoengine import *
