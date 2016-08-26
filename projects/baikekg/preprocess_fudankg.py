@@ -184,7 +184,7 @@ if __name__ == '__main__':
         merge_fudankg('fudankg-json')
     elif sys.argv[1] == 'entity':
         get_fudankg_entity()
-    elif sys.argv[1] == 'entityinc':
+    elif sys.argv[1] == 'entityperiod':
         get_fudaninc_entity()
     elif sys.argv[1] == 'proportion':
         information_exist_proportion()
