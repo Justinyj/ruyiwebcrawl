@@ -28,7 +28,7 @@ class Hmaterial(Document):
     description = StringField() # 描述
     category = StringField() # 分类
     drug_form = StringField() # 剂型
-    properties = DictField() # 属性
+    properties = DictField(default=None) # 属性
     upstream_material = ListField(StringField()) # 上游产品
     downstream_material = ListField(StringField()) # 下游产品
     createdTime = DateTimeField(default=datetime.now)
@@ -58,7 +58,7 @@ class Hprice(Document):
     productSpecification = StringField() # 商品说明
     productPlaceOfOrigin = StringField() # 商品产地
     sellerMarket = StringField() # 卖场
-    properties = DictField() # 属性
+    properties = DictField(default=None) # 属性
     createdTime = DateTimeField(default=datetime.now)
     source = StringField()
     site = StringField()
@@ -126,6 +126,8 @@ class Abnormals(EmbeddedDocument):
     reason = StringField()
     end_date = StringField()
     end_reason = StringField()
+
+
 class Supplier(Document):
     company_name = StringField()
     unified_social_credit_code = StringField()

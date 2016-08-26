@@ -37,8 +37,12 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             'prd': re.compile(r'http://china.chemnet.com/product/pclist--(.+?)--0.html'),
             'comps': re.compile(r'http://china.chemnet.com/product/search.cgi')
         })
+    def safe_state(statement):
+        return statement[0] if statement else ''
 
-
+    def xpath_string(n):
+        return "//*[@id=\"main\"]/div[1]/div[1]/table/tr[" + str(n) + "]/td[2]/text()"
+        
     method, gap, js, timeout, data = parameter.split(':')
     gap = float(max(0, float(gap) - other_batch_process_time))
     timeout= int(timeout)
@@ -115,11 +119,24 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
         else:
             chem_name = page.xpath("//*[@id=\"main\"]/div[1]/div[1]/table/tr[1]/td[2]/text()")[0]
-            comps = page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form/table/tr[1]/td[2]/a[1]/text()")
-            comps = [c for c in comps]
-            data = json.dumps({'name':chem_name, 'companies': comps, 'source': url})
+            total = len(page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form"))   # total num of suppliers
+            dic = ''
+            for i in range(1, total + 1):
+                c = safe_state(page.xpath("//*[@id=\"main\"]/div[2]/div[2]/dl/dd/form[{}]".format(str(i))))
+                if c is '':
+                    break
+                comp = {}
+                comp[u'source'] = url
+                comp[u'chem_name'] = chem_name
+                comp[u'name'] = safe_state(c.xpath(".//table/tr[1]/td[2]/a[1]/text()"))
+                comp[u'tel'] = safe_state(c.xpath(".//table/tr[2]/td[2]/text()"))
+                comp[u'fax'] =  safe_state(c.xpath(".//table/tr[3]/td[2]/text()"))
+                comp[u'website'] = safe_state(c.xpath(".//table/tr[4]/td[2]/a/text()"))
+    
+                dic += json.dumps(comp, encoding='utf-8', ensure_ascii=False) + '\n'
+            dic = dic.strip()
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting companies to cache')
-            return process._cache.post(url, data)
+            return process._cache.post(url, dic)
 
 
 
