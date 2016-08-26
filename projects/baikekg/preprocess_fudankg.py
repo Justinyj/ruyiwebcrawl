@@ -125,7 +125,7 @@ def get_fudankg_entity(entity_dict=False):
         write_file('fudankg_entities.txt', list(entities))
 
 
-def get_fudaninc_entity(entity_dict=False):     # get fudaninc entities stored in periodCache
+def get_fudanperiod_entity(entity_dict=False):     # get fudaninc entities stored in periodCache
     from hzlib.libfile import write_file
     saved_dir = '/data/hproject/2016/fudaninc-20160825'
     entities = set()
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'entity':
         get_fudankg_entity()
     elif sys.argv[1] == 'entityperiod':
-        get_fudaninc_entity()
+        get_fudanperiod_entity()
     elif sys.argv[1] == 'proportion':
         information_exist_proportion()
 
