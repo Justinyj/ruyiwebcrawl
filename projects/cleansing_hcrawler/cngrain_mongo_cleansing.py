@@ -34,10 +34,11 @@ class CngrainCleansing(HpriceCleansing):
                     
                     name = mongo_item.name
                     mongo_item.mainEntityOfPage = self.nameMapper.get(name, name)
-                    mongo_item.nid = self.nids.get(name, None)
-                    if not mongo_item.nid:
-                        mongo_item.nid = self.get_nid(name)
-
+                    nid = self.nids.get(name, None)
+                    if not nid:
+                        nid = self.get_nid(name)
+                    if nid != 'not exist':
+                        mongo_item.nid = nid
                     mongo_item[u'validDate'] = k   #日期
                     mongo_item[u'price']     = v   #价格
                     if not self.counter % 100:
@@ -49,8 +50,8 @@ class CngrainCleansing(HpriceCleansing):
         ret_list = Hentity.objects(alias__in = [name])
         if not ret_list:
             print name.encode('utf-8')
-            self.nids[name] = name
-            return name
+            self.nids[name] = 'not exist'
+            return 'not exist'
         max_length = -1
         longest_ret = None
         for ret in ret_list:
