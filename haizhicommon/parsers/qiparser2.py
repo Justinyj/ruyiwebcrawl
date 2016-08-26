@@ -12,18 +12,12 @@ class QiParser(object):
         pass
 
     def parse_detail(self, tree):
-        """.. :py:method::
-            分析页面的基本信息和扩展信息
-        """
         info = self.parse_basic_info(tree)
         massive_info = self.parse_massive_info(tree)
         massive_info.update({ 'info': info })
         return massive_info
 
     def parse_basic_info(self, html):
-        """.. :py:method::
-            分析页面的基本信息 http://www.qichacha.com/firm_65dc08b2f569f8ebe730433e1999d6a6.shtml
-        """
         info = {
             'unified_social_credit_code': None,
             'registration_id': None,
@@ -76,10 +70,6 @@ class QiParser(object):
 
 
     def parse_massive_info(self, html):
-        """.. :py:method::
-            http://www.qichacha.com/firm_c70a55cb048c8e4db7bca357a2c113e0.shtml
-            分析页面的股东信息，主要人员，分支机构，变更记录，异常
-        """
         shareholders = []
         executives = []
         branches = []
@@ -185,10 +175,6 @@ class QiParser(object):
 
 
     def parse_search_result(self, tree):
-        """.. :py:method::
-
-        :rtype: 根据搜索词出来的公司结果列表
-        """
         ret = []
         if tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
             #new version after 2016-06-13
@@ -255,10 +241,7 @@ class QiParser(object):
         return ret
 
     def parse_search_result_info(self, tree):
-        """.. :py:method::
 
-        :rtype: 搜索结果数
-        """
         result_info = {"version": "v1.0", "date":"2016-05-01", "num_per_page": 10, "total": 0 }
         if tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
             result_info = {"version": "v1.3", "date":"2016-06-13", "num_per_page": 10 }
@@ -280,10 +263,6 @@ class QiParser(object):
         return result_info
 
     def parse_company_investment(self, tree):
-        """.. :py:method::
-            分析出这一页的子公司们
-            http://www.qichacha.com/company_getinfos?unique=8d1061fb73ba80b572d3d5a610e3ddb6&companyname=%E5%AE%89%E5%BE%BD%E5%A4%A9%E6%98%9F%E5%8C%BB%E8%8D%AF%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8&tab=touzi
-        """
         invest_dict = {}
         for sub_company in tree.cssselect('.list-group a.list-group-item'):
             sub_name = sub_company.cssselect('span.clear .text-lg')[0].text_content().strip()

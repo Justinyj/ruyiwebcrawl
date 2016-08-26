@@ -114,6 +114,14 @@ class Qichacha(object):
     #     return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit, refresh )
 
     def list_keyword_search(self, keyword_list, index_list, limit=None, refresh=False, skip_index_max=None):
+        """.. :py:method::
+            对这样词语列表搜索结果的返回http://www.qichacha.com/search?key=%E5%8C%BB%E8%8D%AF&index=0
+
+        :parameter keyword_list: 要搜索的词语列表
+        :parameter index_list: 搜索条件的index编号列表
+        :parameter limit: 搜索返回结果数限制，vip-5000，free-1000
+        :rtype: hash, key is company, value is result json.
+        """
         if not isinstance(keyword_list, list):
             keyword_list = [keyword_list]
 
@@ -175,6 +183,15 @@ class Qichacha(object):
         return result
 
     def list_keyword_search_onepass(self, keyword, index, province, limit, metadata_dict, summary_dict_onepass, refresh):
+        """.. :py:method::
+            对这样单个词搜索结果的返回http://www.qichacha.com/search?key=%E5%8C%BB%E8%8D%AF&index=0
+
+        :parameter keyword: 要搜索的词语
+        :parameter index: 搜索条件的index编号
+        :parameter province: 搜索条件的省份（拼音开头字母?）
+        :parameter limit: 搜索返回结果数限制，vip-5000，free-1000
+        :rtype: hash, key is company, value is result json.
+        """
         summary_dict_local ={}
         cnt_expect = 0
         cnt_items = 0
@@ -292,7 +309,9 @@ class Qichacha(object):
 
 
     def _crawl_company_detail_by_name_id(self, name, key_num):
-        """
+        """.. :py:method::
+            给定company的name和key_num，获取该公司的详情内容，包括子公司
+
         :rtype: {name: {"name": name,
                         "key_num", key_num,
                         "info": {},
@@ -425,6 +444,9 @@ class Qichacha(object):
         all_name_info_dict.update(name_info_dict)
 
     def crawl_company_expand(self, name, key_num=None, limit=None):
+        """.. :py:method::
+            爬取一个公司的子孙公司和父辈公司
+        """
         if key_num is None:
             key_num = self.input_name_output_id(name)
             if key_num is None:
