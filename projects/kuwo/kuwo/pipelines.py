@@ -11,7 +11,7 @@ class KuwoPipeline(object):
     def __init__(self):
         # self.fmusicCat = codecs.open("/home/wl/kuwoFile/musicCatFile1.json","w",encoding='utf-8')
         # self.fplaylist = codecs.open("/home/wl/kuwoFile/playlistFile1.json","w",encoding='utf-8')
-        self.fmusic = codecs.open("/home/wl/kuwoFile2/musicFile1.json","a",encoding='utf-8')
+        self.fmusic = codecs.open("/home/wl/kuwoFile2/musicFile.json","a",encoding='utf-8')
         self.falbum = codecs.open("/home/wl/kuwoFile2/albumFile.json","a",encoding='utf-8')
         self.fartist = codecs.open("/home/wl/kuwoFile2/artistFile.json","a",encoding='utf-8')
         # self.fmusicInfo = codecs.open("/home/wl/kuwoFile1/musicInfoFile.json","a",encoding='utf-8')

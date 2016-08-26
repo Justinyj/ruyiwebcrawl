@@ -23,23 +23,21 @@ def url2domain(url):
 
 class KmzyCleansing(HpriceCleansing):
     def parse_single_item(self, item):
-        mongo_item = Hprice()
-        mongo_item.productGrade = item[u'specs'].split('/')[0]
-        mongo_item.priceCurrency = 'CNY'                        # 价格货币，命名规则使用iso-4217
-        mongo_item.confidence = "0.7"                            # 爬取日期
-        mongo_item.productPlaceOfOrigin = item[u'specs'].split('/')[1]        # 原产地
-        mongo_item.source = item[u'source']                       # 数据源url
-
-        mongo_item.name = item[u'name']
-        name_raw = item[u'name'] 
-        mongo_item.mainEntityOfPage = self.nameMapper.get(name_raw, name_raw)
-        mongo_item.nid = self.get_nid(name_raw)         
-        mongo_item.site = url2domain(mongo_item.source)
-        # del mongo_item.properties
-        # print mongo_item.properties
-        
-
         for mon, price in item['data']:
+            mongo_item = Hprice()
+            mongo_item.productGrade = item[u'specs'].split('/')[0]
+            mongo_item.priceCurrency = 'CNY'                        # 价格货币，命名规则使用iso-4217
+            mongo_item.confidence = "0.7"                            # 爬取日期
+            mongo_item.productPlaceOfOrigin = item[u'specs'].split('/')[1]        # 原产地
+            mongo_item.source = item[u'source']                       # 数据源url
+
+            mongo_item.name = item[u'name']
+            name_raw = item[u'name'] 
+            mongo_item.mainEntityOfPage = self.nameMapper.get(name_raw, name_raw)
+            mongo_item.nid = self.get_nid(name_raw)         
+            mongo_item.site = url2domain(mongo_item.source)
+            # del mongo_item.properties
+            # print mongo_item.properties
             mongo_item.validDate = mon
             mongo_item.price = str(price)
             self.counter +=1
@@ -61,4 +59,3 @@ class KmzyCleansing(HpriceCleansing):
 if __name__ == '__main__':
     c = KmzyCleansing('kmzy-20160808')
     c.run()
-                   
