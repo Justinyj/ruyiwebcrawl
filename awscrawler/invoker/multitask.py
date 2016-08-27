@@ -60,12 +60,15 @@ def run(config):
             config.get("debug", False)) )
 
 
+    # 先开机器
     if config.get("debug"):
         print(datetime.datetime.now().isoformat(), 'start instances')
     if not config.get("debug"):
+        cookies = config["jobs"]["cookies"] if "cookies" in config["jobs"] else []
         schedule = Schedule(config["aws_machine_number"],
                             tag=config["jobs"][mini_key]["batch_id"],
-                            backoff_timeout=config["jobs"][mini_key]["crawl_timeout"])
+                            backoff_timeout=config["jobs"][mini_key]["crawl_timeout"],
+                            cookies=cookies)
 
         catch_terminate_instances_signal(schedule)
 
