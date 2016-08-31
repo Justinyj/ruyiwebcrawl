@@ -14,6 +14,7 @@
                 "url_pattern": "https://crl.ptopenlab.com:8800/cndbpedia/api/entity?mention={}"
             }
         },
+        "cookies": [],
         "aws_machine_number": 60,
         "note": "复旦百科实体属性值爬取",
         "debug": false
