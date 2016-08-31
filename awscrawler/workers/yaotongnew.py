@@ -123,7 +123,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 'productPlaceOfOrigin' : chandi,
                 'sellerMarket'  : process._sellerMarket_list[int(market)],
                 'price_history' : price_history,
-                'source'        : source_url.format(ycnam, guige, chandi,market),
+                'source'        : source_url.format(ycnam, guige, chandi, market),
             }
             print(result_item)
+            result_item['access_time'] = datetime.utcnow().isoformat()  # 从上面source的赋值可看出每个item都对应不同的参数
             return process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True)
