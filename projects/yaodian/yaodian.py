@@ -18,7 +18,7 @@ sys.setdefaultencoding('utf8')
 SITE = "http://www.yaobiaozhun.com/yd2015/"
 url = "http://www.yaobiaozhun.com/yd2015/view.php?v=txt&id={}"
 
-for i in range(1,2159):
+for i in range(1, 2159):  # 药典一部里有2158种药材
     lurl = url.format(str(i))
     time.sleep(1)
     if i % 100 == 0:
