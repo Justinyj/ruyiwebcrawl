@@ -89,7 +89,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
                 med_info = page.xpath("//p/text()")
                 data = {}
-                data['source'] = url
+                data['ss'] = url
 
                 for info in med_info:
                     m = re.compile(r'【.+?】').match(info.encode('utf-8'))
