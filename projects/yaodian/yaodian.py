@@ -1,34 +1,64 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
-# 此脚本用于爬取蒲标网上的中国药典一部文字内容，存入当前路径下的'yaodian2015.json'文件
-# 药典文件在179服务器上的路径：/home/ruyi/Downloads/yaodian/yaodian2015.json
+
 import requests
 from lxml import etree
 import re
 import time
 import json
 import codecs
+import sys
+import hashlib
+from datetime import datetime
 
+reload(sys)  
+sys.setdefaultencoding('utf8')
 
+SITE = "http://www.yaobiaozhun.com/yd2015/"
 url = "http://www.yaobiaozhun.com/yd2015/view.php?v=txt&id={}"
 
-for i in range(1, 2159):
+for i in range(1,2159):
+    lurl = url.format(str(i))
     time.sleep(1)
-    detail = requests.get(url.format(str(i)))
+    if i % 100 == 0:
+        time.sleep(5)
+    detail = requests.get(lurl)
     # print detail.text
     data = {}
     page = etree.HTML(detail.text.replace('<sub>', '').replace('</sub>', ''))
-    name = page.xpath("//*[@id=\"wrap\"]/div[3]/div[2]/div[3]/pre/center[1]/b/text()")[0]
-    pinyin = page.xpath("//*[@id=\"wrap\"]/div[3]/div[2]/div[3]/pre/center[2]/b/text()")[0] if page.xpath("//*[@id=\"wrap\"]/div[3]/div[2]/div[3]/pre/center[2]/b/text()") else ''
-    content = page.xpath("//*[@id=\"wrap\"]/div[3]/div[2]/div[3]/pre/text()[1]")[0]
-    name_eng = page.xpath("//*[@id=\"wrap\"]/div[3]/div[2]/div[3]/pre/center[3]/b/text()")[0] if page.xpath("//*[@id=\"wrap\"]/div[3]/div[2]/div[3]/pre/center[3]/b/text()") else ''
+    name = page.xpath("//*[@id=\"article_info\"]/h1/text()")[0]
+    content = [ c.strip() for c in page.xpath("//*[@id=\"content_text\"]/text()")[0].split('\r\n') ]
+    name_eng = page.xpath("//*[@class=\"cms_list\"]/pre/center[3]/b/text()")[0] if page.xpath("//*[@id=\"wrap\"]/div[3]/div[2]/div[3]/pre/center[3]/b/text()") else ''
     print name, i
-    if not name or not content:
-        print i, 'not captured'
+    j = 0
+    data['basic'] = ''
+    for c in content:
+        m = re.compile(r'【.+?】').match(c.encode('utf-8'))
+        if not m:
+            data['basic'] += c
+            j += 1
+        else:
+            break
+    print data['basic'], j
+    # if not name or not content:
+    #     print i, 'not captured'
+    # print json.dumps(content, encoding='utf-8', ensure_ascii=False)
+    data['source'] = lurl
     data['name'] = name
-    data['pinyin'] = pinyin
-    data['content'] = content
+    
     data['name_eng'] = name_eng
-    with codecs.open('yaodian2015.json', 'a', encoding='utf-8') as file:
-        file.write(json.dumps(data, encoding='utf-8', ensure_ascii=False) + '\n')
+    data['access_time'] = datetime.utcnow().isoformat()
+    for info in content[j:]:
+        m = re.compile(r'【.+?】').match(info.encode('utf-8'))
+        if m:
+            prop = m.group(0)[3:-3]
+            cleaned = re.sub(r'【.+?】', '', info.encode('utf-8'))
+            data[prop] = cleaned
+        else:
+            data[prop] += '\n' + info.encode('utf-8')
+    filename = hashlib.sha1(lurl).hexdigest()
+    # print filename
+    # print json.dumps(data, encoding='utf-8', ensure_ascii=False)
+    with codecs.open(filename, 'w', encoding='utf-8') as file:
+        file.write(json.dumps(data, encoding='utf-8', ensure_ascii=False))

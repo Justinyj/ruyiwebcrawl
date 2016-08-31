@@ -15,7 +15,6 @@ from lxml import etree
 from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
-
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
 
@@ -90,7 +89,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 med_info = page.xpath("//p/text()")
                 data = {}
                 data['source'] = url
-
+                data['access_time'] = datetime.utcnow().isoformat()
                 for info in med_info:
                     
                     m = re.compile(r'【.+?】').match(info.encode('utf-8'))
