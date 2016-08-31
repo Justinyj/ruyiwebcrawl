@@ -15,7 +15,6 @@ from lxml import etree
 from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
-
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
 
@@ -78,7 +77,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             med_name = page.xpath("//*[@id=\"article\"]/h1/text()")[0]
             get_logger(batch_id, today_str, '/opt/service/log/').info(med_name + " main page")
             # print(med_name,"main page")
-            dics = ''
+            dics = {}
             books = content.split('<hr />')     # 用来分开不同的药典
             if len(books) == 2:                 # 只有一个药典的情况
                 books = [ books[0] ]
@@ -89,9 +88,10 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
                 med_info = page.xpath("//p/text()")
                 data = {}
-                data['ss'] = url
-
+                data['source'] = url
+                data['access_time'] = datetime.utcnow().isoformat()
                 for info in med_info:
+                    
                     m = re.compile(r'【.+?】').match(info.encode('utf-8'))
                     if m:
                         prop = m.group(0)[3:-3]
@@ -99,9 +99,12 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                         data[prop] = cleaned
                     else:
                         data[prop] += '\n' + info.encode('utf-8')
-                dics += json.dumps(data) + '\n'    # 一行是一个药典json，不同药典间用换行符分开
-
+                temp = data['摘录']
+                dics[temp] = data
+            dictionary = {}
+            dictionary[data['药材名称']] = dics
+            dictionary = json.dumps(dictionary, encoding='utf-8', ensure_ascii=False)
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting prd page to cache')
-            return process._cache.post(url, dics)
+            return process._cache.post(url, dictionary)
 
 
