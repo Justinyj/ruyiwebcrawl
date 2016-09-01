@@ -89,6 +89,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 total_page = data['page']
                 # print(content)
                 page_num += 1
-                status = process._cache.post(url, content)
+                status = process._cache.post(url + '?pagecode=' + str(page_num), content)
             
             return True
