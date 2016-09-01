@@ -18,11 +18,10 @@ class YaodianLoader(Loader):
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
-                self.yaodian_parse(js)
-                break
+                self.parse(js)
             break
 
-    def yaodian_parse(self, jsn):
+    def parse(self, jsn):
         name = jsn[u'name']
         domain = self.url2domain(jsn[u'source'])
         nid = hashlib.sha1('{}_{}'.format(name.encode('utf-8'), domain)).hexdigest() # apply sameAs映射后可变
@@ -45,8 +44,18 @@ class YaodianLoader(Loader):
             },
         }
 
-        #claim
+        for item in jsn['info']:
+            for k, v in item.iteritems():
+                if not v:
+                    continue
+                if k == u'basic':  # 爬虫json设计成列表第一个就是basic，因此不用额外判断位置
+                    record['claims'].append({'p': u'实体定义', 'o': v})
+                else:
+                    record['claims'].append({'p': k, 'o': v})
 
+        print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
+        
 if __name__ == '__main__':
     obj = YaodianLoader()
-    obj.read_jsn('/data/yaodian')
+    # obj.read_jsn('/data/yaodian')
+    obj.read_jsn('/Users/johnson/zaojvwang/yaodian')
