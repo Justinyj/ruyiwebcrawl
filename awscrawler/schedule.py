@@ -53,7 +53,7 @@ class Schedule(object):
     def run_command(self, one_id, base_cmd):
         idx = self.ec2manager.get_idx_by_id(one_id)
         if one_id in self.id_cookie_dict:
-            command = base_cmd.format(idx) + '-c "{}"'.format(self.id_cookie_dict[one_id])
+            command = base_cmd.format(idx) + ' -c "{}"'.format(self.id_cookie_dict[one_id])
         else:
             command = base_cmd.format(idx)
         ipaddr = self.ec2manager.get_ipaddr(one_id)
