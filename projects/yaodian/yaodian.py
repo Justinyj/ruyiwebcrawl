@@ -25,6 +25,16 @@ for i in range(1, 2159):  # 药典一部里有2158种药材
         time.sleep(5)
     detail = requests.get(lurl)
     # print detail.text
+
+    data = parse(detail)
+    filename = hashlib.sha1(lurl).hexdigest()
+    # print filename
+    # print json.dumps(data, encoding='utf-8', ensure_ascii=False)
+    with codecs.open(filename, 'w', encoding='utf-8') as file:
+        file.write(json.dumps(data, encoding='utf-8', ensure_ascii=False))
+
+
+def parse(detail):
     data = {}
     page = etree.HTML(detail.text.replace('<sub>', '').replace('</sub>', ''))
     name = page.xpath("//*[@id=\"article_info\"]/h1/text()")[0]
@@ -57,8 +67,4 @@ for i in range(1, 2159):  # 药典一部里有2158种药材
             data[prop] = cleaned
         else:
             data[prop] += '\n' + info.encode('utf-8')
-    filename = hashlib.sha1(lurl).hexdigest()
-    # print filename
-    # print json.dumps(data, encoding='utf-8', ensure_ascii=False)
-    with codecs.open(filename, 'w', encoding='utf-8') as file:
-        file.write(json.dumps(data, encoding='utf-8', ensure_ascii=False))
+
