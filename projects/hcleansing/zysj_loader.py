@@ -25,7 +25,7 @@ class ZysjLoader(Loader):
     def parse(self, jsn):
         # print(json.dumps(jsn, ensure_ascii=False, indent=4))
         books_data = jsn[u'books_data']
-        domain = self.url2domain(jsn[u'source'])
+        domain = Loader.url2domain(jsn[u'source'])
         name = jsn[u'name']
         nid = hashlib.sha1('{}_{}'.format(name.encode('utf-8'), domain)).hexdigest() # apply sameAs映射后可变
         gid = nid # 不可变
@@ -37,8 +37,8 @@ class ZysjLoader(Loader):
             # 'tags': [],
             'alias': [name],
             'claims': [],
-            'createdTime': datetime.utcnow().isoformat(),
-            'updatedTime': datetime.utcnow().isoformat(),
+            'createdTime': datetime.utcnow(),
+            'updatedTime': datetime.utcnow(),
             'source': {
                 'url': jsn[u'source'],
                 'domain': domain,
