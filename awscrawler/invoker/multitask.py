@@ -92,7 +92,7 @@ def run(config):
     for i, v in jobs:
         if i == mini_key:
             continue
-        if i == 'cookies':
+        if i == "cookies":
             continue
         if "filename_urls" in v:
             v_url_length = get_urls_length(v["filename_urls"])

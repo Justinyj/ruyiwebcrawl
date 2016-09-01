@@ -30,6 +30,7 @@ class YtyaocaiCleansing(HpriceCleansing):
                 mongo_item.nid = self.get_nid(name)
             mongo_item.validDate = k   #日期
             mongo_item.price     = v   #价格
+            mongo_item.source = item[u'source']
             mongo_item.site = self.url2domain(item[u'source'])
 
             properties = {
