@@ -30,7 +30,7 @@ envs = {
             'redis://172.31.19.253:6379/0/dQm*s5wdtC)m2AuZ',
         ],
 
-        'CACHE_SERVER': 'http://172.31.23.144:8000',
+        'CACHE_SERVER': 'http://172.31.20.248:8000',
         'REGION_NAME': 'ap-northeast-1',
     },
     'TEST': {

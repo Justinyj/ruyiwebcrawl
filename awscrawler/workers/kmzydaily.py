@@ -86,9 +86,11 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 refresh=True
                 )
                 data = json.loads(content)
+                data['source'] = url + '?pagecode=' + str(page_num)
                 total_page = data['page']
+                dic = json.dumps(data, encoding='utf-8', ensure_ascii=False)
                 # print(content)
                 page_num += 1
-                status = process._cache.post(url + '?pagecode=' + str(page_num), content)
+                status = process._cache.post(url + '?pagecode=' + str(page_num), dic)
             
             return True
