@@ -7,7 +7,6 @@ from __future__ import print_function, division
 from datetime import datetime
 from loader import Loader
 from hzlib import libfile
-import pymongo
 import json
 import os
 import hashlib
@@ -47,7 +46,7 @@ class ZysjLoader(Loader):
                 'confidence': 0.8,
             },
         }
-        claims = []
+
         for single_book in books_data:
             book_name = single_book.keys()[0]
             if book_name == u'《中药大辞典》':  # 有中药大辞典，优先选择
@@ -67,11 +66,9 @@ class ZysjLoader(Loader):
                 else:
                     record['claims'].append({'p': k, 'o': v})
 
-        db.hprice.insert(record)
+        self.entity.insert(record)
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
 
 if __name__ == '__main__':
-    client = pymongo.MongoClient()
-    db = client.hcrawler
     obj = ZysjLoader()
     obj.read_jsn('/Users/johnson/zaojvwang/yaodian/')
