@@ -17,6 +17,7 @@ class YtyaocaiCleansing(HpriceCleansing):
         item_suit_schema['source']  = item[u'source']
         item_suit_schema['unitText'] = u'元/千克'
         item_suit_schema['productSpecification'] = item[u'info'][u'规格'],         
+        item_suit_schema['mainEntityOfPage_raw'] = item[u'name']
         self.clean_item_schema(item_suit_schema)
         for k,v in item[u'price_history'].iteritems():
             result_item = item_suit_schema.copy()
@@ -29,6 +30,7 @@ class YtyaocaiCleansing(HpriceCleansing):
             self.counter += 1
             if self.counter >= 2000:
                 sendto_es(self.jsons)
+                print item_suit_schema['name']
                 self.counter = 0
                 self.jsons = []
 

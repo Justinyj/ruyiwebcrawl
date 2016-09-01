@@ -1,0 +1,23 @@
+{
+    "batch_ids": {
+        "entity": "yaotongnew-20160822"
+    },
+    "indexes": {
+        "jobs": {
+            "0": {
+                "batch_id": "yaotongnew-20160822",
+                "crawl_http_method": "get",
+                "crawl_gap": 2,
+                "crawl_use_js_engine": false,
+                "length": 100,
+                "priority": 1,
+                "crawl_timeout": 10,
+                "failure_times": 5,
+                "filename_urls": "/tmp/yaotongnew.txt"
+            }
+        },
+        "aws_machine_number": 10,
+        "note": "药通网另外一个价格页面",
+        "debug": true
+    }
+}
