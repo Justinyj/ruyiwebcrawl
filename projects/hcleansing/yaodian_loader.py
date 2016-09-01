@@ -19,7 +19,6 @@ class YaodianLoader(Loader):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
                 self.parse(js)
-            break
 
     def parse(self, jsn):
         name = jsn[u'name']
@@ -31,7 +30,6 @@ class YaodianLoader(Loader):
         record = {
             'gid': gid,
             'nid': nid,
-            'tags': [],
             'alias': [name],
             'claims': [],
             'createdTime': datetime.utcnow(),
