@@ -52,7 +52,7 @@ class ZysjLoader(Loader):
             if book_name == u'《中药大辞典》':  # 有中药大辞典，优先选择
                 chosen_book = single_book
                 break
-        else:                                # 不存在中药大辞典，则选择第一个 
+        else:                                # 遍历完不存在中药大辞典，则选择第一个 
             chosen_book = books_data[0]
         book_name = chosen_book.keys()[0]
         book_data = chosen_book[book_name]
@@ -71,4 +71,4 @@ class ZysjLoader(Loader):
 
 if __name__ == '__main__':
     obj = ZysjLoader()
-    obj.read_jsn('/Users/johnson/zaojvwang/yaodian/')
+    obj.read_jsn('/data/hproject/2016/zysj-20160902')

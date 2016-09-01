@@ -34,8 +34,8 @@ class YaodianLoader(Loader):
             'tags': [],
             'alias': [name],
             'claims': [],
-            'createdTime': datetime.utcnow().isoformat(),
-            'updatedTime': datetime.utcnow().isoformat(),
+            'createdTime': datetime.utcnow(),
+            'updatedTime': datetime.utcnow(),
             'source': {
                 'url': jsn[u'source'],
                 'domain': domain,
@@ -53,9 +53,9 @@ class YaodianLoader(Loader):
                 else:
                     record['claims'].append({'p': k, 'o': v})
 
-        print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
+        self.entity.insert(record)
+        # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
         
 if __name__ == '__main__':
     obj = YaodianLoader()
-    # obj.read_jsn('/data/yaodian')
-    obj.read_jsn('/Users/johnson/zaojvwang/yaodian')
+    obj.read_jsn('/data/hproject/2016/yaodian-20160901')
