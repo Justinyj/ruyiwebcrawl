@@ -22,9 +22,8 @@ url = "http://www.yaobiaozhun.com/yd2015/view.php?v=txt&id={}"
 
 def has_key(info, key):
     for item in info:
-        for k in item:
-            if k == key:
-                return True
+        if item.get(key, None):
+            return True
     return False
 
 def parse(detail, index, lurl):
