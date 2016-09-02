@@ -62,13 +62,11 @@ class ZysjLoader(Loader):
                     continue
                 if k == u'来源': 
                     entity_definition = v
-                    record['claims'].insert(0, {'p': u'实体定义', 'o': v}) # 实体定义加到最前面
+                    record['claims'].insert(0, {'p': u'实体定义', 'o': v.strip()}) # 实体定义加到最前面
                 else:
-                    record['claims'].append({'p': k, 'o': v})
+                    record['claims'].append({'p': k, 'o': v.strip()})
                     
-        for ele in record['claims']:
-            k = ele.keys()[0]
-            ele[k] = ele[k].strip()
+
         self.entity.insert(record)
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
 

@@ -47,13 +47,10 @@ class YaodianLoader(Loader):
                 if not v:
                     continue
                 if k == u'basic':  # 爬虫json设计成列表第一个就是basic，因此不用额外判断位置
-                    record['claims'].append({'p': u'实体定义', 'o': v})
+                    record['claims'].append({'p': u'实体定义', 'o': v.strip()})
                 else:
-                    record['claims'].append({'p': k, 'o': v})
+                    record['claims'].append({'p': k, 'o': v.strip()})
 
-        for ele in record['claims']:
-            k = ele.keys()[0]
-            ele[k] = ele[k].strip()
 
         self.entity.insert(record)
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
