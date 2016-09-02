@@ -46,7 +46,7 @@ def parse(detail, index, lurl):
     info.append({u'实体定义': basic})
     info.append({u'英文名': name_eng})
 
-    content += u'\n 【' # 为了让最后一个字段成功匹配
+    content += u' 【' # 为了让最后一个字段成功匹配
     for i in re.findall(u'【([^】]+?)】((.|\s)+?)(?= 【)', content):
         key = i[0]
         value = i[1]
