@@ -65,7 +65,7 @@ def parse(detail, index, lurl):
     return data
 
 def run():
-    for i in range(1, 2579):  # 药典一部里有2158种药材
+    for i in range(1, 2159):  # 药典一部里有2158种药材
         lurl = url.format(str(i))
         time.sleep(1)
         if i % 100 == 0:
