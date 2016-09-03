@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,7 +27,8 @@ public class SmartvApiResult {
 	private int code;
 	private String message;
 	private Object result;
-
+	private int total;
+	
 	public SmartvApiResult() {
 
 	}
@@ -35,6 +37,12 @@ public class SmartvApiResult {
 		this.code = code;
 		this.message = msg;
 		this.result = result;
+	}
+	public SmartvApiResult(int code, String msg, Object result,int total) {
+		this.code = code;
+		this.message = msg;
+		this.result = result;
+		this.total=total;
 	}
 
 	public static String successForObj(Object result) {
@@ -49,6 +57,9 @@ public class SmartvApiResult {
 			return ApiGson.toString(ret);
 			// }else if (result instanceof String){
 			// return (String) result;
+		} else if(result instanceof List){
+			SmartvApiResult res = new SmartvApiResult(0, "成功", result,((List<?>) result).size());// 0:成功
+			return ApiGson.toJson(res);
 		} else {
 			SmartvApiResult res = new SmartvApiResult(0, "成功", result);// 0:成功
 			return ApiGson.toJson(res);
@@ -88,7 +99,13 @@ public class SmartvApiResult {
 	public void setResult(Object result) {
 		this.result = result;
 	}
+	public int getTotal() {
+		return total;
+	}
 
+	public void setTotal(int total) {
+		this.total = total;
+	}
 	public static JsonObject packInput(HttpServletRequest request, JsonObject metadata, String... args) {
 		// produce output
 		JsonObject ret = new JsonObject();
@@ -194,5 +211,4 @@ public class SmartvApiResult {
 			throws IOException {
 		writeResponse(request, response, SmartvApiResult.successForObj(output));
 	}
-
 }
