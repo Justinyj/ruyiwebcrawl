@@ -40,7 +40,7 @@ public class EntityController extends BaseController{
 		List<String> list =new ArrayList<>();
 		
 		//防止乱码
-		q= new String(q.getBytes("iso8859_1"), "UTF-8");
+		q= new String(q.getBytes("UTF-8"), "UTF-8");
 		for (String string : q.split(",")) {
 			list.add(string);
 		}
@@ -49,6 +49,7 @@ public class EntityController extends BaseController{
 		query.skip(offset).limit(limit);
 		
 		List<EntityModel> lists=mongoTemplate.find(query,EntityModel.class,"entity");
+		System.out.println("lists="+lists.size());
 		for (EntityModel entity : lists) {
 			entity.setNid(null);
 			entity.setGid(null);
@@ -80,7 +81,7 @@ public class EntityController extends BaseController{
 		List<NodeModel> lists=null;
 		if(StringUtils.isNoneBlank(q)){
 			//防止乱码
-			q= new String(q.getBytes("iso8859_1"), "UTF-8");
+			q= new String(q.getBytes("UTF-8"), "UTF-8");
 			for (String string : q.split(",")) {
 				list.add(string);
 			}
