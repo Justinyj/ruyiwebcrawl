@@ -16,7 +16,6 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 
 class KmzyLoader(Loader):
-
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
