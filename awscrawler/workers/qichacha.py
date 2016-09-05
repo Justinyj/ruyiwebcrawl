@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+# 注意： 企查查不能与其他爬虫同时爬取，必须单独运行
 
 from __future__ import print_function, division
 import sys
@@ -53,9 +53,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
     # if kwargs and kwargs.get("debug"):
     #     get_logger(batch_id, today_str, '/opt/service/log/').info('start download')
-    def reformat(info):
-        temp = info['info']
-        del info['info']
+    def reformat(info):     # 将info按企查查页面顺序插入队列
+        temp = info['info'][:]
         info['info'] = []
         info['info'].append(("统一社会信用码", temp['unified_social_credit_code']))
         info['info'].append(("注册号", temp['registration_id']))
@@ -73,7 +72,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         return info
 
 
-    def parse_company_investment(tree):
+    def parse_company_investment(tree):     # 解析对外投资页面，将子公司存入sub_companies字段下
         invest_dict = {'sub_companies': [] }
         for sub_company in tree.cssselect('.list-group a.list-group-item'):
             sub_name = sub_company.cssselect('span.clear .text-lg')[0].text_content().strip()
@@ -115,7 +114,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         if not m:
             continue
 
-        if label == 'search':
+        if label == 'search':   # 搜索页面解析
             comp_name = urllib.unquote(m.group(1))
             
             get_logger(batch_id, today_str, '/opt/service/log/').info('getting items', comp_name)
@@ -133,11 +132,11 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     item['status'] = i.xpath('.//*[@class=\"tp5 text-center\"]/a/span/text()')[0]
                     item['key_num'] = item['href'].split('firm_')[1].split('.shtml')[0]
                     # get_logger(batch_id, today_str, '/opt/service/log/').info(item['key_num'])
-                    if idx == 0 and comp_name == item['name']:
+                    if idx == 0 and comp_name == item['name']:  # 若第一个搜索结果完全匹配则只添加第一个结果入待爬取队列
                         get_logger(batch_id, today_str, '/opt/service/log/').info('appending', item['name'])
                         urls.append(urlparse.urljoin(SITE, item['href']))
                         break
-                    elif idx < 3:
+                    elif idx < 3:   # 如果第一个不完全匹配， 将前三个搜索结果加入待爬取队列
                         urls.append(urlparse.urljoin(SITE, item['href']))
                         dic['names'].append(item['name'])
             if not urls:
@@ -147,28 +146,28 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             manager.put_urls_enqueue(batch_id, urls)
             if not dic['names']:
                 return True
-            else:
+            else:   # 不完全匹配时将search_name与前三个搜索结果存入json用作别名映射
                 data = json.dumps(dic, encoding='utf-8', ensure_ascii=False)
                 get_logger(batch_id, today_str, '/opt/service/log/').info('projection:', data)
                 return process._cache.post(url, data)
 
-        elif label == 'main':
+        elif label == 'main':   # 公司主页解析，将投资页面和公司详情页面加入待爬取队列
             key_num = m.group(1)
             comp_name = tree.xpath('.//span[@class=\"text-big font-bold\"]/text()')[0]
             get_logger(batch_id, today_str, '/opt/service/log/').info(comp_name, 'main page')
-            base_url = main_pat.format(key_num=key_num, name=comp_name)
+            base_url = main_pat.format(key_num=key_num, name=comp_name) # 详情页面
             invest_urls = [base_url]
             
             total_nums = int(tree.xpath(".//*[@id=\"touzi_title\"]/span/text()")[0])
             total_pages = total_nums // 10 + 1 if total_nums % 10 != 0 else total_nums // 10 
-            for i in range(1, total_pages + 1):
+            for i in range(1, total_pages + 1): # 投资页面
                 invest_urls.append(invest_pat.format(key_num=key_num, name=comp_name, p=str(i)))
             get_logger(batch_id, today_str, '/opt/service/log/').info(str(invest_urls), 'main page urls')
             manager.put_urls_enqueue(batch_id, invest_urls)
             # get_logger(batch_id, today_str, '/opt/service/log/').info(data)
             return True
 
-        elif label == 'detail':
+        elif label == 'detail':     # 解析详情页面
             comp_name = urllib.unquote(m.group(2))
             get_logger(batch_id, today_str, '/opt/service/log/').info(comp_name, "detail page")
             all_info = parser.parse_detail(tree)
@@ -180,8 +179,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             get_logger(batch_id, today_str, '/opt/service/log/').info(data)
             return process._cache.post(url, data)
 
-        else:
-
+        else:           # 解析投资页面
             comp_name = urllib.unquote(m.group(2))
             get_logger(batch_id, today_str, '/opt/service/log/').info(comp_name, "invest page")
             invest_dict = parse_company_investment(tree)
