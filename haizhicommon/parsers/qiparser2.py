@@ -176,10 +176,30 @@ class QiParser(object):
 
     def parse_search_result(self, tree):
         ret = []
-        if tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
+        # print ('in parser')
+        if tree.cssselect('.table-search-list') and tree.cssselect('.tp2_tit a'):
+            #new version after 2016-08-27
+            # print ('using own')
+            items = tree.cssselect('.table-search-list')
+            # print (items)
+            #print ("v3",len(items) )
+            for i in items:
+                #from lxml import etree as ET
+                #print ("v3",  ET.tostring(i, pretty_print=True))
+                if not i.xpath('.//*[@class=\"tp2_tit clear\"]/a/text()'):
+                    continue
+                item = {}
+                item['name'] = i.xpath('.//*[@class=\"tp2_tit clear\"]/a/text()')[0]
+                item['href'] = i.xpath('.//*[@class=\"tp2_tit clear\"]/a/@href')[0]
+                item['status'] = i.xpath('.//*[@class=\"tp5 text-center\"]/a/span/text()')[0]
+                item['key_num'] = item['href'].split('firm_')[1].split('.shtml')[0]
+
+                ret.append(item)
+                #print (name)
+        elif tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
             #new version after 2016-06-13
             items = tree.cssselect('.list-group-item')
-            #print ("v3",len(items) )
+            # print ("v3",len(items) )
             for i in items:
                 #from lxml import etree as ET
                 #print ("v3",  ET.tostring(i, pretty_print=True))
@@ -197,14 +217,14 @@ class QiParser(object):
                     'status': status,
                     'key_num': key_num,
                     'href': href,
-                    'province': province,
+                    # 'province': province,
                 }
                 ret.append(item)
                 #print (name)
         elif tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
             #new version after 2016-05-31
             items = tree.cssselect('.list-group-item')
-            #print ("v2",len(items) )
+            # print ("v2",len(items) )
             for i in items:
                 name = i.cssselect('.name')[0].text_content().strip()
                 status = i.cssselect('.label')[0].text_content().strip()
