@@ -26,7 +26,7 @@ class YaodianLoader(Loader):
         nid = hashlib.sha1('{}_{}'.format(name.encode('utf-8'), domain)).hexdigest() # apply sameAs映射后可变
         gid = nid # 不可变
         trackingId = hashlib.sha1('{}_{}'.format(jsn[u'source'], jsn[u'access_time'])).hexdigest()
-        
+
         record = {
             'gid': gid,
             'nid': nid,
