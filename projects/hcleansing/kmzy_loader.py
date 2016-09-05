@@ -42,8 +42,8 @@ class YaodianLoader(Loader):
                 'gid': rid, # 不可变
                 'series': '_'.join(tags),
                 'tags': [ tag for tag in tags if tag],
-                'createdTime': datetime.utcnow(),#.isoformat(),  # 稍后记得删去 isof
-                'updatedTime': datetime.utcnow(),#.isoformat(),
+                'createdTime': datetime.utcnow(),
+                'updatedTime': datetime.utcnow(),
                 'source': {
                     'url': jsn[u'source'],
                     'domain': domain,
@@ -52,13 +52,12 @@ class YaodianLoader(Loader):
                 },
                 'claims': [],
             }
-            # print (record['series'])
+
             record['claims'].append({'p': u'productName', 'o': name})
             record['claims'].append({'p': u'validDate', 'o': validDate})
             record['claims'].append({'p': u'price', 'o': str(price)})
             record['claims'].append({'p': u'unitText', 'o': u'元/千克',})
             record['claims'].append({'p': u'productPlaceOfOrigin','o': productPlaceOfOrigin})
-            # record['claims'].append({'p': u'sellerMarket', 'o': jsn[u'sellerMarket']})
             record['claims'].append({'p': u'productGrade', 'o': productGrade})
             record['claims'].append({'p': u'priceCurrency', 'o': u'CNY' })
             self.node.insert(record)  
@@ -68,4 +67,3 @@ class YaodianLoader(Loader):
 if __name__ == '__main__':
     obj = YaodianLoader()
     obj.read_jsn('/data/hproject/2016/kmzy-20160905')
-    # obj.read_jsn('/tmp/kmzy-20160905')
