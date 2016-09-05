@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # 注意： 企查查不能与其他爬虫同时爬取，必须单独运行
+# 爬取逻辑：  1： 搜索公司名，将搜索结果即公司主页加入待爬取队列，将可能有的别名映射存入period cache
+#           2： 进入公司主页，将公司详情页面和对外投资页面加入队列
+#           3： 解析投资页面和详情页面，存入period cache
 
 from __future__ import print_function, division
 import sys
