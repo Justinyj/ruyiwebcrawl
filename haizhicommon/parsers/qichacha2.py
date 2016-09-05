@@ -199,9 +199,9 @@ class Qichacha(object):
         for page in range(1, 1000):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
-            # print("into downloader")
+
             source = self.downloader.access_page_with_cache(url, groups="v0531,search,index{}".format(index), refresh=refresh)
-            # print('downloader ended')
+
             if not source:
                 # no more results, cannot get data
                 break
@@ -256,7 +256,6 @@ class Qichacha(object):
         #if province:
         metadata_dict["i{}_sum_a".format(index)] += cnt_items
         cnt_actual = len(summary_dict_local)
-        # print ('items: ', summary_dict_local)
         summary_dict_onepass.update( summary_dict_local )
         if cnt_expect==0 or cnt_actual==0 or abs(cnt_expect - cnt_actual)>0:
             url = self.list_url.format(key=keyword, index=index, page=0, province=province)
@@ -292,16 +291,13 @@ class Qichacha(object):
         :rtype: qichacha id or None
         """
         url = self.list_url.format(key=name, index=0, page=1, province="")
-        print(url)
         try:
-            # print("into downloader")
             source = self.downloader.access_page_with_cache(url, refresh=True).replace('<em>', '').replace('</em>', '')
             tree = lxml.html.fromstring(source)
         except:
             source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
 
-        print('getting items')
         if tree.cssselect('.table-search-list') and tree.cssselect('.tp2_tit a'):
             items = tree.cssselect('.table-search-list')
             for i in items:
@@ -311,17 +307,13 @@ class Qichacha(object):
                     continue
                 item = {}
                 item['name'] = i.xpath('.//*[@class=\"tp2_tit clear\"]/a/text()')[0]
-                print(item['name'])
+                # print(item['name'])
                 item['href'] = i.xpath('.//*[@class=\"tp2_tit clear\"]/a/@href')[0]
                 item['status'] = i.xpath('.//*[@class=\"tp5 text-center\"]/a/span/text()')[0]
                 item['key_num'] = item['href'].split('firm_')[1].split('.shtml')[0]
                 if item['name'] == name:
                     return item['key_num']
-        # for i in tree.cssselect("#searchlist"):
-        #     searched_name = i.cssselect(".name")[0].text_content().strip().encode("utf-8")
-        #     if searched_name == name:
-        #         link = i.cssselect(".list-group-item")[0].attrib["href"]
-        #         return link.rstrip(".shtml").rsplit("_", 1)[-1]
+
 
 
     def _crawl_company_detail_by_name_id(self, name, key_num):
@@ -338,7 +330,6 @@ class Qichacha(object):
         url = self.get_info_url("base", key_num, name)
         source = self.downloader.access_page_with_cache(url)
         if not source:
-            print("no content")
             return {}
         try:
             tree = lxml.html.fromstring(source)
@@ -350,7 +341,6 @@ class Qichacha(object):
             return {}
 
         all_info = self.parser.parse_detail(tree)
-        print('all info:', json.dumps(all_info, ensure_ascii=False))
         all_info["info"]["name"] = name
         all_info.update({"name": name, "key_num": key_num})
         return {name: all_info}
@@ -369,7 +359,6 @@ class Qichacha(object):
         if key_num is None:
             key_num = self.input_name_output_id(name)
             if key_num is None:
-                print("no key_num")
                 return
 
         name_info_dict = self._crawl_company_detail_by_name_id(name, key_num)

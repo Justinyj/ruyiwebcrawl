@@ -92,7 +92,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         batch_id,
         gap,
         method,
-        refresh=True,
         timeout=timeout,
         encoding='utf-8')
     # print(url)
