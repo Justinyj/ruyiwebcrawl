@@ -7,7 +7,7 @@ public class DateTimeUtils {
 
 
 	public static String parseInterISODate(String date){
-		Date d = new Date(); 
+		Date d = new Date(date);
 		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SS");//其中yyyy-MM-dd是你要表示的格式 
 		// 可以任意组合，不限个数和次序；具体表示为：MM-month,dd-day,yyyy-year;kk-hour,mm-minute,ss-second; 
 		String str=sdf.format(d); 
