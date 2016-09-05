@@ -15,7 +15,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-class YaodianLoader(Loader):
+class YaotongLoader(Loader):
 
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
@@ -61,5 +61,5 @@ class YaodianLoader(Loader):
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
         
 if __name__ == '__main__':
-    obj = YaodianLoader()
+    obj = YaotongLoader()
     obj.read_jsn('/data/hproject/2016/yaotongnew-20160904')
