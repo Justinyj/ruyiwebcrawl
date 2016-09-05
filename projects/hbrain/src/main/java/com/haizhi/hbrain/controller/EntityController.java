@@ -1,12 +1,9 @@
 package com.haizhi.hbrain.controller;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.haizhi.hbrain.model.EntityModel;
+import com.haizhi.hbrain.model.NodeModel;
+import com.haizhi.hbrain.util.DateTimeUtils;
+import com.haizhi.hbrain.util.SmartvApiResult;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -15,10 +12,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.haizhi.hbrain.model.EntityModel;
-import com.haizhi.hbrain.model.NodeModel;
-import com.haizhi.hbrain.util.DateTimeUtils;
-import com.haizhi.hbrain.util.SmartvApiResult;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 
 @RestController
@@ -69,7 +67,7 @@ public class EntityController extends BaseController{
 	}
 	
 	//数据价值接口
-	@RequestMapping(value="api/v1/hprice",method = RequestMethod.GET)
+	@RequestMapping(value="api/v1/price",method = RequestMethod.GET)
 	public void getHPrice(@RequestParam(required = false)String q,@RequestParam(required = false)String series,@RequestParam(required = false,defaultValue = "0") int offset,@RequestParam(required = false,defaultValue = "20")int limit,
 			HttpServletRequest request, HttpServletResponse response) throws Exception {
 		if(mongoTemplate==null){
