@@ -11,7 +11,6 @@ import urlparse
 import lxml.html
 import requests
 from datetime import datetime
-# sys.path.append('..')
 from downloader.cacheperiod import CachePeriod
 from downloader.cache import Cache
 from downloader.downloader_wrapper import Downloader
@@ -24,7 +23,7 @@ from settings import REGION_NAME, CACHE_SERVER
 reload(sys)
 sys.setdefaultencoding('utf-8')
 SITE = 'http://www.qichacha.com'
-SERVER = 'http://192.168.1.179:8000'
+
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
