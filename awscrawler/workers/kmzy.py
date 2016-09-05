@@ -130,6 +130,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     cleaned['specs'] = dic['name']
                     cleaned['name'] = prd
                     cleaned['data'] = [ (timestamp2datetime(int(price[0]) // 1000), price[1]) for price in dic['data'] ]
+                    cleaned['access_time'] = datetime.utcnow().isoformat()
                     dics += json.dumps(cleaned, encoding='utf-8') + '\n'
 
                 

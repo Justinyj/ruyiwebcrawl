@@ -22,14 +22,20 @@ class YaodianLoader(Loader):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
                 self.parse(js)
 
-
     def parse(self, jsn):
+
         domain = self.url2domain(jsn[u'source'])
         name = jsn[u'name'].encode('utf-8')
-        for validDate, price in jsn[u'price_history'].iteritems():
+        specs = jsn[u'specs'].encode('utf-8')
+        productGrade = specs.split('/')[0]
+        productPlaceOfOrigin = specs.split('/')[1]
+        sellerMarket = ''
+        priceType = ''
+        print(name)
+        for validDate, price in jsn[u'data']:
             trackingId = hashlib.sha1('{}_{}'.format(jsn[u'source'], jsn[u'access_time'])).hexdigest()
-            priceType = ''  # 药通的价格类型为空
-            tags = [name, priceType, jsn[u'productPlaceOfOrigin'], jsn[u'sellerMarket'], jsn['productGrade']]
+            
+            tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
             record = {
                 'rid': rid,
@@ -42,24 +48,24 @@ class YaodianLoader(Loader):
                     'url': jsn[u'source'],
                     'domain': domain,
                     'trackingId': trackingId,
-                    'confidence': '0.7', 
+                    'confidence': '0.6', 
                 },
                 'claims': [],
             }
+            # print (record['series'])
             record['claims'].append({'p': u'productName', 'o': name})
             record['claims'].append({'p': u'validDate', 'o': validDate})
-            record['claims'].append({'p': u'price', 'o': price})
+            record['claims'].append({'p': u'price', 'o': str(price)})
             record['claims'].append({'p': u'unitText', 'o': u'元/千克',})
-            record['claims'].append({'p': u'productPlaceOfOrigin','o': jsn[u'productPlaceOfOrigin']})
-            record['claims'].append({'p': u'sellerMarket', 'o': jsn[u'sellerMarket']})
-            record['claims'].append({'p': u'productGrade', 'o': jsn[u'productGrade']})
+            record['claims'].append({'p': u'productPlaceOfOrigin','o': productPlaceOfOrigin})
+            # record['claims'].append({'p': u'sellerMarket', 'o': jsn[u'sellerMarket']})
+            record['claims'].append({'p': u'productGrade', 'o': productGrade})
             record['claims'].append({'p': u'priceCurrency', 'o': u'CNY' })
-            self.node.insert(record)
-        print (name)    
+            self.node.insert(record)  
             
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
         
 if __name__ == '__main__':
     obj = YaodianLoader()
-    # obj.read_jsn('/data/hproject/2016/yaotongnew-20160904')
-    obj.read_jsn('/tmp/yaotongnew-20160904')
+    obj.read_jsn('/data/hproject/2016/kmzy-20160905')
+    # obj.read_jsn('/tmp/kmzy-20160905')
