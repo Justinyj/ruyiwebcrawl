@@ -106,6 +106,7 @@ public class SmartvApiResult {
 	public void setTotal(int total) {
 		this.total = total;
 	}
+	@SuppressWarnings("unchecked")
 	public static JsonObject packInput(HttpServletRequest request, JsonObject metadata, String... args) {
 		// produce output
 		JsonObject ret = new JsonObject();
