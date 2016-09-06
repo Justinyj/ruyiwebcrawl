@@ -32,7 +32,7 @@ class Qichacha(object):
 
     def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True, cache_only=False):
         if batch_id is None:
-            batch_id = "qichacha0601"
+            batch_id = "qichacha0831"
         if config is None:
             raise Exception("error: missing config")
 
@@ -292,20 +292,28 @@ class Qichacha(object):
         """
         url = self.list_url.format(key=name, index=0, page=1, province="")
         try:
-            source = self.downloader.access_page_with_cache(url)
+            source = self.downloader.access_page_with_cache(url, refresh=True).replace('<em>', '').replace('</em>', '')
             tree = lxml.html.fromstring(source)
         except:
             source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
 
-        if tree.cssselect("div.noresult .noface"):
-            return
+        if tree.cssselect('.table-search-list') and tree.cssselect('.tp2_tit a'):
+            items = tree.cssselect('.table-search-list')
+            for i in items:
+                #from lxml import etree as ET
+                #print ("v3",  ET.tostring(i, pretty_print=True))
+                if not i.xpath('.//*[@class=\"tp2_tit clear\"]/a/text()'):
+                    continue
+                item = {}
+                item['name'] = i.xpath('.//*[@class=\"tp2_tit clear\"]/a/text()')[0]
+                # print(item['name'])
+                item['href'] = i.xpath('.//*[@class=\"tp2_tit clear\"]/a/@href')[0]
+                item['status'] = i.xpath('.//*[@class=\"tp5 text-center\"]/a/span/text()')[0]
+                item['key_num'] = item['href'].split('firm_')[1].split('.shtml')[0]
+                if item['name'] == name:
+                    return item['key_num']
 
-        for i in tree.cssselect("#searchlist"):
-            searched_name = i.cssselect(".name")[0].text_content().strip().encode("utf-8")
-            if searched_name == name:
-                link = i.cssselect(".list-group-item")[0].attrib["href"]
-                return link.rstrip(".shtml").rsplit("_", 1)[-1]
 
 
     def _crawl_company_detail_by_name_id(self, name, key_num):
