@@ -244,7 +244,7 @@
 
 ### 知识图谱数据企业接口
 
-/api/v1/enterprises?q=杭州稳健钙业有限公司&offset=0&limit=20
+/api/v1/enterprises?q=alias:杭州稳健钙业有限公司&offset=0&limit=20
 
 ````
 {
