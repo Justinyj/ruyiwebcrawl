@@ -3,47 +3,37 @@ package com.haizhi.hbrain.model;
 import java.util.List;
 import java.util.Map;
 
-
 import org.springframework.data.annotation.Id;
 
 import com.haizhi.hbrain.util.ToString;
 
-public class EntityModel extends ToString{
+public class PriceModel extends ToString{
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -8007826315486887330L;
-
+	private static final long serialVersionUID = 4948172401697253231L;
+	
 	@Id
 	private String id;
 	private String gid;
-	private String nid;
-	private int srank;
-	private List<String> tags;
-	private List<String> alias;
-	private List<String> headers;
+	private String rid;
+	private String series;
+	private String tags;
 	private List<Map<String, String>> claims;
 	private String createdTime;
 	private String updatedTime;
+	private String dataSource;
 	private String deletedTime;
-	private String format;
-	public String getFormat() {
-		return format;
-	}
-	public void setFormat(String format) {
-		this.format = format;
-	}
-	public int getTotal() {
-		return total;
-	}
-	public void setTotal(int total) {
-		this.total = total;
-	}
-	private int total;
 	private Map<String, String> source;
 	public String getId() {
 		return id;
+	}
+	public List<Map<String, String>> getClaims() {
+		return claims;
+	}
+	public void setClaims(List<Map<String, String>> claims) {
+		this.claims = claims;
 	}
 	public void setId(String id) {
 		this.id = id;
@@ -54,41 +44,23 @@ public class EntityModel extends ToString{
 	public void setGid(String gid) {
 		this.gid = gid;
 	}
-	public String getNid() {
-		return nid;
+	public String getRid() {
+		return rid;
 	}
-	public void setNid(String nid) {
-		this.nid = nid;
+	public void setRid(String rid) {
+		this.rid = rid;
 	}
-	public int getSrank() {
-		return srank;
+	public String getSeries() {
+		return series;
 	}
-	public void setSrank(int srank) {
-		this.srank = srank;
+	public void setSeries(String series) {
+		this.series = series;
 	}
-	public List<String> getTags() {
+	public String getTags() {
 		return tags;
 	}
-	public void setTags(List<String> tags) {
+	public void setTags(String tags) {
 		this.tags = tags;
-	}
-	public List<String> getAlias() {
-		return alias;
-	}
-	public void setAlias(List<String> alias) {
-		this.alias = alias;
-	}
-	public List<String> getHeaders() {
-		return headers;
-	}
-	public void setHeaders(List<String> headers) {
-		this.headers = headers;
-	}
-	public List<Map<String, String>> getClaims() {
-		return claims;
-	}
-	public void setClaims(List<Map<String, String>> claims) {
-		this.claims = claims;
 	}
 	public String getCreatedTime() {
 		return createdTime;
@@ -102,6 +74,12 @@ public class EntityModel extends ToString{
 	public void setUpdatedTime(String updatedTime) {
 		this.updatedTime = updatedTime;
 	}
+	public String getDataSource() {
+		return dataSource;
+	}
+	public void setDataSource(String dataSource) {
+		this.dataSource = dataSource;
+	}
 	public String getDeletedTime() {
 		return deletedTime;
 	}
@@ -114,4 +92,5 @@ public class EntityModel extends ToString{
 	public void setSource(Map<String, String> source) {
 		this.source = source;
 	}
+	
 }
