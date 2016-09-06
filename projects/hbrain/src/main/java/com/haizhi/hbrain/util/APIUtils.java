@@ -30,7 +30,7 @@ public class APIUtils {
 		Query query = null;
 		try {
 			//防止乱码
-			q= new String(q.getBytes("ISO8859_1"), "UTF-8");
+			q= new String(q.getBytes("UTF-8"), "UTF-8");
 			query = new Query().skip(offset).limit(limit).addCriteria(new Criteria("deletedTime").is(null));
 			
 			if(StringUtils.isNoneBlank(q)){
