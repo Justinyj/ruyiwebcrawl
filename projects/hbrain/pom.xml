@@ -11,8 +11,8 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<org.springframework.version>4.1.4.RELEASE</org.springframework.version>
-		<jdk.version>1.7</jdk.version>
+		<org.springframework.version>4.3.2.RELEASE</org.springframework.version>
+		<jdk.version>1.8</jdk.version>
 		<maven.build.timestamp.format>yyyyMMdd</maven.build.timestamp.format>
 	</properties>
 
@@ -75,7 +75,7 @@
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-mongodb</artifactId>
-			<version>1.7.2.RELEASE</version>
+			<version>1.9.2.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
