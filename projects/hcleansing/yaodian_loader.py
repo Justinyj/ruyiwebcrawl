@@ -8,7 +8,7 @@ import json
 import os
 import hashlib
 from datetime import datetime
-
+from pymongo.errors import DuplicateKeyError
 from loader import Loader
 from hzlib import libfile
 
@@ -53,7 +53,7 @@ class YaodianLoader(Loader):
 
         try:
             self.entity.insert(record)
-        except Exception, e:
+        except DuplicateKeyError as e:
             print (e)
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
         

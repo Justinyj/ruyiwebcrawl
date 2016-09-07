@@ -16,8 +16,9 @@ class Loader(object):
         client = MongoClient('mongodb://127.0.0.1:27017')
         db = client['kgbrain']
         self.entity = db['entities']
-        self.entity.create_index("nid", unique=True)
+        self.entity.create_index('nid', unique=True)
         self.node = db['price']
+        self.node.create_index('rid', unique=True)
 
     @staticmethod
     def url2domain(url):

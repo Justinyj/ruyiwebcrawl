@@ -7,6 +7,7 @@ from __future__ import print_function, division
 from datetime import datetime
 from loader import Loader
 from hzlib import libfile
+from pymongo.errors import DuplicateKeyError
 import json
 import os
 import re
@@ -88,7 +89,7 @@ class ZysjLoader(Loader):
                     record['claims'].append({'p': k, 'o': v.strip()})
         try:
             self.entity.insert(record)
-        except Exception, e:
+        except DuplicateKeyError as e:
             print (e)
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
 
