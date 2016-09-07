@@ -297,7 +297,7 @@
 
 ### 知识图谱数据新闻接口
 
-/api/v1/news?q=alias:山药%20OR%20alias:山茱萸&offset=0&limit=20
+/api/v1/news?q=tags:党参&offset=0&limit=20
 
 
 ````
