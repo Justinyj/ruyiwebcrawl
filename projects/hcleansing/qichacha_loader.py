@@ -22,7 +22,7 @@ class QichachaLoader(Loader):
     def __init__(self):
         client = MongoClient('mongodb://127.0.0.1:27017')
         db = client['kgbrain']
-        self.entity = db['biz']
+        self.entity = db['enterprises']
         self.ridstart = 0
         self.url_pattern = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=base"
 

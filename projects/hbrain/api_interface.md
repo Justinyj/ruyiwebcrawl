@@ -297,3 +297,35 @@
 
 ### 知识图谱数据新闻接口
 
+/api/v1/news?q=alias:山药%20OR%20alias:山茱萸&offset=0&limit=20
+
+
+````
+{
+    code: 0,
+    message: "成功",
+    result: [
+        {
+            id: "57c939affdcdad190ba67c94",
+            tags: ["新闻"],
+            "claims": [
+                {'p': 'title', 'o': '9月7日甘肃渭源党参行情继续疲软'}
+                {'p': 'author', 'o': '兰菲'}
+                {'p': 'validDate', 'o': '2016-09-07'}
+                {'p': 'content', 'o': '甘肃渭源市场上党参上货量在200吨左右，跟上集持平，成交量 估计在20%-30%，整体走动疲软，成交价格有所下滑，今日成交价格下滑6-10元/kg，药厂货价格58元左右，中条成交价格64元左右， 大中条好货价格76元左右。  '}
+            ],
+
+            "createdTime": "2016-08-24T15:02:20.586Z",
+            "updatedTime": "2016-08-24T15:02:20.586Z",
+            "deletedTime": "",
+            "source": { 
+                "url": "http://www.kmzyw.com.cn/pages/channel_11100/1160907/11100.1473229995000.5761.shtml",
+                "domain": "www.kmzyw.com",
+                "trackingId": "123890128sadfhsoaiao8",
+                "confidence": "0.7"
+            }
+        }
+    ],
+    total: 1
+}
+````
