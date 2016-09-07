@@ -147,7 +147,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             )
 
             dom = lxml.html.fromstring(content)
-            title = dom.xpath('//title/text()')
+            title = dom.xpath('//a[@class="this_tab"]//text()')
             if title:
                 title = title[0]
             result = {}
@@ -165,7 +165,9 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 if newest_time != report_time:
                     break
 
-                history_url  = process._pattern['history'].format(product_node.xpath('./td[10]/a/@href')[0])
+                relative_path = product_node.xpath('./td[10]/a/@href')[0]
+                history_url  = process._pattern['history'].format(relative_path)
+
                 get_logger(batch_id, today_str, '/opt/service/log/').info('The history_url is :{}'.format(history_url))
                 content = process._downloader.downloader_wrapper(history_url,
                         batch_id,
@@ -189,8 +191,12 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     'produce_year': product_node.xpath('./td[6]/text()')[0].strip(),
                     'produce_area': product_node.xpath('./td[7]/text()')[0].strip(),
                     'deliver_area': product_node.xpath('./td[8]/text()')[0].strip(),
+                    'source'      : 'http://datacenter.cngrain.com{}'.format(relative_path),
+                    'access_time'  : datetime.utcnow().isoformat(),
                     'price_history': history_dic,
                 }
                 result['product_list'].append(product_item)
-                result['source'] = url
+
+            result['market_source'] = url
+            # print (json.dumps(result, ensure_ascii = False))
             return process._cache.post(url, json.dumps(result, ensure_ascii = False))
