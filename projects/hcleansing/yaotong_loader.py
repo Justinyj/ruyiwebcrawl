@@ -8,7 +8,7 @@ import json
 import os
 import hashlib
 from datetime import datetime
-
+from pymongo.errors import DuplicateKeyError
 from loader import Loader
 from hzlib import libfile
 import sys
@@ -55,7 +55,10 @@ class YaotongLoader(Loader):
             record['claims'].append({'p': u'sellerMarket', 'o': jsn[u'sellerMarket']})
             record['claims'].append({'p': u'productGrade', 'o': jsn[u'productGrade']})
             record['claims'].append({'p': u'priceCurrency', 'o': u'CNY' })
-            self.node.insert(record)
+            try:
+                self.node.insert(record)
+            except DuplicateKeyError as e:
+                print (e)
         print (name)    
             
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
