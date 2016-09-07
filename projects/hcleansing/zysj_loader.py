@@ -94,4 +94,4 @@ class ZysjLoader(Loader):
 
 if __name__ == '__main__':
     obj = ZysjLoader()
-    obj.read_jsn('/tmp/zysj-20160902')
+    obj.read_jsn('/data/hproject/2016/zysj-20160902')
