@@ -51,8 +51,10 @@ class YaodianLoader(Loader):
                 else:
                     record['claims'].append({'p': k, 'o': v.strip()})
 
-
-        self.entity.insert(record)
+        try:
+            self.entity.insert(record)
+        except Exception, e:
+            print (e)
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
         
 if __name__ == '__main__':

@@ -17,7 +17,6 @@ sys.setdefaultencoding('utf-8')
 
 
 def deal_with_alias(name, content):  # 处理别名字符串，返回别名列表
-    print ('before: ' + content)
     content = re.sub(u'\[', u'（', content)   # 示例： 占车[藏名]  刘寄奴[四川]
     content = re.sub(u'\]', u'）', content)
     content = re.sub(u'《', u'（', content)  
@@ -29,7 +28,7 @@ def deal_with_alias(name, content):  # 处理别名字符串，返回别名列�
     content = re.sub(u'\((.*?)\)', '', content)  # 删除部分以英文括号分隔的内容（实际上只有一例）
     content = re.sub(u'。', '',content)       # 去除句号
     content = re.sub(u'，|,|;|、', '-',content) # 统一分隔符，再以此分开
-    print ('after:' + content)
+    # print ('after:' + content)
     return content.split('-')
 
 
@@ -87,10 +86,12 @@ class ZysjLoader(Loader):
                     record['alias'].extend(alias_list)
                 else:
                     record['claims'].append({'p': k, 'o': v.strip()})
-
-        self.entity.insert(record)
+        try:
+            self.entity.insert(record)
+        except Exception, e:
+            print (e)
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
 
 if __name__ == '__main__':
     obj = ZysjLoader()
-    obj.read_jsn('/data/hproject/2016/zysj-20160902')
+    obj.read_jsn('/tmp/zysj-20160902')
