@@ -14,6 +14,8 @@ from datetime import datetime
 from loader import Loader
 from hzlib import libfile
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -43,6 +45,7 @@ class QichachaLoader(Loader):
         def generate_rid():
             self.ridstart += 1
             return '_' + str(self.ridstart * 11)
+
         if u'info' in jsn:
             name = jsn[u'name']
             source = jsn[u'source'].replace(name, urllib.quote(str(name)))
@@ -95,7 +98,10 @@ class QichachaLoader(Loader):
 
 
 
-            self.biz.insert(record)
+            try:
+                self.biz.insert(record)
+            except DuplicateKeyError as e:
+                print(e)
             # del record['_id']
             # print(json.dumps(record, encoding='utf-8', ensure_ascii=False, indent=4))
 
