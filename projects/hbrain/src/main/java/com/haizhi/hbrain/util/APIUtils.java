@@ -1,13 +1,13 @@
 package com.haizhi.hbrain.util;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 
 public class APIUtils {
 
@@ -24,18 +24,18 @@ public class APIUtils {
 		return str;
 	}
 	
-	public static Query constructQuery(String q,int offset,int limit){
-		List<String> vlauesList =new ArrayList<>();
-		String key=null;
+	public static Query constructQuery(String q, int offset, int limit){
+		List<String> vlauesList = new ArrayList<>();
+		String key = null;
 		Query query = null;
 		try {
 			//防止乱码
-			q= new String(q.getBytes("UTF-8"), "UTF-8");
+			q = new String(q.getBytes("UTF-8"), "UTF-8");
 			query = new Query().skip(offset).limit(limit).addCriteria(new Criteria("deletedTime").is(null));
 			
-			if(StringUtils.isNoneBlank(q)){
-				String[] strings=null;
-				if(q.contains("AND")){
+			if (StringUtils.isNoneBlank(q)) {
+				String[] strings = null;
+				if (q.contains("AND")) {
 					strings=q.split("AND");
 					for (String string : strings) {
 						if(key==null){
@@ -44,7 +44,7 @@ public class APIUtils {
 						vlauesList.add(string.trim().split(":")[1]);
 					}
 					query.addCriteria(new Criteria(key).all(vlauesList));
-				}else if(q.contains("OR")){
+				} else if(q.contains("OR")) {
 					strings=q.split("OR");
 					for (String string : strings) {
 						if(key==null){
@@ -53,7 +53,7 @@ public class APIUtils {
 						vlauesList.add(string.trim().split(":")[1]);
 					}
 					query.addCriteria(new Criteria(key).in(vlauesList));
-				}else{
+				} else {
 					if(q.contains(":")){
 						if(key==null){
 							key=q.trim().split(":")[0];
