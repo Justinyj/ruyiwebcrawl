@@ -13,7 +13,7 @@ from multitask import run
 
 
 def get_hcrawler_conf_dir():
-    config_dir = os.path.dirname(os.path.join(os.path.abspath(__file__) ,'..'))
+    config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__) ,'..'))
     return os.path.join(config_dir, 'config_prefetch/hcrawler')
 
 def run_crawler(config_file):

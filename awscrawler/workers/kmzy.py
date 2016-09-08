@@ -55,7 +55,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
     post_form = {
                 'pagecode': None,
-                'search_site': '%25E4%25BA%25B3%25E5%25B7%259E',
+                # 'search_site': '%25E4%25BA%25B3%25E5%25B7%259E',
 
     }
 
