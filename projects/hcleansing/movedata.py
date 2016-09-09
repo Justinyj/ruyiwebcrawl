@@ -46,7 +46,6 @@ class DataMover(object):
             creat_time =  datetime.datetime.strptime(date_string, '%Y-%b-%d-%H:%M')
             if not newest_creat_time:
                 newest_creat_time = creat_time
-
             newest_creat_time = max(newest_creat_time, creat_time)      # todo: 加一个对newest_creat_time为None的判断？
 
         return newest_creat_time
@@ -83,7 +82,6 @@ class DataMover(object):
         else:
             return False
         
-
     def run(self):
         if self.check_dailydir_exist():
             print 'exist: ' + self.dir_path
