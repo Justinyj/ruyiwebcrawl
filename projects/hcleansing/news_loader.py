@@ -91,9 +91,9 @@ class NewsLoader(object):
                 }
                 record['claims'].append({ 'p': '标题', 'o': item['标题'] })
                 record['claims'].append({ 'p': '摘要', 'o': item['摘要'] })
-                record['claims'].append({ 'p': '数据源', 'o': item['数据源'] })
-                record['claims'].append({ 'p': '发布日期', 'o': item['日期'] })
-                record['claims'].append({ 'p': '数据更新时间', 'o': item['数据更新时间']})
+                record['claims'].append({ 'p': '来源', 'o': item['数据源'] })
+                record['claims'].append({ 'p': '日期', 'o': item['日期'] })
+                record['claims'].append({ 'p': '链接', 'o': source })
                 print json.dumps(record, ensure_ascii=False)
                 try:
                     self.news.insert(record)
