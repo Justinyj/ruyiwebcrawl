@@ -1,25 +1,19 @@
 package com.haizhi.hbrain.util;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.UUID;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.smartv.common.core.ApiCalendar;
 import com.smartv.common.ext.ApiGson;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.*;
 
 public class SmartvApiResult {
 	private static final Logger log = Logger.getLogger(SmartvApiResult.class);
@@ -38,7 +32,7 @@ public class SmartvApiResult {
 		this.message = msg;
 		this.result = result;
 	}
-	public SmartvApiResult(int code, String msg, Object result,int total) {
+	public SmartvApiResult(int code, String msg, Object result, int total) {
 		this.code = code;
 		this.message = msg;
 		this.result = result;

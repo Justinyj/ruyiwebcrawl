@@ -14,6 +14,8 @@ from datetime import datetime
 from loader import Loader
 from hzlib import libfile
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
+
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -22,7 +24,8 @@ class QichachaLoader(Loader):
     def __init__(self):
         client = MongoClient('mongodb://127.0.0.1:27017')
         db = client['kgbrain']
-        self.entity = db['enterprises']
+        self.biz = db['enterprises']
+        self.biz.create_index('gid', unique=True)
         self.ridstart = 0
         self.url_pattern = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=base"
 
@@ -42,6 +45,7 @@ class QichachaLoader(Loader):
         def generate_rid():
             self.ridstart += 1
             return '_' + str(self.ridstart * 11)
+
         if u'info' in jsn:
             name = jsn[u'name']
             source = jsn[u'source'].replace(name, urllib.quote(str(name)))
@@ -94,7 +98,10 @@ class QichachaLoader(Loader):
 
 
 
-            self.entity.insert(record)
+            try:
+                self.biz.insert(record)
+            except DuplicateKeyError as e:
+                print(e)
             # del record['_id']
             # print(json.dumps(record, encoding='utf-8', ensure_ascii=False, indent=4))
 
@@ -108,7 +115,7 @@ class QichachaLoader(Loader):
             source = jsn[u'source'].replace(name, urllib.quote(str(name)))
             domain = self.url2domain(source)
             nid = hashlib.sha1('{}_{}'.format(name.encode('utf-8'), domain)).hexdigest()
-            entity = self.entity.find_one({'nid': nid})
+            entity = self.biz.find_one({'nid': nid})
             if not entity:
                 return
             claims = entity['claims']
@@ -120,7 +127,7 @@ class QichachaLoader(Loader):
                 claims.append({'p': u'子公司名称', 'o': subcomp[u'name'], 'rid': rid})
                 claims.append({'p': u'source.url', 'o': self.url_pattern.format(key_num=key_num, name=urllib.quote(str(subcomp[u'name']))), 'rid': rid })
             
-            updated = self.entity.update_one({'nid': nid}, { '$set': { 'claims': claims}})
+            updated = self.biz.update_one({'nid': nid}, { '$set': { 'claims': claims}})
             # print(json.dumps(entity['claims'], ensure_ascii=False))
 
         

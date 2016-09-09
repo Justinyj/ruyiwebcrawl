@@ -44,7 +44,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     if not hasattr(process, '_regs'):
         setattr(process, '_regs', {
             'search': re.compile(urlparse.urljoin(SITE, 'search\?key=(.+?)&index=(\d+)')),
-            'main': re.compile(urlparse.urljoin(SITE, 'firm_(\w+?).shtml')),
             'detail': re.compile(urlparse.urljoin(SITE, 'company_getinfos\?unique=(.+?)&companyname=(.+?)&tab=base')),
             'invest': re.compile(urlparse.urljoin(SITE, 'company_getinfos\?unique=(.+?)&companyname=(.+?)(?:&p=(\d+))?&tab=touzi(?:&box=touzi)?')),
         })
@@ -137,10 +136,12 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     # get_logger(batch_id, today_str, '/opt/service/log/').info(item['key_num'])
                     if idx == 0 and comp_name == item['name']:  # 若第一个搜索结果完全匹配则只添加第一个结果入待爬取队列
                         get_logger(batch_id, today_str, '/opt/service/log/').info('appending', item['name'])
-                        urls.append(urlparse.urljoin(SITE, item['href']))
+                        urls.append(main_pat.format(key_num=item['key_num'], name=item['name']))
+                        urls.append(invest_pat.format(key_num=item['key_num'], name=item['name'], p='1'))
                         break
                     elif idx < 3:   # 如果第一个不完全匹配， 将前三个搜索结果加入待爬取队列
-                        urls.append(urlparse.urljoin(SITE, item['href']))
+                        urls.append(main_pat.format(key_num=item['key_num'], name=item['name']))
+                        urls.append(invest_pat.format(key_num=item['key_num'], name=item['name'], p='1'))
                         dic['names'].append(item['name'])
             if not urls:
                 get_logger(batch_id, today_str, '/opt/service/log/').info("no result")
@@ -154,21 +155,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 get_logger(batch_id, today_str, '/opt/service/log/').info('projection:', data)
                 return process._cache.post(url, data)
 
-        elif label == 'main':   # 公司主页解析，将投资页面和公司详情页面加入待爬取队列
-            key_num = m.group(1)
-            comp_name = tree.xpath('.//span[@class=\"text-big font-bold\"]/text()')[0]
-            get_logger(batch_id, today_str, '/opt/service/log/').info(comp_name, 'main page')
-            base_url = main_pat.format(key_num=key_num, name=comp_name) # 详情页面
-            invest_urls = [base_url]
-            
-            total_nums = int(tree.xpath(".//*[@id=\"touzi_title\"]/span/text()")[0])
-            total_pages = total_nums // 10 + 1 if total_nums % 10 != 0 else total_nums // 10 
-            for i in range(1, total_pages + 1): # 投资页面
-                invest_urls.append(invest_pat.format(key_num=key_num, name=comp_name, p=str(i)))
-            get_logger(batch_id, today_str, '/opt/service/log/').info(str(invest_urls), 'main page urls')
-            manager.put_urls_enqueue(batch_id, invest_urls)
-            # get_logger(batch_id, today_str, '/opt/service/log/').info(data)
-            return True
 
         elif label == 'detail':     # 解析详情页面
             comp_name = urllib.unquote(m.group(2))
@@ -184,8 +170,16 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
         else:           # 解析投资页面
             comp_name = urllib.unquote(m.group(2))
+            key_num = m.group(1)
+            page = int(m.group(3))
+            pages = tree.xpath(".//a[@id=\"ajaxpage\"]/text()")
+            if '>' in pages:
+                urls = [invest_pat.format(key_num=key_num, name=comp_name, p=str(page + 1))]
+                manager.put_urls_enqueue(batch_id, urls)
             get_logger(batch_id, today_str, '/opt/service/log/').info(comp_name, "invest page")
             invest_dict = parse_company_investment(tree)
+            if not invest_dict['sub_companies']:
+                return True
             invest_dict['name'] = comp_name
             invest_dict['source'] = url
             invest_dict['access_time'] = datetime.utcnow().isoformat()
