@@ -80,8 +80,8 @@ class NewsLoader(object):
                         'rid': rid,
                         'tags': tags,
                         'claims': [],
-                        'createdTime': datetime.utcnow().isoformat(),
-                        'updatedTime': datetime.utcnow().isoformat(),
+                        'createdTime': datetime.utcnow(),
+                        'updatedTime': datetime.utcnow(),
                         'source': {
                             'url': source,
                             'domain': domain,
