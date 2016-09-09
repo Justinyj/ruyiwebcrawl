@@ -38,12 +38,12 @@ def slack(msg):
 
 def run(config):
     ts_start = time.time()
-    today_str = datetime.datetime.now().strftime('-%Y%m%d')
+    today_str = datetime.datetime.utcnow().strftime('-%Y%m%d')
 
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start finding first job --- dryrun mode')
+        print(datetime.datetime.utcnow().isoformat(), 'start finding first job --- dryrun mode')
     else:
-        print(datetime.datetime.now().isoformat(), 'start finding first job --- work mode')
+        print(datetime.datetime.utcnow().isoformat(), 'start finding first job --- work mode')
 
     mini_key = min(config["jobs"].keys())
     job = config["jobs"][mini_key]
@@ -62,7 +62,7 @@ def run(config):
 
     # 先开机器
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start instances')
+        print(datetime.datetime.utcnow().isoformat(), 'start instances')
     if not config.get("debug"):
         cookies = config["jobs"]["cookies"] if "cookies" in config["jobs"] else []
         schedule = Schedule(config["aws_machine_number"],
@@ -72,7 +72,7 @@ def run(config):
 
         catch_terminate_instances_signal(schedule)
 
-    print(datetime.datetime.now().isoformat(), 'start post_job')
+    print(datetime.datetime.utcnow().isoformat(), 'start post_job')
 
     tasks = [
         post_job(job["batch_id"] + today_str,
@@ -102,7 +102,7 @@ def run(config):
             v_url_length = url_length
             v_urls_func = None
 
-        print(datetime.datetime.now().isoformat(), 'start post_job with delay')
+        print(datetime.datetime.utcnow().isoformat(), 'start post_job with delay')
         tasks.append( post_job(v["batch_id"] + today_str,
                                v["crawl_http_method"],
                                v["crawl_gap"],
@@ -117,29 +117,29 @@ def run(config):
 
 
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'start spawn to run program in instances')
+        print(datetime.datetime.utcnow().isoformat(), 'start spawn to run program in instances')
     if not config.get("debug"):
         t3 = gevent.spawn(schedule.run_forever)
 
     gevent.joinall(tasks)
 
 
-    print(datetime.datetime.now().isoformat(), 'job done. start delete_distributed_queue')
+    print(datetime.datetime.utcnow().isoformat(), 'job done. start delete_distributed_queue')
     for greenlet in tasks:
         ret = delete_distributed_queue(greenlet)
         print('{} return of delete {}'.format(ret, greenlet.value))
 
 
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'killall')
+        print(datetime.datetime.utcnow().isoformat(), 'killall')
     if not config.get("debug"):
         gevent.killall([t3], block=False)
         schedule.stop_all_instances()
 
     if config.get("debug"):
-        print(datetime.datetime.now().isoformat(), 'all done.  --- dryrun mode')
+        print(datetime.datetime.utcnow().isoformat(), 'all done.  --- dryrun mode')
     else:
-        print(datetime.datetime.now().isoformat(), 'all done.  --- work mode')
+        print(datetime.datetime.utcnow().isoformat(), 'all done.  --- work mode')
 
     seconds = int(time.time() - ts_start)
     if not config.get("debug"):
