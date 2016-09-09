@@ -16,7 +16,7 @@ import re
 
 
 base = date(1900, 1, 1)
-HEADER = [ '实体', 'o1', '日期', '标题', '摘要', '数据源', '数据更新时间', '原文链接' ]
+HEADER = [ '分类', '实体', 'o1', '日期', '标题', '摘要', '数据源', '数据更新时间', '原文链接' ]
 FILE = '1111.xlsx'
 
 # print file['Sheet1'][0:10]
@@ -67,7 +67,7 @@ class NewsLoader(object):
 
             for item in sheet:
                 name = item['实体']
-                tags = [ name, item['o1'], '新闻' ]
+                tags = [ name, item['o1'], '新闻', item['分类'] ]
                 source = item['原文链接']
                 domain = self.url2domain(source)
                 trackingId = hashlib.sha1('{}_{}'.format(source, datetime.utcnow().isoformat())).hexdigest()
@@ -94,7 +94,7 @@ class NewsLoader(object):
                 record['claims'].append({ 'p': '来源', 'o': item['数据源'] })
                 record['claims'].append({ 'p': '日期', 'o': item['日期'] })
                 record['claims'].append({ 'p': '链接', 'o': source })
-                print json.dumps(record, ensure_ascii=False)
+                # print json.dumps(record, ensure_ascii=False)
                 try:
                     self.news.insert(record)
                 except DuplicateKeyError as e:
