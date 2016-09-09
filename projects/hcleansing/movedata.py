@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
 
@@ -30,19 +30,24 @@ class DataMover(object):
 
     def check_dailydir_exist(self):                     # 当日的数据文件夹格式为：kmzydaily-20160909
         stdin, stdout, stderr = self.ssh.exec_command('ls /data/hproject/2016/')  # 所有爬虫数据都储存在此路径下
-
         dir_name = self.get_dir_name(self.batch_id)
         dir_list = stdout.read().strip().split('\n')
         return dir_name in dir_list
 
     def get_newest_create_time(self):
         stdin, stdout, stderr = self.ssh.exec_command("cd {}; ls -l --time=ctime".format(self.dir_path))
-        rows = stdout.read().strip().split('\n')[1:]    # 第一行是total 描述，去掉
-        newest_creat_time = '00:00'
-        for row in rows:                                # row的格式: -rw-r--r-- 1 admin admin 4401 Sep  8 07:14 ff22a80c953068db08581e783b6b69b4e5e588ad
-            creat_time = row.split(' ')[8]              # 时间格式为00:06 ，由于日期的检查已在check_dailydir_exist中完成，这里直接取HH:MM
-            if creat_time > newest_creat_time:
-                newest_creat_time = creat_time          # todo: 加一个对newest_creat_time 仍然为 00：00的判断？
+        rows = stdout.read().strip().split('\n')[1:]        # 第一行是total 描述，去掉
+
+        newest_creat_time = None 
+        for row in rows:                                    # row的格式: -rw-r--r-- 1 admin admin 4401 Sep  8 07:14 ff22a80c953068db08581e783b6b69b4e5e588ad
+            row = row.replace('  ', ' ')                    # Sep和8之间有两个空格
+            date_string = '-'.join(row.split(' ')[5:8])     #  Sep-9-06:29
+            date_string = '2016-' + date_string
+            creat_time =  datetime.datetime.strptime(date_string, '%Y-%b-%d-%H:%M')
+            if not newest_creat_time:
+                newest_creat_time = creat_time
+
+            newest_creat_time = max(newest_creat_time, creat_time)      # todo: 加一个对newest_creat_time为None的判断？
 
         return newest_creat_time
 
@@ -53,21 +58,17 @@ class DataMover(object):
             print 'waiting'
             now = datetime.datetime.utcnow()
             newest_time = self.get_newest_create_time()
-            hour, minute = newest_time.split(':')
-            newest_time = datetime.datetime(now.year, now.month, now.day, int(hour),  int(minute))   
             delta = now - newest_time
-            # print delta
             if delta.seconds > 1800:
                 break                     # 另一种粗暴的方法：hour*60 + minute  - now.hour*60 - now.minute > 30 
             time.sleep(60)
-
 
     def move_data(self):
         # todo :处理异常情况（MD5不相同）
         # 由于两台机上的数据储存目录结构相同，所以本地和远程用的都是dir_path，无需变换
         print('moving')
         self.ssh.exec_command('tar cvzf {}.tar.gz {}'.format(self.dir_path, self.dir_path))
-        os.system('scp -r {}@{}:{}.tar.gz {}'.format(self.username, self.ipaddr, self.dir_path, self.dir_path))
+        os.system('scp {}@{}:{}.tar.gz {}'.format(self.username, self.ipaddr, self.dir_path, self.dir_path))
         stdin, stdout, stderr = self.ssh.exec_command("md5sum {}.tar.gz".format(self.dir_path))
 
         md5_remote = stdout.read().split(' ')[0]
@@ -76,7 +77,11 @@ class DataMover(object):
             md5_local = hashlib.md5(f.read()).hexdigest()
         self.ssh.exec_command('rm {}.tar.gz'.format(self.dir_path))
 
-        return md5_remote == md5_local
+        if md5_remote == md5_local:
+            os.system('tar zxvf {}.tar.gz -C /data/hproject/2016/'.fromat(self.dir_path))
+            return True
+        else:
+            return False
         
 
     def run(self):
