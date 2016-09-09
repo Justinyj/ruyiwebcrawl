@@ -132,11 +132,11 @@ class QichachaLoader(Loader):
             # print(json.dumps(entity['claims'], ensure_ascii=False))
 
     def parse_alias(self, jsn):
-            if u'search_name' in jsn:
-                entity = self.biz.find_one({ 'alias': jsn['names'][0] })
-                alias = entity['alias']
-                alias.append(jsn['search_name'])
-                updated = self.biz.update_one({'alias': jsn['names'][0]}, { '$set': { 'alias': alias}})
+        if u'search_name' in jsn:
+            entity = self.biz.find_one({ 'alias': jsn['names'][0] })
+            alias = entity['alias']
+            alias.append(jsn['search_name'])
+            updated = self.biz.update_one({'alias': jsn['names'][0]}, { '$set': { 'alias': alias}})
 
 
         
