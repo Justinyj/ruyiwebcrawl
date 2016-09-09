@@ -25,8 +25,6 @@ from settings import REGION_NAME, CACHE_SERVER
 reload(sys)
 sys.setdefaultencoding('utf-8')
 SITE = 'http://www.kmzyw.com.cn/'
-# SERVER = 'http://192.168.1.179:8000'
-
 
 
 
@@ -53,11 +51,9 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         mid = '-0' if dt.month < 10 else '-'
         return str(dt.year) + mid + str(dt.month) 
 
-    post_form = {
-                'pagecode': None,
-                'search_site': '%25E4%25BA%25B3%25E5%25B7%259E',
-
-    }
+    post_form = {}
+                # 'pagecode': None,
+                # 'search_site': '%25E4%25BA%25B3%25E5%25B7%259E',   这个参数解码以后是亳州，意味着只能取亳州市场，应该去掉，无限制
 
     method, gap, js, timeout, data = parameter.split(':')
     gap = float(max(0, float(gap) - other_batch_process_time))
@@ -69,14 +65,11 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         m = reg.match(url)
         if not m:
             continue
-        
         if label == 'main':
             total_page = 10 # 初始化为一个较小的数，之后在获取页面内容后会更新此总页数
             page_num = 1
             while page_num < total_page + 1:
-
                 post_form['pagecode'] = page_num 
-                # print(page_num)
                 content = process._downloader.downloader_wrapper(url,
                 batch_id,
                 gap,
@@ -86,11 +79,10 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 refresh=True
                 )
                 data = json.loads(content)
-                data['source'] = url + '?pagecode=' + str(page_num)
+                data['source'] = 'http://www.kmzyw.com.cn/bzjsp/price-varieties.jsp'  
                 data['access_time'] = datetime.utcnow().isoformat()
                 total_page = data['page']
                 dic = json.dumps(data, encoding='utf-8', ensure_ascii=False)
-                # print(content)
                 page_num += 1
                 status = process._cache.post(url + '?pagecode=' + str(page_num), dic)
             
