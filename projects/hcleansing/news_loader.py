@@ -5,7 +5,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-from lib.libfile import readExcel
+from hzlib.libfile import readExcel
 
 from datetime import timedelta, date, datetime
 from pymongo import MongoClient
