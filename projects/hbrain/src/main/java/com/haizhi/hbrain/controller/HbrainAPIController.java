@@ -27,19 +27,20 @@ public class HbrainAPIController extends BaseController{
 	
 	//数据定义接口
 	@RequestMapping(value="api/v1/entities",method = RequestMethod.GET)
-	public void findHData(@RequestParam(required = false,defaultValue = "0") int offset,@RequestParam(required = false,defaultValue = "20")int limit,
-			@RequestParam(required = false)String q,HttpServletRequest request, HttpServletResponse response) throws Exception {
+	public void findHData(@RequestParam(required = false) String q,
+                          @RequestParam(required = false, defaultValue = "0") int offset,
+                          @RequestParam(required = false, defaultValue = "20") int limit,
+                          HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+        if (mongoTemplate == null) {
+            SmartvApiResult.writeResponseException(request, response, new Exception("error: 数据库连接失败"));
+        }
+        if (StringUtils.isBlank(q)) {
+            SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
+        }
+		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "source.confidence")));
 		
-		if(mongoTemplate==null){
-			SmartvApiResult.writeResponseException(request, response, new Exception("数据库链接失败,error"));
-		}
-		if(StringUtils.isBlank(q)){
-			SmartvApiResult.writeResponseException(request, response, new Exception("  q or types is null!"));
-		}
-		
-		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC,"source.confidence")));
-		
-		List<EntitiesModel> lists=mongoTemplate.find(query,EntitiesModel.class,"entities");
+		List<EntitiesModel> lists = mongoTemplate.find(query, EntitiesModel.class, "entities");
 		for (EntitiesModel entity : lists) {
 			entity.setNid(null);
 			entity.setGid(null);
@@ -52,16 +53,19 @@ public class HbrainAPIController extends BaseController{
 	
 	//数据价值接口
 	@RequestMapping(value="api/v1/price",method = RequestMethod.GET)
-	public void getHPrice(@RequestParam(required = false)String q,@RequestParam(required = false,defaultValue = "0") int offset,@RequestParam(required = false,defaultValue = "20")int limit,
-			HttpServletRequest request, HttpServletResponse response) throws Exception {
-		if(mongoTemplate==null){
-			SmartvApiResult.writeResponseException(request, response, new Exception("数据库链接失败,error"));
-		}
-		if(StringUtils.isBlank(q)){
-			SmartvApiResult.writeResponseException(request, response, new Exception("  q is null!"));
-		}
+	public void getHPrice(@RequestParam(required = false) String q,
+                          @RequestParam(required = false, defaultValue = "0") int offset,
+                          @RequestParam(required = false, defaultValue = "20")int limit,
+                          HttpServletRequest request, HttpServletResponse response) throws Exception {
 
-		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC,"updatedTime")));
+        if (mongoTemplate == null) {
+            SmartvApiResult.writeResponseException(request, response, new Exception("error: 数据库连接失败"));
+        }
+        if (StringUtils.isBlank(q)) {
+            SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
+        }
+
+		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
 		
 		List<PriceModel> lists = mongoTemplate.find(query,PriceModel.class,"price");
 		for (PriceModel entity : lists) {
@@ -80,6 +84,7 @@ public class HbrainAPIController extends BaseController{
                             @RequestParam(required = false, defaultValue = "0") int offset,
 			                @RequestParam(required = false, defaultValue = "20")int limit,
                             HttpServletRequest request, HttpServletResponse response) throws Exception {
+
 		if (mongoTemplate == null) {
 				SmartvApiResult.writeResponseException(request, response, new Exception("error: 数据库链接失败"));
         }
@@ -105,13 +110,15 @@ public class HbrainAPIController extends BaseController{
                      @RequestParam(required = false, defaultValue = "0") int offset,
                      @RequestParam(required = false, defaultValue = "20") int limit,
                      HttpServletRequest request, HttpServletResponse response) throws Exception {
+
         if (mongoTemplate == null) {
             SmartvApiResult.writeResponseException(request, response, new Exception("error: 数据库连接失败"));
         }
         if (StringUtils.isBlank(q)) {
             SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
         }
-        Query query = APIUtils.constructQuery(q, offset, limit);
+
+        Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
         List<NewsModel> lists = mongoTemplate.find(query, NewsModel.class, "news");
         for (NewsModel entity : lists) {
             entity.setRid(null);
@@ -126,6 +133,6 @@ public class HbrainAPIController extends BaseController{
 	//数据价值接口
 	@RequestMapping(value="debug/version",method = RequestMethod.GET)
 	public void version(HttpServletRequest request, HttpServletResponse response) throws Exception {
-		SmartvApiResult.writeResponseOk(request, response,new Date());
+		SmartvApiResult.writeResponseOk(request, response, new Date());
 	}
 }

@@ -11,6 +11,8 @@ import java.util.Map;
  */
 public class NewsModel extends ToString {
 
+    private static final long serialVersionUID = 1L;
+
     @Id
     private String id;
     private String gid;
