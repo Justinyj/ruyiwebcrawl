@@ -9,7 +9,6 @@ import datetime
 import pytz
 import hashlib
 
-# from scp import SCPClient
 # 由于daily文件夹里的文件数量在几百个到一千个左右，所以下面get_newest_create_time()中的时间开销并不会太大。
 
 class DataMover(object):
