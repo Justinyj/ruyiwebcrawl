@@ -22,7 +22,7 @@ class DataMover(object):
         self.ssh.connect(ipaddr, username=username)
 
     def get_dir_name(self, batch_id):
-        now = datetime.datetime.now().date()
+        now = datetime.datetime.utcnow().date()
         suffix = str(now).replace('-', '')
         dir_name = '{}-{}'.format(batch_id, suffix)
         self.dir_path = os.path.join('/data/hproject/2016', dir_name)
