@@ -37,6 +37,7 @@ class QichachaLoader(Loader):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
                 self.parse_subcompany(js)
+                self.parse_alias(js)
 
 
     def parse_info(self, jsn):
@@ -129,6 +130,14 @@ class QichachaLoader(Loader):
             
             updated = self.biz.update_one({'nid': nid}, { '$set': { 'claims': claims}})
             # print(json.dumps(entity['claims'], ensure_ascii=False))
+
+    def parse_alias(self, jsn):
+        if u'search_name' in jsn:
+            entity = self.biz.find_one({ 'alias': jsn['names'][0] })
+            alias = entity['alias']
+            alias.append(jsn['search_name'])
+            updated = self.biz.update_one({'alias': jsn['names'][0]}, { '$set': { 'alias': alias}})
+
 
         
 if __name__ == '__main__':
