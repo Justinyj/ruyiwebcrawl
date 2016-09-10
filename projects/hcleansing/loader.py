@@ -19,6 +19,8 @@ class Loader(object):
         self.entity.create_index('gid', unique=True)
         self.node = db['price']
         self.node.create_index('gid', unique=True)
+        self.node.create_index('series', unique=False)
+        self.node.create_index('tags', unique=False)
 
     @staticmethod
     def url2domain(url):

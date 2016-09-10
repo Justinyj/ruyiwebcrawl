@@ -66,8 +66,8 @@ class DataMover(object):
         # todo :处理异常情况（MD5不相同）
         # 由于两台机上的数据储存目录结构相同，所以本地和远程用的都是dir_path，无需变换
         print('moving')
-        self.ssh.exec_command('tar cvzf {}.tar.gz {}'.format(self.dir_path, self.dir_path))
-        os.system('scp {}@{}:{}.tar.gz {}'.format(self.username, self.ipaddr, self.dir_path, self.dir_path))
+        self.ssh.exec_command('tar cvzf {}.tar.gz -C {} .'.format(self.dir_path, self.dir_path))
+        os.system('scp {}@{}:{}.tar.gz {}.tar.gz'.format(self.username, self.ipaddr, self.dir_path, self.dir_path))
         stdin, stdout, stderr = self.ssh.exec_command("md5sum {}.tar.gz".format(self.dir_path))
 
         md5_remote = stdout.read().split(' ')[0]
@@ -77,7 +77,8 @@ class DataMover(object):
         self.ssh.exec_command('rm {}.tar.gz'.format(self.dir_path))
 
         if md5_remote == md5_local:
-            os.system('tar zxvf {}.tar.gz -C /data/hproject/2016/'.fromat(self.dir_path))
+            os.system('mkdir {};tar zxvf {}.tar.gz -C {}'.format(self.dir_path, self.dir_path, self.dir_path))
+            os.system('rm {}.tar.gz'.format(self.dir_path))
             return True
         else:
             return False
