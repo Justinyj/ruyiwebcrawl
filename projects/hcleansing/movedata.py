@@ -77,7 +77,7 @@ class DataMover(object):
         self.ssh.exec_command('rm {}.tar.gz'.format(self.dir_path))
 
         if md5_remote == md5_local:
-            os.system('mkdir {};tar zxvf {}.tar.gz -C {}'.format(self.dir_path, self.dir_path, self.dir_path))
+            os.system('mkdir {} -p;tar zxvf {}.tar.gz -C {}'.format(self.dir_path, self.dir_path, self.dir_path))
             os.system('rm {}.tar.gz'.format(self.dir_path))
             return True
         else:
