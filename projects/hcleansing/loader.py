@@ -6,9 +6,17 @@ from __future__ import print_function, division
 
 import json
 import re
+import requests
 
 from urlparse import urlparse
 from pymongo import MongoClient
+
+
+def slack(msg):
+    data={
+        "text": msg
+    }
+    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 
 class Loader(object):
@@ -16,11 +24,14 @@ class Loader(object):
         client = MongoClient('mongodb://127.0.0.1:27017')
         db = client['kgbrain']
         self.entity = db['entities']
-        self.entity.create_index('gid', unique=True)
-        self.node = db['price']
-        self.node.create_index('gid', unique=True)
-        self.node.create_index('series', unique=False)
-        self.node.create_index('tags', unique=False)
+        self.node = db['price']  # 无论mongo服务器开启关闭，以上语句都可成功执行
+        try:
+            self.entity.create_index('gid', unique=True)
+            self.node.create_index('gid', unique=True)
+            self.node.create_index('series', unique=False)
+            self.node.create_index('tags', unique=False)
+        except Exception, e:
+            slack('Failed to connect mongoDB:\n{} : {}'.format(str(Exception), str(e)))
 
     @staticmethod
     def url2domain(url):

@@ -9,18 +9,28 @@ import datetime
 import pytz
 import hashlib
 
+from loader import slack
 # 由于daily文件夹里的文件数量在几百个到一千个左右，所以下面get_newest_create_time()中的时间开销并不会太大。
 
 class DataMover(object):
-    def __init__(self, ipaddr = '52.198.100.109', username='admin', batch_id='kmzydaily', year=2016):
+    def __init__(self, ipaddr = '52.198.100.108', username='admin', batch_id='kmzydaily'):
         self.batch_id = batch_id
         self.ipaddr = ipaddr
         self.username = username
+        self.year = datetime.datetime.now().year
         self.ssh = paramiko.SSHClient()
         self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.ssh.connect(ipaddr, username=username)
-        self.year = year
+        for i in range(3):
+            try:
+                self.ssh.connect(ipaddr, username=username)
+                break
+            except Exception, e:
+                if i == '0':
+                    slack('Failed to connect ssh:\n{} : {}\n ipaddress: {}@{}'.format(str(Exception), str(e), format(username), format(ipaddr)))
+                    raise(Exception)
+
+        
 
     def get_dir_name(self, batch_id):
         now = datetime.datetime.utcnow().date()
