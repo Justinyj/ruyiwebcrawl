@@ -18,9 +18,9 @@ def main():
         mover = DataMover(batch_id=batch_id)
         move_success = mover.run()
         if move_success:
-            loader_module_name = '{}_loader'.format('kmzydaily')
+            loader_module_name = '{}_loader'.format(batch_id)
             loader_module = __import__(loader_module_name, fromlist=['process'])
-            loader_class_name = '{}Loader'.format('kmzydaily'.capitalize())
+            loader_class_name = '{}Loader'.format(batch_id.capitalize())
             loader_class = getattr(loader_module, loader_class_name)
 
             obj = loader_class()
