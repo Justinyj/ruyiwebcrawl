@@ -17,18 +17,19 @@ class DataMover(object):
         self.batch_id = batch_id
         self.ipaddr = ipaddr
         self.username = username
-        self.year = datetime.datetime.now().year
+        self.year = datetime.datetime.utcnow().year
         self.ssh = paramiko.SSHClient()
         self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        for i in range(3):
+        for _ in range(3):
             try:
                 self.ssh.connect(ipaddr, username=username)
                 break
             except Exception, e:
-                if i == '0':
-                    slack('Failed to connect ssh:\n{} : {}\n ipaddress: {}@{}'.format(str(Exception), str(e), format(username), format(ipaddr)))
-                    raise(Exception)
+                pass
+        else:
+            slack('Failed to connect ssh:\n{} : {}\n ipaddress: {}@{}'.format(repr(Exception), str(e), format(username), format(ipaddr)))
+            raise Exception(repr(e))
 
         
 
