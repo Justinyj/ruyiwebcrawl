@@ -13,7 +13,7 @@ from loader import slack
 # 由于daily文件夹里的文件数量在几百个到一千个左右，所以下面get_newest_create_time()中的时间开销并不会太大。
 
 class DataMover(object):
-    def __init__(self, ipaddr = '52.198.100.108', username='admin', batch_id='kmzydaily'):
+    def __init__(self, ipaddr = '52.198.100.109', username='admin', batch_id='kmzydaily'):
         self.batch_id = batch_id
         self.ipaddr = ipaddr
         self.username = username
