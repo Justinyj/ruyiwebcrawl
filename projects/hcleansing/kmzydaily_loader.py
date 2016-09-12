@@ -75,4 +75,4 @@ class KmzydailyLoader(Loader):
 
 if __name__ == '__main__':
     obj = KmzydailyLoader()
-    obj.read_jsn('/tmp/kmzydaily-20160912')
+    obj.read_jsn('/data/hproject/2016/kmzydaily-20160912')
