@@ -48,8 +48,8 @@ class KmzydailyLoader(Loader):
                 'gid': rid, # 不可变
                 'series': '_'.join(tags),
                 'tags': [ tag for tag in tags if tag],
-                'createdTime': datetime.utcnow().isoformat(),
-                'updatedTime': datetime.utcnow().isoformat(),
+                'createdTime': datetime.utcnow(),
+                'updatedTime': datetime.utcnow(),
                 'source': {
                     'url': source,
                     'domain': domain,
