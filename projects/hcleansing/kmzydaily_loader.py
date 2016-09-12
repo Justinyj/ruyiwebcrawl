@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
-# 数据说明：（总json为271*20=5420条左右）
+# 数据说明：（总数据条数为271*20=5420条左右）
 # 1.有5%左右的数据是重复的，即完全一样，经检验是网站方面的问题，导入时会有三百条报重复，属正常情况。
-# 2.在9月12号对数据中validDate分布的统计：  Counter({u'2016-09-11': 3708, u'2016-09-09': 909, u'2016-08-20': 792, u'2016-08-28': 2, u'2016-08-25': 1, u'2016-09-05': 1})
+# 2.9月12号时，对数据中validDate分布的统计：  Counter({u'2016-09-11': 3708, u'2016-09-09': 909, u'2016-08-20': 792, u'2016-08-28': 2, u'2016-08-25': 1, u'2016-09-05': 1})
 
 
 from __future__ import print_function, division
@@ -25,6 +25,7 @@ class KmzydailyLoader(Loader):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
                 self.parse(js)
+
     def parse(self, jsn):
         source = jsn[u'source']
         domain = self.url2domain(source)
@@ -58,8 +59,6 @@ class KmzydailyLoader(Loader):
                 'claims': [],
             }
 
-
-
             record['claims'].append({'p': u'productName', 'o': name})
             record['claims'].append({'p': u'validDate', 'o': validDate})
             record['claims'].append({'p': u'price', 'o': str(price)})
@@ -68,8 +67,6 @@ class KmzydailyLoader(Loader):
             record['claims'].append({'p': u'sellerMarket','o': sellerMarket})
             record['claims'].append({'p': u'productGrade', 'o': productGrade})
             record['claims'].append({'p': u'priceCurrency', 'o': u'CNY' })
-            # print (json.dumps(record, ensure_ascii = False))
-            # return
             try:
                 self.node.insert(record)
             except DuplicateKeyError as e:
