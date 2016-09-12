@@ -11,8 +11,7 @@ import sys
 reload(sys)
 
 def main():
-    
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(description='just for batchid argument, maybe more in future')
     parser.add_argument('--batchid', '-b', type=str, help='the batch_id of spider and loader such as kmzydaily')
     batch_id = parser.parse_args().batchid
     if batch_id:

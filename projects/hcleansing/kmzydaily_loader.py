@@ -72,6 +72,7 @@ class KmzydailyLoader(Loader):
             except DuplicateKeyError as e:
                 print (e)
 
+
 if __name__ == '__main__':
     obj = KmzydailyLoader()
     obj.read_jsn('/tmp/kmzydaily-20160912')
