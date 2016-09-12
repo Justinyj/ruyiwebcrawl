@@ -12,7 +12,7 @@ import hashlib
 # 由于daily文件夹里的文件数量在几百个到一千个左右，所以下面get_newest_create_time()中的时间开销并不会太大。
 
 class DataMover(object):
-    def __init__(self, ipaddr = '52.198.100.109', username='admin', batch_id='kmzydaily'):
+    def __init__(self, ipaddr = '52.198.100.109', username='admin', batch_id='kmzydaily', year=2016):
         self.batch_id = batch_id
         self.ipaddr = ipaddr
         self.username = username
@@ -20,16 +20,17 @@ class DataMover(object):
         self.ssh.load_system_host_keys()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self.ssh.connect(ipaddr, username=username)
+        self.year = year
 
     def get_dir_name(self, batch_id):
         now = datetime.datetime.utcnow().date()
         suffix = str(now).replace('-', '')
         dir_name = '{}-{}'.format(batch_id, suffix)
-        self.dir_path = os.path.join('/data/hproject/2016', dir_name)
+        self.dir_path = os.path.join('/data/hproject/{}'.format(self.year), dir_name)
         return dir_name
 
     def check_dailydir_exist(self):                     # 当日的数据文件夹格式为：kmzydaily-20160909
-        stdin, stdout, stderr = self.ssh.exec_command('ls /data/hproject/2016/')  # 所有爬虫数据都储存在此路径下
+        stdin, stdout, stderr = self.ssh.exec_command('ls /data/hproject/{}/'.format(self.year))  # 所有爬虫数据都储存在此路径下
         dir_name = self.get_dir_name(self.batch_id)
         dir_list = stdout.read().strip().split('\n')
         return dir_name in dir_list
@@ -42,7 +43,7 @@ class DataMover(object):
         for row in rows:                                    # row的格式: -rw-r--r-- 1 admin admin 4401 Sep  8 07:14 ff22a80c953068db08581e783b6b69b4e5e588ad
             row = row.replace('  ', ' ')                    # Sep和8之间有两个空格
             date_string = '-'.join(row.split(' ')[5:8])     #  Sep-9-06:29
-            date_string = '2016-' + date_string
+            date_string = '{}-'.format(self.year) + date_string
             creat_time =  datetime.datetime.strptime(date_string, '%Y-%b-%d-%H:%M')
             if not newest_creat_time:
                 newest_creat_time = creat_time
