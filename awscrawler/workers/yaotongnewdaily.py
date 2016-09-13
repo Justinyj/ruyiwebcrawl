@@ -42,9 +42,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
 
     method, gap, js, timeout, data = parameter.split(':')
-    gap = int(gap)
+    gap = float(max(0, float(gap) - other_batch_process_time))
     timeout= int(timeout)
-    gap = max(gap - other_batch_process_time, 0)
     for label, reg in process._regs.iteritems():
         m = reg.match(url)
         if not m:

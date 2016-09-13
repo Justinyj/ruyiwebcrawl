@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
-
+# 总数据接近5000条，插入时会有10条左右的record重复
 
 
 import json
@@ -14,8 +14,6 @@ from hzlib import libfile
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-from collections import Counter
-counter = Counter()
 
 class YaotongnewdailyLoader(Loader):
     def read_jsn(self, data_dir):
@@ -26,20 +24,15 @@ class YaotongnewdailyLoader(Loader):
     def parse(self, jsn):
         source = 'http://www.yt1998.com/priceInfo.html'
         domain = self.url2domain(source)
-        for i in jsn['data']:
-            counter[i['dtm']] += 1
-        return
-        for row in jsn[u'rows']:
-            return
+        for row in jsn[u'data']:
             trackingId = hashlib.sha1('{}_{}'.format(source, row[u'access_time'])).hexdigest()
-            name = row[u'drug_name']
+            name = row[u'ycnam']
             priceType = ''
-            productPlaceOfOrigin = row[u'origin']
-            sellerMarket = row[u'site']
-            productGrade = row[u'standards']
-            validDate = row[u'price_date']
-            price = row[u'price']
-
+            productPlaceOfOrigin = row[u'chandi']
+            sellerMarket = row[u'shichang'] + u'市场'
+            productGrade = row[u'guige']
+            validDate = row[u'dtm']
+            price = row[u'pri']
             tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
 
@@ -54,11 +47,10 @@ class YaotongnewdailyLoader(Loader):
                     'url': source,
                     'domain': domain,
                     'trackingId': trackingId,
-                    'confidence': '0.6', 
+                    'confidence': '0.7', 
                 },
                 'claims': [],
             }
-
             record['claims'].append({'p': u'productName', 'o': name})
             record['claims'].append({'p': u'validDate', 'o': validDate})
             record['claims'].append({'p': u'价格', 'o': str(price)})
@@ -76,5 +68,4 @@ class YaotongnewdailyLoader(Loader):
 
 if __name__ == '__main__':
     obj = YaotongnewdailyLoader()
-    obj.read_jsn('/tmp/yaotongnewdaily-20160913')
-print (counter)
+    obj.read_jsn('/data/hproject/2016/yaotongnewdaily-20160913')
