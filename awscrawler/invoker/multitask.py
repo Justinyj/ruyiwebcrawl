@@ -41,15 +41,11 @@ def get_failed_url(batch_id):
     queue = Queue(batch_id)
     count = 0
 
-    with open(getTheFile('../failed/') + batch_id + '.txt', 'w') as fd:
-        for field, value in queue.get_failed_fields().iteritems():
-            count += 1
-            fd.write(value + '\n')
+    for field, value in queue.get_failed_fields().iteritems():
+        count += 1
 
-    if count:
-        slack('spider has {} failed urls batch_id:{}'.format(count, batch_id))
-    else:
-        slack('spider has no failed urls batch_id:{}'.format(batch_id))
+
+    slack('spider has {} failed urls batch_id:{}'.format(count, batch_id))
 
 def run(config):
     ts_start = time.time()
@@ -160,6 +156,8 @@ def run(config):
     if not config.get("debug"):
         slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"] + today_str, seconds) )
     for key in config["jobs"].keys():
+        if key == 'cookies':
+            continue
         batch_id = config["jobs"][key]["batch_id"]
         get_failed_url(batch_id)
 
