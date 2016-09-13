@@ -15,6 +15,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
+
 class YaotongnewdailyLoader(Loader):
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
@@ -68,4 +69,4 @@ class YaotongnewdailyLoader(Loader):
 
 if __name__ == '__main__':
     obj = YaotongnewdailyLoader()
-    obj.read_jsn('/data/hproject/2016/yaotongnewdaily-20160913')
+    obj.read_jsn('/tmp/yaotongnewdaily-20160913')

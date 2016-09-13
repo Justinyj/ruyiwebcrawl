@@ -59,7 +59,7 @@ class KmzyLoader(Loader):
             record['claims'].append({'p': u'productPlaceOfOrigin','o': productPlaceOfOrigin})
             record['claims'].append({'p': u'productGrade', 'o': productGrade})
             record['claims'].append({'p': u'priceCurrency', 'o': u'CNY' })
-            record['quotedTime'] = datetime.strptime(validDate, '%Y-%m-%d')
+            record['quotedTime'] = datetime.strptime('{}-01'.format(validDate), '%Y-%m-%d')
             try:
                 self.node.insert(record)
             except DuplicateKeyError as e:
