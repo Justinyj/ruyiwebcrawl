@@ -80,7 +80,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 )
                 data = json.loads(content)
                 data['source'] = 'http://www.kmzyw.com.cn/bzjsp/price-varieties.jsp'  
-                data['access_time'] = datetime.utcnow().isoformat()
+                for row in data['rows']:
+                    row['access_time'] = datetime.utcnow().isoformat()
                 total_page = data['page']
                 dic = json.dumps(data, encoding='utf-8', ensure_ascii=False)
                 page_num += 1

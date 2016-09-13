@@ -16,6 +16,7 @@ import json
 import signal
 from operator import itemgetter
 from functools import partial
+from rediscluster.queues import Queue
 
 from awscrawler import post_job, delete_distributed_queue
 from schedule import Schedule
@@ -35,6 +36,15 @@ def slack(msg):
         "text": msg
     }
     requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+
+def get_failed_url(batch_id):
+    queue = Queue(batch_id)
+    count = 0
+
+    for field, value in queue.get_failed_fields().iteritems():
+        count += 1
+
+    slack('spider has {} failed urls batch_id:{}'.format(count, batch_id))
 
 def run(config):
     ts_start = time.time()
@@ -144,6 +154,11 @@ def run(config):
     seconds = int(time.time() - ts_start)
     if not config.get("debug"):
         slack( "done {}, {} seconds".format(config["jobs"][mini_key]["batch_id"] + today_str, seconds) )
+    for key in config["jobs"].keys():
+        if key == 'cookies':
+            continue
+        batch_id = config["jobs"][key]["batch_id"]
+        get_failed_url(batch_id)
 
 
 def get_urls_length(fname):
