@@ -23,9 +23,6 @@ from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
-    # 药材的详情页涉及2个部分：价格历史history和边栏sidebar，以下的ytw/second/是价格历史的url，返回一个大的json；
-    # 所以在最后处理的时候还要额外向另一个url发送一次请求，以获得边栏信息,由于要储存到同一个result.json中，因此不再放入队列，而是直接在process里完成
-    
     today_str = datetime.now().strftime('%Y%m%d')
     get_logger(batch_id, today_str, '/opt/service/log/').info('process {}'.format(url))
     if not hasattr(process, '_downloader'):
@@ -39,10 +36,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             'detail_view': re.compile('http://www.yt1998.com/ytw/second/priceInMarket/getPriceHistory.jsp\?ycnam=(.*)&guige=(.*)&chandi=(.*)&market=(.*)')
         })
 
-    if not hasattr(process, '_sellerMarket_list'):
-        setattr(process, '_sellerMarket_list', ['', u'亳州市场', u'安国市场', u'玉林市场',u'成都市场'])
-
-    # http://www.yt1998.com/price/nowDayPriceQ!getPriceList.do?pageIndex=0&pageSize=500
+    # http://www.yt1998.com/price/nowDayPriceQ!getPriceList.do?pageIndex=0&pageSize=20
     if not hasattr(process, '_cache'):
         head, tail = batch_id.split('-')
         setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
@@ -66,31 +60,19 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 encoding = 'utf-8',
                 refresh = True)
             get_logger(batch_id, today_str, '/opt/service/log/').info('download ok')
-            get_logger(batch_id, today_str, '/opt/service/log/').info(len(content))
             list_item = json.loads(content)
-            urls = []
             for detail_item in list_item[u'data']:
-                detail_url_pattern = 'http://www.yt1998.com/ytw/second/priceInMarket/getPriceHistory.jsp?ycnam={}&guige={}&chandi={}&market={}'
-                ycnam = str(detail_item[u'ycnam'])
-                chandi = str(detail_item[u'chandi'])
-                market = str(detail_item[u'market'])
-                guige = str(detail_item[u'guige'])
-                detail_url = detail_url_pattern.format(urllib.quote(ycnam), urllib.quote(guige), urllib.quote(chandi), urllib.quote(market))
-                urls.append(detail_url)
-            get_logger(batch_id, today_str, '/opt/service/log/').info('len urls')
-            get_logger(batch_id, today_str, '/opt/service/log/').info(len(urls))
-            manager.put_urls_enqueue(batch_id, urls)
+                detail_item[u'access_time'] = datetime.utcnow().isoformat()
 
             total_num = int(list_item[u'total'])
             pageIndex = int(m.group(1))
             pageSize = int(m.group(2))
             if pageIndex == 0:
-                print(total_num // pageSize)
                 for index in range(1, total_num // pageSize + 1):
-                    get_logger(batch_id, today_str, '/opt/service/log/').info('iiiiiindex')
+                    get_logger(batch_id, today_str, '/opt/service/log/').info('index:')
                     get_logger(batch_id, today_str, '/opt/service/log/').info(index)
                     list_pattern = 'http://www.yt1998.com/price/nowDayPriceQ!getPriceList.do?pageIndex={}&pageSize={}'
                     list_url    = list_pattern.format(index, pageSize)
                     manager.put_urls_enqueue(batch_id, [list_url])
-            
-            return process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True)
+
+            return process._cache.post(url, json.dumps(list_item, ensure_ascii = False), refresh = True)
