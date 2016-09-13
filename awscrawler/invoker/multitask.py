@@ -44,7 +44,6 @@ def get_failed_url(batch_id):
     for field, value in queue.get_failed_fields().iteritems():
         count += 1
 
-
     slack('spider has {} failed urls batch_id:{}'.format(count, batch_id))
 
 def run(config):
