@@ -59,14 +59,14 @@ class KmzydailyLoader(Loader):
                 'claims': [],
             }
 
-            record['claims'].append({'p': u'productName', 'o': name})
-            record['claims'].append({'p': u'validDate', 'o': validDate})
+            record['claims'].append({'p': u'商品名称', 'o': name})
+            record['claims'].append({'p': u'日期', 'o': validDate})
             record['claims'].append({'p': u'价格', 'o': str(price)})
-            record['claims'].append({'p': u'unitText', 'o': u'元/千克',})
-            record['claims'].append({'p': u'productPlaceOfOrigin','o': productPlaceOfOrigin})
-            record['claims'].append({'p': u'sellerMarket','o': sellerMarket})
-            record['claims'].append({'p': u'productGrade', 'o': productGrade})
-            record['claims'].append({'p': u'priceCurrency', 'o': u'CNY' })
+            record['claims'].append({'p': u'价格单位', 'o': u'元/千克',})
+            record['claims'].append({'p': u'产地','o': productPlaceOfOrigin})
+            record['claims'].append({'p': u'报价地点','o': sellerMarket})
+            record['claims'].append({'p': u'规格', 'o': productGrade})
+            record['claims'].append({'p': u'币种', 'o': u'CNY' })
             record['quotedTime'] = datetime.strptime(validDate, '%Y-%m-%d')
             try:
                 self.node.insert(record)
