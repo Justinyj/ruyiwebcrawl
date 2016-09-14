@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
+# 总数据接近5000条，插入时会有10条左右的record重复
 
-from __future__ import print_function, division
 
 import json
 import os
@@ -15,22 +15,28 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-class YaotongLoader(Loader):
 
+class YaotongnewdailyLoader(Loader):
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
                 self.parse(js)
 
-
     def parse(self, jsn):
-        domain = self.url2domain(jsn[u'source'])
-        name = jsn[u'name'].encode('utf-8')
-        for validDate, price in jsn[u'price_history'].iteritems():
-            trackingId = hashlib.sha1('{}_{}'.format(jsn[u'source'], jsn[u'access_time'])).hexdigest()
-            priceType = ''  # 药通的价格类型为空
-            tags = [name, priceType, jsn[u'productPlaceOfOrigin'], jsn[u'sellerMarket'], jsn['productGrade']]
+        source = 'http://www.yt1998.com/priceInfo.html'
+        domain = self.url2domain(source)
+        for row in jsn[u'data']:
+            trackingId = hashlib.sha1('{}_{}'.format(source, row[u'access_time'])).hexdigest()
+            name = row[u'ycnam']
+            priceType = ''
+            productPlaceOfOrigin = row[u'chandi']
+            sellerMarket = row[u'shichang'] + u'市场'
+            productGrade = row[u'guige']
+            validDate = row[u'dtm']
+            price = row[u'pri']
+            tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
+
             record = {
                 'rid': rid,
                 'gid': rid, # 不可变
@@ -39,31 +45,28 @@ class YaotongLoader(Loader):
                 'createdTime': datetime.utcnow(),
                 'updatedTime': datetime.utcnow(),
                 'source': {
-                    'url': jsn[u'source'],
+                    'url': source,
                     'domain': domain,
                     'trackingId': trackingId,
                     'confidence': '0.7', 
                 },
                 'claims': [],
             }
-
             record['claims'].append({'p': u'商品名称', 'o': name})
             record['claims'].append({'p': u'日期', 'o': validDate})
-            record['claims'].append({'p': u'价格', 'o': price})
+            record['claims'].append({'p': u'价格', 'o': str(price)})
             record['claims'].append({'p': u'价格单位', 'o': u'元/千克',})
-            record['claims'].append({'p': u'产地','o': jsn[u'productPlaceOfOrigin']})
-            record['claims'].append({'p': u'报价地点', 'o': jsn[u'sellerMarket']})
-            record['claims'].append({'p': u'规格', 'o': jsn[u'productGrade']})
+            record['claims'].append({'p': u'产地','o': productPlaceOfOrigin})
+            record['claims'].append({'p': u'报价地点','o': sellerMarket})
+            record['claims'].append({'p': u'规格', 'o': productGrade})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
             record['quotedTime'] = datetime.strptime(validDate, '%Y-%m-%d')
             try:
                 self.node.insert(record)
             except DuplicateKeyError as e:
                 print (e)
-        print (name)    
-            
-        # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
-        
+
+
 if __name__ == '__main__':
-    obj = YaotongLoader()
-    obj.read_jsn('/data/hproject/2016/yaotongnew-20160904')
+    obj = YaotongnewdailyLoader()
+    obj.read_jsn('/tmp/yaotongnewdaily-20160913')
