@@ -65,7 +65,7 @@ public class HbrainAPIController extends BaseController{
             SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
         }
 
-		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
+		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "quotedTime")));
 		
 		List<PriceModel> lists = mongoTemplate.find(query,PriceModel.class,"price");
 		for (PriceModel entity : lists) {
@@ -73,6 +73,7 @@ public class HbrainAPIController extends BaseController{
 			entity.setGid(null);
 			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
 			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
+			entity.setQuotedTime(APIUtils.parseInterISODate(entity.getQuotedTime()));
 		}
 		SmartvApiResult.writeResponseOk(request, response, lists);
 	}

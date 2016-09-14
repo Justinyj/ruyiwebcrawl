@@ -1,11 +1,10 @@
 package com.haizhi.hbrain.model;
 
-import java.util.List;
-import java.util.Map;
-
+import com.haizhi.hbrain.util.ToString;
 import org.springframework.data.annotation.Id;
 
-import com.haizhi.hbrain.util.ToString;
+import java.util.List;
+import java.util.Map;
 
 public class PriceModel extends ToString{
 
@@ -23,6 +22,7 @@ public class PriceModel extends ToString{
 	private List<Map<String, String>> claims;
 	private String createdTime;
 	private String updatedTime;
+	private String quotedTime;
 	private String dataSource;
 	private String deletedTime;
 	private Map<String, String> source;
@@ -86,6 +86,15 @@ public class PriceModel extends ToString{
 	public void setDeletedTime(String deletedTime) {
 		this.deletedTime = deletedTime;
 	}
+
+	public String getQuotedTime() {
+		return quotedTime;
+	}
+
+	public void setQuotedTime(String quotedTime) {
+		this.quotedTime = quotedTime;
+	}
+
 	public Map<String, String> getSource() {
 		return source;
 	}
