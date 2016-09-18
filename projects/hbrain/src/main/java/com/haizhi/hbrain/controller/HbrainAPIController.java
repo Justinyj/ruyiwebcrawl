@@ -1,6 +1,6 @@
 package com.haizhi.hbrain.controller;
 
-import com.haizhi.hbrain.model.EnterprisesModel;
+import com.haizhi.hbrain.model.CompaniesModel;
 import com.haizhi.hbrain.model.EntitiesModel;
 import com.haizhi.hbrain.model.NewsModel;
 import com.haizhi.hbrain.model.PriceModel;
@@ -80,8 +80,8 @@ public class HbrainAPIController extends BaseController{
 	
 	
 	//知识图谱数据企业接口
-	@RequestMapping(value="api/v1/enterprises", method=RequestMethod.GET)
-	public void enterprises(@RequestParam(required = true) String q,
+	@RequestMapping(value="api/v1/companies", method=RequestMethod.GET)
+	public void companies(@RequestParam(required = true) String q,
                             @RequestParam(required = false, defaultValue = "0") int offset,
 			                @RequestParam(required = false, defaultValue = "20")int limit,
                             HttpServletRequest request, HttpServletResponse response) throws Exception {
@@ -94,8 +94,8 @@ public class HbrainAPIController extends BaseController{
 		}
 
 		Query query = APIUtils.constructQuery(q, offset, limit);
-		List<EnterprisesModel> lists = mongoTemplate.find(query, EnterprisesModel.class, "enterprises");
-		for (EnterprisesModel entity : lists) {
+		List<CompaniesModel> lists = mongoTemplate.find(query, CompaniesModel.class, "companies");
+		for (CompaniesModel entity : lists) {
 			entity.setNid(null);
 			entity.setGid(null);
 			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));

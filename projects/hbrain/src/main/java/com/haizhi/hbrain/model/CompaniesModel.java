@@ -1,13 +1,12 @@
 package com.haizhi.hbrain.model;
 
+import com.haizhi.hbrain.util.ToString;
+import org.springframework.data.annotation.Id;
+
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.data.annotation.Id;
-
-import com.haizhi.hbrain.util.ToString;
-
-public class EnterprisesModel extends ToString {
+public class CompaniesModel extends ToString {
 
 	/**
 	 * 
