@@ -52,7 +52,7 @@ class ShanghaigoldLoader(Loader):
                 'claims': [],
                 'createdTime': datetime.utcnow(),
                 'updatedTime': datetime.utcnow(),
-                'recordDate': dateutil.parser.parse(validDate),
+                'recordDate': validDate,
                 'source': {
                     'url': source,
                     'domain': domain,
