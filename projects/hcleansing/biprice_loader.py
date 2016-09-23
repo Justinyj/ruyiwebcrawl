@@ -51,7 +51,7 @@ class BipriceLoader(Loader):
             'claims': [],
             'createdTime': datetime.utcnow(),
             'updatedTime': datetime.utcnow(),
-            'recordTime': validDate,
+            'recordDate': validDate,
             'source': {
                 'url': source,
                 'domain': domain,

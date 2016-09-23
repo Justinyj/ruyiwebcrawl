@@ -9,6 +9,7 @@ from fabric.api import *
 env.user = 'admin'
 
 DEPLOY_ENV = 'PRODUCTION'
+DEPLOY_ENV = 'XIAMI'
 
 def _aws():
     """ main server need 200G disk for cache logging

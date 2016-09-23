@@ -60,7 +60,7 @@ class YaotongnewdailyLoader(Loader):
             record['claims'].append({'p': u'报价地点','o': sellerMarket})
             record['claims'].append({'p': u'规格', 'o': productGrade})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
-            record['quotedTime'] = datetime.strptime(validDate, '%Y-%m-%d')
+            record['recordDate'] = datetime.strptime(validDate, '%Y-%m-%d')
             try:
                 self.node.insert(record)
             except DuplicateKeyError as e:
