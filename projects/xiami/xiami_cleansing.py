@@ -19,7 +19,7 @@ class XiamiDataMover(object):
         self.tags = set()
 
     def set_directory_list(self):
-        origin_dir = ('/data/xiami/crawl/test/xiami-0921/raw')
+        origin_dir = ('/Users/johnson/xiami/music')
         dir_list = [origin_dir]
         while 1:
             directory = dir_list[0]
