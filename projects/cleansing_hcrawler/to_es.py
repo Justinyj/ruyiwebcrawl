@@ -7,10 +7,11 @@ from __future__ import print_function, division
 import os
 from es.es_api import get_esconfig, batch_init, run_esbulk_rows
 
-ENV = 'local'
+ENV = 'xiami'
 CONFIG = {
     'local': {'CACHESERVER': 'http://192.168.1.179:8000'},
     'prod': {'CACHESERVER': 'http://127.0.0.1:8000'},
+    'xiami':{'CACHESERVER': 'http://192.168.1.179:8000'}
 }
 
 ES_DATASET_CONFIG = {
@@ -18,6 +19,13 @@ ES_DATASET_CONFIG = {
         'es_index': 'hprice',
         'es_type': 'materialprice',
         'filepath_mapping': os.path.abspath(os.path.dirname(__file__)) + '/' + 'price_schema.json'
+}
+
+ES_DATASET_CONFIG = {
+        'description': 'clean_music_xiami_20160920',
+        'es_index': 'clean_music_xiami_20160920',
+        'es_type': 'xiamimusic',
+        'filepath_mapping': os.path.abspath(os.path.dirname(__file__)) + '/' + 'music_schema.json'
 }
 
 ES_DATASET_CONFIG_M = {
@@ -28,7 +36,6 @@ ES_DATASET_CONFIG_M = {
 }
 
 batch_init(get_esconfig(ENV), [ES_DATASET_CONFIG])
-
 def sendto_es(jsons):
     esconfig = get_esconfig(ENV)
     run_esbulk_rows(jsons, "index", esconfig, ES_DATASET_CONFIG)

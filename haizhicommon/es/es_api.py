@@ -158,7 +158,6 @@ def run_es_search(esconfig, es_index, es_type, params):
         'content-type': 'application/json',
         'Authorization': esconfig["es_auth"]
     }
-
     r = requests.get(es_search_url, headers=headers)
     if r:
         data = json.loads(r.content)
