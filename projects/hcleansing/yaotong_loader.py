@@ -55,7 +55,7 @@ class YaotongLoader(Loader):
             record['claims'].append({'p': u'报价地点', 'o': jsn[u'sellerMarket']})
             record['claims'].append({'p': u'规格', 'o': jsn[u'productGrade']})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
-            record['recordDate'] = datetime.strptime(validDate, '%Y-%m-%d')
+            record['recordDate'] = validDate
             try:
                 self.node.insert(record)
             except DuplicateKeyError as e:
