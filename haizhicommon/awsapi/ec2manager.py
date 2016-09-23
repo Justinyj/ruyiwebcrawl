@@ -25,6 +25,12 @@ class Ec2Manager(object):
             'amiid': 'ami-fff8369e',
             'instancetype': 't2.nano',
             'securitygroupid': ['sg-fcbf0998'],
+        },
+        'cn-north-1': {
+            'keypair': 'crawl-beijing',
+            'amiid': 'ami-f89c4895',
+            'instancetype': 't2.micro',
+            'securitygroupid': ['sg-ab4679ce'],
         }
     }
 

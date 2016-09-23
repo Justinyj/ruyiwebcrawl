@@ -44,6 +44,18 @@ envs = {
 
         'CACHE_SERVER': 'http://172.31.1.59:8000',
         'REGION_NAME': 'us-west-1',
+    },
+    'XIAMI':{
+        'CONCURRENT_NUM': 200,
+
+        'RECORD_REDIS': 'redis://172.31.13.36:6379/1/dQm*s5wdtC)m2AuZ',
+        'QUEUE_REDIS': 'redis://172.31.13.36:6379/2/dQm*s5wdtC)m2AuZ',
+        'CACHE_REDIS': [
+            'redis://172.31.13.36:6379/0/dQm*s5wdtC)m2AuZ',
+        ],
+
+        'CACHE_SERVER': 'http://172.31.13.36:8000',
+        'REGION_NAME': 'cn-north-1',
     }
 }
 
