@@ -38,7 +38,7 @@ def get_content(url):
             'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.116 Safari/537.36',
     }
     for _ in range(3):
-        time.sleep(0.5)
+        time.sleep(1)
         response = requests.get(url, headers=headers)
         content = response.text
         if response.status_code == 200:
