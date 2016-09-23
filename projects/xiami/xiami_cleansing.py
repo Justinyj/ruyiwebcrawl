@@ -60,7 +60,7 @@ class XiamiDataMover(object):
                 self.count = 0
                 self.jsons = []
 
-    def statistic_tags(self):     #  统计排名前100的tag
+    def statistic_tags(self):     #  歌曲tag排序
         print 'begin statistic'
         sorted_tags = []
         for tag, count in self.tag_counter.iteritems():
