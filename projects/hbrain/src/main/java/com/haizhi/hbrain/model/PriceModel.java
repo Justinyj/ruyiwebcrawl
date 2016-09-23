@@ -18,11 +18,11 @@ public class PriceModel extends ToString{
 	private String gid;
 	private String rid;
 	private String series;
-	private String tags;
+	private List<String> tags;
 	private List<Map<String, String>> claims;
 	private String createdTime;
 	private String updatedTime;
-	private String quotedTime;
+	private String recordDate;
 	private String dataSource;
 	private String deletedTime;
 	private Map<String, String> source;
@@ -56,10 +56,10 @@ public class PriceModel extends ToString{
 	public void setSeries(String series) {
 		this.series = series;
 	}
-	public String getTags() {
+	public List<String> getTags() {
 		return tags;
 	}
-	public void setTags(String tags) {
+	public void setTags(List<String> tags) {
 		this.tags = tags;
 	}
 	public String getCreatedTime() {
@@ -87,12 +87,12 @@ public class PriceModel extends ToString{
 		this.deletedTime = deletedTime;
 	}
 
-	public String getQuotedTime() {
-		return quotedTime;
+	public String getrecordDate() {
+		return recordDate;
 	}
 
-	public void setQuotedTime(String quotedTime) {
-		this.quotedTime = quotedTime;
+	public void setrecordDate(String recordDate) {
+		this.recordDate = recordDate;
 	}
 
 	public Map<String, String> getSource() {

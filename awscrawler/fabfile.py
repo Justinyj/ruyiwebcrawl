@@ -27,7 +27,7 @@ def build_env():
     sudo('apt-get -y install libcurl4-gnutls-dev libghc-gnutls-dev python-pip python-dev dtach')
     sudo('apt-get -y install libssl-dev libxslt-dev')
     sudo('pip install virtualenvwrapper')
-#    sudo('apt-get -y install redis-server') # worker not needed
+#    sudo('apt-get -y install redis-server dbus') # worker not needed
 #    sudo('sed -i "s/bind 127.0.0.1/bind 0.0.0.0/" /etc/redis/redis.conf')
 #    sudo('/etc/init.d/redis-server restart')
 

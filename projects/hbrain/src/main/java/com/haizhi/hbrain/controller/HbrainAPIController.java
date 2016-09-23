@@ -26,7 +26,7 @@ import java.util.List;
 public class HbrainAPIController extends BaseController{
 	
 	//数据定义接口
-	@RequestMapping(value="api/v1/entities",method = RequestMethod.GET)
+	@RequestMapping(value="api/v1/entities", method = RequestMethod.GET)
 	public void findHData(@RequestParam(required = false) String q,
                           @RequestParam(required = false, defaultValue = "0") int offset,
                           @RequestParam(required = false, defaultValue = "20") int limit,
@@ -52,7 +52,7 @@ public class HbrainAPIController extends BaseController{
 	}
 	
 	//数据价值接口
-	@RequestMapping(value="api/v1/price",method = RequestMethod.GET)
+	@RequestMapping(value="api/v1/price", method = RequestMethod.GET)
 	public void getHPrice(@RequestParam(required = false) String q,
                           @RequestParam(required = false, defaultValue = "0") int offset,
                           @RequestParam(required = false, defaultValue = "20")int limit,
@@ -65,7 +65,7 @@ public class HbrainAPIController extends BaseController{
             SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
         }
 
-		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "quotedTime")));
+		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "recordDate")));
 		
 		List<PriceModel> lists = mongoTemplate.find(query,PriceModel.class,"price");
 		for (PriceModel entity : lists) {
@@ -73,7 +73,6 @@ public class HbrainAPIController extends BaseController{
 			entity.setGid(null);
 			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
 			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
-			entity.setQuotedTime(APIUtils.parseInterISODate(entity.getQuotedTime()));
 		}
 		SmartvApiResult.writeResponseOk(request, response, lists);
 	}

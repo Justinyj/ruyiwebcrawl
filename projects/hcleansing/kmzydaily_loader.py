@@ -67,7 +67,7 @@ class KmzydailyLoader(Loader):
             record['claims'].append({'p': u'报价地点','o': sellerMarket})
             record['claims'].append({'p': u'规格', 'o': productGrade})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
-            record['recordDate'] = datetime.strptime(validDate, '%Y-%m-%d')
+            record['recordDate'] = validDate
             try:
                 self.node.insert(record)
             except DuplicateKeyError as e:

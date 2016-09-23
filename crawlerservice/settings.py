@@ -94,6 +94,27 @@ envs = {
 
         'PROXY_SERVER': 'http://127.0.0.1:8001',
         'CACHE_SERVER': 'http://127.0.0.1:8000',
+    },
+    'XIAMI': {
+        'DBNAME': 'crawlercache',
+        'DBUSER': 'postgres',
+        'DBPASS': '1qaz2wsx',
+        'DBHOST': '127.0.0.1',
+        'DBPORT': 5432,
+
+        'CACHEPAGE': 'fs', # ufile, fs, pg, qiniu
+        'REGION_NAME': 'cn-north-1',
+        'FSCACHEDIR': '/data/crawler_file_cache/',
+        'CONCURRENT_NUM': 200,
+
+        'RECORD_REDIS': 'redis://localhost:6379/1',
+        'QUEUE_REDIS': 'redis://localhost:6379/2',
+        'CACHE_REDIS': [
+            'redis://localhost:6379/0',
+        ],
+
+        'PROXY_SERVER': 'http://172.31.6.236:8001',
+        'CACHE_SERVER': 'http://172.31.6.236:8000',
     }
 }
 
