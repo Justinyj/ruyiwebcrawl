@@ -10,17 +10,19 @@ import sys
 sys.path.append('..')
 
 from cleansing_hcrawler.hprice_cleaning import  *
-
+from collections import Counter
 
 class XiamiDataMover(object):
-    def __init__(self):
+    def __init__(self, origin_dir='/Users/johnson/xiami/music'):
         self.count = 0
         self.jsons = []
-        self.tags = set()
+        self.origin_dir = origin_dir
+        self.tag_counter = Counter()
 
     def set_directory_list(self):
-        origin_dir = ('/Users/johnson/xiami/music')
-        dir_list = [origin_dir]
+        # 是一个层序遍历的函数，利用列表模拟队列
+        # 输入：上级目录，得到：所有最下级目录
+        dir_list = [self.origin_dir]
         while 1:
             directory = dir_list[0]
             sub_dir_list = os.listdir(directory)
@@ -42,7 +44,7 @@ class XiamiDataMover(object):
                     for tag in item['tags']:
                         if tag[0:3] in ['AN:','BN:','MN:']:
                             continue
-                        self.tags.add(tag)
+                        self.tag_counter[tag] += 1
                     with open('artisits.txt','a') as f:
                         f.write(item['artist'] + '\n')
                     with open('songname.txt','a') as f:
@@ -50,26 +52,37 @@ class XiamiDataMover(object):
             except:
                 with open('failed.txt','a') as f:
                     f.write(abs_file_path + '\n')
-                print(abs_file_path)
                 continue
             self.jsons.append(item)
             self.count += 1
-            if self.count > 350:
+            if self.count > 350:     # 对于歌曲json，大于400会发送失败
                 sendto_es(self.jsons)
                 self.count = 0
                 self.jsons = []
+
+    def statistic_tags(self):     #  统计排名前100的tag
+        print 'begin statistic'
+        sorted_tags = []
+        for tag, count in self.tag_counter.iteritems():
+            sorted_tags.append([tag, count])
+
+        self.tag_counter = []
+        sorted_tags.sort(key=lambda ele:ele[1], reverse=1)
+        with open('tags.txt', 'w') as f:
+            for tag in sorted_tags:
+                f.write('{}\t{}'.format(tag[0], tag[1]) + '\n')
+
     def run(self):
         self.set_directory_list()
         for dir_path in self.dir_list:
             self.read_and_insert(dir_path)
         if self.jsons:
             sendto_es(self.jsons)
-        with open('tags.txt', 'w') as f:
-            for tag in self.tags:
-                f.write(tag + '\n')
+
+        self.statistic_tags()
+
 
 
 if __name__ == '__main__':
-    mover = XiamiDataMover()
+    mover = XiamiDataMover(origin_dir='/Users/johnson/xiami/music/crawl/latest')
     mover.run()
-
