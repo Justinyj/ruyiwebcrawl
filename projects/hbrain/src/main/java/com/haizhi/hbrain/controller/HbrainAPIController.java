@@ -1,9 +1,6 @@
 package com.haizhi.hbrain.controller;
 
-import com.haizhi.hbrain.model.CompaniesModel;
-import com.haizhi.hbrain.model.EntitiesModel;
-import com.haizhi.hbrain.model.NewsModel;
-import com.haizhi.hbrain.model.PriceModel;
+import com.haizhi.hbrain.model.*;
 import com.haizhi.hbrain.util.APIUtils;
 import com.haizhi.hbrain.util.SmartvApiResult;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +23,7 @@ import java.util.List;
 public class HbrainAPIController extends BaseController{
 	
 	//数据定义接口
-	@RequestMapping(value="api/v1/entities", method = RequestMethod.GET)
+	@RequestMapping(value="api/v1/entities", method=RequestMethod.GET)
 	public void findHData(@RequestParam(required = false) String q,
                           @RequestParam(required = false, defaultValue = "0") int offset,
                           @RequestParam(required = false, defaultValue = "20") int limit,
@@ -129,6 +126,30 @@ public class HbrainAPIController extends BaseController{
         SmartvApiResult.writeResponseOk(request, response, lists);
     }
 
+
+	@RequestMapping(value="api/v1/record", method=RequestMethod.GET)
+	public void records(@RequestParam(required = false) String q,
+						@RequestParam(required = false, defaultValue = "0") int offset,
+						@RequestParam(required = false, defaultValue = "20") int limit,
+						HttpServletRequest request, HttpServletResponse response) throws Exception {
+
+		if (mongoTemplate == null) {
+			SmartvApiResult.writeResponseException(request, response, new Exception("error: 数据库连接失败"));
+		}
+		if (StringUtils.isBlank(q)) {
+			SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
+		}
+		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
+
+		List<RecordsModel> lists = mongoTemplate.find(query, RecordsModel.class, "records");
+		for (RecordsModel entity : lists) {
+			entity.setRid(null);
+			entity.setGid(null);
+			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
+			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
+		}
+		SmartvApiResult.writeResponseOk(request, response, lists);//"数据库连接成功,success");
+	}
 
 	//数据价值接口
 	@RequestMapping(value="debug/version",method = RequestMethod.GET)
