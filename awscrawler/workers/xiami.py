@@ -5,7 +5,10 @@
 # 付费测例：  artist_id   23549
 # 无专辑测例：artist_id 73352507
 # 主页跳转： artist_id 7194 、1718627433    这类音乐人为在虾米上有账号的音乐人
-# 312329211
+# 终极BUG：613269197
+# 主页无专辑： 113543
+
+
 import json
 import urllib
 import re
@@ -17,7 +20,6 @@ import datetime
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
 
 from downloader.cacheperiod import CachePeriod
 
@@ -161,7 +163,7 @@ def get_fans(artist_id):
     url = 'http://www.xiami.com/artist/{}'.format(artist_id)
     content = get_content(url)
     dom = lxml.html.fromstring(content)
-    return dom.xpath('//div[@class="music_counts"]//li[1]//a/text()')[0]
+    return dom.xpath('//div[@class="music_counts"]//li[1]//a//text()')[0]
 
 
 def parse_song_list(artist_id):
@@ -199,7 +201,6 @@ def parse_song_list(artist_id):
             else:  # 不是demo，加入
                 result_list.append(result)
 
-
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     if not hasattr(process, '_cache'):
         head, tail = batch_id.split('-')
@@ -209,7 +210,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     timeout= int(timeout)
     gap = max(gap - other_batch_process_time, 0)
     artist_id = url
-
     result_list = parse_song_list(artist_id)
     if result_list == False:       # 因为也可能是空列表，所以采取这种判断方式
         return False
