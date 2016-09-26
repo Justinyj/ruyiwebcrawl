@@ -8,7 +8,6 @@
 # 终极BUG：613269197
 # 主页无专辑： 113543
 
-
 import json
 import urllib
 import re
@@ -25,10 +24,12 @@ from downloader.cacheperiod import CachePeriod
 
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
-# print REGION_NAME
-# print CACHE_SERVER
+
 
 def get_content(url):
+    # 有的歌手会有个人主页，会跳转到i.xiami.com,仍要爬取粉丝数
+    # 有的歌为demo歌曲，会跳转到i.xiami.com/XXX/demo/xxx ,不爬取
+    # todo :统一返回类型，更换手段处理demo情况
     headers = {
             'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Encoding':'gzip, deflate, sdch',
@@ -42,21 +43,21 @@ def get_content(url):
     for _ in range(3):
         time.sleep(1)
         response = requests.get(url, headers=headers)
-        content = response.text
         if response.status_code == 200:
             break
         elif response.url != url:
             url = response.url
             headers = {}                  # 对于i.xiami.com 网页，不需要headers
             if 'demo' in url:
-                return ''
-                   
+                return '' 
     else:
         return False
 
     return response.text
 
 def parse_album_detail(album_id):
+    # 解析专辑页面，主要是为了得到时间，再转化为相应时间戳
+    # 现在是设置成返回二元组，不是一个恰当的选择，返回字典更合适
     if not hasattr(parse_album_detail, '_album_cache'):
         setattr(parse_album_detail, '_album_cache',{})
 
@@ -89,6 +90,7 @@ def parse_album_detail(album_id):
         return [published_time, timestamp]
 
 def parse_song_detail(result, song_id):
+    # 需要得到：歌曲标签，歌词，相似歌曲，发行日期（从专辑页面中获取，注意要缓存，否则每首歌都重复访问一次专辑页面）
     url = 'http://www.xiami.com/song/{}'.format(song_id)
     content = get_content(url)
     if content == '':      
@@ -160,17 +162,25 @@ def get_hot(dom):
 
 
 def get_fans(artist_id):
+    # 获取粉丝数量，注意有的网页格式不规范会导致粉丝数不显示，原先位置被‘粉丝’两个字占用
     url = 'http://www.xiami.com/artist/{}'.format(artist_id)
     content = get_content(url)
+    if not content:
+        return ''
     dom = lxml.html.fromstring(content)
     return dom.xpath('//div[@class="music_counts"]//li[1]//a//text()')[0]
 
 
 def parse_song_list(artist_id):
+    # 页面介绍：每个歌手的歌曲列表 such as :http://www.xiami.com/artist/top-1260
+    # 函数目的：预先得到粉丝数和热度这种歌曲，同时进行翻页， 每首歌的详细信息在parse_song_detail中处理
+    # 获取粉丝数量，注意有的网页不规范会导致‘粉丝’两个字占用原来应该是粉丝数的位置
     result_list = []
     page = 1
     song_list_pattern = 'http://www.xiami.com/artist/top-{}?spm=0.0.0.0.qH9VFH&page={}'
     fans = get_fans(artist_id)
+    if fans == u'粉丝':
+        fans = '0'
     while 1:
         url = song_list_pattern.format(artist_id, page)
         page += 1
