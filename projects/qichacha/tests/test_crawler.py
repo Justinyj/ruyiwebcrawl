@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
+# 企查查爬虫单元测试脚本, 分为三个部分
+# test_searchpage 测试搜索页面解析是否正确
+# test_detailpage 测试详情页面解析是否正确, 其中的parser_patch是在页面关于股东及主要人员部分改版后增加的补丁
+# test_investpage 测试对外投资页面解析是否争取
+# 注意使用时需更新cookie确保cookie有效
+
 
 from __future__ import print_function, division
 
