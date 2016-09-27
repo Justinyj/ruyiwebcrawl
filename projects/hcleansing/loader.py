@@ -30,6 +30,7 @@ class Loader(object):
             self.node.create_index('gid', unique=True)
             self.node.create_index('series', unique=False)
             self.node.create_index('tags', unique=False)
+            self.node.create_index('recordDate', unique=False)
         except Exception, e:
             slack('Failed to connect mongoDB:\n{} : {}'.format(str(Exception), str(e)))
 
