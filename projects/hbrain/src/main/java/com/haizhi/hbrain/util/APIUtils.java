@@ -24,14 +24,14 @@ public class APIUtils {
 		return str;
 	}
 
-	public static Query constructQuery(String q, int offset, int limit){
+	public static Query constructQuery(String q) {
 		List<String> vlauesList = new ArrayList<>();
 		String key = null;
 		Query query = null;
 		try {
 			//防止乱码
 			q = new String(q.getBytes("UTF-8"), "UTF-8");
-			query = new Query().skip(offset).limit(limit).addCriteria(new Criteria("deletedTime").is(null));
+			query = new Query().addCriteria(new Criteria("deletedTime").is(null));
 			
 			if (StringUtils.isNoneBlank(q)) {
 				String[] strings = null;

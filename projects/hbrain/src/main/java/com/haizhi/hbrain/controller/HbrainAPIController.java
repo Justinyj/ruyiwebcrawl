@@ -35,20 +35,20 @@ public class HbrainAPIController extends BaseController{
         if (StringUtils.isBlank(q)) {
             SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
         }
-		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "source.confidence")));
+		Query query = APIUtils.constructQuery(q).skip(offset).limit(limit).with(new Sort(new Order(Direction.DESC, "source.confidence")));
 		
 		List<EntitiesModel> lists = mongoTemplate.find(query, EntitiesModel.class, "entities");
 		for (EntitiesModel entity : lists) {
 			entity.setNid(null);
 			entity.setGid(null);
-			entity.setTotal(entity.getClaims()!=null?entity.getClaims().size():0);
+			entity.setTotalClaim(entity.getClaims()!=null?entity.getClaims().size():0);
 			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
 			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
 		}
 		SmartvApiResult.writeResponseOk(request, response, lists);//"数据库连接成功,success");
 	}
 	
-	//数据价值接口
+	//数据价格接口
 	@RequestMapping(value="api/v1/price", method = RequestMethod.GET)
 	public void getHPrice(@RequestParam(required = false) String q,
                           @RequestParam(required = false, defaultValue = "0") int offset,
@@ -62,16 +62,18 @@ public class HbrainAPIController extends BaseController{
             SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
         }
 
-		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "recordDate")));
-		
-		List<PriceModel> lists = mongoTemplate.find(query,PriceModel.class,"price");
+
+		Query query = APIUtils.constructQuery(q);
+		long totalCount = mongoTemplate.count(query, PriceModel.class, "price");
+		query.skip(offset).limit(limit).with(new Sort(new Order(Direction.DESC, "recordDate")));
+		List<PriceModel> lists = mongoTemplate.find(query, PriceModel.class, "price");
 		for (PriceModel entity : lists) {
 			entity.setRid(null);
 			entity.setGid(null);
 			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
 			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
 		}
-		SmartvApiResult.writeResponseOk(request, response, lists);
+		SmartvApiResult.writeResponseOk(request, response, lists, totalCount);
 	}
 	
 	
@@ -89,7 +91,7 @@ public class HbrainAPIController extends BaseController{
 			SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
 		}
 
-		Query query = APIUtils.constructQuery(q, offset, limit);
+		Query query = APIUtils.constructQuery(q).skip(offset).limit(limit);
 		List<CompaniesModel> lists = mongoTemplate.find(query, CompaniesModel.class, "companies");
 		for (CompaniesModel entity : lists) {
 			entity.setNid(null);
@@ -115,7 +117,7 @@ public class HbrainAPIController extends BaseController{
             SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
         }
 
-        Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
+        Query query = APIUtils.constructQuery(q).skip(offset).limit(limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
         List<NewsModel> lists = mongoTemplate.find(query, NewsModel.class, "news");
         for (NewsModel entity : lists) {
             entity.setRid(null);
@@ -139,7 +141,7 @@ public class HbrainAPIController extends BaseController{
 		if (StringUtils.isBlank(q)) {
 			SmartvApiResult.writeResponseException(request, response, new Exception("q is null!"));
 		}
-		Query query = APIUtils.constructQuery(q, offset, limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
+		Query query = APIUtils.constructQuery(q).skip(offset).limit(limit).with(new Sort(new Order(Direction.DESC, "updatedTime")));
 
 		List<RecordsModel> lists = mongoTemplate.find(query, RecordsModel.class, "records");
 		for (RecordsModel entity : lists) {
