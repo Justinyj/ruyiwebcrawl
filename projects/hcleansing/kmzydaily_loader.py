@@ -24,9 +24,14 @@ class KmzydailyLoader(Loader):
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
-                self.parse(js)
+                try:
+                    self.parse(js)
+                except Exception, e:
+                    print ('{}: {}'.format(type(e), e.message))
+
 
     def parse(self, jsn):
+        self.success = 0
         source = jsn[u'source']
         domain = self.url2domain(source)
 
@@ -70,10 +75,19 @@ class KmzydailyLoader(Loader):
             record['recordDate'] = validDate
             try:
                 self.node.insert(record)
+                self.success += 1
             except DuplicateKeyError as e:
                 print (e)
+        print ('success: {}'.format(self.success))
 
+def load_all(path='/data/hproject/2016'):
+    obj = KmzydailyLoader()
+    for diretory in os.listdir(path):
+        if diretory.startswith('kmzydaily'):
+            abs_path = os.path.join(path, diretory)
+            obj.read_jsn(abs_path)
 
 if __name__ == '__main__':
     obj = KmzydailyLoader()
-    obj.read_jsn('/data/hproject/2016/kmzydaily-20160912')
+    #obj.read_jsn('/data/hproject/2016/kmzydaily-20160927')
+    load_all()

@@ -15,14 +15,17 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-
 class YaotongnewdailyLoader(Loader):
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
-                self.parse(js)
+                try:
+                    self.parse(js)
+                except Exception, e:
+                    print ('{}: {}'.format(type(e), e.message))
 
     def parse(self, jsn):
+        self.success = 0
         source = 'http://www.yt1998.com/priceInfo.html'
         domain = self.url2domain(source)
         for row in jsn[u'data']:
@@ -63,10 +66,19 @@ class YaotongnewdailyLoader(Loader):
             record['recordDate'] = validDate
             try:
                 self.node.insert(record)
+                self.success += 1
             except DuplicateKeyError as e:
                 print (e)
+        print ('success: {}'.format(self.success))
 
+def load_all(path='/data/hproject/2016'):
+    obj = YaotongnewdailyLoader()
+    for diretory in os.listdir(path):
+        if diretory.startswith('yaotongnewdaily'):
+            abs_path = os.path.join(path, diretory)
+            obj.read_jsn(abs_path)
 
 if __name__ == '__main__':
     obj = YaotongnewdailyLoader()
-    obj.read_jsn('/tmp/yaotongnewdaily-20160913')
+    #obj.read_jsn('/tmp/yaotongnewdaily-20160913')
+    load_all()
