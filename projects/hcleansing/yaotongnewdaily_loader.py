@@ -79,6 +79,6 @@ def load_all(path='/data/hproject/2016'):
             obj.read_jsn(abs_path)
 
 if __name__ == '__main__':
-    obj = YaotongnewdailyLoader()
+    # obj = YaotongnewdailyLoader()
     #obj.read_jsn('/tmp/yaotongnewdaily-20160913')
     load_all()

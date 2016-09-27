@@ -88,6 +88,6 @@ def load_all(path='/data/hproject/2016'):
             obj.read_jsn(abs_path)
 
 if __name__ == '__main__':
-    obj = KmzydailyLoader()
+    # obj = KmzydailyLoader()
     #obj.read_jsn('/data/hproject/2016/kmzydaily-20160927')
     load_all()
