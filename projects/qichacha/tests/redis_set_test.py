@@ -28,7 +28,7 @@ import time
 
 
 TOTAL = [300000, 500000, 1000000, 2000000]
-PASS = "dQm*s5wdtC)m2AuZ"
+PASS = ""
 
 class RedisSpeedTest(object):
     def __init__(self, host, port, db, password=None):
