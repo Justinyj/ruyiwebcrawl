@@ -26,15 +26,17 @@ class YaotongLoader(Loader):
     def parse(self, jsn):
         domain = self.url2domain(jsn[u'source'])
         name = jsn[u'name'].encode('utf-8')
+        priceType = ''  # 药通的价格类型为空
+        tags = [name, priceType, jsn[u'productPlaceOfOrigin'], jsn[u'sellerMarket'], jsn['productGrade']]
+        series = '_'.join(tags)
+        self.insert_meta_by_series(series)
         for validDate, price in jsn[u'price_history'].iteritems():
             trackingId = hashlib.sha1('{}_{}'.format(jsn[u'source'], jsn[u'access_time'])).hexdigest()
-            priceType = ''  # 药通的价格类型为空
-            tags = [name, priceType, jsn[u'productPlaceOfOrigin'], jsn[u'sellerMarket'], jsn['productGrade']]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
             record = {
                 'rid': rid,
                 'gid': rid, # 不可变
-                'series': '_'.join(tags),
+                'series': series,
                 'tags': [ tag for tag in tags if tag],
                 'createdTime': datetime.utcnow(),
                 'updatedTime': datetime.utcnow(),

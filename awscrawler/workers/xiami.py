@@ -142,7 +142,7 @@ def parse_song_detail(result, song_id):
     result['tags'].append(u'BN:{}'.format(album_name))
 
     lrc = dom.xpath('//div[@class="lrc_main"]//text()')   
-    result['lrc'] = ''.join(lrc)
+    result['lrc'] = ''.join(lrc).strip()  # 这是对整个歌词strip，其实还可以对每一行都strip，即strip放到josin()里，但是这会让文本全连在一起。不确定对检索是否会造成负面影响。
     result['similar'] = []
 
     similar_songs = dom.xpath('//div[@id="relate_song"]//tr')
