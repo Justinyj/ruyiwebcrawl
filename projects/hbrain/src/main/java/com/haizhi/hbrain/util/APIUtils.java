@@ -24,46 +24,112 @@ public class APIUtils {
 		return str;
 	}
 
-	public static Query constructQuery(String q) {
-		List<String> vlauesList = new ArrayList<>();
+	public static Criteria constructSubQuery(String sub) {
 		String key = null;
+		Criteria criteria = null;
+		List<String> vlauesList = new ArrayList<>();
+		String[] strings = null;
+		//System.out.println("sub: " + sub);
+
+		if (sub.contains("AND")) {
+			strings = sub.split("AND");
+			for (String string : strings) {
+				if (key == null) {
+					key = string.trim().split(":")[0];
+				}
+				vlauesList.add(string.trim().split(":")[1]);
+			}
+			criteria = new Criteria(key).all(vlauesList);
+		} else if (sub.contains("OR")) {
+			strings = sub.split("OR");
+			for (String string : strings) {
+				if (key == null) {
+					key = string.trim().split(":")[0];
+				}
+				vlauesList.add(string.trim().split(":")[1]);
+			}
+			criteria = new Criteria(key).in(vlauesList);
+		} else {
+			if (sub.startsWith("recordDate")) {
+				// TODO
+			}
+			if (sub.contains(":")) {
+				if (key == null) {
+					key = sub.trim().split(":")[0];
+				}
+				vlauesList.add(sub.trim().split(":")[1]);
+				criteria = new Criteria(key).in(vlauesList);
+			}
+		}
+		return criteria;
+	}
+
+	public static Query findSubQueries(String q, Query query) {
+		//括号的部分抽出来，当做子查询
+		if (StringUtils.isBlank(q)) {
+			return null;
+		}
+		int end;
+		q = q.trim();
+
+		while (StringUtils.isNotBlank(q)) {
+			String pre = "";
+			if (q.startsWith("AND")) {
+				pre = "AND";
+				q = q.substring(3).trim();
+			} else if (q.startsWith("OR")) {
+				pre = "OR"; // TODO parsing
+				q = q.substring(2).trim();
+			}
+
+			//System.out.println("query without pre: " + q);
+			if (q.startsWith("(")) {
+				end = q.indexOf(')');
+				String sub = q.substring(1, end);
+				if (pre == "" || pre == "AND") {
+					query.addCriteria(constructSubQuery(sub));
+				}
+				q = q.substring(end + 1).trim();
+			} else {
+				end = q.indexOf("AND");
+				if (end == -1) {
+					end = q.indexOf("OR");
+					if (end == -1) {
+						end = q.length();
+					}
+				}
+				String sub = q.substring(0, end).trim();
+				if (pre == "" || pre == "AND") {
+					query.addCriteria(constructSubQuery(sub));
+				}
+				q = q.substring(end).trim();
+			}
+			//System.out.println("next sub_q: " + q);
+		}
+		return query;
+	}
+
+	public static Query constructQuery(String q) {
+		/*
+			hypothesis: 括号里面的query字段都是一个字段，相邻的同一个字段必须加括号，
+				最外层相当于一个隐去的括号，这样就很容易跟mongodb的query对应起来。
+			q=(tags:豆油 AND tags:广东广州粮油批发交易市场) AND recordDate:[2016-08-02 TO 2016-09-02}
+			db.price.find({tags: {$all: ['豆油', '广东广州粮油批发交易市场']}, recordDate: {$gte: '2016-08-02', $lt: '2016-09-02'}})
+
+			q=(tags:豆油 AND tags:广东广州粮油批发交易市场) OR recordDate:[2016-08-02 TO 2016-09-02}
+			db.price.find({$or: [{tags: {$all: ['豆油', '广东广州粮油批发交易市场']}}, {recordDate: {$gte: '2016-08-02', $lt: '2016-09-02'}}]})
+		*/
 		Query query = null;
 		try {
 			//防止乱码
 			q = new String(q.getBytes("UTF-8"), "UTF-8");
 			query = new Query().addCriteria(new Criteria("deletedTime").is(null));
 			
-			if (StringUtils.isNoneBlank(q)) {
-				String[] strings = null;
-				if (q.contains("AND")) {
-					strings = q.split("AND");
-					for (String string : strings) {
-						if (key == null) {
-							key = string.trim().split(":")[0];
-						}
-						vlauesList.add(string.trim().split(":")[1]);
-					}
-					query.addCriteria(new Criteria(key).all(vlauesList));
-				} else if (q.contains("OR")) {
-					strings = q.split("OR");
-					for (String string : strings) {
-						if (key == null) {
-							key = string.trim().split(":")[0];
-						}
-						vlauesList.add(string.trim().split(":")[1]);
-					}
-					query.addCriteria(new Criteria(key).in(vlauesList));
-				} else {
-					if (q.contains(":")) {
-						if (key == null) {
-							key = q.trim().split(":")[0];
-						}
-						vlauesList.add(q.trim().split(":")[1]);
-						query.addCriteria(new Criteria(key).in(vlauesList));
-					}
-				}
+			if (StringUtils.isNotBlank(q)) {
+				findSubQueries(q, query);
+			} else {
+				System.out.println("query is blank: " + q);
 			}
-			System.out.println("key="+key+", vlauesList="+vlauesList);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

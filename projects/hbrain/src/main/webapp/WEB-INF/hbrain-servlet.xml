@@ -20,6 +20,15 @@
 
 	<context:property-placeholder location="classpath:config.properties" />
 
+	<!-- rpc服务调用时长统计 -->
+	<bean id="serviceTimer" class="com.haizhi.hbrain.util.ServiceTimer" />
+	<aop:config>
+		<aop:pointcut id="pointcut" expression="execution (* com.haizhi.hbrain.controller.*.*(..))" />
+		<aop:advisor pointcut-ref="pointcut" advice-ref="serviceTimer" />
+	</aop:config>
+
+
+
 	<!-- db_ruyi -->
 	<bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
 		<constructor-arg name="mongoDbFactory" ref="mongoDbFactory" />

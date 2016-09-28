@@ -20,7 +20,7 @@ import java.util.List;
 
 
 @RestController
-public class HbrainAPIController extends BaseController{
+public class HbrainAPIController extends BaseController {
 	
 	//数据定义接口
 	@RequestMapping(value="api/v1/entities", method=RequestMethod.GET)
