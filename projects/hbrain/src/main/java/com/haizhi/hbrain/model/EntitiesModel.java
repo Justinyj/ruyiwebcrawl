@@ -1,12 +1,10 @@
 package com.haizhi.hbrain.model;
 
-import java.util.List;
-import java.util.Map;
-
-
+import com.haizhi.hbrain.util.ToString;
 import org.springframework.data.annotation.Id;
 
-import com.haizhi.hbrain.util.ToString;
+import java.util.List;
+import java.util.Map;
 
 public class EntitiesModel extends ToString{
 
@@ -26,20 +24,7 @@ public class EntitiesModel extends ToString{
 	private String createdTime;
 	private String updatedTime;
 	private String deletedTime;
-	private String format;
-	public String getFormat() {
-		return format;
-	}
-	public void setFormat(String format) {
-		this.format = format;
-	}
-	public int getTotal() {
-		return total;
-	}
-	public void setTotal(int total) {
-		this.total = total;
-	}
-	private int total;
+	private int totalClaim;
 	private Map<String, String> source;
 	public String getId() {
 		return id;
@@ -100,6 +85,12 @@ public class EntitiesModel extends ToString{
 	}
 	public void setDeletedTime(String deletedTime) {
 		this.deletedTime = deletedTime;
+	}
+	public int getTotalClaim() {
+		return totalClaim;
+	}
+	public void setTotalClaim(int totalClaim) {
+		this.totalClaim = totalClaim;
 	}
 	public Map<String, String> getSource() {
 		return source;
