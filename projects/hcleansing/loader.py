@@ -8,6 +8,7 @@ import json
 import re
 import requests
 
+from pymongo.errors import DuplicateKeyError
 from urlparse import urlparse
 from pymongo import MongoClient
 
@@ -25,12 +26,15 @@ class Loader(object):
         db = client['kgbrain']
         self.entity = db['entities']
         self.node = db['price']  # 无论mongo服务器开启关闭，以上语句都可成功执行
+        self.meta = db['pricemeta']
         try:
             self.entity.create_index('gid', unique=True)
             self.node.create_index('gid', unique=True)
             self.node.create_index('series', unique=False)
             self.node.create_index('tags', unique=False)
             self.node.create_index('recordDate', unique=False)
+            self.meta.create_index('attrs', unique=False)
+            self.meta.create_index('series', unique=True) # 这里创建series索引仅为了去重，attrs的unique设为True会出错
         except Exception, e:
             slack('Failed to connect mongoDB:\n{} : {}'.format(str(Exception), str(e)))
 
@@ -70,3 +74,18 @@ class Loader(object):
                                     else:
                                         alias_dict[entity].append(v)
         return tags_dict, alias_dict
+
+    def insert_meta_by_series(self, series):
+        name, priceType, productPlaceOfOrigin, sellerMarket, productGrade = series.split('_')
+        record = {
+            'series':series,
+            'attrs':[
+            "名称={}".format(name),
+            "产地={}".format(productPlaceOfOrigin),
+            "市场={}".format(sellerMarket),
+            "规格={}".format(productGrade)]
+        }
+        try:
+            self.meta.insert(record)
+        except DuplicateKeyError as e:
+            print (e)

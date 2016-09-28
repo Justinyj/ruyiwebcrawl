@@ -39,11 +39,12 @@ class YaotongnewdailyLoader(Loader):
             price = row[u'pri']
             tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
-
+            series = '_'.join(tags)
+            self.insert_meta_by_series(series)
             record = {
                 'rid': rid,
                 'gid': rid, # 不可变
-                'series': '_'.join(tags),
+                'series': series,
                 'tags': [ tag for tag in tags if tag],
                 'createdTime': datetime.utcnow(),
                 'updatedTime': datetime.utcnow(),
