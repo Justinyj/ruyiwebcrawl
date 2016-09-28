@@ -76,14 +76,15 @@ class Loader(object):
         return tags_dict, alias_dict
 
     def insert_meta_by_series(self, series):
-        name, priceType, productPlaceOfOrigin, sellerMarket, productGrade = series.split('_')
+        tags = series.split('_')
+        prefix = [u'名称={}', u'价格类型={}', u'产地={}', u'市场={}', u'规格={}'] # 这个前缀列表可用的前提是假设series中字段都按照规定的顺序排列
+        attrs = []
+        for index in range(5):
+            if tags[index]:
+                attrs.append(prefix[index].format(tags[index]))
         record = {
             'series':series,
-            'attrs':[
-            "名称={}".format(name),
-            "产地={}".format(productPlaceOfOrigin),
-            "市场={}".format(sellerMarket),
-            "规格={}".format(productGrade)]
+            'attrs':attrs
         }
         try:
             self.meta.insert(record)
