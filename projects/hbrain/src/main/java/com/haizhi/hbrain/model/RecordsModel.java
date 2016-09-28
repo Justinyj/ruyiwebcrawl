@@ -21,13 +21,13 @@ public class RecordsModel extends ToString {
     private String createdTime;
     private String updatedTime;
     private String deletedTime;
+    private int total;
     public int getTotal() {
         return total;
     }
     public void setTotal(int total) {
         this.total = total;
     }
-    private int total;
     private Map<String, String> source;
     public String getId() {
         return id;

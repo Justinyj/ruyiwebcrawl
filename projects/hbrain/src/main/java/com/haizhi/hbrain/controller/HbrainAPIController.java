@@ -36,20 +36,21 @@ public class HbrainAPIController extends BaseController {
 
 		long start = System.currentTimeMillis();
 		List<?> lists = null;
+		String totalCount = "";
 		switch (types) {
 			case "entities":
 				lists = findEntities(q, offset, limit);
 				break;
 			case "price":
 				Map<String, List<PriceModel>> maps = findPrice(q, offset, limit);
-				String totalCount = null;
-				for (String key : maps.keySet()){
+				for (String key : maps.keySet()) {
+					totalCount = key;
 					lists = maps.get(key);
 					break;
 				}
-				SmartvApiResult.writeResponseOk(request, response, lists, totalCount);
-				return;
+				break;
 			case "pricemeta":
+				lists = findPricemeta(q, offset, limit);
 				break;
 			case "companies":
 				lists = findCompanies(q, offset, limit);
@@ -65,7 +66,7 @@ public class HbrainAPIController extends BaseController {
 
 		}
 		long duration = System.currentTimeMillis() - start;
-		SmartvApiResult.writeResponseOk(request, response, lists);
+		SmartvApiResult.writeResponseOk(request, response, lists, duration, totalCount);
 	}
 	
 	//数据定义接口
@@ -104,10 +105,21 @@ public class HbrainAPIController extends BaseController {
 		maps.put(Long.toString(totalCount), lists);
 		return maps;
 	}
-	
-	
-	//知识图谱数据企业接口
 
+    public List<PricemetaModel> findPricemeta(String q,
+                                              int offset,
+                                              int limit) {
+		// q=attrs:名称=甘草
+		Query query = APIUtils.constructQuery(q);
+		List<PricemetaModel> lists = mongoTemplate.find(query, PricemetaModel.class, "pricemeta");
+		for (PricemetaModel entity : lists) {
+			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
+			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
+		}
+		return lists;
+	}
+
+	//知识图谱数据企业接口
 	public List<CompaniesModel> findCompanies(String q,
                                               int offset,
 			                                  int limit) {

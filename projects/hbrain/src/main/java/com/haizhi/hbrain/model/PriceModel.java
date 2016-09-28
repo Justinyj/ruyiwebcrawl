@@ -6,7 +6,7 @@ import org.springframework.data.annotation.Id;
 import java.util.List;
 import java.util.Map;
 
-public class PriceModel extends ToString{
+public class PriceModel extends ToString {
 
 	/**
 	 * 
@@ -29,14 +29,14 @@ public class PriceModel extends ToString{
 	public String getId() {
 		return id;
 	}
+	public void setId(String id) {
+		this.id = id;
+	}
 	public List<Map<String, String>> getClaims() {
 		return claims;
 	}
 	public void setClaims(List<Map<String, String>> claims) {
 		this.claims = claims;
-	}
-	public void setId(String id) {
-		this.id = id;
 	}
 	public String getGid() {
 		return gid;
