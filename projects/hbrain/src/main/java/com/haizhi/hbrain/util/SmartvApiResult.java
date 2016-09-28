@@ -22,7 +22,7 @@ public class SmartvApiResult {
 	private String message;
 	private Object result;
 	private int total;
-	private long totalCount;
+	private String totalCount;
 	
 	public SmartvApiResult() {
 
@@ -39,7 +39,7 @@ public class SmartvApiResult {
 		this.result = result;
 		this.total=total;
 	}
-	public SmartvApiResult(int code, String msg, Object result, int total, long totalCount) {
+	public SmartvApiResult(int code, String msg, Object result, int total, String totalCount) {
 		this.code = code;
 		this.message = msg;
 		this.result = result;
@@ -68,7 +68,7 @@ public class SmartvApiResult {
 		}
 	}
 
-	public static String successForObj(Object result, long totalCount) {
+	public static String successForObj(Object result, String totalCount) {
 		if (null == result) {
 			SmartvApiResult res = new SmartvApiResult(2, "未获取到数据", result, 0, totalCount);// 0:成功
 			return ApiGson.toJson(res);
@@ -237,7 +237,7 @@ public class SmartvApiResult {
 		writeResponse(request, response, SmartvApiResult.successForObj(output));
 	}
 
-    public static void writeResponseOk(HttpServletRequest request, HttpServletResponse response, Object output, long totalCount)
+    public static void writeResponseOk(HttpServletRequest request, HttpServletResponse response, Object output, String totalCount)
             throws IOException {
         writeResponse(request, response, SmartvApiResult.successForObj(output, totalCount));
     }
