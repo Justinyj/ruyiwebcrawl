@@ -8,10 +8,7 @@ import java.util.Map;
 
 public class CompaniesModel extends ToString {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 8493213091600211460L;
+	private static final long serialVersionUID = -4327265699911703814L;
 
 	@Id
 	private String id;

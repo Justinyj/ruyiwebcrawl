@@ -6,12 +6,9 @@ import org.springframework.data.annotation.Id;
 import java.util.List;
 import java.util.Map;
 
-public class EntitiesModel extends ToString{
+public class EntitiesModel extends ToString {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -8007826315486887330L;
+	private static final long serialVersionUID = 5060273350667545228L;
 
 	@Id
 	private String id;

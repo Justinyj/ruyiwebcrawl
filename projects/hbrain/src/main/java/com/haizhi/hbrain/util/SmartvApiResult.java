@@ -23,7 +23,7 @@ public class SmartvApiResult {
 	private Object result;
 	private int total;
 	private long duration;
-	private String totalCount;
+	private long dbTotalCount;
 	
 	public SmartvApiResult() {
 
@@ -40,20 +40,20 @@ public class SmartvApiResult {
 		this.result = result;
 		this.total=total;
 	}
-	public SmartvApiResult(int code, String msg, Object result, int total, String totalCount) {
+	public SmartvApiResult(int code, String msg, Object result, int total, long dbTotalCount) {
 		this.code = code;
 		this.message = msg;
 		this.result = result;
 		this.total=total;
-		this.totalCount=totalCount;
+		this.dbTotalCount =dbTotalCount;
 	}
-	public SmartvApiResult(int code, String msg, Object result, int total, long duration, String totalCount) {
+	public SmartvApiResult(int code, String msg, Object result, int total, long duration, long dbTotalCount) {
 		this.code = code;
 		this.message = msg;
 		this.result = result;
 		this.total=total;
 		this.duration=duration;
-		this.totalCount=totalCount;
+		this.dbTotalCount =dbTotalCount;
 	}
 
 	public static String successForObj(Object result) {
@@ -77,48 +77,48 @@ public class SmartvApiResult {
 		}
 	}
 
-	public static String successForObj(Object result, String totalCount) {
+	public static String successForObj(Object result, long dbTotalCount) {
 		if (null == result) {
-			SmartvApiResult res = new SmartvApiResult(2, "未获取到数据", result, 0, totalCount);// 0:成功
+			SmartvApiResult res = new SmartvApiResult(2, "未获取到数据", result, 0, dbTotalCount);// 0:成功
 			return ApiGson.toJson(res);
 		} else if (result instanceof JsonElement) {
 			JsonObject ret = new JsonObject();
 			ret.addProperty("code", 0);
 			ret.addProperty("msg", "成功");
-            ret.addProperty("totalCount", 1);
+            ret.addProperty("dbTotalCount", 1);
 			ret.add("result", (JsonElement) result);
 			return ApiGson.toString(ret);
 			// }else if (result instanceof String){
 			// return (String) result;
 		} else if(result instanceof List){
-			SmartvApiResult res = new SmartvApiResult(0, "成功", result, ((List<?>) result).size(), totalCount);// 0:成功
+			SmartvApiResult res = new SmartvApiResult(0, "成功", result, ((List<?>) result).size(), dbTotalCount);// 0:成功
 			return ApiGson.toJson(res);
 		} else {
-			SmartvApiResult res = new SmartvApiResult(0, "成功", result, 0, totalCount);// 0:成功
+			SmartvApiResult res = new SmartvApiResult(0, "成功", result, 0, dbTotalCount);// 0:成功
 			return ApiGson.toJson(res);
 		}
 	}
 
 
-	public static String successForObj(Object result, long duration, String totalCount) {
+	public static String successForObj(Object result, long duration, long dbTotalCount) {
 		if (null == result) {
-			SmartvApiResult res = new SmartvApiResult(2, "未获取到数据", result, 0, duration, totalCount);// 0:成功
+			SmartvApiResult res = new SmartvApiResult(2, "未获取到数据", result, 0, duration, dbTotalCount);// 0:成功
 			return ApiGson.toJson(res);
 		} else if (result instanceof JsonElement) {
 			JsonObject ret = new JsonObject();
 			ret.addProperty("code", 0);
 			ret.addProperty("msg", "成功");
 			ret.addProperty("duration", duration);
-			ret.addProperty("totalCount", 1);
+			ret.addProperty("dbTotalCount", 1);
 			ret.add("result", (JsonElement) result);
 			return ApiGson.toString(ret);
 			// }else if (result instanceof String){
 			// return (String) result;
 		} else if(result instanceof List){
-			SmartvApiResult res = new SmartvApiResult(0, "成功", result, ((List<?>) result).size(), duration, totalCount);
+			SmartvApiResult res = new SmartvApiResult(0, "成功", result, ((List<?>) result).size(), duration, dbTotalCount);
 			return ApiGson.toJson(res);
 		} else {
-			SmartvApiResult res = new SmartvApiResult(0, "成功", result, 0, duration, totalCount);
+			SmartvApiResult res = new SmartvApiResult(0, "成功", result, 0, duration, dbTotalCount);
 			return ApiGson.toJson(res);
 		}
 	}
@@ -270,13 +270,13 @@ public class SmartvApiResult {
 		writeResponse(request, response, SmartvApiResult.successForObj(output));
 	}
 
-    public static void writeResponseOk(HttpServletRequest request, HttpServletResponse response, Object output, String totalCount)
+    public static void writeResponseOk(HttpServletRequest request, HttpServletResponse response, Object output, long dbTotalCount)
             throws IOException {
-        writeResponse(request, response, SmartvApiResult.successForObj(output, totalCount));
+        writeResponse(request, response, SmartvApiResult.successForObj(output, dbTotalCount));
     }
 
-	public static void writeResponseOk(HttpServletRequest request, HttpServletResponse response, Object output, long duration, String totalCount)
+	public static void writeResponseOk(HttpServletRequest request, HttpServletResponse response, Object output, long duration, long dbTotalCount)
 			throws IOException {
-		writeResponse(request, response, SmartvApiResult.successForObj(output, duration, totalCount));
+		writeResponse(request, response, SmartvApiResult.successForObj(output, duration, dbTotalCount));
 	}
 }

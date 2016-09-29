@@ -8,11 +8,8 @@ import java.util.Map;
 
 public class PriceModel extends ToString {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 4948172401697253231L;
-	
+	private static final long serialVersionUID = 3500991592473255836L;
+
 	@Id
 	private String id;
 	private String gid;

@@ -36,16 +36,16 @@ public class HbrainAPIController extends BaseController {
 
 		long start = System.currentTimeMillis();
 		List<?> lists = null;
-		String totalCount = "";
+		long totalCount = -1;
 		switch (types) {
 			case "entities":
 				lists = findEntities(q, offset, limit);
 				break;
 			case "price":
-				Map<String, List<PriceModel>> maps = findPrice(q, offset, limit);
-				for (String key : maps.keySet()) {
-					totalCount = key;
-					lists = maps.get(key);
+				Map<Long, List<PriceModel>> maps = findPrice(q, offset, limit);
+				for (Map.Entry entry : maps.entrySet()) {
+					totalCount = (long)entry.getKey();
+					lists = (List<?>)entry.getValue();
 					break;
 				}
 				break;
@@ -87,10 +87,10 @@ public class HbrainAPIController extends BaseController {
 	}
 	
 	//数据价格接口
-	public Map<String, List<PriceModel>> findPrice(String q,
-												   int offset,
-												   int limit) {
-		Map<String, List<PriceModel>> maps = new HashMap<String, List<PriceModel>>();
+	public Map<Long, List<PriceModel>> findPrice(String q,
+												 int offset,
+												 int limit) {
+		Map<Long, List<PriceModel>> maps = new HashMap<Long, List<PriceModel>>();
 
 		Query query = APIUtils.constructQuery(q);
 		long totalCount = mongoTemplate.count(query, PriceModel.class, "price");
@@ -102,7 +102,7 @@ public class HbrainAPIController extends BaseController {
 			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
 			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
 		}
-		maps.put(Long.toString(totalCount), lists);
+		maps.put(totalCount, lists);
 		return maps;
 	}
 

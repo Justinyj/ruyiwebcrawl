@@ -9,7 +9,8 @@ import java.util.List;
  * Created by bishop on 28/09/2016.
  */
 public class PricemetaModel extends ToString {
-    private static final long serialVersionUID = 1L;
+
+    private static final long serialVersionUID = 7776747214648581206L;
 
     @Id
     private String id;

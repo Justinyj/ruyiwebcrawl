@@ -20,10 +20,7 @@ import java.util.Map;
  */
 public class ToString implements Serializable {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = -7187454415838423368L;
+	private static final long serialVersionUID = 2916569593087369596L;
 	
 	private static Map<Class<?>, Field[]> filedMap = new HashMap<Class<?>, Field[]>();
 	

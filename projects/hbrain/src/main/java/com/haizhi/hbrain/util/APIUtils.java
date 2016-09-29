@@ -24,9 +24,43 @@ public class APIUtils {
 		return str;
 	}
 
-	public static Criteria constructSubQuery(String sub) {
+	public static List<Criteria> parseTimeRange(String recordDate) {
+		List<Criteria> criterias = new ArrayList<>();
+
+		String begin = recordDate.split("TO")[0];
+		if (begin.startsWith("[")) {
+			begin = begin.substring(1).trim();
+			if (begin.equals("*")) {
+			} else {
+				criterias.add(new Criteria("recordDate").gte(begin));
+			}
+		} else if (begin.startsWith("{")) {
+			begin = begin.substring(1).trim();
+			if (begin.equals("*")) {
+			} else {
+				criterias.add(new Criteria("recordDate").gt(begin));
+			}
+		}
+		String end = recordDate.split("TO")[1];
+		if (end.endsWith("]")) {
+			end = end.substring(0, end.length() - 1).trim();
+			if (end.equals("*")) {
+			} else {
+				criterias.add(new Criteria("recordDate").lte(end));
+			}
+		} else if (end.endsWith("}")) {
+			end = end.substring(0, end.length() - 1).trim();
+			if (end.equals("*")) {
+			} else {
+				criterias.add(new Criteria("recordDate").gt(end));
+			}
+		}
+		return criterias;
+	}
+
+	public static List<Criteria> constructSubQuery(String sub) {
 		String key = null;
-		Criteria criteria = null;
+		List<Criteria> criterias = new ArrayList<>();
 		List<String> vlauesList = new ArrayList<>();
 		String[] strings = null;
 		//System.out.println("sub: " + sub);
@@ -34,34 +68,33 @@ public class APIUtils {
 		if (sub.contains("AND")) {
 			strings = sub.split("AND");
 			for (String string : strings) {
-				if (key == null) {
-					key = string.trim().split(":")[0];
-				}
+				key = string.trim().split(":")[0];
 				vlauesList.add(string.trim().split(":")[1]);
 			}
-			criteria = new Criteria(key).all(vlauesList);
+			criterias.add(new Criteria(key).all(vlauesList));
 		} else if (sub.contains("OR")) {
 			strings = sub.split("OR");
 			for (String string : strings) {
-				if (key == null) {
-					key = string.trim().split(":")[0];
-				}
+				key = string.trim().split(":")[0];
 				vlauesList.add(string.trim().split(":")[1]);
 			}
-			criteria = new Criteria(key).in(vlauesList);
+			criterias.add(new Criteria(key).in(vlauesList));
 		} else {
-			if (sub.startsWith("recordDate")) {
-				// TODO
-			}
 			if (sub.contains(":")) {
-				if (key == null) {
-					key = sub.trim().split(":")[0];
+				key = sub.trim().split(":")[0];
+				if (sub.startsWith("recordDate")) {
+					List<Criteria> subCriterias = parseTimeRange(sub.trim().split(":")[1]);
+					for (Criteria criteria : subCriterias) {
+						criterias.add(criteria);
+					}
+				} else {
+
+					vlauesList.add(sub.trim().split(":")[1]);
 				}
-				vlauesList.add(sub.trim().split(":")[1]);
-				criteria = new Criteria(key).in(vlauesList);
+				criterias.add(new Criteria(key).in(vlauesList));
 			}
 		}
-		return criteria;
+		return criterias;
 	}
 
 	public static Query findSubQueries(String q, Query query) {
@@ -87,7 +120,9 @@ public class APIUtils {
 				end = q.indexOf(')');
 				String sub = q.substring(1, end);
 				if (pre == "" || pre == "AND") {
-					query.addCriteria(constructSubQuery(sub));
+					for (Criteria criteria: constructSubQuery(sub)) {
+						query.addCriteria(criteria);
+					}
 				}
 				q = q.substring(end + 1).trim();
 			} else {
@@ -100,7 +135,9 @@ public class APIUtils {
 				}
 				String sub = q.substring(0, end).trim();
 				if (pre == "" || pre == "AND") {
-					query.addCriteria(constructSubQuery(sub));
+					for (Criteria criteria: constructSubQuery(sub)) {
+						query.addCriteria(criteria);
+					}
 				}
 				q = q.substring(end).trim();
 			}

@@ -10,7 +10,8 @@ import java.util.Map;
  * Created by bishop on 9/25/16.
  */
 public class RecordsModel extends ToString {
-    private static final long serialVersionUID = 1L;
+
+    private static final long serialVersionUID = 2658844851328128031L;
 
     @Id
     private String id;
