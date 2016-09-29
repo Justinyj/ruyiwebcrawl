@@ -7,7 +7,6 @@ from __future__ import print_function, division
 import boto3
 import time
 from collections import deque
-
 from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
 
