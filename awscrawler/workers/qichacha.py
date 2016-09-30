@@ -107,7 +107,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         get_logger(batch_id, today_str, '/opt/service/log/').info("no content")
         content = requests.get(url, cookies={1: cookie}).text
         if content:
-            print("got content", file=log_file)
+            # print("got content", file=log_file)
             get_logger(batch_id, today_str, '/opt/service/log/').info('got content')
         if not content and url.endswith("tab=touzi&box=touzi"):
             get_logger(batch_id, today_str, '/opt/service/log/').info("void invest page")
@@ -196,7 +196,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 urls = [invest_pat.format(key_num=key_num, name=comp_name, p=str(page + 1))]
                 manager.put_urls_enqueue(batch_id, urls)
             invest_dict = parse_company_investment(tree)
-            print(invest_dict, file=log_file)
+            # print(invest_dict, file=log_file)
             if not invest_dict['sub_companies']:
                 return True
             invest_dict['name'] = comp_name
