@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
-
+# 爬取逻辑: 首页上最近三天内的价格
 
 from __future__ import print_function, division
 import sys
