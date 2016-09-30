@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
-# 数据说明：（总数据条数为271*20=5420条左右）
-# 1.有5%左右的数据是重复的，即完全一样，经检验是网站方面的问题，导入时会有三百条报重复，属正常情况。
-# 2.9月12号时，对数据中validDate分布的统计：  Counter({u'2016-09-11': 3708, u'2016-09-09': 909, u'2016-08-20': 792, u'2016-08-28': 2, u'2016-08-25': 1, u'2016-09-05': 1})
 
-
-from __future__ import print_function, division
+# from __future__ import print_function, division
 
 import json
 import os
@@ -19,8 +15,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-
-class KmzydailyLoader(Loader):
+class ZhongyaocaitdLoader(Loader):
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
@@ -29,28 +24,28 @@ class KmzydailyLoader(Loader):
                 except Exception, e:
                     print ('{}: {}'.format(type(e), e.message))
 
-
     def parse(self, jsn):
         self.success = 0
         source = jsn[u'source']
         domain = self.url2domain(source)
-
-        for row in jsn[u'rows']:
+        name = jsn[u'name']
+        priceType = ''
+        productPlaceOfOrigin = jsn[u'productPlaceOfOrigin']
+        productGrade         = jsn[u'productGrade']
+        price_item_list      = jsn[u'price_data']
+        series_cache = set()
+        print name
+        for row in price_item_list:                         # 格式 {"sellerMarket": "玉林药市", "price": 57.0, "validDate": "2016-09-26", "access_time": "2016-09-30T04:42:25.371477"}
             trackingId = hashlib.sha1('{}_{}'.format(source, row[u'access_time'])).hexdigest()
-            name = row[u'drug_name']
-            priceType = ''
-            productPlaceOfOrigin = row[u'origin']
-            sellerMarket = row[u'site']
-            if not sellerMarket.endswith(u'市场'):
-                sellerMarket = u'{}市场'.format(sellerMarket)
-            productGrade = row[u'standards']
-            validDate = row[u'price_date']
+            sellerMarket = row[u'sellerMarket'].replace(u'药市', u'市场')
+            validDate = row[u'validDate']
             price = row[u'price']
-
             tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
             series = '_'.join(tags)
-            self.insert_meta_by_series(series)
+            if series not in series_cache:
+                self.insert_meta_by_series(series)
+                series_cache.add(series)
             record = {
                 'rid': rid,
                 'gid': rid, # 不可变
@@ -66,7 +61,6 @@ class KmzydailyLoader(Loader):
                 },
                 'claims': [],
             }
-
             record['claims'].append({'p': u'商品名称', 'o': name})
             record['claims'].append({'p': u'日期', 'o': validDate})
             record['claims'].append({'p': u'价格', 'o': str(price)})
@@ -76,6 +70,7 @@ class KmzydailyLoader(Loader):
             record['claims'].append({'p': u'规格', 'o': productGrade})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
             record['recordDate'] = validDate
+
             try:
                 self.node.insert(record)
                 self.success += 1
@@ -83,14 +78,8 @@ class KmzydailyLoader(Loader):
                 print (e)
         print ('success: {}'.format(self.success))
 
-def load_all(path='/data/hproject/2016'):
-    obj = KmzydailyLoader()
-    for diretory in os.listdir(path):
-        if diretory.startswith('kmzydaily'):
-            abs_path = os.path.join(path, diretory)
-            obj.read_jsn(abs_path)
+
 
 if __name__ == '__main__':
-    # obj = KmzydailyLoader()
-    #obj.read_jsn('/data/hproject/2016/kmzydaily-20160927')
-    load_all()
+    obj = ZhongyaocaitdLoader()
+    obj.read_jsn('/data/hproject/2016/zhongyaocaitd-20160930')

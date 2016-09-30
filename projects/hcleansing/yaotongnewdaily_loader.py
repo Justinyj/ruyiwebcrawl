@@ -33,7 +33,9 @@ class YaotongnewdailyLoader(Loader):
             name = row[u'ycnam']
             priceType = ''
             productPlaceOfOrigin = row[u'chandi']
-            sellerMarket = row[u'shichang'] + u'市场'
+            sellerMarket = row[u'shichang']
+            if not sellerMarket.endswith(u'市场'):
+                sellerMarket = u'{}市场'.format(sellerMarket)
             productGrade = row[u'guige']
             validDate = row[u'dtm']
             price = row[u'pri']
