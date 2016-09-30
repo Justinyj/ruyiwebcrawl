@@ -133,13 +133,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
         if label == 'search':   # 搜索页面解析
             comp_name = urllib.unquote(m.group(1))
-            page = int(m.group(3))
             dic = { 'search_name': comp_name, 'names': [] }
             urls = []
-            pages = tree.xpath(".//a[@id=\"ajaxpage\"]/text()")
-            if '>' in pages and page < 10: # 添加搜索结果下一页入队列
-                urls = [search_pat.format(name=comp_name, p=str(page + 1))]
-                manager.put_urls_enqueue(batch_id, urls)
             if tree.cssselect('.table-search-list') and tree.cssselect('.tp2_tit a'):
                 items = tree.cssselect('.table-search-list')
                 for idx, i in enumerate(items):
