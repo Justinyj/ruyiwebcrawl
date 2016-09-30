@@ -48,13 +48,15 @@ class YaotongLoader(Loader):
                 },
                 'claims': [],
             }
-
+            sellerMarket = jsn[u'sellerMarket']
+            if not sellerMarket.endswith(u'市场'):
+                sellerMarket = u'{}市场'.format(sellerMarket)
             record['claims'].append({'p': u'商品名称', 'o': name})
             record['claims'].append({'p': u'日期', 'o': validDate})
             record['claims'].append({'p': u'价格', 'o': price})
             record['claims'].append({'p': u'价格单位', 'o': u'元/千克',})
             record['claims'].append({'p': u'产地','o': jsn[u'productPlaceOfOrigin']})
-            record['claims'].append({'p': u'报价地点', 'o': jsn[u'sellerMarket']})
+            record['claims'].append({'p': u'报价地点', 'o': sellerMarket})
             record['claims'].append({'p': u'规格', 'o': jsn[u'productGrade']})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
             record['recordDate'] = validDate

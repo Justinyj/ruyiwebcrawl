@@ -36,7 +36,7 @@ class XiamiDataMover(object):
 
     def clean_single_song(self, song):
         song_item = song.copy()
-        song_item['artist_fans'] = song_item['fans']
+        song_item['artist_fans'] = int(song_item['fans'])
         del song_item['fans']              # 将fans字段替换成artist_fans
         self.count += 1
         self.jsons.append(song_item)

@@ -11,6 +11,7 @@ import requests
 from pymongo.errors import DuplicateKeyError
 from urlparse import urlparse
 from pymongo import MongoClient
+from datetime import datetime
 
 
 def slack(msg):
@@ -84,7 +85,9 @@ class Loader(object):
                 attrs.append(prefix[index].format(tags[index]))
         record = {
             'series':series,
-            'attrs':attrs
+            'attrs':attrs,
+            'createdTime': datetime.utcnow(),
+            'updatedTime': datetime.utcnow()
         }
         try:
             self.meta.insert(record)
