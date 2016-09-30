@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
-# 爬取逻辑：
+# 爬取逻辑：  从网页的“品种”栏进入（http://yaocai.zyctd.com/），得到以首字母划分的所有药材列表及相应ID，再去访问各个价格。
 # 1.先通过首字母得到各个药材的MBID，如刀豆的MBID是133
 # 2.再通过http://www.zyctd.com/Breeds/GetMCodexPoolListByMBID这个URL得到每个MBID下的各种规格-产地，和相应的MBSID
 # 如post刀豆的MBID=133后返回一个列表：红统-较广 MBSID=133301、白统-较广 MBDIS=13302
@@ -25,6 +25,26 @@ from downloader.downloader_wrapper import DownloadWrapper
 
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
+
+def deal_with_price(price_data):
+    result_item = []
+    price_item_list = json.loads(price_data.encode('utf-8'))
+    for price_item in price_item_list:
+        sellerMarket = price_item['name']  # sellerMarket可能是各个药市，也可能是‘总趋势’
+        if sellerMarket == u'总趋势':
+            continue
+        
+        for price_info in price_item[u'data']:  # 每个元素的格式为 ： [1443484800000, 800.0, 0, 0, 0, 5, "马鹿茸等外 较广", 130699, "安国药市", "2015-09-29", "平"]
+            validDate = price_info[-2]
+            price = price_info[1]
+            price_item = {
+                'validDate' : validDate,
+                'price'     : price,
+                'sellerMarket' : sellerMarket,
+                'access_time'  : datetime.utcnow().isoformat(),
+            }
+            result_item.append(price_item)
+    return result_item
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     today_str = datetime.now().strftime('%Y%m%d')
@@ -70,7 +90,10 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 return False
 
             drug_list = json.loads(content)
-            MBID_list = [ str(drug[u'MBID'])for drug in drug_list[u'Data']]
+
+            MBID_list = []
+            for drug in drug_list[u'Data']:
+                MBID_list.append(str(drug[u'MBID']))
             manager.put_urls_enqueue(batch_id, MBID_list) # 每个MBID为一个数字
 
         elif label == 'drug':
@@ -119,17 +142,18 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     productPlaceOfOrigin = ''
                 price_item = json.loads(price_content)[u'Data']
                 price_data = price_item[u'PriceChartData']      # 注意price_data是一个字符串，需要再次loads后变为一个列表，每个列表代表一个药市，其中还嵌套着价格列表,价格里时间表示为时间戳等。
-                                                                # 由于后续处理较复杂，决定将这部分留到清洗脚本中完成，爬虫层面避免过多的清洗操作。
+
 
                 if price_data == '[]':                          # 即使存在这种规格，也有可能会没有价格历史
                     return True
+                formatted_price_data = deal_with_price(price_data)
                 result_item ={
                     'name' : sub_drug['MName'],
                     'productGrade': productGrade,
                     'productPlaceOfOrigin':productPlaceOfOrigin,
                     'source'        : 'http://www.zyctd.com/jiage/xq{}.html'.format(mbid),
                     'access_time'   : datetime.utcnow().isoformat(),
-                    'price_data'    : price_data
+                    'price_data'    : formatted_price_data
                 }
 
                 if not process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True):
