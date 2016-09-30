@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # 注意： 企查查不能与其他爬虫同时爬取，必须单独运行
-# 爬取逻辑：  1： 搜索公司名，将搜索结果的公司详情页及投资页加入待爬取队列，将别名映射存入period cache
+# 爬取逻辑：  1： 搜索公司名，将搜索结果前十页的公司详情页及投资页加入待爬取队列，将别名映射存入period cache
 #           2： 解析投资页面和详情页面，若json内容不为空则存入period cache,否则丢弃
 
 from __future__ import print_function, division
@@ -87,8 +87,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             })
         return invest_dict
 
-    
-
 
     content = process._downloader.downloader_wrapper(url,
         batch_id,
@@ -96,7 +94,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         method,
         timeout=timeout,
         encoding='utf-8')
-    # print(url, file=log_file)
 
     cookie = kwargs.get('cookie', None)
     if not cookie:
@@ -107,7 +104,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         get_logger(batch_id, today_str, '/opt/service/log/').info("no content")
         content = requests.get(url, cookies={1: cookie}).text
         if content:
-            print("got content", file=log_file)
             get_logger(batch_id, today_str, '/opt/service/log/').info('got content')
         if not content and url.endswith("tab=touzi&box=touzi"):
             get_logger(batch_id, today_str, '/opt/service/log/').info("void invest page")
@@ -152,15 +148,9 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     item['status'] = i.xpath('.//*[@class=\"tp5 text-center\"]/a/span/text()')[0]
                     item['key_num'] = item['href'].split('firm_')[1].split('.shtml')[0]
                     # print(item['key_num'], file=log_file)
-                    if idx == 0 and comp_name == item['name']:  # 若第一个搜索结果完全匹配则只添加第一个结果入待爬取队列
-                        # get_logger(batch_id, today_str, '/opt/service/log/').info('appending', item['name'])
-                        urls.append(main_pat.format(key_num=item['key_num'], name=item['name']))
-                        urls.append(invest_pat.format(key_num=item['key_num'], name=item['name'], p='1'))
-                        break
-                    elif idx < 3:   # 如果第一个不完全匹配， 将前三个搜索结果加入待爬取队列
-                        urls.append(main_pat.format(key_num=item['key_num'], name=item['name']))
-                        urls.append(invest_pat.format(key_num=item['key_num'], name=item['name'], p='1'))
-                        dic['names'].append(item['name'])
+                    urls.append(main_pat.format(key_num=item['key_num'], name=item['name']))
+                    urls.append(invest_pat.format(key_num=item['key_num'], name=item['name'], p='1'))
+                    dic['names'].append(item['name'])
             if not urls:
                 return True
             manager.put_urls_enqueue(batch_id, urls)
@@ -173,7 +163,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
         elif label == 'detail':     # 解析详情页面
             comp_name = urllib.unquote(m.group(2))
-            # print(comp_name, 'detail', file=log_file)
             all_info = parser.parse_detail(tree)
             all_info['name'] = comp_name
             all_info['source'] = url
@@ -186,7 +175,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 return False
             return process._cache.post(url, data)
 
-
         else:           # 解析投资页面
             comp_name = urllib.unquote(m.group(2))
             key_num = m.group(1)
@@ -196,16 +184,13 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 urls = [invest_pat.format(key_num=key_num, name=comp_name, p=str(page + 1))]
                 manager.put_urls_enqueue(batch_id, urls)
             invest_dict = parse_company_investment(tree)
-            print(invest_dict, file=log_file)
             if not invest_dict['sub_companies']:
                 return True
             invest_dict['name'] = comp_name
             invest_dict['source'] = url
             invest_dict['access_time'] = datetime.utcnow().isoformat()
             data = json.dumps(invest_dict, encoding='utf-8', ensure_ascii=False)
-            get_logger(batch_id, today_str, '/opt/service/log/').info(data)
             return process._cache.post(url, data)
-
 
 
 
