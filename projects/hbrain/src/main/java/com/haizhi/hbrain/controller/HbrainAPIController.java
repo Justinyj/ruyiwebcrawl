@@ -27,6 +27,7 @@ public class HbrainAPIController extends BaseController {
 							 @RequestParam(required = false, defaultValue = "0") int offset,
 							 @RequestParam(required = false, defaultValue = "20") int limit,
 							 HttpServletRequest request, HttpServletResponse response) throws Exception {
+		// q need to be quoted when calling
 		if (mongoTemplate == null) {
 			SmartvApiResult.writeResponseException(request, response, new Exception("error: 数据库连接失败"));
 		}
@@ -90,6 +91,7 @@ public class HbrainAPIController extends BaseController {
 	public Map<Long, List<PriceModel>> findPrice(String q,
 												 int offset,
 												 int limit) {
+		// api/v1/price?q=(tags:山茱萸 AND tags:成都荷花池) AND (recordDate:[2016-08-02 TO 2016-09-02}
 		Map<Long, List<PriceModel>> maps = new HashMap<Long, List<PriceModel>>();
 
 		Query query = APIUtils.constructQuery(q);
