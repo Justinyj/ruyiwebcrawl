@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
-
+# 生意社化工频道每日价格更新, 因早上8点网页不一定更新了当日价格,所以逻辑为获取近两天的(当天及前一天)
 
 from __future__ import print_function, division
 import sys
