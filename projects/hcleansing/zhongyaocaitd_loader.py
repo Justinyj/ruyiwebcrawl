@@ -70,7 +70,6 @@ class ZhongyaocaitdLoader(Loader):
             record['claims'].append({'p': u'规格', 'o': productGrade})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
             record['recordDate'] = validDate
-
             try:
                 self.node.insert(record)
                 self.success += 1
