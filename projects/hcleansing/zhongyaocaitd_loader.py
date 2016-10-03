@@ -57,7 +57,7 @@ class ZhongyaocaitdLoader(Loader):
                     'url': source,
                     'domain': domain,
                     'trackingId': trackingId,
-                    'confidence': '0.6', 
+                    'confidence': '0.7', 
                 },
                 'claims': [],
             }
