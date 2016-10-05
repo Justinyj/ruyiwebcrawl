@@ -260,6 +260,21 @@ class QiParser(object):
 
         return ret
 
+    def parser_patch(self, tree, all_info):
+        shareholders = tree.xpath("//table[@class='table table-bordered']/tr")
+        for sh in shareholders[1:]:
+            name = sh.xpath('./td[1]/a[1]/text()')[0]
+            subscribe_money = sh.xpath("./td[2]/text()")[0]
+            actual_money = sh.xpath("./td[3]/text()")[0]
+            all_info['shareholders'].append({ 'name':name, 'subscribe_money': subscribe_money, 'actual_money': actual_money})
+        names = tree.xpath("//div[@class='clear']/a[@class='text-lg']/text()")
+        positions = tree.xpath("//div[@class='clear']/small/text()")
+
+        for name,pos in zip(names, positions):
+            all_info['executives'].append({'name': name, 'position': pos})
+        return all_info
+
+
     def parse_search_result_info(self, tree):
 
         result_info = {"version": "v1.0", "date":"2016-05-01", "num_per_page": 10, "total": 0 }
