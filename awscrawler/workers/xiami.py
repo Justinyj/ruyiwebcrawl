@@ -89,6 +89,19 @@ def parse_album_detail(album_id):
         parse_album_detail._album_cache[album_id] = [published_time, timestamp]
         return [published_time, timestamp]
 
+def get_hot_comment(content):
+    dom = lxml.html.fromstring(content)
+    hot_comment_node = dom.xpath('//div[@class="hotComment"]')
+    if not hot_comment_node:
+        return []
+    else:
+        comments = hot_comment_node[0].xpath('.//div[@class="brief"]//div')
+        result = []
+        for comment in comments:                # 之所以不在上面完成对text的提取是因为多行评论的时候会处在不同的标签内
+            text = ''.join(comment.xpath('.//text()'))
+            result.append(text.strip())
+        return result
+
 def parse_song_detail(result, song_id):
     # 需要得到：歌曲标签，歌词，相似歌曲，发行日期（从专辑页面中获取，注意要缓存，否则每首歌都重复访问一次专辑页面）
     url = 'http://www.xiami.com/song/{}'.format(song_id)
@@ -123,6 +136,7 @@ def parse_song_detail(result, song_id):
     result['id']        = song_id
     result['name']      = song_name
     result['pic']       = dom.xpath('//a[@id="albumCover"]/img/@src')[0]  # 得到封面图片
+    result['hot_comment']   = get_hot_comment(content)
     raw_tags = dom.xpath('//div[@id="song_tags_block"]/div[@class="content clearfix"]/a/text()')
     raw_tags = list(set(raw_tags))  # 得到标签并去重
 
@@ -141,10 +155,25 @@ def parse_song_detail(result, song_id):
     result['tags'].append(u'MN:{}'.format(song_name))
     result['tags'].append(u'BN:{}'.format(album_name))
 
-    lrc = dom.xpath('//div[@class="lrc_main"]//text()')   
-    result['lrc'] = ''.join(lrc).strip()  # 这是对整个歌词strip，其实还可以对每一行都strip，即strip放到josin()里，但是这会让文本全连在一起。不确定对检索是否会造成负面影响。
-    result['similar'] = []
+    lrc = dom.xpath('//div[@class="lrc_main"]//text()')     # 提取歌词
+    result['lrc'] = ''.join(lrc).strip()
 
+
+    song_share = dom.xpath('//div[@class="music_counts"]//li[1]//text()')
+    if song_share:
+        song_share = int(song_share[0])
+    else:
+        song_share = 0
+    result['song_share'] = song_share
+
+    comment_cnt = dom.xpath('//div[@class="music_counts"]//li[2]//text()')
+    if comment_cnt:
+        comment_cnt = int(comment_cnt[0])
+    else:
+        comment_cnt = 0
+    result['comment_cnt'] = comment_cnt
+
+    result['similar'] = []
     similar_songs = dom.xpath('//div[@id="relate_song"]//tr')
     if similar_songs:
         for song in similar_songs:
@@ -152,35 +181,48 @@ def parse_song_detail(result, song_id):
             result['similar'].append(re.findall('\d+', song_url)[0])
 
     result['published_time'], result['published_timestamp'] = parse_album_detail(album_id)
-
+    print json.dumps(result, ensure_ascii=False)
     return True
 
 
-def get_hot(dom):
+def get_hotness(dom):
     song_hot_bar = dom.xpath('./td[@class="song_hot_bar"]/span/@style')[0]
     return re.findall('\d+', str(song_hot_bar))[0]
 
 
-def get_fans(artist_id):
+def get_fans(content):
     # 获取粉丝数量，注意有的网页格式不规范会导致粉丝数不显示，原先位置被‘粉丝’两个字占用
-    url = 'http://www.xiami.com/artist/{}'.format(artist_id)
-    content = get_content(url)
     if not content:
-        return ''
+        return 0
     dom = lxml.html.fromstring(content)
-    return dom.xpath('//div[@class="music_counts"]//li[1]//a//text()')[0]
+    fans = dom.xpath('//div[@class="music_counts"]//li[1]//a//text()')[0]
+    if fans == u'粉丝':
+        fans = '0'
+    return int(fans)
 
+def get_artist_share(content):
+    if not content:
+        return 0
+    dom = lxml.html.fromstring(content)
+    artist_share = dom.xpath('//li[@class="do_share"]//em//text()')   # 成功匹配后的样式为 ['(123)']  需要从列表中取出再去掉括号
+    if artist_share:
+        artist_share = int(re.findall('\d+',(artist_share[0]))[0])
+    else:
+        artist_share = 0
+    return artist_share
 
 def parse_song_list(artist_id):
     # 页面介绍：每个歌手的歌曲列表 such as :http://www.xiami.com/artist/top-1260
     # 函数目的：预先得到粉丝数和热度这种歌曲，同时进行翻页， 每首歌的详细信息在parse_song_detail中处理
     # 获取粉丝数量，注意有的网页不规范会导致‘粉丝’两个字占用原来应该是粉丝数的位置
+    artist_page_url = 'http://www.xiami.com/artist/{}'.format(artist_id)
+    artist_page_content = get_content(artist_page_url)
+    fans = get_fans(artist_page_content)
+    artist_share = get_artist_share(artist_page_content)
+
     result_list = []
     page = 1
-    song_list_pattern = 'http://www.xiami.com/artist/top-{}?spm=0.0.0.0.qH9VFH&page={}'
-    fans = get_fans(artist_id)
-    if fans == u'粉丝':
-        fans = '0'
+    song_list_pattern = 'http://www.xiami.com/artist/top-{}?spm=0.0.0.0.qH9VFH&page={}'    
     while 1:
         url = song_list_pattern.format(artist_id, page)
         page += 1
@@ -196,9 +238,10 @@ def parse_song_list(artist_id):
 
         for song in songs:
             result = {
-                'hotness' : get_hot(song),
+                'hotness' : get_hotness(song),
                 'artistid': artist_id,
                 'fans'    : fans,
+                'artist_share':artist_share,
             }
             song_href = song.xpath('./td[@class="song_name"]/a/@href')[0]
             song_id = re.findall('\d+', song_href)[0]

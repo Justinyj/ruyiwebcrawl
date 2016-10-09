@@ -30,6 +30,7 @@ class YaotongLoader(Loader):
         tags = [name, priceType, jsn[u'productPlaceOfOrigin'], jsn[u'sellerMarket'], jsn['productGrade']]
         series = '_'.join(tags)
         self.insert_meta_by_series(series)
+        self.set_price_index(series, name, domain)
         for validDate, price in jsn[u'price_history'].iteritems():
             trackingId = hashlib.sha1('{}_{}'.format(jsn[u'source'], jsn[u'access_time'])).hexdigest()
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()

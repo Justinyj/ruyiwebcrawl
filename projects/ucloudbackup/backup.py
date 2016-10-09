@@ -139,7 +139,7 @@ def main():
 
     now = datetime.datetime.now()
     day_of_month = now.day
-    if day_of_month % 15 == 0:
+    if day_of_month == 15:
         download_newest_backup('monthly')
         return
 

@@ -93,3 +93,13 @@ class Loader(object):
             self.meta.insert(record)
         except DuplicateKeyError as e:
             print (e)
+
+    def set_price_index(self, data_series, name, source):
+        # 为了导出价格数据索引
+        data = {
+            "data_series":  data_series,
+            "product": name, 
+            "source": source,
+        }
+        with open('price_index_list.txt', 'a') as f:
+            f.write(json.dumps(data, ensure_ascii = False) + '\n')
