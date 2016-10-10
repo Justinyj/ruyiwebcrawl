@@ -167,10 +167,11 @@ def parse_song_detail(result, song_id):
     result['song_share'] = song_share
 
     comment_cnt = dom.xpath('//div[@class="music_counts"]//li[2]//text()')
-    if comment_cnt:
+    try:
         comment_cnt = int(comment_cnt[0])
-    else:
+    except:
         comment_cnt = 0
+
     result['comment_cnt'] = comment_cnt
 
     result['similar'] = []
@@ -181,7 +182,7 @@ def parse_song_detail(result, song_id):
             result['similar'].append(re.findall('\d+', song_url)[0])
 
     result['published_time'], result['published_timestamp'] = parse_album_detail(album_id)
-    print json.dumps(result, ensure_ascii=False)
+    print json.dumps(result, ensure_ascii=False).encode('utf-8')
     return True
 
 
@@ -192,17 +193,13 @@ def get_hotness(dom):
 
 def get_fans(content):
     # 获取粉丝数量，注意有的网页格式不规范会导致粉丝数不显示，原先位置被‘粉丝’两个字占用
-    if not content:
-        return 0
     dom = lxml.html.fromstring(content)
     fans = dom.xpath('//div[@class="music_counts"]//li[1]//a//text()')[0]
-    if fans == u'粉丝':
+    if fans == u'粉丝' or not fans:
         fans = '0'
     return int(fans)
 
 def get_artist_share(content):
-    if not content:
-        return 0
     dom = lxml.html.fromstring(content)
     artist_share = dom.xpath('//li[@class="do_share"]//em//text()')   # 成功匹配后的样式为 ['(123)']  需要从列表中取出再去掉括号
     if artist_share:
@@ -211,14 +208,28 @@ def get_artist_share(content):
         artist_share = 0
     return artist_share
 
+def get_artist_alias(content):
+    # 此处返回别名的原始字符，最终别名列的处理在清洗步骤完成
+    dom = lxml.html.fromstring(content)
+    title_node = dom.xpath('//div[contains(@id, "title")]//span//text()')
+    if title_node:
+        return title_node[0]
+    else:
+        return ''
+
+
+
 def parse_song_list(artist_id):
     # 页面介绍：每个歌手的歌曲列表 such as :http://www.xiami.com/artist/top-1260
     # 函数目的：预先得到粉丝数和热度这种歌曲，同时进行翻页， 每首歌的详细信息在parse_song_detail中处理
     # 获取粉丝数量，注意有的网页不规范会导致‘粉丝’两个字占用原来应该是粉丝数的位置
     artist_page_url = 'http://www.xiami.com/artist/{}'.format(artist_id)
     artist_page_content = get_content(artist_page_url)
+    if not artist_page_content:
+        return False
     fans = get_fans(artist_page_content)
     artist_share = get_artist_share(artist_page_content)
+    alias = get_artist_alias(artist_page_content)
 
     result_list = []
     page = 1
@@ -229,6 +240,7 @@ def parse_song_list(artist_id):
         content = get_content(url)
         if not content:
             return False
+
         dom = lxml.html.fromstring(content)
         table = dom.xpath('//table[@class="track_list"]')[0]
 
@@ -242,7 +254,9 @@ def parse_song_list(artist_id):
                 'artistid': artist_id,
                 'fans'    : fans,
                 'artist_share':artist_share,
+                'artist_alias'       : alias,
             }
+            # print json.dumps(result, ensure_ascii=False).encode('utf-8')
             song_href = song.xpath('./td[@class="song_name"]/a/@href')[0]
             song_id = re.findall('\d+', song_href)[0]
 

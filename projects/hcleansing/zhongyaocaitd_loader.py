@@ -45,6 +45,7 @@ class ZhongyaocaitdLoader(Loader):
             series = '_'.join(tags)
             if series not in series_cache:
                 self.insert_meta_by_series(series)
+                self.set_price_index(series, name, domain)
                 series_cache.add(series)
             record = {
                 'rid': rid,
