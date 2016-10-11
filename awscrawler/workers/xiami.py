@@ -182,7 +182,7 @@ def parse_song_detail(result, song_id):
             result['similar'].append(re.findall('\d+', song_url)[0])
 
     result['published_time'], result['published_timestamp'] = parse_album_detail(album_id)
-    print json.dumps(result, ensure_ascii=False).encode('utf-8')
+    # print json.dumps(result, ensure_ascii=False).encode('utf-8')
     return True
 
 
@@ -281,5 +281,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     if result_list == False:       # 因为也可能是空列表，所以采取这种判断方式
         return False
     else:
-        flag =  process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
-        return True
+        return process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
+
+
+if __name__ == '__main__':
+    parse_song_list('331650197')

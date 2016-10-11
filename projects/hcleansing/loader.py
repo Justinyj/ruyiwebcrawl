@@ -101,5 +101,5 @@ class Loader(object):
             "product": name, 
             "source": source,
         }
-        with open('price_index_list.txt', 'a') as f:            # 不同的清洗脚本都要导出，所以用append模式，注意每次导出索引时删除文件
+        with open('price_index_list.txt', 'a') as f:            # 不同的清洗脚本都要导出，所以用append模式，注意每次导出索引时删除旧文件
             f.write(json.dumps(data, ensure_ascii = False) + '\n')

@@ -13,11 +13,14 @@ from cleansing_hcrawler.hprice_cleaning import  *
 from collections import Counter
 
 class XiamiDataMover(object):
-    def __init__(self, origin_dir='/Users/johnson/xiami/music/xiami-0923/raw'):
+    def __init__(self, origin_dir='/data/xiami/music/xiami-1009failed4'):
         self.count = 0
         self.jsons = []
         self.origin_dir = origin_dir
         self.tag_counter = Counter()
+
+    def calculate_score(self, artist_fans, song_share, comment_cnt):
+        return artist_fans * 0.001 + song_share * 0.599 + comment_cnt * 0.4
 
     def set_directory_list(self):
         # 是一个层序遍历的函数，利用列表模拟队列
@@ -36,10 +39,32 @@ class XiamiDataMover(object):
 
     def clean_single_song(self, song):
         song_item = song.copy()
-        song_item['artist_fans'] = int(song_item['fans'])
-        del song_item['fans']              # 将fans字段替换成artist_fans
-        self.count += 1
+        song_item['artist_fans'] = song_item['fans']
+        del song_item['fans']                                   # 将fans字段替换成artist_fans
+        alias_string = song_item['artist_alias'].replace(u'(', u'').replace(u')',u'').strip()
+        song_item['artist_alias'] = [song[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
+
+        if u'&' in song[u'artist']:
+            song_item['artist_alias'].extend(song[u'artist'].split(u'&'))
+        if alias_string:
+            song_item['artist_alias'].extend(alias_string.replace(u'·', u'').split(u'/'))
+
+        for index in range(len(song_item['artist_alias'])):
+            alias = song_item['artist_alias'][index].strip()
+            song_item[u'artist_alias'][index]  = alias
+            song_item[u'tags'].append(u'AN:{}'.format(alias))
+
+        song_item[u'name'] = song_item[u'name'].replace(u'(Live)', '').replace(u'(现场版)', '').strip()
+        song_item[u'songName'] = song_item[u'name']
+        song_item[u'tags'].append(u'MN:{}'.format(song_item[u'name']))
+        song_item[u'tags'].append(u'BN:{}'.format(song_item[u'album'].strip()))
+
+        song_item[u'hot_score'] = self.calculate_score(song_item[u'artist_fans'], song_item[u'song_share'], song_item[u'comment_cnt'])
+        with open('alias.txt', 'a') as f:
+            f.write('\t'.join(song_item['artist_alias'])+'\n')
+
         self.jsons.append(song_item)
+        self.count += 1
         if self.count == 300:              # 说明，由于部分歌曲歌词很长，每次发送300个json可能会使data大小超出es服务器的限制
             try:                           # 但是每次发送100个又会使es插入速度太慢，所以采取这种优先发送300个，失败后再分开发送
                 sendto_es(self.jsons)
@@ -53,7 +78,7 @@ class XiamiDataMover(object):
             self.count = 0
             self.jsons = []
 
-    def statistic_one_song(item):
+    def statistic_one_song(self, item):
         for tag in item['tags']:
             if tag[0:3] in ['AN:','BN:','MN:']:  # AN歌手名，BN专辑名，MN歌曲名，是在爬取过程中二次加入的，（如 AN:周杰伦 MN：晴天 ）。
               continue
@@ -75,11 +100,14 @@ class XiamiDataMover(object):
             with open(abs_file_path, 'r') as f:
                 song_list = json.load(f)
                 for song in song_list:
+                    song[u'tags'] = song[u'tags'][:-3]  # 后续数据需求变化，删除tags里的AN BN MN，在清洗过程中重新加入
+                    if u'&' in song[u'artist']:
+                        song[u'tags'] = song[u'tags'][:-1]
                     self.clean_single_song(song)
-                    # self.statistic_one_song(song)
+                    #self.statistic_one_song(song)
 
 
-    def statistic_tags(self):     #  歌曲tag排序
+    def statistic_tags(self):           #  歌曲tag排序
         print 'begin statistic'
         sorted_tags = []
         for tag, count in self.tag_counter.iteritems():
@@ -106,3 +134,4 @@ class XiamiDataMover(object):
 if __name__ == '__main__':
     mover = XiamiDataMover()
     mover.run()
+
