@@ -37,32 +37,48 @@ class XiamiDataMover(object):
                 dir_list.pop(0)
         self.dir_list = dir_list
 
+    def clean_dot(self, word):
+        word = re.sub(u'[·-‧()•]・', u'',word)
+        dot_list = [u'·', u'-', u'‧', u'(', u')', u'•', u'・']
+        for dot in dot_list:
+            word = word.replace(dot, u'')
+        return word
+
     def clean_single_song(self, song):
         song_item = song.copy()
         song_item['artist_fans'] = song_item['fans']
         del song_item['fans']                                   # 将fans字段替换成artist_fans
-        alias_string = song_item['artist_alias'].replace(u'(', u'').replace(u')',u'').strip()
+
+        try:
+            alias_string = self.clean_dot(song_item['artist_alias']).strip()
+        except:
+            print 'aho'
+            return
         song_item['artist_alias'] = [song[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
 
         if u'&' in song[u'artist']:
             song_item['artist_alias'].extend(song[u'artist'].split(u'&'))
+        elif u' x ' in song[u'artist']:
+            song_item['artist_alias'].extend(song[u'artist'].split(u' x '))
+
         if alias_string:
-            song_item['artist_alias'].extend(alias_string.replace(u'·', u'').split(u'/'))
+            song_item['artist_alias'].extend(alias_string.split(u'/'))
 
         for index in range(len(song_item['artist_alias'])):
-            alias = song_item['artist_alias'][index].strip()
+            alias = self.clean_dot(song_item['artist_alias'][index]).strip()
             song_item[u'artist_alias'][index]  = alias
             song_item[u'tags'].append(u'AN:{}'.format(alias))
 
         song_item[u'name'] = song_item[u'name'].replace(u'(Live)', '').replace(u'(现场版)', '').strip()
+        song_item[u'name'] = self.clean_dot(song_item['name'])
         song_item[u'songName'] = song_item[u'name']
         song_item[u'tags'].append(u'MN:{}'.format(song_item[u'name']))
         song_item[u'tags'].append(u'BN:{}'.format(song_item[u'album'].strip()))
-
         song_item[u'hot_score'] = self.calculate_score(song_item[u'artist_fans'], song_item[u'song_share'], song_item[u'comment_cnt'])
+
         with open('alias.txt', 'a') as f:
             f.write('\t'.join(song_item['artist_alias'])+'\n')
-
+        
         self.jsons.append(song_item)
         self.count += 1
         if self.count == 300:              # 说明，由于部分歌曲歌词很长，每次发送300个json可能会使data大小超出es服务器的限制
@@ -96,7 +112,6 @@ class XiamiDataMover(object):
         file_name_list = os.listdir(dir_path)
         for file_name in file_name_list:
             abs_file_path = os.path.join(dir_path, file_name)
-            # try:
             with open(abs_file_path, 'r') as f:
                 song_list = json.load(f)
                 for song in song_list:
@@ -134,4 +149,3 @@ class XiamiDataMover(object):
 if __name__ == '__main__':
     mover = XiamiDataMover()
     mover.run()
-
