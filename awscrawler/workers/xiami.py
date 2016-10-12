@@ -43,7 +43,11 @@ def get_content(url):
     }
     for _ in range(3):
         time.sleep(1)
-        response = requests.get(url, headers=headers)
+        try:
+            response = requests.get(url, headers=headers)   # 适当减少连接失败的情况
+        except:
+            time.sleep(10)
+            continue
         if response.status_code == 200:
             break
         elif response.url != url:
@@ -53,8 +57,8 @@ def get_content(url):
                 return '' 
     else:
         return False
-
     return response.text
+
 def get_fans(content):
     # 获取粉丝数量，注意有的网页格式不规范会导致粉丝数不显示，原先位置被‘粉丝’两个字占用
     dom = lxml.html.fromstring(content)
@@ -63,7 +67,7 @@ def get_fans(content):
         fans = '0'
     return int(fans)
 
-def get_artist_share(content):
+def get_artist_share(content):  # 得到歌手分享数
     dom = lxml.html.fromstring(content)
     artist_share = dom.xpath('//li[@class="do_share"]//em//text()')   # 成功匹配后的样式为 ['(123)']  需要从列表中取出再去掉括号
     if artist_share:
@@ -71,7 +75,8 @@ def get_artist_share(content):
     else:
         artist_share = 0
     return artist_share
-def get_hot_comment(content):
+
+def get_hot_comment(content):   # 得到热评
     dom = lxml.html.fromstring(content)
     hot_comment_node = dom.xpath('//div[@class="hotComment"]')
     if not hot_comment_node:
@@ -83,6 +88,7 @@ def get_hot_comment(content):
             text = ''.join(comment.xpath('.//text()'))
             result.append(text.strip())
         return result
+
 def get_artist_alias(content):
     # 此处返回别名的原始字符，最终别名列的处理在清洗步骤完成
     dom = lxml.html.fromstring(content)
@@ -192,8 +198,13 @@ def parse_album(album_id):
                 'songOpt'               : song_item[u'songOpt'],
             }
 
-            parse_song_detail(result, song_item[u'songId'])
-            result_list.append(result)
+            success = parse_song_detail(result, song_item[u'songId'])
+            if not success:
+                return False
+            elif success == 'demo':  # 是demo，跳过
+                continue
+            else:                   # 不是demo，加入
+                result_list.append(result)
         page += 1
     return process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
 
