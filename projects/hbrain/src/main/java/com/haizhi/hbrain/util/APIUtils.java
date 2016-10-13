@@ -26,6 +26,10 @@ public class APIUtils {
 
 	public static List<Criteria> parseTimeRange(String recordDate) {
 		List<Criteria> criterias = new ArrayList<>();
+		if (!recordDate.contains("TO")) {
+			criterias.add(Criteria.where("recordDate").is(recordDate));
+			return criterias;
+		}
 
 		String begin = recordDate.split("TO")[0];
 		if (begin.startsWith("[")) {
