@@ -38,7 +38,7 @@ class XiamiDataMover(object):
         self.dir_list = dir_list
 
     def clean_dot(self, word):
-        word = re.sub(u'[·-‧()•]・', u'',word)
+        # word = re.sub(u'[·-‧()•]・', u'',word)
         dot_list = [u'·', u'-', u'‧', u'(', u')', u'•', u'・']
         for dot in dot_list:
             word = word.replace(dot, u'')
@@ -56,9 +56,9 @@ class XiamiDataMover(object):
             return
         song_item['artist_alias'] = [song[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
 
-        if u'&' in song[u'artist']:
-            song_item['artist_alias'].extend(song[u'artist'].split(u'&'))
-        elif u' x ' in song[u'artist']:
+        if u';' in song[u'artist']:                             # 合唱情况一般用;分隔
+            song_item['artist_alias'].extend(song[u'artist'].split(u';'))
+        elif u' x ' in song[u'artist']:                         # 有时也用 x 分隔
             song_item['artist_alias'].extend(song[u'artist'].split(u' x '))
 
         if alias_string:
@@ -115,9 +115,7 @@ class XiamiDataMover(object):
             with open(abs_file_path, 'r') as f:
                 song_list = json.load(f)
                 for song in song_list:
-                    song[u'tags'] = song[u'tags'][:-3]  # 后续数据需求变化，删除tags里的AN BN MN，在清洗过程中重新加入
-                    if u'&' in song[u'artist']:
-                        song[u'tags'] = song[u'tags'][:-1]
+                    song[u'tags'] = song[u'tags']
                     self.clean_single_song(song)
                     #self.statistic_one_song(song)
 
