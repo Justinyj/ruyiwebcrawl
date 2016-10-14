@@ -1416,6 +1416,7 @@ def test_cookie(limit=None):
         config["debug"] = True
         config["WORKER_NUM"] =1
         config["CACHE_SERVER"] ="http://52.69.161.139:8000"
+        config["CACHE_SERVER"] ="http://192.168.1.179:8000"
         #config["CRAWL_GAP"] =5 *len(config["COOKIES"])
     crawler = Qichacha(config)
 

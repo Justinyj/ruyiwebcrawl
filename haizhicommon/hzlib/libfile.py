@@ -2,6 +2,8 @@
 '''
 change log
 2016-05-24    created
+2016-08-15    readExcel2
+2016-08-17    readExcel2 change output format {'data':...,'fields':....}
 '''
 
 import glob
@@ -19,7 +21,7 @@ def genEsId(text):
     text =text.encode('utf-8')
     return hashlib.md5(text).hexdigest()
 
-def writeExcel(items, keys, filename, page_size=60000):
+def writeExcel(items, keys, filename, page_size=60000, debug=False):
     import xlwt
     wb = xlwt.Workbook()
     rowindex =0
@@ -48,7 +50,8 @@ def writeExcel(items, keys, filename, page_size=60000):
             colindex+=1
         rowindex +=1
 
-    print filename
+    if debug:
+        print filename
     wb.save(filename)
 
 
@@ -96,12 +99,14 @@ def readExcel2(filename, non_empty_col=0, file_contents=None):
 
     start_row = 0
     ret = defaultdict(list)
+    fields = {}
     for name in workbook.sheet_names():
         sh = workbook.sheet_by_name(name)
         headers = []
         for col in range(len(sh.row(start_row))):
             headers.append(sh.cell(start_row,col).value)
         print headers
+        fields[name]= headers
 
         for row in range(start_row+1, sh.nrows):
             item={}
@@ -122,7 +127,7 @@ def readExcel2(filename, non_empty_col=0, file_contents=None):
 
             ret[name].append(item)
         print "loaded",filename, len(ret[name])
-    return ret
+    return {'data':ret,'fields':fields}
 
 
 def file2list(filename, encoding='utf-8'):

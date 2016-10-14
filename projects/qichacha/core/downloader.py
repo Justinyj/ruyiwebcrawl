@@ -166,7 +166,9 @@ class Downloader(object):
         if len(content.strip()) ==0:
             return "invalid, empty"
 
-        if u"window.location.href" in content:
+        test_str = u"window.location.href"
+        print (content)
+        if test_str in content and content.index(test_str)<500:
             print (content)
             sys.exit(1)
             return "invalid,redirection"
