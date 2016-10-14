@@ -1,5 +1,6 @@
 {
-    "es_url": "http://nlp.ruyi.ai:9200",
+    "note": "2016.10.13,lidingpku,switch to new ES server",
+    "es_url": "http://106.75.27.226",
     "es_user": "es_ruyi",
     "es_pass": "ruyiruyies",
     "es_auth": "Basic ZXNfcnV5aTpydXlpcnV5aWVz"

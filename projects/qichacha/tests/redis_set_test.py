@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
 
+# requirement: 测试medium上，插入百万数据以上，每秒的性能，CPU和MEM，并测试出来性能何时开始下降
 # 测试机器类型: Linux ip-172-31-28-118 3.16.0-4-amd64 #1 SMP Debian 3.16.7-ckt25-1 (2016-03-06) x86_64 GNU/Linux, AWS medium instance
 # Redis version: Redis server v=2.8.17 sha=00000000:0 malloc=jemalloc-3.6.0 bits=64 build=4c1d5710660b9479
 
