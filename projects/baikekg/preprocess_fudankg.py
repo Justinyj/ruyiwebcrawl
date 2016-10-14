@@ -125,6 +125,35 @@ def get_fudankg_entity(entity_dict=False):
         write_file('fudankg_entities.txt', list(entities))
 
 
+def get_fudanperiod_entity(entity_dict=False):     # get fudaninc entities stored in periodCache
+    from hzlib.libfile import write_file
+    saved_dir = '/data/hproject/2016/fudaninc-20160825'
+    entities = set()
+    i = 0
+    for f in os.listdir(saved_dir):
+        fname = os.path.join(saved_dir, f)
+        with open(fname) as fd:
+            try:
+                data = json.load(fd)
+            except:
+                i += 1
+                with open('failed.txt', 'a') as out:
+                    out.write(fd.read() + '\n')
+                print(i)
+            for entity, dic in data.iteritems():
+                if entity_dict:
+                    m = regdropbrackets.match(entity)
+                    if m:
+                        entities.add(m.group(1))
+                    else:
+                        entities.add(entity)
+                else:
+                    entities.add(entity)
+    if entity_dict:
+        write_file('fudankg_entities_dict.txt', list(entities))
+    else:
+        write_file('fudankg_entities.txt', list(entities))
+
 
 def information_exist_proportion():
     from hzlib.libfile import write_file
@@ -155,6 +184,8 @@ if __name__ == '__main__':
         merge_fudankg('fudankg-json')
     elif sys.argv[1] == 'entity':
         get_fudankg_entity()
+    elif sys.argv[1] == 'entityperiod':
+        get_fudanperiod_entity()
     elif sys.argv[1] == 'proportion':
         information_exist_proportion()
 

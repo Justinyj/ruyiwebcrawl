@@ -13,18 +13,18 @@ if hostos == 'ubuntu':
     env.user = 'ubuntu'
     PG_VERSION = 'trusty-pgdg'
 elif hostos == 'debian':
-    env.hosts = ['52.196.135.33']
+    env.hosts = ['54.223.120.139']
     env.user = 'admin'
     PG_VERSION = 'jessie-pgdg'
 
-DEPLOY_ENV = 'HCRAWLER'
+DEPLOY_ENV = 'XIAMI'
 
 def _aws():
     sudo('mkfs -t ext4 /dev/xvdb')
     sudo('mkdir -p /data')
     sudo('mount /dev/xvdb /data')
     sudo('cp /etc/fstab /etc/fstab.orig')
-    sudo("""sh -c "echo '/dev/xvdb /data ext4 defaults,nofail 0 2' > /etc/fstab" """)
+    sudo("""sh -c "echo '/dev/xvdb /data ext4 defaults,nofail 0 2' >> /etc/fstab" """)
 
 def _build_pg():
     _aws()
@@ -63,8 +63,8 @@ def upload():
         run('[ -L crawlerservice ] && unlink crawlerservice || echo ""')
         run('ln -s /opt/service/raw/`ls /opt/service/raw/ | sort | tail -n 1` /opt/service/crawlerservice')
 
-    # with cd('/opt/service/crawlerservice'):
-    #     run('psql -U postgres < cache/crawlercache.sql')
+    with cd('/opt/service/crawlerservice'):
+        run('psql -U postgres < cache/crawlercache.sql')
 
 
 def kill():

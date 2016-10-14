@@ -15,7 +15,6 @@ from lxml import etree
 from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
-
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
 
@@ -78,7 +77,8 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             med_name = page.xpath("//*[@id=\"article\"]/h1/text()")[0]
             get_logger(batch_id, today_str, '/opt/service/log/').info(med_name + " main page")
             # print(med_name,"main page")
-            dics = ''
+            book_list = []
+            dictionary = {}
             books = content.split('<hr />')     # 用来分开不同的药典
             if len(books) == 2:                 # 只有一个药典的情况
                 books = [ books[0] ]
@@ -89,19 +89,30 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
                 med_info = page.xpath("//p/text()")
                 data = {}
-                data['source'] = url
+                # data['source'] = url
+                dictionary['source'] = url
 
+                # data['access_time'] = datetime.utcnow().isoformat()
+                dictionary['access_time'] = datetime.utcnow().isoformat()
+                data_list = []
                 for info in med_info:
+                    
                     m = re.compile(r'【.+?】').match(info.encode('utf-8'))
                     if m:
                         prop = m.group(0)[3:-3]
                         cleaned = re.sub(r'【.+?】', '', info.encode('utf-8'))
                         data[prop] = cleaned
+                        data_list.append({prop: cleaned})
                     else:
                         data[prop] += '\n' + info.encode('utf-8')
-                dics += json.dumps(data) + '\n'    # 一行是一个药典json，不同药典间用换行符分开
-
+                        data_list[-1][prop] += '\n' + info.encode('utf-8')
+                book_name = data['摘录']
+                # dics[book_name] = data
+                book_list.append({book_name: data_list}) # 为了保持原书籍的顺序，使用列表结构
+            
+            dictionary[data['药材名称']] = book_list
+            dictionary = json.dumps(dictionary, encoding='utf-8', ensure_ascii=False)
             get_logger(batch_id, today_str, '/opt/service/log/').info('start posting prd page to cache')
-            return process._cache.post(url, dics)
+            return process._cache.post(url, dictionary)
 
 

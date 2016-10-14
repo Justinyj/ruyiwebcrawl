@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Author: Yingqi Wang <yingqi.wang93 (at) gmail.com>
-
+# 生意社农副频道每日价格更新, 因早上8点生意社不一定更新了当日价格,所以逻辑为获取近两天的(当天及前一天)
 
 from __future__ import print_function, division
 import sys
@@ -10,7 +10,7 @@ import urllib
 import re
 import urlparse
 # sys.path.append('..')
-from datetime import datetime
+from datetime import datetime, timedelta
 from lxml import etree
 from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
@@ -44,6 +44,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
     gap = float(max(0, float(gap) - other_batch_process_time))
     timeout= int(timeout)
     today_str = datetime.now().strftime('%Y%m%d')
+    yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
     # print(url)
     # if kwargs and kwargs.get("debug"):
     #     get_logger(batch_id, today_str, '/opt/service/log/').info('start download')
@@ -71,7 +72,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             # print("adding agricultural prds")
             prd_links = page.xpath('//table/tr/td[1]/div/a/@href')
             newest = page.xpath("//table/tr[2]/td[6]/text()")[0]
-            if newest.replace(u'-','') != today_str:
+            if newest.replace(u'-','') not in [today_str, yesterday_str]:
                 return True 
             if not prd_links:
                 # print('end of pages')
@@ -125,7 +126,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             data[u'联系方式'] = contact
 
             # print(json.dumps(data, encoding='utf-8', ensure_ascii=False))
-            if data[u'发布时间'].replace(u'-','') != today_str:
+            if data[u'发布时间'].replace(u'-','') not in [today_str, yesterday_str]:
                 return True 
             dics = json.dumps(data, encoding='utf-8', ensure_ascii=False)
             get_logger(batch_id, today_str, '/opt/service/log/').info(dics + ' saved to S3')

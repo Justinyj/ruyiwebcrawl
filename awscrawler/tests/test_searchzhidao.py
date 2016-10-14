@@ -11,7 +11,6 @@ from __future__ import print_function, division
 import os
 import re
 import requests
-import urlparse
 import time
 import lxml.html
 from collections import Counter

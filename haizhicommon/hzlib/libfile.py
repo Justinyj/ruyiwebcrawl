@@ -188,10 +188,14 @@ def read_file_iter(fname, jsn=False):
     with codecs.open(fname, 'r') as fd:
         if jsn:
             for line in fd:
-                yield json.loads(line.strip())
+                line = line.strip()
+                if line:
+                    yield json.loads(line)
         else:
             for line in fd:
-                yield line.strip()
+                line = line.strip()
+                if line:
+                    yield line
 
 
 def write_file(fname, lines, jsn=False):
