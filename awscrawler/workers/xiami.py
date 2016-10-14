@@ -161,10 +161,10 @@ def parse_album(album_id):
         url = 'http://www.xiami.com/album/songs/id/{}/page/{}?&_=1476235381636'.format(album_id, page)
         content = get_content(url)
         album_item = json.loads(content)      # 通过上述url可以直接获得json，为一个列表，每个元素为一首歌曲
-
+        print url
         data = album_item[u'data']
         if not data:
-            break
+            break       # 正常存在data这个key，但是data里面没有内容，说明到了专辑页末尾，翻页结束
         for song_item in data:
             if song_item[u'singerIds']:
                 artist_id = song_item[u'singerIds'][0]
@@ -177,7 +177,7 @@ def parse_album(album_id):
             fans = get_fans(artist_page_content)
             artist_share = get_artist_share(artist_page_content)
             alias = get_artist_alias(artist_page_content)
-            result = {
+            result = {                      # 先收集json包含的数据，其它网页内容在parse_song_detail里处理
                 'hotness'               : song_item[u'width'],
                 'artistid'              : artist_id,
                 'singer_ids'            : song_item[u'singerIds'],
@@ -251,3 +251,5 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             album_id = m.group(1)
             return parse_album(album_id)
 
+if __name__ == '__main__':
+    parse_album('120052')

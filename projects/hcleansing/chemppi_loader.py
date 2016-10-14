@@ -37,7 +37,7 @@ class ChemppiLoader(Loader):
     def parse_info(self, jsn):
         name = jsn[u'name']
         validDate = jsn[u'发布时间']
-        source = jsn[u'url']
+        source = jsn[u'source']
         domain = self.url2domain(source)
         
         priceType = jsn[u'报价类型']
@@ -92,7 +92,14 @@ class ChemppiLoader(Loader):
             self.collection.insert(record)
         except DuplicateKeyError as e:
             print (e)
-            
+
+def load_all(path='/data/hproject/2016'):
+    # TODO:更改loadall为主类方法，根据相应脚本的batchid自动载入所有数据
+    obj = ChemppiLoader()
+    for diretory in os.listdir(path):
+        if diretory.startswith('che'):
+            abs_path = os.path.join(path, diretory)
+            obj.read_jsn(abs_path)
 
         
 if __name__ == '__main__':
