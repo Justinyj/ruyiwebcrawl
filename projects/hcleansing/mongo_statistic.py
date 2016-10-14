@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 # Author: Yixuan Zhao <johnsonqrr (at) gmail.com>
 
-
 from pymongo import MongoClient
 from collections import Counter
 
+import json
+import datetime
+import hashlib
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
@@ -18,49 +20,49 @@ class mongoStatistic(object):
         self.entity = db['entities']
         self.node = db['price']  # 无论mongo服务器开启关闭，以上语句都可成功执行
         self.meta = db['pricemeta']
-        self.series_counter    = {}
-        self.product_counter   = {}
+        self.log  = db['log']
+
+        self.series_counter    = Counter()
+        self.product_counter   = Counter()
         self.price_counter = Counter() 
+        self.total_price_record = 0
+        self.domain_list =[
+            'www.kmzyw.com.cn',
+            'www.yt1998.com',
+            'www.100ppi.com',
+            'www.zyctd.com',
+        ]
     
-    def run(self):
+    def get_statistics(self):
         # TODO 更改成使用查询条件查询，增加查询速度
-        cursor = self.node.find()
-        for record in cursor:
-            domain = record[u'source'][u'domain']
 
-            self.price_counter[domain] += 1                           # 统计价格条数
-            if not self.series_counter.get(domain, None):
-                self.series_counter[domain] = set()
-            self.series_counter[domain].add(record[u'series'])  # 统计价格系列
+        for domain in self.domain_list:
+            record_num = self.node.count({'source.domain':domain})
+            self.total_price_record += record_num
+            self.price_counter[domain] = record_num
 
-            if not self.product_counter.get(domain, None):
-                self.product_counter[domain] = set()
+            series_num = len(self.node.distinct('series', {'source.domain':domain}))
+            self.series_counter[domain] = series_num
 
-            self.product_counter[domain].add(record[u'tags'][0]) # 统计物料名
-
-        self.output_counter()
+            product_num = len(self.node.distinct('tags.0', {'source.domain':domain})) # tags的第一个标签是种类
+            self.product_counter[domain] = product_num
+        return
 
     def output_counter(self):
         print ('price statistics')
-        total = 0
-        for k, v in self.price_counter.iteritems():
-            total += v
-            print '{} : {}'.format(k, v)
-        print '{} : {}'.format('total', total)
 
-        print ('\nseries statistics')
-        total = set()
-        for k, v in self.series_counter.iteritems():
-            total.update(v)
-            print '{} : {}'.format(k, len(v))
-        print '{} : {}'.format('total', len(total))
+        log_record = {                                          # 因为counter的key格式是 www.100ppi.com 带.符号，不可直接作为mongo的key，所以先选择直接dumps，结构有待改进
+            'log_record_date'        :  datetime.datetime.utcnow(),
+            'price'              :  json.dumps(self.price_counter, ensure_ascii=False),    
+            'series'             :  json.dumps(self.series_counter, ensure_ascii=False),
+            'product'            :  json.dumps(self.product_counter, ensure_ascii=False),
+            'total_price_record' :  self.total_price_record,
+        }
+        self.log.insert(log_record)
 
-        print ('\nproduct statistics')
-        total = set()
-        for k, v in self.product_counter.iteritems():
-            total.update(v)
-            print '{} : {}'.format(k, len(v))
-        print '{} : {}'.format('total', len(total))
+    def run(self):
+        self.get_statistics()
+        self.output_counter()
 
 if __name__ == '__main__':
     obj = mongoStatistic()

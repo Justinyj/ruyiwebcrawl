@@ -7,6 +7,7 @@ import time
 import datetime
 import hashlib
 import sys
+import re
 sys.path.append('..')
 
 from cleansing_hcrawler.hprice_cleaning import  *
@@ -44,6 +45,9 @@ class XiamiDataMover(object):
             word = word.replace(dot, u'')
         return word
 
+    def clean_kuohao(self, word):
+        return re.sub('\(.*\)', '',word)
+
     def clean_single_song(self, song):
         song_item = song.copy()
         song_item['artist_fans'] = song_item['fans']
@@ -69,7 +73,7 @@ class XiamiDataMover(object):
             song_item[u'artist_alias'][index]  = alias
             song_item[u'tags'].append(u'AN:{}'.format(alias))
 
-        song_item[u'name'] = song_item[u'name'].replace(u'(Live)', '').replace(u'(现场版)', '').strip()
+        song_item[u'name'] = self.clean_kuohao(song_item[u'name']).strip()
         song_item[u'name'] = self.clean_dot(song_item['name'])
         song_item[u'songName'] = song_item[u'name']
         song_item[u'tags'].append(u'MN:{}'.format(song_item[u'name']))
