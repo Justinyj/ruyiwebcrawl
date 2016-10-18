@@ -85,6 +85,7 @@ class DataMover(object):
         # 由于两台机上的数据储存目录结构相同，所以本地和远程用的都是dir_path，无需变换
         print('moving')
         self.ssh.exec_command('tar cvzf {}.tar.gz -C {} .'.format(self.dir_path, self.dir_path))
+        time.sleep(30)          # 等待一小段时间，否则会导致远程server上一条命令未压缩完便执行本机的下一条命令
         os.system('scp {}@{}:{}.tar.gz {}.tar.gz'.format(self.username, self.ipaddr, self.dir_path, self.dir_path))
         stdin, stdout, stderr = self.ssh.exec_command("md5sum {}.tar.gz".format(self.dir_path))
 

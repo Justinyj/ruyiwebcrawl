@@ -9,6 +9,7 @@ import os
 import hashlib
 from datetime import datetime
 from pymongo.errors import DuplicateKeyError
+from pymongo.errors import BulkWriteError
 from loader import Loader
 from hzlib import libfile
 import sys
@@ -29,11 +30,14 @@ class YaotongLoader(Loader):
         priceType = ''  # 药通的价格类型为空
         tags = [name, priceType, jsn[u'productPlaceOfOrigin'], jsn[u'sellerMarket'], jsn['productGrade']]
         series = '_'.join(tags)
+
+        self.pipe_line.clean_product_place(tags[2], tags)
         self.insert_meta_by_series(series)
-        self.set_price_index(series, name, domain)
+        # self.set_price_index(series, name, domain)
+        records = []
         for validDate, price in jsn[u'price_history'].iteritems():
             trackingId = hashlib.sha1('{}_{}'.format(jsn[u'source'], jsn[u'access_time'])).hexdigest()
-            rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
+            rid = hashlib.sha1('{}_{}_{}'.format(series, validDate, domain)).hexdigest()
             record = {
                 'rid': rid,
                 'gid': rid, # 不可变
@@ -61,14 +65,23 @@ class YaotongLoader(Loader):
             record['claims'].append({'p': u'规格', 'o': jsn[u'productGrade']})
             record['claims'].append({'p': u'币种', 'o': u'CNY' })
             record['recordDate'] = validDate
+            records.append(record)
             try:
-                self.node.insert(record)
-            except DuplicateKeyError as e:
+                if len(records) > 1000:          # 由于药通网数据量很大，此处做了效率优化
+                    self.node.insert_many(records)
+                    records = []
+            except BulkWriteError as e:          # insert_many有重复时所报的错误
                 print (e)
+                break
+
+        try:
+            self.node.insert_many(records)
+        except BulkWriteError as e:
+            print (e)
         print (name)    
             
         # print(json.dumps(record, ensure_ascii=False, indent=4).encode('utf-8'))
         
 if __name__ == '__main__':
     obj = YaotongLoader()
-    obj.read_jsn('/data/hproject/2016/yaotongnew-20160904')
+    obj.read_jsn('/data/hproject/2016/yaotongnew-20161017')

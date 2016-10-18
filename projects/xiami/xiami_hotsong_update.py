@@ -8,9 +8,9 @@ import re
 import json
 import os
 import redis
-import lxml.html
 
-redis_id_keyname = 'ruyi-aciton-xiami-hotmusic'
+
+redis_id_keyname = 'ruyi-action-xiami-hotmusic'
 
 def slack(msg):
     data = { "text": msg }
@@ -20,7 +20,7 @@ def slack(msg):
 
 
 def insert_record_into_redis(record):
-    key_pattern = 'ruyi-aciton-xiami-hotmusic-result-mid:{}'
+    key_pattern = 'ruyi-action-xiami-hotmusic-result-mid:{}'
     song_id = record['id']
     insert_record_succeed = redis_client.set(key_pattern.format(song_id), json.dumps(record, ensure_ascii=False))
     insert_id_succees     = redis_client.sadd(redis_id_keyname, song_id)
@@ -43,6 +43,8 @@ def get_hot_song():
     page = 1
     success = 0
     failed = 0
+    records = []
+
     while 1:
         content =  requests.get(url.format(page), headers=headers).text
         if content == u'empty':
@@ -61,27 +63,27 @@ def get_hot_song():
                 'pic':pic,
                 'name':song_name,
             }
-            if  insert_record_into_redis(record):
-                success += 1
-            else:
-                failed += 1
+            records.append(record)
+    delete_old_key()
+    for record in records:
+        if  insert_record_into_redis(record):
+            success += 1
+        else:
+            failed += 1
     slack('successful : {};failed:{}'.format(success, failed))
 
 def delete_old_key():
     redis_client.delete(redis_id_keyname)  # 每次都清空之前的id,下面是清空之前的key
     cursor = 0L
-    keys = []
-    while 1:
-        scan_result = redis_client.scan(cursor,'ruyi-aciton-xiami-hotmusic-result-mid:*',200)
-        cursor = scan_result[0]
-        if cursor == 0L:
-            keys = scan_result[1]
-            break
+    keys = redis_client.keys('ruyi-action-xiami-hotmusic-result-mid:*')
+    count = 0
     for key in keys:
-        redis_client.delete(key)
+        response = redis_client.delete(key)
+        if response == 1:
+            count += 1
+    print ('delete:{}'.format(count))
 
 
 if __name__ == '__main__':
-    redis_client = redis.Redis(host = 'localhost', port=6379, db=0)
-    delete_old_key()
+    redis_client = redis.Redis(host = '10.10.84.141', port=6379, db=0)
     get_hot_song()
