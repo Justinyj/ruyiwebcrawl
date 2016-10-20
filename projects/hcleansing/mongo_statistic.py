@@ -75,7 +75,7 @@ class mongoStatistic(object):
         records = []
         for record in cursor:
             records.append(record)
-        records.sort(key = lambda ele:ele[u'log_record_date'], reverse=0)
+        records.sort(key = lambda ele:ele[u'log_record_date'])
         oldest_record = records[0]
         newest_record = records[-1]
         return oldest_record, newest_record
