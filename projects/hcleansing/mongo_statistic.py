@@ -97,7 +97,7 @@ class mongoStatistic(object):
     def daily_statistic(self, days_delta=1):
         now = datetime.datetime.utcnow()
         last = datetime.date.today() - datetime.timedelta(days=days_delta)  # 使用today是为了为了取到N天前的0点，而不是往前走24*N小时
-        last = datetime.datetime(*(last.timetuple()[:6]))
+        last = datetime.datetime(*(last.timetuple()[:6]))                   # 此前取到的是date格式，转为datetime
         oldest_record, newest_record = self.get_records_by_date(last,now)
         self.compare_two_records(oldest_record, newest_record)
 
