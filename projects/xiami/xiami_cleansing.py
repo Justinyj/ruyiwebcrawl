@@ -51,13 +51,11 @@ class XiamiDataMover(object):
     def clean_kuohao(self, song_item):
         word = song_item[u'name']
         if u'(' in word:
-            #with open('version_file.txt', 'a') as f:
             left = word.find(u'(')
             right = word.find(u')')
             version = word[left+1:right]
             self.versions.add(version)
             song_item[u'tags'].append(version)
-                # f.write(version + '\n')
             song_item[u'name'] = re.sub('\(.*\)', '',word).strip()
 
     def clean_pay(self, song_item):
@@ -68,19 +66,31 @@ class XiamiDataMover(object):
         else:
             song_item[u'pay'] = 1
 
+    def clean_tag_space(self,tags):          # 使带空格的tag分离开来
+        cleaned_tags = []
+        for tag in tags:
+            cleaned_tags.extend(tag.split(u' '))
+        return cleaned_tags
+
     def clean_single_song(self, song):
         song_item = song.copy()
-        song_item['artist_fans'] = song_item['fans']
-        del song_item['fans']                                   # 将fans字段替换成artist_fans
+        song_item[u'artist_fans'] = song_item[u'fans']
+        del song_item[u'fans']                                   # 将fans字段替换成artist_fans
+
+        song_item[u'name'] = song_item[u'name'].lower()         # 歌名和歌手词典都是小写字母，因此入库时数据也要变小写
+        song_item[u'artist'] = song_item[u'artist'].lower()
+        song_item[u'artist_alias'] = song_item[u'artist_alias'].lower()
+
+        song_item[u'tags'] = self.clean_tag_space(song_item[u'tags'])
 
 
-        alias_string = self.clean_dot(song_item['artist_alias']).strip()
-        song_item['artist_alias'] = [song[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
+        alias_string = self.clean_dot(song_item[u'artist_alias']).strip()
+        song_item['artist_alias'] = [song_item[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
 
-        if u';' in song[u'artist']:                             # 合唱情况一般用;分隔
-            song_item['artist_alias'].extend(song[u'artist'].split(u';'))
-        elif u' x ' in song[u'artist']:                         # 有时也用 x 分隔
-            song_item['artist_alias'].extend(song[u'artist'].split(u' x '))
+        if u';' in song_item[u'artist']:                             # 合唱情况一般用;分隔
+            song_item['artist_alias'].extend(song_item[u'artist'].split(u';'))
+        elif u' x ' in song_item[u'artist']:                         # 有时也用 x 分隔
+            song_item['artist_alias'].extend(song_item[u'artist'].split(u' x '))
 
         if alias_string:
             song_item['artist_alias'].extend(alias_string.split(u'/'))
