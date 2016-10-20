@@ -116,7 +116,7 @@ class pipeLine(object):
             self.product_place_mapping = json.load(f)
 
     def is_place(self, word):
-        place_list = [u'国内', u'国外', '青海', '西藏']                             #   这些是mapping文件中所有属于产地的value字段
+        place_list = [u'国内', u'国外', u'青海', u'西藏']                             #   这些是mapping文件中所有属于产地的value字段
         return word in place_list
 
     def clean_product_place(self, product_place, tags):                          #    这个tags可能是元数据的attr格式，也可能是price record的tags格式，会在此方法内进行区分
