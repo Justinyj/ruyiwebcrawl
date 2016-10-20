@@ -64,7 +64,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
 
     method, gap, js, timeout, data = parameter.split(':')
-    gap = int(gap)
+    gap = float(gap)
     timeout= int(timeout)
     gap = max(gap - other_batch_process_time, 0)
 
@@ -155,7 +155,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     'access_time'   : datetime.utcnow().isoformat(),
                     'price_data'    : formatted_price_data
                 }
-
-                if not process._cache.post(url, json.dumps(result_item, ensure_ascii = False), refresh = True):
+                if not process._cache.post(str(sub_drug['MBSID']), json.dumps(result_item, ensure_ascii = False), refresh = True):
                     return False
             return True

@@ -43,8 +43,10 @@ class ZhongyaocaitdLoader(Loader):
             tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
             series = '_'.join(tags)
+            self.pipe_line.clean_product_place(tags[2], tags)
             if series not in series_cache:
                 self.insert_meta_by_series(series)
+                self.set_price_index(series, name, domain)
                 series_cache.add(series)
             record = {
                 'rid': rid,
@@ -57,7 +59,7 @@ class ZhongyaocaitdLoader(Loader):
                     'url': source,
                     'domain': domain,
                     'trackingId': trackingId,
-                    'confidence': '0.6', 
+                    'confidence': '0.7', 
                 },
                 'claims': [],
             }
@@ -75,10 +77,10 @@ class ZhongyaocaitdLoader(Loader):
                 self.success += 1
             except DuplicateKeyError as e:
                 print (e)
-        print ('success: {}'.format(self.success))
 
+        print ('success: {}'.format(self.success))
 
 
 if __name__ == '__main__':
     obj = ZhongyaocaitdLoader()
-    obj.read_jsn('/data/hproject/2016/zhongyaocaitd-20160930')
+    obj.read_jsn('/data/hproject/2016/zhongyaocaitd-20161017')

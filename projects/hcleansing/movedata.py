@@ -12,6 +12,12 @@ import hashlib
 from loader import slack
 # 由于daily文件夹里的文件数量在几百个到一千个左右，所以下面get_newest_create_time()中的时间开销并不会太大。
 
+def slack(msg):
+    data={
+        "text": msg
+    }
+    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+
 class DataMover(object):
     def __init__(self, ipaddr = '52.198.100.109', username='admin', batch_id='kmzydaily'):
         self.batch_id = batch_id
@@ -79,6 +85,7 @@ class DataMover(object):
         # 由于两台机上的数据储存目录结构相同，所以本地和远程用的都是dir_path，无需变换
         print('moving')
         self.ssh.exec_command('tar cvzf {}.tar.gz -C {} .'.format(self.dir_path, self.dir_path))
+        time.sleep(30)          # 等待一小段时间，否则会导致远程server上一条命令未压缩完便执行本机的下一条命令
         os.system('scp {}@{}:{}.tar.gz {}.tar.gz'.format(self.username, self.ipaddr, self.dir_path, self.dir_path))
         stdin, stdout, stderr = self.ssh.exec_command("md5sum {}.tar.gz".format(self.dir_path))
 
@@ -103,7 +110,7 @@ class DataMover(object):
             return True
         else:
             print 'no such directory' + self.dir_path     # 不存在此文件夹，说明爬虫方面异常
-            #slack('Warning: Can not find the data directory\n batch_id :{}'.format(self.batch_id))
+            slack('Warning: Can not find the data directory\n batch_id :{}'.format(self.batch_id))
             return False
 
 

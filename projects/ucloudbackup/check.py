@@ -1,7 +1,10 @@
 from pymongo import MongoClient
-import time,datetime
+import time, datetime
 from unpack import unpack
 from restore import restore
+import json
+import requests
+import os
 
 #crontab : 
 #20 06 * * * /usr/bin/python2.7 /data/monitor/check/check.py  >> /data/monitor/check/cron_check.log
@@ -23,7 +26,8 @@ STANDARD_COLLECTION_LIST = [u'intentScenario',
                             u'col_log', 
                             u'col_developer', 
                             u'intentModel', 
-                            u'multiMediaModel']
+                            u'multiMediaModel',
+                            u'activationCodeModel']
 def slack(msg):
         data={
             "text": msg
@@ -67,3 +71,4 @@ check_time()
 print statistic()
 os.system('mongo < /data/monitor/check/deleteDatabase.js')
 print "finished!"
+os.system('rm -rf /data/monitor/check/tmp')

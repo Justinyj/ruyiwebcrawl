@@ -43,6 +43,8 @@ class YaotongnewdailyLoader(Loader):
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
             series = '_'.join(tags)
             self.insert_meta_by_series(series)
+            self.pipe_line.clean_product_place(tags[2], tags)
+
             record = {
                 'rid': rid,
                 'gid': rid, # 不可变

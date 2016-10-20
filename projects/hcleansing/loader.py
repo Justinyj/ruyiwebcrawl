@@ -7,6 +7,7 @@ from __future__ import print_function, division
 import json
 import re
 import requests
+import os
 
 from pymongo.errors import DuplicateKeyError
 from urlparse import urlparse
@@ -28,6 +29,8 @@ class Loader(object):
         self.entity = db['entities']
         self.node = db['price']  # 无论mongo服务器开启关闭，以上语句都可成功执行
         self.meta = db['pricemeta']
+        self.pipe_line = pipeLine()
+
         try:
             self.entity.create_index('gid', unique=True)
             self.node.create_index('gid', unique=True)
@@ -89,7 +92,44 @@ class Loader(object):
             'createdTime': datetime.utcnow(),
             'updatedTime': datetime.utcnow()
         }
+        self.pipe_line.clean_product_place(tags[2], attrs)
+
         try:
             self.meta.insert(record)
         except DuplicateKeyError as e:
             print (e)
+
+    def set_price_index(self, data_series, name, source):
+        # 为了导出价格数据索引
+        data = {
+            "data_series":  data_series,
+            "product": name, 
+            "source": source,
+        }
+        with open('price_index_list.txt', 'a') as f:            # 不同的清洗脚本都要导出，所以用append模式，注意每次导出索引时删除旧文件
+            f.write(json.dumps(data, ensure_ascii = False) + '\n')
+
+class pipeLine(object):
+    def __init__(self, filename='productPlaceMapping.json'):  # 生成所有产地方法： db.pricemeta.distinct("attrs.1")   
+        product_place_mapping_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+        with open(product_place_mapping_path, 'r') as f:
+            self.product_place_mapping = json.load(f)
+
+    def is_place(self, word):
+        place_list = [u'国内', u'国外', '青海', '西藏']                             #   这些是mapping文件中所有属于产地的value字段
+        return word in place_list
+
+    def clean_product_place(self, product_place, tags):                          #    这个tags可能是元数据的attr格式，也可能是price record的tags格式，会在此方法内进行区分
+        mapped_result_list = self.product_place_mapping.get(product_place, None)
+        if not mapped_result_list:
+            return
+        if u'名称=' in tags[0]:
+            for mapped_result in mapped_result_list:
+                if self.is_place(mapped_result):                                # 不是产地就是规格，暂时不考虑其他情况
+                    print (u'产地={}'.format(mapped_result))
+                    tags.append(u'产地={}'.format(mapped_result))
+                else:
+                    print (u'规格={}'.format(mapped_result))
+                    tags.append(u'规格={}'.format(mapped_result))
+        else:
+            tags.extend(mapped_result_list)
