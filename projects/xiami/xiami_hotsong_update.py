@@ -15,7 +15,6 @@ redis_id_keyname = 'ruyi-action-xiami-hotmusic'
 def slack(msg):
     data = { "text": msg }
     print msg
-    return
     requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 
@@ -70,7 +69,7 @@ def get_hot_song():
             success += 1
         else:
             failed += 1
-    slack('successful : {};failed:{}'.format(success, failed))
+    slack('server:ruyi@106.75.13.47\nxiami hot song update  successful : {};failed:{}'.format(success, failed))
 
 def delete_old_key():
     redis_client.delete(redis_id_keyname)  # 每次都清空之前的id,下面是清空之前的key
