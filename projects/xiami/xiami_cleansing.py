@@ -132,16 +132,16 @@ class XiamiDataMover(object):
 
     def statistic_one_song(self, item):
         for tag in item['tags']:
-            if tag[0:3] in ['AN:','BN:','MN:']:  # AN歌手名，BN专辑名，MN歌曲名，是在爬取过程中二次加入的，（如 AN:周杰伦 MN：晴天 ）。
+            if tag[0:3] in [u'AN:',u'BN:',u'MN:']:  # AN歌手名，BN专辑名，MN歌曲名，是在爬取过程中二次加入的，（如 AN:周杰伦 MN：晴天 ）。
               continue
             else:
                 self.tag_counter[tag] += 1
 
-        with open('artisits.txt','a') as f:
-            f.write(item['artistid'] + '\n')
+        with open('artisits_alias_by_table.txt','a') as f:
+            f.write('\t'.join(item['artist_alias']) + '\n')
 
-        with open('songname.txt','a') as f:
-            f.write(item['songName'] + '\n')
+        # with open('songname.txt','a') as f:
+            # f.write(item['songName'] + '\n')
 
 
     def read_and_insert(self, dir_path):
