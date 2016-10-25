@@ -8,6 +8,7 @@ import re
 import json
 import os
 import redis
+import lxml.html
 
 
 redis_id_keyname = 'ruyi-action-xiami-hotmusic'
@@ -53,14 +54,19 @@ def get_hot_song():
         pic_list = re.findall('src="(.*)"', content)
         song_name_list = re.findall('\">(.*?)?</a></strong>', content)
         song_id_list   = re.findall('song/(\d+)"',content)
+        dom = lxml.html.fromstring(content)
+        artist_name_list = dom.xpath('//div[@class="info"]/p[2]')
         for index in range(length):
             pic = pic_list[index]
             song_name = song_name_list[index]
+            artist_name = ''.join((artist_name_list[index].xpath('.//text()'))).strip()
+            print artist_name
             song_id = song_id_list[index]
             record = {
-                'id':song_id,
-                'pic':pic,
-                'name':song_name,
+                'id' : song_id,
+                'pic' : pic,
+                'name' : song_name,
+                'artist_name' : artist_name
             }
             records.append(record)
     delete_old_key()

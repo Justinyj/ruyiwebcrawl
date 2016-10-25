@@ -21,7 +21,7 @@ import datetime
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
+sys.path.append('..')
 from downloader.cacheperiod import CachePeriod
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
@@ -67,6 +67,14 @@ def get_fans(content):
         fans = '0'
     return int(fans)
 
+def get_tags(content):   # 同时适用专辑tag，歌曲tag，歌手tag，虾米音乐人tag！
+    dom = lxml.html.fromstring(content)
+    tags = dom.xpath('//div[contains(@id, "_tags_block")]/div[@class="content clearfix"]/a/text()')
+    # 这个contains可以同时覆盖  artist_tags_block, song_tags_block, album_tags_block三种情况，其内部结构相同
+    if not tags:
+        tags = dom.xpath('//div[@id="artist_tag"]/div[@class="content clearfix"]/a/text()')  # 针对虾米音乐人的情况
+    return tags
+
 def get_artist_share(content):  # 得到歌手分享数
     dom = lxml.html.fromstring(content)
     artist_share = dom.xpath('//li[@class="do_share"]//em//text()')   # 成功匹配后的样式为 ['(123)']  需要从列表中取出再去掉括号
@@ -89,7 +97,7 @@ def get_hot_comment(content):   # 得到热评
             result.append(text.strip())
         return result
 
-def get_artist_alias(content):
+def get_alias(content):      # 经验证，此方法同时适用专辑别名和歌手别名和歌曲别名
     # 此处返回别名的原始字符，最终别名列的处理在清洗步骤完成
     dom = lxml.html.fromstring(content)
     title_node = dom.xpath('//div[contains(@id, "title")]//span//text()')
@@ -97,6 +105,7 @@ def get_artist_alias(content):
         return title_node[0]
     else:
         return ''
+
 
 def parse_song_detail(result, song_id):
     # 需要得到：歌曲标签，歌词，相似歌曲，发行日期（从专辑页面中获取，注意要缓存，否则每首歌都重复访问一次专辑页面）
@@ -112,9 +121,8 @@ def parse_song_detail(result, song_id):
     result['musicrid']  = song_id
     result['id']        = song_id
     result['hot_comment']   = get_hot_comment(content)
-
-    raw_tags = dom.xpath('//div[@id="song_tags_block"]/div[@class="content clearfix"]/a/text()')
-    result['tags']= list(set(raw_tags))
+    result['song_alias']    = get_alias(content)
+    result['tags'] = get_tags(content)
 
     lrc = dom.xpath('//div[@class="lrc_main"]//text()')     # 提取歌词
     result['lrc'] = ''.join(lrc).strip()
@@ -133,11 +141,7 @@ def parse_song_detail(result, song_id):
             result['similar'].append(re.findall('\d+', song_url)[0])
     return True
 
-def get_published_time(album_id):
-    url = 'http://www.xiami.com/album/{}'.format(album_id)
-    content = get_content(url)
-    if not  content:
-        return False
+def get_published_time(content):
     dom = lxml.html.fromstring(content)
     node = dom.xpath('//div[@id="album_info"]//tr')
     published_time = ''
@@ -154,9 +158,16 @@ def get_published_time(album_id):
 
 
 def parse_album(album_id):
+    url = 'http://www.xiami.com/album/{}'.format(album_id)
+    alubm_page_content = get_content(url)
+    if not  alubm_page_content:
+        return False
+    published_time, timestamp = get_published_time(alubm_page_content)
+    album_alias               = get_alias(alubm_page_content)
+    album_tags                = get_tags(alubm_page_content)
     result_list = []
     page = 1
-    published_time, timestamp = get_published_time(album_id)
+
     while 1:
         url = 'http://www.xiami.com/album/songs/id/{}/page/{}?&_=1476235381636'.format(album_id, page)
         content = get_content(url)
@@ -174,16 +185,18 @@ def parse_album(album_id):
             artist_page_content = get_content(artist_page_url)
             if not artist_page_content:
                 continue
+
             fans = get_fans(artist_page_content)
             artist_share = get_artist_share(artist_page_content)
-            alias = get_artist_alias(artist_page_content)
+            artist_tags  = get_tags(artist_page_content)
+            artist_alias = get_alias(artist_page_content)
             result = {                      # 先收集json包含的数据，其它网页内容在parse_song_detail里处理
                 'hotness'               : song_item[u'width'],
                 'artistid'              : artist_id,
                 'singer_ids'            : song_item[u'singerIds'],
                 'fans'                  : fans,
                 'artist_share'          : artist_share,
-                'artist_alias'          : alias,
+                'artist_alias'          : artist_alias,
                 'pic'                   : urlparse.urljoin('http://img.xiami.net/i', song_item[u'album_logo']),
                 'published_timestamp'   : timestamp,
                 'published_time'        : published_time,
@@ -196,9 +209,14 @@ def parse_album(album_id):
                 'albumid'               : song_item[u'albumId'],
                 'song_share'            : song_item[u'recommends'],
                 'songOpt'               : song_item[u'songOpt'],
+                'raw_api_json'          : song_item,                  # 一次性拿下所有数据，避免以后重爬
+                'artist_tags'           : artist_tags,
+                'album_tags'            : album_tags,
+                'album_alias'           : album_alias,
             }
 
             success = parse_song_detail(result, song_item[u'songId'])
+            # print json.dumps(result, ensure_ascii=False)
             if not success:
                 return False
             elif success == 'demo':  # 是demo，跳过
@@ -206,6 +224,7 @@ def parse_album(album_id):
             else:                   # 不是demo，加入
                 result_list.append(result)
         page += 1
+    print 'post'
     return process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
 
 
@@ -252,4 +271,6 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             return parse_album(album_id)
 
 if __name__ == '__main__':
-    parse_album('120052')
+    # url = 'http://www.xiami.com/artist/2099990850?spm=a1z1s.3061781.6856533.8.qzOrrm'
+    # content = get_content(url)
+    parse_album('2100327398')
