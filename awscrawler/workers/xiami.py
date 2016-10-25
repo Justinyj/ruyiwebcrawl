@@ -21,7 +21,7 @@ import datetime
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-sys.path.append('..')
+
 from downloader.cacheperiod import CachePeriod
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
