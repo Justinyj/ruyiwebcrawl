@@ -14,9 +14,9 @@ import lxml.html
 redis_id_keyname = 'ruyi-action-xiami-hotmusic'
 
 def slack(msg):
-    data = { "text": msg }
+    data = { "text": 'message from ruyi xiami hotmusic update\n{}'.format(msg) }
     print msg
-    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 
 def insert_record_into_redis(record):

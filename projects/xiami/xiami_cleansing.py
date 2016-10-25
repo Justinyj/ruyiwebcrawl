@@ -14,13 +14,14 @@ from cleansing_hcrawler.hprice_cleaning import  *
 from collections import Counter
 
 class XiamiDataMover(object):
-    def __init__(self, origin_dir='/data/crawler_file_cache/xiami-1015'):
+    def __init__(self, origin_dir='/data/crawler_file_cache/xiami-1015/raw/latest/0/11'):
+        origin_dir =  '/data/crawler_file_cache/xiami-1015'
         self.count = 0
         self.jsons = []
         self.origin_dir = origin_dir
         self.tag_counter = Counter()
         self.versions = set()
-
+        self.tags_by_artist = {}
 
     def calculate_score(self, artist_fans, song_share, comment_cnt):
         return artist_fans * 0.001 + song_share * 0.599 + comment_cnt * 0.4
@@ -48,7 +49,7 @@ class XiamiDataMover(object):
             word = word.replace(dot, u'')
         return word
 
-    def clean_kuohao(self, song_item):
+    def clean_bracket(self, song_item):
         word = song_item[u'name']
         if u'(' in word:
             left = word.find(u'(')
@@ -59,6 +60,7 @@ class XiamiDataMover(object):
             song_item[u'name'] = re.sub('\(.*\)', '',word).strip()
 
     def clean_pay(self, song_item):
+        # for item in song_item['raw_api_json'][u'purview_flag']:
         for item in song_item[u'purview_flag']:
             if item[u'action'] == u'LISTEN' and item[u'opt'] == u'FREE':
                 song_item[u'pay'] = 0
@@ -66,23 +68,29 @@ class XiamiDataMover(object):
         else:
             song_item[u'pay'] = 1
 
-    def clean_tag_space(self,tags):          # 使带空格的tag分离开来
+
+    def clean_tags(self, song_item):
+        tags = song_item['tags']
+        artist_id = song_item['artistid']
         cleaned_tags = []
         for tag in tags:
-            cleaned_tags.extend(tag.split(u' '))
-        return cleaned_tags
+            cleaned_tags.extend(tag.split(u' '))        # 处理空格
+        cleaned_tags = list(set(cleaned_tags))            # 去重
+        tag_pool = self.tags_by_artist[artist_id]
+        for tag in cleaned_tags[::-1]:                  # 考虑到有删除操作，采用倒序遍历
+            if not tag in tag_pool or not tag:              # 第二个条件判断偶有的空格情况
+                cleaned_tags.remove(tag)
+        song_item['tag_pool']     = tag_pool
+        song_item['origin_tags']  = tags
+        song_item['tags'] = cleaned_tags
 
-    def clean_single_song(self, song):
-        song_item = song.copy()
+
+
+    def clean_single_song(self, song_item):
         song_item[u'artist_fans'] = song_item[u'fans']
         del song_item[u'fans']                                   # 将fans字段替换成artist_fans
 
-        song_item[u'name'] = song_item[u'name'].lower()         # 歌名和歌手词典都是小写字母，因此入库时数据也要变小写
-        song_item[u'artist'] = song_item[u'artist'].lower()
-        song_item[u'artist_alias'] = song_item[u'artist_alias'].lower()
-
-        song_item[u'tags'] = self.clean_tag_space(song_item[u'tags'])
-
+        self.clean_tags(song_item)                              # 处理空格，符号，以及按照百分比过滤
 
         alias_string = self.clean_dot(song_item[u'artist_alias']).strip()
         song_item['artist_alias'] = [song_item[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
@@ -100,14 +108,13 @@ class XiamiDataMover(object):
             song_item[u'artist_alias'][index]  = alias
             song_item[u'tags'].append(u'AN:{}'.format(alias))
 
-        self.clean_kuohao(song_item)
+        self.clean_bracket(song_item)
         self.clean_pay(song_item)
         song_item[u'name'] = self.clean_dot(song_item['name'])
         song_item[u'songName'] = song_item[u'name']
         song_item[u'tags'].append(u'MN:{}'.format(song_item[u'name']))
         song_item[u'tags'].append(u'BN:{}'.format(song_item[u'album'].strip()))
         song_item[u'hot_score'] = self.calculate_score(song_item[u'artist_fans'], song_item[u'song_share'], song_item[u'comment_cnt'])
-
         
         self.jsons.append(song_item)
         self.count += 1
@@ -154,18 +161,43 @@ class XiamiDataMover(object):
                     self.clean_single_song(song)
                     #self.statistic_one_song(song)
 
+    def count_for_tag(self, song_item):
+        artist_id = song_item[u'artistid']
+        if not self.tags_by_artist.get(artist_id, None):
+            self.tags_by_artist[artist_id] = Counter()
+        tags = song_item[u'tags']
+        for tag in tags:
+            self.tags_by_artist[artist_id][tag] += 1
+
+    def cut_tags_by_percent(self, percent=0.2):
+        for artist_id, tag_counter in self.tags_by_artist.iteritems():
+            length = len(tag_counter.keys())
+            self.tags_by_artist[artist_id] = [ele[0] for ele in tag_counter.most_common(int(length * percent + 0.99))]  # 保证向上取整
+
+    def filter_tags(self, dir_path):   # 统计歌手名下所有tag出现的次数，并且只留下前20%的tag
+        file_name_list = os.listdir(dir_path)
+        for file_name in file_name_list:
+            abs_file_path = os.path.join(dir_path, file_name)
+            with open(abs_file_path, 'r') as f:
+                song_list = json.load(f)
+                for song in song_list:
+                    self.count_for_tag(song)   # 计数
+
     def run(self):
         self.set_directory_list()
+        for dir_path in self.dir_list:          # 由于储存粒度为专辑，先遍历第一遍，得出所有歌手的tag情况并过滤
+            self.filter_tags(dir_path)
+            print dir_path
+        print 192
+        self.cut_tags_by_percent()
         for dir_path in self.dir_list:
-            self.read_and_insert(dir_path)
+            self.read_and_insert(dir_path)      # 再遍历第二遍，进行清洗和插入操作
+
         if self.jsons:
             sendto_es(self.jsons)
-        with open('version.txt', 'w') as f:
-            for line  in self.versions:
-                f.write(line + '\n')
-
-
-
+        # with open('version.txt', 'w') as f:
+        #     for line  in self.versions:
+        #         f.write(line + '\n')
 
 
 if __name__ == '__main__':
