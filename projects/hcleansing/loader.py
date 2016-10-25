@@ -81,18 +81,17 @@ class Loader(object):
 
     def insert_meta_by_series(self, series):
         tags = series.split('_')
-        prefix = [u'名称={}', u'价格类型={}', u'产地={}', u'市场={}', u'规格={}'] # 这个前缀列表可用的前提是假设series中字段都按照规定的顺序排列
-        attrs = []
-        for index in range(5):
-            if tags[index]:
-                attrs.append(prefix[index].format(tags[index]))
+        keys = [u'名称', u'价格类型', u'产地', u'市场', u'规格'] # 这个前缀列表可用的前提是假设series中字段都按照规定的顺序排列
         record = {
             'series':series,
-            'attrs':attrs,
             'createdTime': datetime.utcnow(),
             'updatedTime': datetime.utcnow()
         }
-        self.pipe_line.clean_product_place(tags[2], attrs)
+        for index in range(5):
+            if tags[index]:
+                record[keys[index]] = tags[index]
+        record[u'规格'] = [record[u'规格']]
+        self.pipe_line.clean_product_place(tags[2], record)
 
         try:
             self.meta.insert(record)
@@ -116,20 +115,20 @@ class pipeLine(object):
             self.product_place_mapping = json.load(f)
 
     def is_place(self, word):
-        place_list = [u'国内', u'国外', u'青海', u'西藏']                             #   这些是mapping文件中所有属于产地的value字段
+        place_list = [u'国内', u'国外', u'较广']                             #   这些是mapping文件中所有属于产地的value字段
         return word in place_list
 
-    def clean_product_place(self, product_place, tags):                          #    这个tags可能是元数据的attr格式，也可能是price record的tags格式，会在此方法内进行区分
+    def clean_product_place(self, product_place, item):                          #    这个tags可能是元数据的record格式，也可能是price record的tags格式，会在此方法内进行区分
         mapped_result_list = self.product_place_mapping.get(product_place, None)
         if not mapped_result_list:
             return
-        if u'名称=' in tags[0]:
+        if isinstance(item, dict):
             for mapped_result in mapped_result_list:
                 if self.is_place(mapped_result):                                # 不是产地就是规格，暂时不考虑其他情况
-                    print (u'产地={}'.format(mapped_result))
-                    tags.append(u'产地={}'.format(mapped_result))
+                    print (u'国家={}'.format(mapped_result))
+                    item[u'国家'] = mapped_result
                 else:
                     print (u'规格={}'.format(mapped_result))
-                    tags.append(u'规格={}'.format(mapped_result))
+                    item[u'规格'].append(mapped_result)
         else:
-            tags.extend(mapped_result_list)
+            item.extend(mapped_result_list)
