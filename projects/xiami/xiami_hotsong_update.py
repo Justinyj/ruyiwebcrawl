@@ -47,7 +47,7 @@ def get_hot_song():
 
     while 1:
         content =  requests.get(url.format(page), headers=headers).text
-        if content == u'empty':
+        if content == u'empty' or not u'playstatus' in content:
             break
         page += 1
         length = len(re.findall('class="song"', content))

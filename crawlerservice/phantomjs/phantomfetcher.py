@@ -7,7 +7,6 @@ from __future__ import print_function, division
 import json
 import time
 import copy
-import sys
 
 from tornado.curl_httpclient import CurlAsyncHTTPClient
 import tornado.httpclient
@@ -102,22 +101,21 @@ class PhantomFetcher(object):
                 return handle_error(e)
         except Exception as e:
             return handle_error(e)
-丹参
-if __name__ == '__main__':
-    import urllib
-    if len(sys.argv) > 1:
-        key_word = sys.argv[1]
-    else:
-        key_word = u'中国'
-    url = 'https://www.google.com/search?q={}&tbm=nws&oq=china&ie=UTF-8&hl=zh-CN'.format(key_word)
 
-    
+if __name__ == '__main__':
+    # baidu calculator: http://www.baidu.com/aladdin/js/calculator/calculator1.html?v=20141113
+    import urllib
+    url = 'https://www.baidu.com/s?&wd={}'
+    url = url.format( urllib.quote('三加二十') )
+
+    url = 'https://m.baidu.com/s?word={}'
+    url = url.format( urllib.quote('三加二十') )
+
     fetcher = PhantomFetcher('http://localhost:8001', async=False)
     res = fetcher.fetch(url)
 
     print(res.keys())
-    # print (res)
-    # print(res[u'status_code'], res[u'headers'], res[u'cookies'])
+    print(res[u'status_code'], res[u'headers'], res[u'cookies'])
 
 
     open('a.html', 'w').write(res[u'content'].encode('utf-8'))
