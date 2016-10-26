@@ -174,7 +174,7 @@ class XiamiDataMover(object):
             length = len(tag_counter.keys())
             self.tags_by_artist[artist_id] = [ele[0] for ele in tag_counter.most_common(int(length * percent + 0.99))]  # 保证向上取整
 
-    def filter_tags(self, dir_path):   # 统计歌手名下所有tag出现的次数，并且只留下前20%的tag
+    def filter_tags(self, dir_path):                 # 统计歌手名下所有tag出现的次数
         file_name_list = os.listdir(dir_path)
         for file_name in file_name_list:
             abs_file_path = os.path.join(dir_path, file_name)
@@ -187,17 +187,16 @@ class XiamiDataMover(object):
         self.set_directory_list()
         for dir_path in self.dir_list:          # 由于储存粒度为专辑，先遍历第一遍，得出所有歌手的tag情况并过滤
             self.filter_tags(dir_path)
-            print dir_path
-        print 192
-        self.cut_tags_by_percent()
+
+        self.cut_tags_by_percent()              # 留下前20%的歌曲（）比例可变
         for dir_path in self.dir_list:
             self.read_and_insert(dir_path)      # 再遍历第二遍，进行清洗和插入操作
 
         if self.jsons:
             sendto_es(self.jsons)
-        # with open('version.txt', 'w') as f:
-        #     for line  in self.versions:
-        #         f.write(line + '\n')
+        with open('version.txt', 'w') as f:
+            for line  in self.versions:
+                f.write(line + '\n')
 
 
 if __name__ == '__main__':
