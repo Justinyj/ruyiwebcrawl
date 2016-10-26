@@ -21,6 +21,9 @@ import java.util.Map;
 @RestController
 public class HbrainAPIController extends BaseController {
 
+	//private Log log = LogFactory.getLog(HbrainAPIController.class);
+
+
 	@RequestMapping(value="api/v1/{types}", method=RequestMethod.GET)
 	public void apiInterface(@PathVariable(required = true) String types,
 							 @RequestParam(required = false) String q,
@@ -95,15 +98,23 @@ public class HbrainAPIController extends BaseController {
 		Map<Long, List<PriceModel>> maps = new HashMap<Long, List<PriceModel>>();
 
 		Query query = APIUtils.constructQuery(q);
+		//long begin = System.currentTimeMillis();
+		//log.info("before mongo count query" + begin);
 		long totalCount = mongoTemplate.count(query, PriceModel.class, "price");
+		//log.info("after mongo count query" + (System.currentTimeMillis() - begin));
+
 		query.skip(offset).limit(limit).with(new Sort(new Order(Direction.DESC, "recordDate")));
+
+		//log.info("before mongo find query" + (System.currentTimeMillis() - begin));
 		List<PriceModel> lists = mongoTemplate.find(query, PriceModel.class, "price");
+		//log.info("after mongo find query" + (System.currentTimeMillis() - begin));
 		for (PriceModel entity : lists) {
 			entity.setRid(null);
 			entity.setGid(null);
 			entity.setCreatedTime(APIUtils.parseInterISODate(entity.getCreatedTime()));
 			entity.setUpdatedTime(APIUtils.parseInterISODate(entity.getUpdatedTime()));
 		}
+		//log.info("after for each" + (System.currentTimeMillis() - begin));
 		maps.put(totalCount, lists);
 		return maps;
 	}
