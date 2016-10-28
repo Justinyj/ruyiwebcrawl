@@ -15,8 +15,10 @@ import datetime
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-sys.path.append('..')
+
 from downloader.cacheperiod import CachePeriod
+from downloader.downloader_wrapper import Downloader
+from downloader.downloader_wrapper import DownloadWrapper
 from crawlerlog.cachelog import get_logger
 from settings import REGION_NAME, CACHE_SERVER
 
@@ -105,8 +107,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             
             urls = []
             for page in range(2,page_num):       # 根据页码将所有页加入队列
-                url = url_pattern.format(page)
-                urls.append(url)
+                urls.append(url_pattern.format(page))
             manager.put_urls_enqueue(batch_id, urls)
 
             result_list = parse_list_page(content)               # 首页本身作为第一页也有新闻信息，也要进行分析
