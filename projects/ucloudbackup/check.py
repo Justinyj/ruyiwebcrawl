@@ -32,7 +32,7 @@ def slack(msg):
         data={
             "text": msg
         }
-        requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+        requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 unpack()
 restore()

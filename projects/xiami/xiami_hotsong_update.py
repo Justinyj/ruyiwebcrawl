@@ -8,23 +8,23 @@ import re
 import json
 import os
 import redis
+import lxml.html
 
 
 redis_id_keyname = 'ruyi-action-xiami-hotmusic'
-
+HASH_KEY = 'ruyi-action-xiami-hotmusic-result'
 def slack(msg):
-    data = { "text": msg }
+    data = { "text": 'message from ruyi xiami hotmusic update\n{}'.format(msg) }
     print msg
-    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
+    requests.post("https://hooks.slack.com/services/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", data=json.dumps(data))
 
 
 def insert_record_into_redis(record):
-    key_pattern = 'ruyi-action-xiami-hotmusic-result-mid:{}'
+    # 更改储存方式为hash
+    key = HASH_KEY
     song_id = record['id']
-    insert_record_succeed = redis_client.set(key_pattern.format(song_id), json.dumps(record, ensure_ascii=False))
+    redis_client.hset(HASH_KEY,song_id, json.dumps(record, ensure_ascii=False))
     insert_id_succees     = redis_client.sadd(redis_id_keyname, song_id)
-    return insert_id_succees
-
 
 def get_hot_song():
     headers = {
@@ -46,21 +46,26 @@ def get_hot_song():
 
     while 1:
         content =  requests.get(url.format(page), headers=headers).text
-        if content == u'empty':
+        if content == u'empty' or not u'playstatus' in content:
             break
         page += 1
         length = len(re.findall('class="song"', content))
         pic_list = re.findall('src="(.*)"', content)
         song_name_list = re.findall('\">(.*?)?</a></strong>', content)
         song_id_list   = re.findall('song/(\d+)"',content)
+        dom = lxml.html.fromstring(content)
+        artist_name_list = dom.xpath('//div[@class="info"]/p[2]')
         for index in range(length):
             pic = pic_list[index]
             song_name = song_name_list[index]
+            artist_name = ''.join((artist_name_list[index].xpath('.//text()'))).strip()
+            print artist_name
             song_id = song_id_list[index]
             record = {
-                'id':song_id,
-                'pic':pic,
-                'name':song_name,
+                'id' : song_id,
+                'pic' : pic,
+                'name' : song_name,
+                'artist' : artist_name
             }
             records.append(record)
     delete_old_key()
@@ -73,14 +78,8 @@ def get_hot_song():
 
 def delete_old_key():
     redis_client.delete(redis_id_keyname)  # 每次都清空之前的id,下面是清空之前的key
-    cursor = 0L
-    keys = redis_client.keys('ruyi-action-xiami-hotmusic-result-mid:*')
-    count = 0
-    for key in keys:
-        response = redis_client.delete(key)
-        if response == 1:
-            count += 1
-    print ('delete:{}'.format(count))
+    redis_client.delete(HASH_KEY)
+
 
 
 if __name__ == '__main__':
