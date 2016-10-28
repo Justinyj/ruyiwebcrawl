@@ -29,6 +29,7 @@ class Loader(object):
         self.entity = db['entities']
         self.node = db['price']  # 无论mongo服务器开启关闭，以上语句都可成功执行
         self.meta = db['pricemeta']
+        self.news = db['news']
         self.pipe_line = pipeLine()
 
         try:
@@ -39,6 +40,8 @@ class Loader(object):
             self.node.create_index('recordDate', unique=False)
             self.meta.create_index('attrs', unique=False)
             self.meta.create_index('series', unique=True) # 这里创建series索引仅为了去重，attrs的unique设为True会出错
+            self.news.create_index('tags', unique=False)
+            self.news.create_index('gid', unique=True)
         except Exception, e:
             slack('Failed to connect mongoDB:\n{} : {}'.format(str(Exception), str(e)))
 

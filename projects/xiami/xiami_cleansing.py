@@ -15,7 +15,6 @@ from collections import Counter
 
 class XiamiDataMover(object):
     def __init__(self, origin_dir='/data/crawler_file_cache/xiami-1015/raw/latest/0/11'):
-        origin_dir =  '/data/crawler_file_cache/xiami-1015'
         self.count = 0
         self.jsons = []
         self.origin_dir = origin_dir
@@ -60,8 +59,7 @@ class XiamiDataMover(object):
             song_item[u'name'] = re.sub('\(.*\)', '',word).strip()
 
     def clean_pay(self, song_item):
-        # for item in song_item['raw_api_json'][u'purview_flag']:
-        for item in song_item[u'purview_flag']:
+        for item in song_item[u'raw_api_json'][u'purview_flag']:
             if item[u'action'] == u'LISTEN' and item[u'opt'] == u'FREE':
                 song_item[u'pay'] = 0
                 return
@@ -76,9 +74,9 @@ class XiamiDataMover(object):
         for tag in tags:
             cleaned_tags.extend(tag.split(u' '))        # 处理空格
         cleaned_tags = list(set(cleaned_tags))            # 去重
-        tag_pool = self.tags_by_artist[artist_id]
+        tag_pool = self.tags_by_artist[artist_id].extend(song_item[u'artist_tags'])
         for tag in cleaned_tags[::-1]:                  # 考虑到有删除操作，采用倒序遍历
-            if not tag in tag_pool or not tag:              # 第二个条件判断偶有的空格情况
+            if not tag or not tag in tag_pool:              # 第二个条件判断偶有的空格情况
                 cleaned_tags.remove(tag)
         song_item['tag_pool']     = tag_pool
         song_item['origin_tags']  = tags
@@ -95,10 +93,9 @@ class XiamiDataMover(object):
         alias_string = self.clean_dot(song_item[u'artist_alias']).strip()
         song_item['artist_alias'] = [song_item[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
 
-        if u';' in song_item[u'artist']:                             # 合唱情况一般用;分隔
-            song_item['artist_alias'].extend(song_item[u'artist'].split(u';'))
-        elif u' x ' in song_item[u'artist']:                         # 有时也用 x 分隔
-            song_item['artist_alias'].extend(song_item[u'artist'].split(u' x '))
+
+        if re.search(u'\ x\ |;', song_item[u'artist']):
+            song_item['artist_alias'].extend(re.split(u'\ x\ |;', song_item[u'artist']))
 
         if alias_string:
             song_item['artist_alias'].extend(alias_string.split(u'/'))
@@ -110,11 +107,20 @@ class XiamiDataMover(object):
 
         self.clean_bracket(song_item)
         self.clean_pay(song_item)
+        del song_item[u'raw_api_json']
+
         song_item[u'name'] = self.clean_dot(song_item['name'])
         song_item[u'songName'] = song_item[u'name']
-        song_item[u'tags'].append(u'MN:{}'.format(song_item[u'name']))
         song_item[u'tags'].append(u'BN:{}'.format(song_item[u'album'].strip()))
         song_item[u'hot_score'] = self.calculate_score(song_item[u'artist_fans'], song_item[u'song_share'], song_item[u'comment_cnt'])
+
+        if song_item[u'name'] in song_item[u'tags']:
+            song_item[u'tags'].remove(song_item[u'name'])
+        song_item[u'tags'].append(u'MN:{}'.format(song_item[u'name']))
+        if song_item[u'album'] in song_item[u'tags']:
+            song_item[u'tags'].remove(song_item[u'album'])
+        if song_item[u'artist'] in song_item[u'tags']:
+            song_item[u'tags'].remove(song_item[u'artist'])
         
         self.jsons.append(song_item)
         self.count += 1
@@ -169,13 +175,18 @@ class XiamiDataMover(object):
         for tag in tags:
             self.tags_by_artist[artist_id][tag] += 1
 
-    def cut_tags_by_percent(self, percent=0.2):
+    def cut_tags_by_percent(self, percent=0.3):
         for artist_id, tag_counter in self.tags_by_artist.iteritems():
             length = len(tag_counter.keys())
             self.tags_by_artist[artist_id] = [ele[0] for ele in tag_counter.most_common(int(length * percent + 0.99))]  # 保证向上取整
+            for tag in self.tags_by_artist[artist_id][::-1]:
+                if tag_counter[tag] == 1:
+                    self.tags_by_artist[artist_id].remove(tag)
+            print self.tags_by_artist[artist_id]
 
     def filter_tags(self, dir_path):                 # 统计歌手名下所有tag出现的次数
         file_name_list = os.listdir(dir_path)
+        print dir_path
         for file_name in file_name_list:
             abs_file_path = os.path.join(dir_path, file_name)
             with open(abs_file_path, 'r') as f:
@@ -185,10 +196,11 @@ class XiamiDataMover(object):
 
     def run(self):
         self.set_directory_list()
-        for dir_path in self.dir_list:          # 由于储存粒度为专辑，先遍历第一遍，得出所有歌手的tag情况并过滤
+        for dir_path in self.dir_list:          # 先遍历第一遍，得出所有歌手的tag情况
             self.filter_tags(dir_path)
 
-        self.cut_tags_by_percent()              # 留下前20%的歌曲（）比例可变
+        self.cut_tags_by_percent()              # 留下前20%的歌曲,比例可变
+
         for dir_path in self.dir_list:
             self.read_and_insert(dir_path)      # 再遍历第二遍，进行清洗和插入操作
 
