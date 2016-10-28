@@ -11,55 +11,99 @@ import java.util.List;
 
 public class APIUtils {
 
+	static SimpleDateFormat gsdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SS");//其中yyyy-MM-dd是你要表示的格式
+
 	@SuppressWarnings("deprecation")
 	public static String parseInterISODate(String date){
 		if(StringUtils.isBlank(date)){
 			return null;
 		}
 		Date d = new Date(date);
-		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SS");//其中yyyy-MM-dd是你要表示的格式 
 		// 可以任意组合，不限个数和次序；具体表示为：MM-month,dd-day,yyyy-year;kk-hour,mm-minute,ss-second; 
-		String str = sdf.format(d);
+		String str = gsdf.format(d);
 		str = str.split(" ")[0] + "T" + str.split(" ")[1] + "Z";
 		return str;
 	}
 
-	public static List<Criteria> parseTimeRange(String recordDate) {
-		List<Criteria> criterias = new ArrayList<>();
+	public static Criteria parseTimeRange(String recordDate) {
 		if (!recordDate.contains("TO")) {
-			criterias.add(Criteria.where("recordDate").is(recordDate));
-			return criterias;
+			return Criteria.where("recordDate").is(recordDate);
 		}
+
+		/* 0. init, 1. *, 2. [, 3. {,
+		 * 4. **, 5. *], 6. *},
+		 * 7. [*, 8. [], 9. [},
+		 * 10.{*, 11.{], 12.{}
+		 */
+		StringBuffer stats = new StringBuffer();
 
 		String begin = recordDate.split("TO")[0];
 		if (begin.startsWith("[")) {
 			begin = begin.substring(1).trim();
 			if (begin.equals("*")) {
+				stats.append("*");
 			} else {
-				criterias.add(new Criteria("recordDate").gte(begin));
+				stats.append("[");
 			}
 		} else if (begin.startsWith("{")) {
 			begin = begin.substring(1).trim();
 			if (begin.equals("*")) {
+				stats.append("*");
 			} else {
-				criterias.add(new Criteria("recordDate").gt(begin));
+				stats.append("{");
 			}
 		}
+
 		String end = recordDate.split("TO")[1];
 		if (end.endsWith("]")) {
 			end = end.substring(0, end.length() - 1).trim();
 			if (end.equals("*")) {
+				stats.append("*");
 			} else {
-				criterias.add(new Criteria("recordDate").lte(end));
+				stats.append("]");
 			}
 		} else if (end.endsWith("}")) {
 			end = end.substring(0, end.length() - 1).trim();
 			if (end.equals("*")) {
+				stats.append("*");
 			} else {
-				criterias.add(new Criteria("recordDate").gt(end));
+				stats.append("}");
 			}
 		}
-		return criterias;
+		System.out.println("recordDate is: " + stats.toString() + begin + "||" + end);
+		switch (stats.toString()) {
+			case "**":
+				return null;
+			case "*]":
+				return new Criteria("recordDate").lte(end);
+			case "*}":
+				return new Criteria("recordDate").lt(end);
+			case "[*":
+				return new Criteria("recordDate").gte(begin);
+			case "[]":
+				return new Criteria().andOperator(
+						Criteria.where("recordDate").gte(begin),
+						Criteria.where("recordDate").lte(end)
+				);
+			case "[}":
+				return new Criteria().andOperator(
+						Criteria.where("recordDate").gte(begin),
+						Criteria.where("recordDate").lt(end)
+				);
+			case "{*":
+				return new Criteria("recordDate").gt(begin);
+			case "{]":
+				return new Criteria().andOperator(
+						Criteria.where("recordDate").gt(begin),
+						Criteria.where("recordDate").lte(end)
+				);
+			case "{}":
+				return new Criteria().andOperator(
+						Criteria.where("recordDate").gt(begin),
+						Criteria.where("recordDate").lt(end)
+				);
+		}
+		return null;
 	}
 
 	public static List<Criteria> constructSubQuery(String sub) {
@@ -87,15 +131,14 @@ public class APIUtils {
 			if (sub.contains(":")) {
 				key = sub.trim().split(":")[0];
 				if (sub.startsWith("recordDate")) {
-					List<Criteria> subCriterias = parseTimeRange(sub.trim().split(":")[1]);
-					for (Criteria criteria : subCriterias) {
-						criterias.add(criteria);
+					Criteria subCriteria = parseTimeRange(sub.trim().split(":")[1]);
+					if (subCriteria != null) {
+						criterias.add(subCriteria);
 					}
 				} else {
-
 					vlauesList.add(sub.trim().split(":")[1]);
+					criterias.add(new Criteria(key).in(vlauesList));
 				}
-				criterias.add(new Criteria(key).in(vlauesList));
 			}
 		}
 		return criterias;
@@ -119,7 +162,7 @@ public class APIUtils {
 				q = q.substring(2).trim();
 			}
 
-			//System.out.println("query without pre: " + q);
+			System.out.println("query without pre: " + q);
 			if (q.startsWith("(")) {
 				end = q.indexOf(')');
 				String sub = q.substring(1, end);
@@ -145,7 +188,7 @@ public class APIUtils {
 				}
 				q = q.substring(end).trim();
 			}
-			//System.out.println("next sub_q: " + q);
+			System.out.println("next sub_q: " + q);
 		}
 		return query;
 	}
