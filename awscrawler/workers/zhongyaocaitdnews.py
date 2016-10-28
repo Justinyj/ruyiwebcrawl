@@ -60,7 +60,6 @@ def parse_list_page(content):
             'news_keyword_list' : [keyword.strip() for keyword in news_keyword_list],   #  每个药材字符都需要strip
             'access_time'       : datetime.datetime.utcnow().isoformat(),
         }
-        print '63'
         news_menuid = re.findall('www.zyctd.com/zixun/(\d+)/', news_url)[0]
         result['news_type'] = menu_dic[news_menuid]
         if u'快讯' in result['news_type']:
@@ -69,12 +68,14 @@ def parse_list_page(content):
             continue
         else:
             result['news_content'] = get_news_content(news_url)                         # 属于需要爬的长新闻
-
         result_list.append(result)
     return result_list
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
-    print url
+    if not hasattr(process, '_downloader'):
+        domain_name =  Downloader.url2domain(url)
+        headers = {'Host': domain_name}
+        setattr(process, '_downloader', DownloadWrapper(None, headers))
     if not hasattr(process, '_cache'):
         setattr(process, '_cache', CachePeriod(batch_id, CACHE_SERVER))
     if not hasattr(process, '_regs'):
@@ -90,8 +91,13 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
         print label
         if label == 'home_page':
             url_pattern = 'http://www.zyctd.com/zixun-{}.html'
-            req = requests.get(url)
-            content = req.text
+            content = process._downloader.downloader_wrapper(
+                url,
+                batch_id,
+                gap,
+                timeout = timeout,
+                encoding = 'utf-8',
+                refresh = True)
             page_content = re.findall('var pageCount = parseInt\(\'(\d+)\'\)', content)  # 在网页元素中没有，通过js代码段获得
             if not page_content:
                 return False
@@ -101,14 +107,19 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             for page in range(2,page_num):       # 根据页码将所有页加入队列
                 url = url_pattern.format(page)
                 urls.append(url)
-
             manager.put_urls_enqueue(batch_id, urls)
 
             result_list = parse_list_page(content)               # 首页本身作为第一页也有新闻信息，也要进行分析
             return process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
 
         elif label == 'list_page':
-            content = requests.get(url).text
+            content = process._downloader.downloader_wrapper(
+                url,
+                batch_id,
+                gap,
+                timeout = timeout,
+                encoding = 'utf-8',
+                refresh = True)
             result_list = parse_list_page(content)
             return process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
 

@@ -224,7 +224,6 @@ def parse_album(album_id):
             else:                   # 不是demo，加入
                 result_list.append(result)
         page += 1
-    print 'post'
     return process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
 
 
@@ -271,6 +270,4 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             return parse_album(album_id)
 
 if __name__ == '__main__':
-    # url = 'http://www.xiami.com/artist/2099990850?spm=a1z1s.3061781.6856533.8.qzOrrm'
-    # content = get_content(url)
-    parse_album('2100327398')
+    parse_album('120052')
