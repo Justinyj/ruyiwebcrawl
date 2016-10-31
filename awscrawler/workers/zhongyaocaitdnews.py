@@ -55,7 +55,7 @@ def parse_list_page(content):
         news_keyword_list    = news_info_node.xpath('.//span[@class="r"]//text()')
         news_keyword_list       = news_keyword_list[1:-1]                               # 第一个元素为‘药材’字符，最后一个元素为制表符等， 此种语法可以应对不存在药材关键字字段的新闻
         result = {
-            'news_title':news_title,
+            'news_title'        : news_title,
             'news_url'          : news_url,
             'news_desc'         : news_desc,
             'news_date'         : news_date,
