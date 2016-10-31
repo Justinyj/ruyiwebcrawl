@@ -27,7 +27,7 @@ class ZhongyaocaitdnewsLoader(Loader):
             source = news_item[u'news_url']
             domain = Loader.url2domain(source)
             trackingId = hashlib.sha1('{}_{}'.format(source, news_item[u'access_time'])).hexdigest()
-            rid = hashlib.sha1('{}_{}_{}'.format(news_item[u'news_title'], news_item[u'news_data'], domain)).hexdigest()    # 这里news_data是一个拼写错误，下批爬取会改回来
+            rid = hashlib.sha1('{}_{}_{}'.format(news_item[u'news_title'], news_item[u'news_date'], domain)).hexdigest()
             gid = rid
             tags = [u'新闻']
             tags.extend(news_item[u'news_keyword_list'])
@@ -49,7 +49,7 @@ class ZhongyaocaitdnewsLoader(Loader):
             record['claims'].append({ 'p': '标题', 'o': news_item[u'news_title'] })
             record['claims'].append({ 'p': '摘要', 'o': news_item[u'news_desc'] })
             record['claims'].append({ 'p': '来源', 'o': u'中药材天地网'})
-            record['claims'].append({ 'p': '日期', 'o': news_item[u'news_data'][:10] })
+            record['claims'].append({ 'p': '日期', 'o': news_item[u'news_date'][:10] })
             record['claims'].append({ 'p': '链接', 'o': source })
             record['claims'].append({ 'p': '正文', 'o': news_item[u'news_content'] })
             # print record
