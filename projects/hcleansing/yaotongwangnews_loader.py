@@ -64,4 +64,4 @@ class YaotongwangnewsLoader(Loader):
 
 if __name__ == '__main__':
     obj = YaotongwangnewsLoader()
-    obj.read_jsn('/Users/johnson/google')
+    obj.read_jsn('/data/hproject/2016/yaotongwangnews-1031')
