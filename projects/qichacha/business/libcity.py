@@ -151,8 +151,8 @@ class CityData():
             self.data['items'][item['citycode']] = item
 
         #process province
-        map_province =collections.defaultdict(set)
-        set_province =set()
+        map_province = collections.defaultdict(set)
+        set_province = set()
         for item in data:
             p = item.get('province')
             c = item.get('city')
@@ -256,7 +256,7 @@ class CityData():
                         if address.startswith(alias):
                             #print address, '-->', name, self.data[index][name]['province']
                             return  self.data[index][name].get('province')
-                        if re.search(ur'（{}）', address):
+                        if re.search(ur'（{}）'.format(alias), address):
                             #print address, '-->', name, self.data[index][name]['province']
                             return  self.data[index][name].get('province')
 
@@ -274,8 +274,8 @@ def test():
     #city_data.stat()
     print "-----"
     print city_data.guess_province([u"上海西红柿集团"])
-    print city_data.guess_provincen([u"浦东新区软件园"])
-    print city_data.guess_provincen([u"朝阳新区软件园"])
+    print city_data.guess_province([u"浦东新区软件园"])
+    print city_data.guess_province([u"朝阳新区软件园"])
 
 
 ##################
