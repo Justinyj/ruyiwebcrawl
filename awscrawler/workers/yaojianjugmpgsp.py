@@ -44,13 +44,12 @@ def get_formatted_table(table_node):
     return result_list
 
 def parse_page(url):
-    # content = process._downloader.downloader_wrapper(
-    #             url,
-    #             'yaojianjugmpgsp',
-    #             1,
-    #             timeout = 10,
-    #             refresh = True)
-    content = requests.get(url).text
+    content = process._downloader.downloader_wrapper(
+                url,
+                'yaojianjugmpgsp',
+                1,
+                timeout = 10,
+                refresh = True)
     if not content:
         raise IOError('This page might be 404')
     dom = lxml.html.fromstring(content)
@@ -98,9 +97,8 @@ def parse_page(url):
         raise IOError('There is no table element in this url')
     for table in record['table_list']:
         table['access_time'] = datetime.datetime.utcnow().isoformat()
-    print json.dumps(record, ensure_ascii=False).encode('utf-8')
     return process._cache.post(url, json.dumps(record, ensure_ascii=False), refresh=True)
-parse_page('http://www.sfda.gov.cn/WS01/CL0369/147873.html')
+
 
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     print (url)
