@@ -65,21 +65,6 @@ class XiamiDataMover(object):
             song_item[u'pay'] = 1
 
 
-    def clean_tags_old(self, song_item):
-        tags = song_item['tags']
-        artist_id = song_item['artistid']
-        cleaned_tags = []
-        for tag in tags:
-            cleaned_tags.extend(tag.split(u' '))        # 处理空格
-        cleaned_tags = list(set(cleaned_tags))            # 去重
-        tag_pool = self.tags_by_artist[artist_id].extend(song_item[u'artist_tags'])
-        for tag in cleaned_tags[::-1]:                  # 考虑到有删除操作，采用倒序遍历
-            if not tag or not tag in tag_pool:              # 第二个条件判断偶有的空格情况
-                cleaned_tags.remove(tag)
-        song_item['tag_pool']     = tag_pool
-        song_item['origin_tags']  = tags
-        song_item['tags'] = cleaned_tags
-
     def clean_tags(self, song_item):
         cleaned_tags = []
         for tag in song_item['tags']:
