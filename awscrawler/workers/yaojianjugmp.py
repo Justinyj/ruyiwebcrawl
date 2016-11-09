@@ -127,3 +127,5 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
 
         return process._cache.post(url, json.dumps(item, ensure_ascii = False))
 
+
+

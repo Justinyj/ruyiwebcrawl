@@ -149,7 +149,7 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                     page_url,
                     batch_id,
                     gap,
-                    timeout = 10,
+                    timeout = timeout,
                     refresh = True)
                 dom = lxml.html.fromstring(content)
             return True
