@@ -48,15 +48,13 @@ class XiamiDataMover(object):
             word = word.replace(dot, u'')
         return word
 
-    def clean_bracket(self, song_item):
+    def clean_bracket(self, song_item):     # 可能会有多个版本信息
         word = song_item[u'name']
-        if u'(' in word:
-            left = word.find(u'(')
-            right = word.find(u')')
-            version = word[left+1:right]
+        versions = re.findall(u'[\(（](.*?)[\)）]', word)
+        song_item[u'name'] = re.sub(u'[\(（](.*?)[\)）]', u'',word).strip()
+        for version in versions:
             self.versions.add(version)
-            song_item[u'tags'].append(version)
-            song_item[u'name'] = re.sub('\(.*\)', '',word).strip()
+            song_item[u'tags'].append('VN:{}'.format(version))
 
     def clean_pay(self, song_item):
         for item in song_item[u'raw_api_json'][u'purview_flag']:
@@ -67,7 +65,7 @@ class XiamiDataMover(object):
             song_item[u'pay'] = 1
 
 
-    def clean_tags(self, song_item):
+    def clean_tags_old(self, song_item):
         tags = song_item['tags']
         artist_id = song_item['artistid']
         cleaned_tags = []
@@ -82,17 +80,25 @@ class XiamiDataMover(object):
         song_item['origin_tags']  = tags
         song_item['tags'] = cleaned_tags
 
-
+    def clean_tags(self, song_item):
+        cleaned_tags = []
+        for tag in song_item['tags']:
+            cleaned_tags.extend(tag.split(u' '))        # 处理空格
+        cleaned_tags = list(set(cleaned_tags))            # 去重
+        song_item['tags'] = cleaned_tags
 
     def clean_single_song(self, song_item):
         song_item[u'artist_fans'] = song_item[u'fans']
+        song_item[u'songName']    = song_item[u'songName'].lower()
+        song_item[u'name']        = song_item[u'name'].lower()
+        if not song_item[u'artist']:
+            song_item[u'artist'] = song_item[u'raw_api_json'][u'artist_name']
         del song_item[u'fans']                                   # 将fans字段替换成artist_fans
 
         self.clean_tags(song_item)                              # 处理空格，符号，以及按照百分比过滤
 
         alias_string = self.clean_dot(song_item[u'artist_alias']).strip()
         song_item['artist_alias'] = [song_item[u'artist']]           # 按照知识图谱的习惯，别名里第一个为歌手本名
-
 
         if re.search(u'\ x\ |;', song_item[u'artist']):
             song_item['artist_alias'].extend(re.split(u'\ x\ |;', song_item[u'artist']))
@@ -143,18 +149,18 @@ class XiamiDataMover(object):
             self.count = 0
             self.jsons = []
 
-    def statistic_one_song(self, item):
+    def statistic_single_song(self, item):
         for tag in item['tags']:
-            if tag[0:3] in [u'AN:',u'BN:',u'MN:']:  # AN歌手名，BN专辑名，MN歌曲名，是在爬取过程中二次加入的，（如 AN:周杰伦 MN：晴天 ）。
+            if tag[0:3] in [u'AN:',u'BN:',u'MN:', u'VN:']:  # AN歌手名，BN专辑名，MN歌曲名，是在爬取过程中二次加入的，（如 AN:周杰伦 MN：晴天 ）。
               continue
             else:
                 self.tag_counter[tag] += 1
 
-        with open('artisits_alias_by_table.txt','a') as f:
-            f.write('\t'.join(item['artist_alias']) + '\n')
+        # with open('artisits_alias_by_table.txt','a') as f:
+        #     f.write('\t'.join(item['artist_alias']) + '\n')
 
-        # with open('songname.txt','a') as f:
-            # f.write(item['songName'] + '\n')
+        with open('songname.txt','a') as f:
+            f.write(item['songName'] + '\n')
 
 
     def read_and_insert(self, dir_path):
@@ -165,7 +171,7 @@ class XiamiDataMover(object):
                 song_list = json.load(f)
                 for song in song_list:
                     self.clean_single_song(song)
-                    #self.statistic_one_song(song)
+                    self.statistic_single_song(song)
 
     def count_for_tag(self, song_item):
         artist_id = song_item[u'artistid']
@@ -196,21 +202,24 @@ class XiamiDataMover(object):
 
     def run(self):
         self.set_directory_list()
-        for dir_path in self.dir_list:          # 先遍历第一遍，得出所有歌手的tag情况
-            self.filter_tags(dir_path)
+        # for dir_path in self.dir_list:          # 先遍历第一遍，得出所有歌手的tag情况
+            # self.filter_tags(dir_path)
 
-        self.cut_tags_by_percent()              # 留下前20%的歌曲,比例可变
+        # self.cut_tags_by_percent()              # 留下前20%的歌曲,比例可变
 
         for dir_path in self.dir_list:
             self.read_and_insert(dir_path)      # 再遍历第二遍，进行清洗和插入操作
 
         if self.jsons:
             sendto_es(self.jsons)
+        self.out_put_tag()
         with open('version.txt', 'w') as f:
             for line  in self.versions:
                 f.write(line + '\n')
 
 
 if __name__ == '__main__':
-    mover = XiamiDataMover()
+    dir_path = '/data/crawler_file_cache/'
+    xiami_dirs = [ele if ele.startswith('xiamidaily') else '' for ele in os.listdir(dir_path)]
+    mover = XiamiDataMover(origin_dir=dir_path + max(xiami_dirs))
     mover.run()

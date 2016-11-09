@@ -22,8 +22,8 @@ ES_DATASET_CONFIG = {
 }
 
 ES_DATASET_CONFIG = {
-        'description': 'clean_music_xiami_20161024',
-        'es_index': 'clean_music_xiami_whole_20161024',
+        'description': 'clean_music_xiami_20161028',
+        'es_index': 'clean_music_xiami_whole_20161028',
         'es_type': 'xiamimusic',
         'filepath_mapping': os.path.abspath(os.path.dirname(__file__)) + '/' + 'music_schema.json'
 }
