@@ -85,7 +85,7 @@ class Downloader(object):
         else:
             from selenium import webdriver
             self.driver = webdriver.Firefox()
-            self.driver.get('http://qichacha.com/user_login')
+            self.driver.get('https://graph.qq.com/oauth/show?which=Login&display=pc&response_type=code&client_id=101188807&redirect_uri=http%3A%2F%2Fwww.qichacha.com%2Fuser_callbackqq&state=8629a7fecfe3a1a81308915c97f38646&scope=get_user_info,add_share')
             self.driver.find_element_by_css_selector('#user_login .form-group [name=name]').send_keys('18623390999')
             self.driver.find_element_by_css_selector('#user_login .form-group [name=pswd]').send_keys('5201314pmm')
 #            self.driver.find_element_by_css_selector('#user_login button[type=submit]').submit()
