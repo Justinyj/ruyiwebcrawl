@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 import urllib
 import re
+import pytz
 import urlparse
 import lxml.html
 import time
@@ -15,7 +16,7 @@ import datetime
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
-
+sys.path.append('..')
 from downloader.cacheperiod import CachePeriod
 from downloader.downloader_wrapper import Downloader
 from downloader.downloader_wrapper import DownloadWrapper
@@ -73,6 +74,22 @@ def parse_list_page(content):
         result_list.append(result)
     return result_list
 
+def check_date_ok(url):                                  # 药通网的新闻每天北京时间10~12点更新，爬虫可以设成北京时间13~14点爬取，
+    print 'check date'
+    now = datetime.datetime.utcnow()
+    content = requests.get(url).text
+    dom = lxml.html.fromstring(content)
+    date_list = dom.xpath('//span[@class="g9"]//text()')
+
+    date = date_list[0]
+    news_date = time.strptime(date,'%Y-%m-%d %H:%M')
+    yesterday_date = datetime.date.today() - datetime.timedelta(days=1)
+    yesterday_zero = yesterday_date.timetuple()   #当天上海时间0点
+    print news_date
+    print yesterday_zero
+    return news_date > yesterday_zero
+
+
 def process(url, batch_id, parameter, manager, other_batch_process_time, *args, **kwargs):
     if not hasattr(process, '_downloader'):
         domain_name =  Downloader.url2domain(url)
@@ -107,10 +124,16 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
             if not page_content:
                 return False
             page_num = int(page_content[0])
-            
+            print (page_num)
             urls = []
-            for page in range(2,page_num):       # 根据页码将所有页加入队列
-                urls.append(url_pattern.format(page))
+
+            for page in range(2,page_num):
+                print page
+                page_url = url_pattern.format(page)
+                if not check_date_ok(page_url):         # 由于中药材天地网每天更新新闻只有十多页，逐页检查虽然会浪费访问次数，但是并不严重
+                    break
+                urls.append(page_url)
+            print len(urls)
             manager.put_urls_enqueue(batch_id, urls)
 
             result_list = parse_list_page(content)               # 首页本身作为第一页也有新闻信息，也要进行分析
@@ -126,9 +149,3 @@ def process(url, batch_id, parameter, manager, other_batch_process_time, *args, 
                 refresh = True)
             result_list = parse_list_page(content)
             return process._cache.post(url, json.dumps(result_list, ensure_ascii=False), refresh=True)
-
-
-
-
-if __name__ == '__main__':
-    url = 'http://www.zyctd.com/zixun-12.html'

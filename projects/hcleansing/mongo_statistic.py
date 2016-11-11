@@ -9,6 +9,7 @@ import json
 import datetime
 import hashlib
 import sys
+import requests
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
@@ -26,11 +27,13 @@ class mongoStatistic(object):
         self.entity = db['entities']
         self.node = db['price']  # 无论mongo服务器开启关闭，以上语句都可成功执行
         self.meta = db['pricemeta']
+        self.news = db['news']
         self.log  = db['log']
 
         self.series_counter    = Counter()
         self.product_counter   = Counter()
         self.price_counter = Counter() 
+        self.news_counter  = Counter()
         self.total_price_record = 0
         self.domain_list =[
             'www.kmzyw.com.cn',
@@ -40,7 +43,6 @@ class mongoStatistic(object):
         ]
     
     def get_statistics(self):
-        # TODO 更改成使用查询条件查询，增加查询速度
 
         for domain in self.domain_list:
             record_num = self.node.count({'source.domain':domain})
@@ -52,6 +54,9 @@ class mongoStatistic(object):
 
             product_num = len(self.node.distinct('tags.0', {'source.domain':domain})) # tags的第一个标签是种类
             self.product_counter[domain] = product_num
+
+            news_num   = self.news.count({'source.domain':domain})
+            self.news_counter[domain] = news_num
         return
 
     def insert_log(self):
@@ -62,6 +67,7 @@ class mongoStatistic(object):
             'price'              :  json.dumps(self.price_counter, ensure_ascii=False),    
             'series'             :  json.dumps(self.series_counter, ensure_ascii=False),
             'product'            :  json.dumps(self.product_counter, ensure_ascii=False),
+            'news'               :  json.dumps(self.news_counter, ensure_ascii=False),
             'total_price_record' :  self.total_price_record,
         }
         self.log.insert(log_record)

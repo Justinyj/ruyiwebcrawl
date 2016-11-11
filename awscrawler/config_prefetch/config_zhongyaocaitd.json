@@ -16,7 +16,7 @@
                 "filename_urls": "/home/admin/hcrawler/zhongyaocaitd.txt"
             }
         },
-        "aws_machine_number": 2,
+        "aws_machine_number": 20,
         "note": "中药材天地",
         "debug": true
     }
