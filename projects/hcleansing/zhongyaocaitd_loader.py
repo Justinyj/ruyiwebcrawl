@@ -43,6 +43,7 @@ class ZhongyaocaitdLoader(Loader):
             tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
             series = '_'.join(tags)
+            seriesid = '{}_{}'.format(series, domain)
             self.pipe_line.clean_product_place(tags[2], tags)
             if series not in series_cache:
                 self.insert_meta_by_series(series)
@@ -52,6 +53,7 @@ class ZhongyaocaitdLoader(Loader):
                 'rid': rid,
                 'gid': rid, # 不可变
                 'series': series,
+                'seriesid' : seriesid,
                 'tags': [ tag for tag in tags if tag],
                 'createdTime': datetime.utcnow(),
                 'updatedTime': datetime.utcnow(),
