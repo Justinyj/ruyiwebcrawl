@@ -103,9 +103,20 @@
                 "crawl_timeout": 10,
                 "failure_times": 5,
                 "filename_urls": "/home/admin/hcrawler/zhongyaocaitdnews.txt"
+            },
+            "9": {
+                "batch_id": "yaojianjugmpgspdaily",
+                "crawl_http_method": "get",
+                "crawl_gap": 1,
+                "crawl_use_js_engine": false,
+                "length": 100,
+                "priority": 1,
+                "crawl_timeout": 10,
+                "failure_times": 5,
+                "filename_urls": "/home/admin/hcrawler/gmpgspurl.txt"
             }
         },
-        "aws_machine_number": 50,
+        "aws_machine_number": 60,
         "note": "daily",
         "debug": true
     }

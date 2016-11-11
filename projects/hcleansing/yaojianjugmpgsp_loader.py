@@ -37,7 +37,6 @@ class YaojianjugmpgspLoader(Loader):
             rule_string = rule_tuple[0]
             if re.search(rule_string, word):
                 return rule_tuple[1]
-        return
 
 
     def get_tag_from_title(self, word):
@@ -57,7 +56,6 @@ class YaojianjugmpgspLoader(Loader):
             rule_string = rule_tuple[0]
             if re.search(rule_string, word):
                 return rule_tuple[1]
-        return 
 
     def parse(self, jsn):
         published_time = jsn['published_time']
