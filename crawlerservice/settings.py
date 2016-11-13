@@ -16,7 +16,7 @@ envs = {
         'DBHOST': '127.0.0.1',
         'DBPORT': 5432,
 
-        'CACHEPAGE': 's3', # ufile, fs, pg, qiniu, s3
+        'CACHEPAGE': 's3', # ufile, fs, pg, qiniu, s3, period
         'REGION_NAME': 'ap-northeast-1',
         'FSCACHEDIR': '/data/crawlercache/',
         'CONCURRENT_NUM': 200,
@@ -61,7 +61,7 @@ envs = {
         'DBPORT': 5432,
 
         'CACHEPAGE': 'fs', # ufile, fs, pg, qiniu
-        'FSCACHEDIR': '/data/crawler_file_cache/',
+        'FSCACHEDIR': '/data/hproject/20161111/',
         'CONCURRENT_NUM': 200,
         'REGION_NAME': 'ap-northeast-1',
 

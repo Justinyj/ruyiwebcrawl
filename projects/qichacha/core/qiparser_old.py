@@ -175,103 +175,61 @@ class QiParser(object):
 
 
     def parse_search_result(self, tree):
-        ret = []
-        if tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
-            #new version after 2016-06-13
-            items = tree.cssselect('.list-group-item')
-            #print ("v3",len(items) )
-            for i in items:
-                #from lxml import etree as ET
-                #print ("v3",  ET.tostring(i, pretty_print=True))
-                if not i.cssselect('.name'):
-                    continue
-
-                href = i.attrib['href']
-                name = i.cssselect('.name')[0].text_content().strip()
-                status = i.cssselect('.label')[0].text_content().strip()
-                province, key_num = href.rstrip('.shtml').lstrip('/firm_').split('_', 1)
-                if not name:
-                    name = "NONAME-"+key_num
-                item = {
-                    'name': name,
-                    'status': status,
-                    'key_num': key_num,
-                    'href': href,
-                    'province': province,
-                }
-                ret.append(item)
-                #print (name)
-        elif tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
+        summary_dict = {}
+        if tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
             #new version after 2016-05-31
-            items = tree.cssselect('.list-group-item')
-            #print ("v2",len(items) )
-            for i in items:
+            for i in tree.cssselect('.list-group-item'):
                 name = i.cssselect('.name')[0].text_content().strip()
                 status = i.cssselect('.label')[0].text_content().strip()
                 href = i.attrib['href']
                 province, key_num = href.rstrip('.shtml').lstrip('/firm_').split('_', 1)
                 if not name:
                     name = "NONAME-"+key_num
-                item = {
+                summary_dict[name] = {
                     'name': name,
                     'status': status,
                     'key_num': key_num,
                     'href': href,
                     'province': province,
                 }
-                ret.append(item)
-                #print (name)
         else:
             for i in tree.cssselect('#searchlist'):
                 name = i.cssselect('.name')[0].text_content().strip()
                 status = i.cssselect('.label')[0].text_content().strip()
                 href = i.cssselect('.list-group-item')[0].attrib['href']
                 key_num = href.rstrip('.shtml').rsplit('_', 1)[-1]
-                item = {
+                summary_dict[name] = {
                     'name': name,
                     'status': status,
                     'key_num': key_num,
                     'href': href,
                 }
-                ret.append(item)
 
-        #import json
-        #print  (len(summary_dict), json.dumps(summary_dict.keys(),ensure_ascii=False))
 
-        return ret
 
-    def parse_search_result_info(self, tree):
+        return summary_dict
 
-        result_info = {"version": "v1.0", "date":"2016-05-01", "num_per_page": 10, "total": 0 }
-        if tree.cssselect('#searchlist') and tree.cssselect('.list-group-item'):
-            result_info = {"version": "v1.3", "date":"2016-06-13", "num_per_page": 10 }
-        elif tree.cssselect('#options') and tree.cssselect('.list-group-item .name'):
-            result_info = {"version": "v1.2", "date":"2016-05-31", "num_per_page": 20 }
-        elif tree.cssselect('#searchlist'):
-            result_info = {"version": "v1.1", "date":"2016-05-15", "num_per_page": 10 }
+    def parse_search_result_count(self, tree):
+        ret = tree.cssselect('.panel-default .pull-left .text-danger')
+        if ret:
+            return int(ret[0].text_content().strip().replace("+",""))
 
-        r = tree.cssselect('.panel-default .pull-left .text-danger')
-        if r:
-            result_info["total"] = int(r[0].text_content().strip().replace("+",""))
-            return result_info
-        else:
-            r = tree.cssselect('.container .panel-default .pull-right span.text-danger')
-            #print (ret,ret[0].text_content().strip())
-            if r:
-                result_info["total"] = int(r[0].text_content().strip().replace("+",""))
+        ret = tree.cssselect('.container .panel-default .pull-right span.text-danger')
+        #print (ret,ret[0].text_content().strip())
+        if ret:
+            return int(ret[0].text_content().strip().replace("+",""))
 
-        return result_info
+        return 0
 
     def parse_company_investment(self, tree):
         invest_dict = {}
         for sub_company in tree.cssselect('.list-group a.list-group-item'):
             sub_name = sub_company.cssselect('span.clear .text-lg')[0].text_content().strip()
             href = sub_company.get('href')
-            province, key_num = href.rsplit('_', 2)[-2:]
+            key_num = href.rsplit('_', 1)[-1]
             invest_dict[sub_name] = {
                 'name': sub_name,
                 'key_num': key_num,
-                'province': province,
                 'href': href,
             }
         return invest_dict

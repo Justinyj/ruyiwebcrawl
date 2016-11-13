@@ -17,20 +17,7 @@ import urllib
 
 class Qichacha(object):
 
-    def get_info_url(self, tab, key_num, name, page=None):
-        if "NONAME" in name:
-            name = "%20"
-        if None == page or page == 1:
-            ret = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab={tab}".format(key_num=key_num, name=name, tab=tab)
-        else:
-            ret = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab={tab}&page={page}".format(key_num=key_num, name=name, page=page, tab=tab)
-
-        #if self.config.get('debug'):
-        #    print (ret)
-
-        return ret
-
-    def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True, cache_only=False):
+    def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True):
         if batch_id is None:
             batch_id = "qichacha0601"
         if config is None:
@@ -38,13 +25,12 @@ class Qichacha(object):
 
         self.config = config
         self.list_url = "http://www.qichacha.com/search?key={key}&index={index}&p={page}&province={province}"
-        #self.base_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=base"
-        #self.invest_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=touzi&p={page}"
-        #self.legal_url = "http://www.qichacha.com/company_getinfos?unique={key_num}&companyname={name}&tab=susong&p={page}"
+        self.base_url = "http://www.qichacha.com/company_base?unique={key_num}&companyname={name}"
+        self.invest_url = "http://www.qichacha.com/company_touzi?unique={key_num}&companyname={name}&p={page}"
 
         #self.VIP_MAX_PAGE_NUM = 500
         #self.MAX_PAGE_NUM = 10
-        #self.NUM_PER_PAGE = config.get('NUM_PER_PAGE',20 )  #10
+        self.NUM_PER_PAGE = 10
         self.INDEX_LIST_PERSON = [4,6,14]
         self.INDEX_LIST_ORG = [2]
         self.PROVINCE_LIST = {
@@ -84,8 +70,7 @@ class Qichacha(object):
                                      request=request,
                                      batch_id=batch_id,
                                      groups=groups,
-                                     refresh=refresh,
-                                     cache_only=cache_only)
+                                     refresh=refresh)
         self.downloader.login()
         self.parser = QiParser()
 
@@ -114,21 +99,14 @@ class Qichacha(object):
     #     return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit, refresh )
 
     def list_keyword_search(self, keyword_list, index_list, limit=None, refresh=False, skip_index_max=None):
-        """.. :py:method::
-            对这样词语列表搜索结果的返回http://www.qichacha.com/search?key=%E5%8C%BB%E8%8D%AF&index=0
-
-        :parameter keyword_list: 要搜索的词语列表
-        :parameter index_list: 搜索条件的index编号列表
-        :parameter limit: 搜索返回结果数限制，vip-5000，free-1000
-        :rtype: hash, key is company, value is result json.
-        """
         if not isinstance(keyword_list, list):
             keyword_list = [keyword_list]
 
         if limit is None:
-            limit  =  self.config["MAX_LIMIT"]
+            max_page = self.config["MAX_PAGE_NUM"]
         else:
-            limit = min(limit, self.config["MAX_LIMIT"])
+            max_page = (limit - 1) // self.NUM_PER_PAGE + 1
+            max_page = min(self.config["MAX_PAGE_NUM"], max_page)
 
         result = {}
         for idx, keyword in enumerate(keyword_list):
@@ -137,27 +115,24 @@ class Qichacha(object):
             sum_e = 0
             sum_a = 0
             for index in index_list:
-                result_info = self.get_keyword_search_result_info(keyword, index, refresh)
-                index_expect = result_info["total"]
 
-                #max_page = (limit - 1) // result_info["max_page_num"] + 1  #self.NUM_PER_PAGE + 1
-
+                index_expect = self.get_keyword_search_count(keyword, index, refresh)
                 metadata_dict["expect"] += index_expect
                 metadata_dict["i{}_e".format(index)] = index_expect
                 #metadata_dict["total_[index:{}]_expect".format(index)]=cnt
 
                 province_list = []
                 summary_dict_by_index = {}
-                if skip_index_max and index_expect >= skip_index_max:
+                if skip_index_max and index_expect>=skip_index_max:
                     print (" ---- undersample [{}][index:{}] 5000+ results".format(keyword, index))
-                    self.list_keyword_search_onepass(keyword, index, "",  limit, metadata_dict, summary_dict_by_index, refresh)
+                    self.list_keyword_search_onepass(keyword, index, "", max_page, metadata_dict, summary_dict_by_index, refresh)
                     pass
-                elif limit is None and index_expect >= self.config["MAX_LIMIT"]:
+                elif limit is None and index_expect>= self.config["MAX_PAGE_NUM"] * self.NUM_PER_PAGE:
                     print (" ---- expand [{}][index:{}] auto expand by province , expect {} ".format(keyword, index, index_expect) )
                     for province in self.PROVINCE_LIST:
-                        self.list_keyword_search_onepass(keyword, index, province, limit, metadata_dict, summary_dict_by_index, refresh)
-                elif index_expect > 0:
-                    self.list_keyword_search_onepass(keyword, index, "",  limit, metadata_dict, summary_dict_by_index, refresh)
+                        self.list_keyword_search_onepass(keyword, index, province, max_page, metadata_dict, summary_dict_by_index, refresh)
+                elif index_expect>0:
+                    self.list_keyword_search_onepass(keyword, index, "", max_page, metadata_dict, summary_dict_by_index, refresh)
                 else:
                     print (" ---- skip [{}][index:{}] no expected result".format(keyword, index))
                 summary_dict.update(summary_dict_by_index)
@@ -182,55 +157,35 @@ class Qichacha(object):
         #print(json.dumps(result, ensure_ascii=False))
         return result
 
-    def list_keyword_search_onepass(self, keyword, index, province, limit, metadata_dict, summary_dict_onepass, refresh):
-        """.. :py:method::
-            对这样单个词搜索结果的返回http://www.qichacha.com/search?key=%E5%8C%BB%E8%8D%AF&index=0
-
-        :parameter keyword: 要搜索的词语
-        :parameter index: 搜索条件的index编号
-        :parameter province: 搜索条件的省份（拼音开头字母?）
-        :parameter limit: 搜索返回结果数限制，vip-5000，free-1000
-        :rtype: hash, key is company, value is result json.
-        """
+    def list_keyword_search_onepass(self, keyword, index, province, max_page, metadata_dict, summary_dict_onepass, refresh):
         summary_dict_local ={}
         cnt_expect = 0
         cnt_items = 0
 
-        for page in range(1, 1000):
+        for page in range(1, max_page + 1):
 
             url = self.list_url.format(key=keyword, index=index, page=page, province=province)
 
             source = self.downloader.access_page_with_cache(url, groups="v0531,search,index{}".format(index), refresh=refresh)
-
             if not source:
-                # no more results, cannot get data
-                break
-
-            #if self.config.get("debug"):
-            #    print (source)
-
-            if "nodata.png" in source:
                 # no more results, cannot get data
                 break
 
             tree = lxml.html.fromstring(source)
 
             if page ==1:
-                result_info = self.parser.parse_search_result_info(tree)
-                cnt_expect = result_info["total"]
-                metadata_dict["i{}_sum_e".format(index)] += cnt_expect
-                metadata_dict["num_per_page"] = result_info["num_per_page"]
-
+                cnt_expect = self.parser.parse_search_result_count(tree)
+                metadata_dict["i{}_sum_e".format(index)]+=cnt_expect
                 #metadata_dict["total_[index:{}]_expect2".format(index)]+=cnt
                 #metadata_dict["total_[index:{}][省:{}]_expect2".format(index, province)]=cnt
-                if cnt_expect >= self.config["MAX_LIMIT"]:
+                if cnt_expect >= self.config["MAX_PAGE_NUM"] * self.NUM_PER_PAGE:
                     msg = " ---- todo [{}][index:{}][省:{}] TO BE EXPAND , expect {}, ".format( keyword,index, province, cnt_expect)
                     print (msg)
                     metadata_dict["todo_expand"]+=1
-                else:
-                    if self.config.get("debug"):
-                        msg = "---- regular [{}][index:{}][省:{}], expect {}, ".format( keyword,index, province, cnt_expect)
-                        print (msg)
+                elif province:
+                    #msg = "[{}][index:{}][省:{}], expect {}, ".format( keyword,index, province, cnt_expect)
+                    #print (msg, end="")
+                    pass
 
             if tree.cssselect("div.noresult .noface"):
                 break
@@ -242,19 +197,14 @@ class Qichacha(object):
                 name = item['name']
                 summary_dict_local[name]= item
 
-            if cnt_items >= cnt_expect:
+            if cnt_items == cnt_expect:
                 break
 
-            if cnt_items >= limit:
+            if len(items)<self.NUM_PER_PAGE:
                 break
-
-            #if self.config.get("debug"):
-            #    print (len(items), page)
-            #if len(items)<self.NUM_PER_PAGE:
-            #    break
 
         #if province:
-        metadata_dict["i{}_sum_a".format(index)] += cnt_items
+        metadata_dict["i{}_sum_a".format(index)]+= cnt_items
         cnt_actual = len(summary_dict_local)
         summary_dict_onepass.update( summary_dict_local )
         if cnt_expect==0 or cnt_actual==0 or abs(cnt_expect - cnt_actual)>0:
@@ -263,11 +213,11 @@ class Qichacha(object):
             print (msg)
             #print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
 
-    def get_keyword_search_result_info(self, keyword, index, refresh=False):
+    def get_keyword_search_count(self, keyword, index, refresh=False):
         """.. :py:method::
 
         :param keyword: search keyword
-        :rtype: json
+        :rtype: count
         """
         url = self.list_url.format(key=keyword, index=index, page=1, province="")
 
@@ -278,10 +228,7 @@ class Qichacha(object):
         #print (url, source)
         tree = lxml.html.fromstring(source)
 
-        result_info = self.parser.parse_search_result_info(tree)
-        result_info["keyword"] = keyword
-        result_info["index"] = index
-        return result_info
+        return  self.parser.parse_search_result_count(tree)
 
 
     def input_name_output_id(self, name):
@@ -309,9 +256,7 @@ class Qichacha(object):
 
 
     def _crawl_company_detail_by_name_id(self, name, key_num):
-        """.. :py:method::
-            给定company的name和key_num，获取该公司的详情内容，包括子公司
-
+        """
         :rtype: {name: {"name": name,
                         "key_num", key_num,
                         "info": {},
@@ -319,18 +264,13 @@ class Qichacha(object):
                        }
                 }
         """
-        url = self.get_info_url("base", key_num, name)
-        source = self.downloader.access_page_with_cache(url)
-        if not source:
-            return {}
+        url = self.base_url.format(name=name, key_num=key_num)
         try:
+            source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
         except:
-            if self.config.get("debug"):
-                print (source)
-            import traceback
-            traceback.print_exc(file=sys.stdout)
-            return {}
+            source = self.downloader.access_page_with_cache(url)
+            tree = lxml.html.fromstring(source)
 
         all_info = self.parser.parse_detail(tree)
         all_info["info"]["name"] = name
@@ -369,20 +309,15 @@ class Qichacha(object):
         if not hasattr(self, "_re_page_num"):
             setattr(self,
                     "_re_page_num",
-                    re.compile("javascript:getTabList\((\d+)"))
+                    re.compile("javascript:touzilist\((\d+)\)"))
 
-        url = self.get_info_url("touzi",key_num, name, page=page)
-        source = self.downloader.access_page_with_cache(url)
-        if not source:
-            return
+        url = self.invest_url.format(key_num=key_num, name=name, page=page)
         try:
+            source = self.downloader.access_page_with_cache(url)
             tree = lxml.html.fromstring(source)
         except:
-            if self.config.get("debug"):
-                print (source)
-            import traceback
-            traceback.print_exc(file=sys.stdout)
-            return
+            source = self.downloader.access_page_with_cache(url)
+            tree = lxml.html.fromstring(source)
 
         if tree.cssselect("div.noresult .noface"):
             return
@@ -418,12 +353,9 @@ class Qichacha(object):
             max_page_num = max_page_num[0]
 
         for page_idx in range(2, max_page_num + 1):
-            more_invest_dict = self._crawl_company_investment_single_page(name,
+            invest_dict.update(self._crawl_company_investment_single_page(name,
                                                                      key_num,
-                                                                     page_idx)
-            if more_invest_dict:
-                invest_dict.update(more_invest_dict)
-
+                                                                     page_idx))
         return {name: invest_dict}
 
 
@@ -436,31 +368,12 @@ class Qichacha(object):
 
         name_info_dict = self.crawl_company_detail(name, key_num, subcompany=True)
         already_crawled_names.add(name)
-        if "invests" in name_info_dict.get(name,{}):
+        if "invests" in name_info_dict[name]:
             next_layer_name_id_set.update(
                 [(i["name"], i["key_num"]) for i in name_info_dict[name]["invests"]\
                     if i["name"] not in already_crawled_names]
             )
         all_name_info_dict.update(name_info_dict)
-
-    def crawl_company_expand(self, name, key_num=None, limit=None):
-        """.. :py:method::
-            爬取一个公司的子孙公司和父辈公司
-        """
-        if key_num is None:
-            key_num = self.input_name_output_id(name)
-            if key_num is None:
-                return
-
-        company_raw_one = {}
-        temp = self.crawl_descendant_company(name, key_num, limit=limit)
-        if temp:
-            company_raw_one.update(temp)
-
-        temp = self.crawl_ancestors_company(name, key_num, limit=limit)
-        if temp:
-            company_raw_one.update(temp)
-        return company_raw_one
 
 
     def crawl_descendant_company(self, name, key_num=None, limit=None):
