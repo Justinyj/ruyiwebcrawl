@@ -28,7 +28,7 @@ def init():
     list_url10 = 'http://www.qichacha.com/search?key={key}&index={index}&province={province}statusCode=10&sortField=registcapi&isSortAsc=false&p={page}'
     # 存续
     list_url20 = 'http://www.qichacha.com/search?key={key}&index={index}&province={province}statusCode=20&sortField=registcapi&isSortAsc=false&p={page}'
-    q10 = Qichacha(config, batch_id='qichacha1111', request=True, list_url=list_url10)
+    q10 = Qichacha(config, batch_id='qichacha1111', refresh=True, request=True, list_url=list_url10)
     q10.list_keyword_search(u'中药饮片', [12], 5000)
 
 #    q20 = Qichacha(config, batch_id='qichacha1111', request=True, list_url=list_url10)

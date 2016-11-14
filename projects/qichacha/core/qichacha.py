@@ -30,7 +30,7 @@ class Qichacha(object):
 
         return ret
 
-    def __init__(self, config, batch_id=None, groups=None,  refresh=False, request=True, cache_only=False, list_url=None):
+    def __init__(self, config, batch_id=None, groups=None,  refresh=None, request=True, cache_only=False, list_url=None):
         if batch_id is None:
             batch_id = "qichacha1111"
         if config is None:
@@ -95,7 +95,7 @@ class Qichacha(object):
 
 
 
-    # def list_person_search(self, person_list, limit=None, refresh=False):
+    # def list_person_search(self, person_list, limit=None, refresh=None):
     #     """.. :py:method::
     #         need to catch exception of download error
     #
@@ -106,7 +106,7 @@ class Qichacha(object):
     #     """
     #     return self._list_keyword_search(person_list, self.INDEX_LIST_PERSON, limit, refresh )
     #
-    # def list_corporate_search(self, corporate_list, limit=None, refresh=False):
+    # def list_corporate_search(self, corporate_list, limit=None, refresh=None):
     #     """.. :py:method::
     #         need to catch exception of download error
     #
@@ -117,7 +117,7 @@ class Qichacha(object):
     #     """
     #     return self._list_keyword_search(corporate_list, self.INDEX_LIST_ORG, limit, refresh )
 
-    def list_keyword_search(self, keyword_list, index_list, limit=None, refresh=False, skip_index_max=None):
+    def list_keyword_search(self, keyword_list, index_list, limit=None, refresh=None, skip_index_max=None):
         """.. :py:method::
             对这样词语列表搜索结果的返回http://www.qichacha.com/search?key=%E5%8C%BB%E8%8D%AF&index=0
 
@@ -267,7 +267,7 @@ class Qichacha(object):
             print (msg)
             #print ( json.dumps(summary_dict_local.keys(), ensure_ascii=False) )
 
-    def get_keyword_search_result_info(self, keyword, index, refresh=False):
+    def get_keyword_search_result_info(self, keyword, index, refresh=None):
         """.. :py:method::
 
         :param keyword: search keyword

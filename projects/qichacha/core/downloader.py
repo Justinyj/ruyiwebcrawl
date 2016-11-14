@@ -24,7 +24,7 @@ class Downloader(object):
 
     """
 
-    def __init__(self, config, request=False, batch_id='', groups=None, refresh=False, cache_only=False):
+    def __init__(self, config, request=False, batch_id='', groups=None, refresh=None, cache_only=False):
         self.request = request
         self.TIMEOUT = 10
         self.RETRY = 3
@@ -71,14 +71,15 @@ class Downloader(object):
             session = requests.Session()
             session.mount('http://', requests.adapters.HTTPAdapter(pool_connections=30, pool_maxsize=30, max_retries=3))
             session.headers = {
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, sdch',
-                'Accept-Language': 'zh-CN,en-US;q=0.8,en;q=0.6',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Encoding': 'gzip, deflate',
+                'Accept-Language': 'zh-CN,en-US;q=0.7,en;q=0.3',
                 'Cache-Control': 'max-age=0',
                 'Connection': 'keep-alive',
                 'Upgrade-Insecure-Requests' :'1',
                 'Host': 'www.qichacha.com',
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.86 Safari/537.36',
+                'Connection': 'keep-alive',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:49.0) Gecko/20100101 Firefox/49.0'
             }
             self.driver = session
 
@@ -176,16 +177,16 @@ class Downloader(object):
 #        if u"nodata.png" in content:
 #            return "invalid, nodata"
 
-    def access_page_with_cache(self, url, groups=None, refresh=False):
+    def access_page_with_cache(self, url, groups=None, refresh=None):
 
         def save_cache(url, content, groups, refresh):
-            refresh = self.refresh if refresh is None else refresh
             groups = self.groups if groups is None else groups
             self.counter["cache_write"]+=1
             ret = self.cache.post(url, content, groups, refresh)
             if ret not in [True, False]:
                 print('save_cache failed',ret)
 
+        refresh = self.refresh if refresh is None else refresh
         if not refresh:
             self.counter["cache_get"]+=1
             content = self.cache.get(url)

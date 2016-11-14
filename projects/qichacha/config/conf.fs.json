@@ -310,14 +310,14 @@
 	},
 
     "vip": {
-        "CACHE_SERVER": "http://192.168.1.189:8000",
+        "CACHE_SERVER": "http://192.168.1.178:8000",
         "PROXY_SERVER": "http://52.196.158.37:8888",
         "debug": true,
-        "CRAWL_GAP": 5,
+        "CRAWL_GAP": 20,
         "MAX_PAGE_NUM": 250,
         "MAX_LIMIT": 5000,
         "COOKIES": {
-            "3428296229_jed*#k2pS34D": "gr_user_id=573242e5-28ed-4104-ac8e-edf82506cf03; PHPSESSID=ghth4pn23gve8tc0m36sc0ur43; gr_session_id_9c1eb7420511f8b2=43d56743-87e2-4d04-92f4-75709d51fb0c; CNZZDATA1254842228=906963858-1478756158-http%253A%252F%252Fwww.qichacha.com%252F%7C1478756158",
+            "3428296229_jed*#k2pS34D": "PHPSESSID=973juodrskmmcqjk6s366euce1; CNZZDATA1254842228=1347897426-1478851608-http%253A%252F%252Fwww.qichacha.com%252F%7C1478851608; gr_user_id=a63f94b9-bbd8-4d8b-bde4-6af2154be402; gr_session_id_9c1eb7420511f8b2=078f8acb-5233-4c77-9c26-c07c343a835a",
             "1794355196_jed*#k2pS34D": "gr_user_id=09653c60-7c95-4e3a-903b-60c74ac95c16; PHPSESSID=2s7mmtm4fhrfc9dot0jir2cte2; gr_session_id_9c1eb7420511f8b2=6b7ef20b-1f38-4b4b-9b20-d4d5b2a49087; CNZZDATA1254842228=1636514596-1478756158-http%253A%252F%252Fwww.qichacha.com%252F%7C1478756158"
         }
     }
