@@ -33,7 +33,6 @@ class Loader(object):
         self.records = db['records']
         self.pipe_line = pipeLine()
 
-
         try:
             self.entity.create_index('gid', unique=True)
             self.node.create_index('gid', unique=True)
@@ -93,6 +92,7 @@ class Loader(object):
             'createdTime': datetime.utcnow(),
             'updatedTime': datetime.utcnow(),
             'seriesid'   : seriesid,
+            'source_domain': seriesid.split('_')[-1],
         }
         for index in range(5):
             if tags[index]:

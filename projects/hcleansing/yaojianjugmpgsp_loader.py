@@ -20,6 +20,14 @@ sys.setdefaultencoding('utf-8')
 from collections import Counter
 
 class YaojianjugmpgspLoader(Loader):
+    def read_from_mapping(self):
+        self.company_set = set()
+        dir_path = os.path.abspath(os.path.dirname(__file__))
+        mapping_file = 'gmpgsp_header_mapping.json'
+        mapping_path = os.path.join(dir_path, mapping_file)
+        with open(mapping_path) as f:
+            self.header_mapping = json.load(f)
+
     def read_jsn(self, data_dir):
         for fname in os.listdir(data_dir):
             for js in libfile.read_file_iter(os.path.join(data_dir, fname), jsn=True):
@@ -63,11 +71,12 @@ class YaojianjugmpgspLoader(Loader):
         try:
             time_array = time.strptime(published_time, u'%Y年%m月%d日')
         except:
-            with open('luanma.txt','a') as f:
-                f.write(jsn[u'source'] + '\n')
+            # with open('luanma.txt','a') as f:
+                # f.write(jsn[u'source'] + '\n')
             return
         published_time = time.strftime(u'%Y-%m-%d', time_array)  # 年月日转化为-形式
         jsn['published_time'] = published_time
+
         for table in jsn[u'table_list']:
             source = jsn[u'source']
             domain = Loader.url2domain(source)
@@ -81,14 +90,16 @@ class YaojianjugmpgspLoader(Loader):
                 tags.append('GMP')
 
             type_tag = self.get_tag_from_title(jsn[u'title'])
+
             if not type_tag:
                 type_tag = self.get_tag_from_content(jsn[u'article_content'])
+
             if type_tag:
                 tags.append(type_tag)
             else:
-                with open('type_failed.txt','a') as f:
-                    f.write(source + '\n')              
-                return
+                pass
+                # with open('type_failed.txt','a') as f:
+                    # f.write(source + '\n')              
 
             record = {
                     'gid': gid,
@@ -110,29 +121,38 @@ class YaojianjugmpgspLoader(Loader):
             record['claims'].append({ 'p': '正文', 'o': jsn[u'article_content']})
             del table[u'access_time']
             for key in table:
-                if len(key) > 30 or u'有限公司' in key:
-                    with open('wrong_url.txt','a') as f:
-                        f.write(source + '\n')
+                if len(key) > 30 or u'有限公司' in key or u'责任公司' in key:
+                    # with open('wrong_url.txt','a') as f:
+                        # f.write(source + '\n')
                     return
 
             for key in table:
                 if u'证书编号' in key or u'企业名称' in key:
                     break
             else:
-                with open('wrong_url.txt','a') as f:
-                    f.write(source + '\n')
+                # with open('wrong_url.txt','a') as f:
+                    # f.write(source + '\n')
                 return
 
             for key in table:
                 new_key = re.sub(u'[\s   　]', u'',key.strip())  # \s  之后是一种不同的空格！
+                if not new_key:
+                    continue
+                new_key = self.header_mapping.get(new_key, new_key)
+                if not new_key:
+                    print key
                 if not self.tag_counter.get(new_key, None):
                     self.tag_counter[new_key] = {
                         'counts':0,
                         'eg'    :source,
                     }
                 self.tag_counter[new_key]['counts'] += 1
-                record['claims'].append({ 'p': key, 'o': table[key]})
-
+                if new_key == u'认证证书编号' :
+                    if u'CL03' not in source:  
+                        obj.cc += 1
+                        self.company_counter[table[key]] += 1
+                        self.company_set.add(table[key])
+                record['claims'].append({ 'p': new_key, 'o': table[key]})
             try:
                 continue
                 self.records.insert(record)
@@ -142,7 +162,14 @@ class YaojianjugmpgspLoader(Loader):
 if __name__ == '__main__':
     obj = YaojianjugmpgspLoader()
     obj.tag_counter = {}
-    obj.read_jsn('/data/hproject/2016/yaojianjugmpgsp-1109/')
+    obj.company_counter = Counter()
+    obj.read_from_mapping()
+    obj.cc = 0
+    obj.read_jsn('/Users/johnson/yaojianjugmpgsp-1114')
+    print len(obj.company_set)
     print json.dumps(obj.tag_counter, ensure_ascii=False)
-
-
+    print obj.cc
+    # with open('numbers.txt','w') as f:
+        # for i in obj.company_set:
+            # f.write(i + '\n')
+    # print json.dumps(obj.company_counter, ensure_ascii=False)
