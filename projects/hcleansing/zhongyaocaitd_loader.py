@@ -46,7 +46,7 @@ class ZhongyaocaitdLoader(Loader):
             seriesid = '{}_{}'.format(series, domain)
             self.pipe_line.clean_product_place(tags[2], tags)
             if series not in series_cache:
-                self.insert_meta_by_series(series)
+                self.insert_meta_by_series(series, seriesid)
                 self.set_price_index(series, name, domain)
                 series_cache.add(series)
             record = {
