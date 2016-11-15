@@ -33,13 +33,14 @@ def get_formatted_table(table_node):
     for td_label in tr_labels[0].xpath('.//td'):
             word = ''.join(td_label.xpath('.//text()'))
             keys.append(re.sub(u'[\s]', u'',word))
-    values = []
     for tr_label in tr_labels[1:]:
-        for td_label in table_node.xpath('.//tr[2]//td'):
+        values = []
+        for td_label in tr_label.xpath('.//td'):
             word = ''.join(td_label.xpath('.//text()'))
             if word.strip():
                 values.append(word.strip())
         item = dict(zip(keys, values))
+
         result_list.append(item)
     return result_list
 
@@ -56,7 +57,6 @@ def parse_page(url):
     title = dom.xpath('//td[@class="articletitle3"]//text()')[0]
     published_time = dom.xpath('//td[@class="articletddate3"]//text()')[0]
     content_block = dom.xpath('//td[@class="articlecontent3"]')[0]
-    print title.encode('utf-8')
     record = {
         'title'             : title,
         'published_time'    : published_time,

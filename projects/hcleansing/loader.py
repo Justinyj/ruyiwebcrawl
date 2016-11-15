@@ -33,7 +33,6 @@ class Loader(object):
         self.records = db['records']
         self.pipe_line = pipeLine()
 
-
         try:
             self.entity.create_index('gid', unique=True)
             self.node.create_index('gid', unique=True)
@@ -41,7 +40,7 @@ class Loader(object):
             self.node.create_index('tags', unique=False)
             self.node.create_index('recordDate', unique=False)
             self.meta.create_index('attrs', unique=False)
-            self.meta.create_index('series', unique=True) # 这里创建series索引仅为了去重，attrs的unique设为True会出错
+            self.meta.create_index('seriesid', unique=True)
             self.news.create_index('tags', unique=False)
             self.news.create_index('gid', unique=True)
             self.records.create_index('gid', unique=True)
@@ -85,13 +84,17 @@ class Loader(object):
                                         alias_dict[entity].append(v)
         return tags_dict, alias_dict
 
-    def insert_meta_by_series(self, series):
+    def insert_meta_by_series(self, series, seriesid):
+        # TODO现在的传参数形式不太好，是考虑到统一改脚本不方便的权宜之计
+        # 将来可以直接传record或者item参数，适应更灵活的数据变更
         tags = series.split('_')
         keys = [u'名称', u'价格类型', u'产地', u'市场', u'规格'] # 这个前缀列表可用的前提是假设series中字段都按照规定的顺序排列
         record = {
             'series':series,
             'createdTime': datetime.utcnow(),
-            'updatedTime': datetime.utcnow()
+            'updatedTime': datetime.utcnow(),
+            'seriesid'   : seriesid,
+            'source_domain': seriesid.split('_')[-1],
         }
         for index in range(5):
             if tags[index]:

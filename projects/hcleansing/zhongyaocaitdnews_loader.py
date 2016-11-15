@@ -32,6 +32,13 @@ class ZhongyaocaitdnewsLoader(Loader):
             tags = [u'新闻']
             tags.extend(news_item[u'news_keyword_list'])
             tags.append(news_item[u'news_type'])            # 市场快讯等
+            market_name_list = [u'荷花池', u'安国', u'亳州', u'玉林']            #  由于药市和市场用词会变化，先只匹配部分名字
+            for market_name in market_name_list:
+                if market_name in news_item[u'news_title']:
+                    tags.append(u'{}市场'.format(market_name))
+            for tag in tags[::-1]:
+                if not tag:
+                    tags.remove(tag)
             record = {
                     'gid': gid,
                     'rid': rid,
@@ -58,6 +65,7 @@ class ZhongyaocaitdnewsLoader(Loader):
             except DuplicateKeyError as e:
                 print(e)
             # print json.dumps(record, ensure_ascii=False)
+
 if __name__ == '__main__':
     obj = ZhongyaocaitdnewsLoader()
     obj.read_jsn('/Users/johnson/google')

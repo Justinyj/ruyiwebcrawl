@@ -37,6 +37,9 @@ class YaotongwangnewsLoader(Loader):
             tags.append(news_item[u'news_type'])            # 市场快讯等
             if news_item[u'market']:                        # 部分新闻会含市场信息
                 tags.append(news_item[u'market'])
+            for tag in tags[::-1]:
+                if not tag:
+                    tags.remove(tag)
             record = {
                     'gid': gid,
                     'rid': rid,

@@ -50,12 +50,14 @@ class KmzydailyLoader(Loader):
             tags = [name, priceType, productPlaceOfOrigin, sellerMarket, productGrade]
             rid = hashlib.sha1('{}_{}_{}'.format('_'.join(tags), validDate, domain)).hexdigest()
             series = '_'.join(tags)
-            self.insert_meta_by_series(series)
+            seriesid = '{}_{}'.format(series, domain)
+            self.insert_meta_by_series(series, seriesid)
             self.pipe_line.clean_product_place(tags[2], tags)
             record = {
                 'rid': rid,
                 'gid': rid, # 不可变
                 'series': series,
+                'seriesid' : seriesid,
                 'tags': [ tag for tag in tags if tag],
                 'createdTime': datetime.utcnow(),
                 'updatedTime': datetime.utcnow(),
