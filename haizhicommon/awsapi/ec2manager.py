@@ -8,8 +8,6 @@ import boto3
 import time
 from collections import deque
 
-from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
-
 
 class Ec2Manager(object):
 
@@ -43,6 +41,11 @@ class Ec2Manager(object):
         self.amiid = amiid if amiid else self.config[self.region_name]['amiid']
         self.id_instance = {}
         self.id_idx = {}
+
+        if region_name == 'ap-northeast-1':
+            from secret import AWS_ACCESS_ID_TK as AWS_ACCESS_ID, AWS_SECRET_KEY_TK as AWS_SECRET_KEY
+        elif region_name == 'cn-north-1':
+            from secret import AWS_ACCESS_ID_BJ as AWS_ACCESS_ID, AWS_SECRET_KEY_BJ as AWS_SECRET_KEY
 
         self.ec2 = boto3.resource('ec2', region_name=region_name, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 

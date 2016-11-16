@@ -8,13 +8,17 @@ import boto3
 import botocore
 import hashlib
 
-from .secret import AWS_ACCESS_ID, AWS_SECRET_KEY
 
 class S3Object(object):
     def __init__(self, batch_id, region_name='ap-northeast-1'):
         self.batch_id = batch_id
         self.batch_key = batch_id.rsplit('-', 1)[0]
         self.region_name = region_name
+        if region_name == 'ap-northeast-1':
+            from secret import AWS_ACCESS_ID_TK as AWS_ACCESS_ID, AWS_SECRET_KEY_TK as AWS_SECRET_KEY
+        elif region_name == 'cn-north-1':
+            from secret import AWS_ACCESS_ID_BJ as AWS_ACCESS_ID, AWS_SECRET_KEY_BJ as AWS_SECRET_KEY
+
         self.S3 = boto3.resource('s3', region_name=region_name, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
 

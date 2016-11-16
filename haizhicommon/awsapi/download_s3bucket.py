@@ -8,8 +8,13 @@ import boto3
 import os
 from datetime import datetime
 
-from secret import AWS_ACCESS_ID, AWS_SECRET_KEY
+
 REGION_NAME = 'ap-northeast-1'
+if REGION_NAME == 'ap-northeast-1':
+    from secret import AWS_ACCESS_ID_TK as AWS_ACCESS_ID, AWS_SECRET_KEY_TK as AWS_SECRET_KEY
+elif REGION_NAME == 'cn-north-1':
+    from secret import AWS_ACCESS_ID_BJ as AWS_ACCESS_ID, AWS_SECRET_KEY_BJ as AWS_SECRET_KEY
+
 
 S3 = boto3.resource('s3', region_name=REGION_NAME, aws_access_key_id=AWS_ACCESS_ID, aws_secret_access_key=AWS_SECRET_KEY)
 
